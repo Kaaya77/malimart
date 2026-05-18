@@ -28,6 +28,13 @@ export default defineConfig(({ mode }) => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
+        // Force new SW to take over old tabs the moment it installs.
+        // Without these, users see stale bundles for one refresh cycle after every deploy.
+        workbox: {
+          skipWaiting: true,
+          clientsClaim: true,
+          cleanupOutdatedCaches: true,
+        },
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
         manifest: {
           name: 'MaliMart',
@@ -68,15 +75,4 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         output: {
           manualChunks: {
-            react: ['react', 'react-dom', 'react-router-dom'],
-            ui: ['framer-motion', 'motion', 'lucide-react'],
-            charts: ['recharts'],
-            supabase: ['@supabase/supabase-js'],
-            gemini: ['@google/genai'],
-            pdf: ['jspdf', 'html2canvas'],
-          },
-        },
-      },
-    },
-  };
-});
+            react: ['react', 'react-dom', 'react
