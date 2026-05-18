@@ -72,14 +72,16 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
         setQuantity(1);
     }, [product?.id]);
 
+    // Hooks MUST be declared before any early return.
+    const images = useMemo(() => {
+        const base = product?.images || [];
+        if (selectedVariant?.image_url) return [selectedVariant.image_url, ...base];
+        return base.length ? base : ['https://via.placeholder.com/800x800?text=No+Image'];
+    }, [product?.images, selectedVariant?.image_url]);
+
     if (!product) return null;
 
     const isLiked = isInWishlist(product.id);
-    const images = useMemo(() => {
-        const base = product.images || [];
-        if (selectedVariant?.image_url) return [selectedVariant.image_url, ...base];
-        return base.length ? base : ['https://via.placeholder.com/800x800?text=No+Image'];
-    }, [product.images, selectedVariant?.image_url]);
 
     const finalPrice = stats.price;
     const onSale = stats.originalPrice && stats.originalPrice > stats.price;
