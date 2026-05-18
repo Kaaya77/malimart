@@ -1,0 +1,22 @@
+# Local-only files that should never go to Vercel build
+node_modules
+dist
+dist-ssr
+.DS_Store
+*.log
+
+# Local dev server (Vercel doesn't run long-lived Express + Socket.IO)
+server.ts
+
+# Raw SQL — those live in Supabase, not in the deployed bundle
+supabase_*.sql
+supabase/migrations
+
+# Local quick-tests
+test_products.js
+test_query.js
+
+# Env files (Vercel uses the dashboard's env vars)
+.env
+.env.local
+.env.*.local

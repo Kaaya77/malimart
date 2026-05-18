@@ -1,0 +1,9 @@
+{
+  "name": "Malimart 1.8",
+  "description": "A premier modern Tanzanian e-commerce platform with elite level development  connecting  sellers with buyers, featuring AI-powered tools for sellers and buyers. bringing market for everything  closer to you ",
+  "requestFramePermissions": [
+    "microphone",
+    "camera",
+    "geolocation"
+  ]
+}

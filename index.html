@@ -1,0 +1,119 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MaliMart - Tanzanian Marketplace</title>
+    <meta name="description" content="Discover authentic Tanzanian products from verified local sellers. Shop fashion, crafts, spices, and more on MaliMart." />
+    
+    <!-- PWA & Mobile -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="MaliMart" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://malimart.tz/" />
+    <meta property="og:title" content="MaliMart - Tanzanian Heritage Marketplace" />
+    <meta property="og:description" content="Connect with Tanzania's finest artisans and merchants. Secure payments, nationwide delivery." />
+    <meta property="og:image" content="https://images.unsplash.com/photo-1542831371-29b0f74f9713?auto=format&fit=crop&q=80&w=1200" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://malimart.tz/" />
+    <meta property="twitter:title" content="MaliMart - Tanzanian Marketplace" />
+    <meta property="twitter:description" content="Discover authentic Tanzanian products from verified local sellers." />
+    <meta property="twitter:image" content="https://images.unsplash.com/photo-1542831371-29b0f74f9713?auto=format&fit=crop&q=80&w=1200" />
+
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛍️</text></svg>">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3081/3081559.png">
+
+    <script>
+      (function() {
+        const theme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        if (theme === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --glass-bg: rgba(255, 255, 255, 0.7);
+        --glass-border: rgba(255, 255, 255, 0.5);
+        --glass-blur: 20px;
+      }
+
+      .dark {
+        --glass-bg: rgba(2, 6, 23, 0.8);
+        --glass-border: rgba(255, 255, 255, 0.08);
+      }
+      
+      h1, h2, h3, h4, h5, h6 { 
+        font-family: 'Space Grotesk', sans-serif; 
+        letter-spacing: -0.03em; 
+      }
+      
+      /* Subtle Texture */
+      .bg-noise {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        opacity: 0.03;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        pointer-events: none;
+      }
+
+      .glass {
+        background: var(--glass-bg);
+        backdrop-filter: blur(var(--glass-blur));
+        -webkit-backdrop-filter: blur(var(--glass-blur));
+        border: 1px solid var(--glass-border);
+      }
+
+      /* Premium Scrollbar */
+      ::-webkit-scrollbar { width: 0px; height: 0px; background: transparent; }
+      
+      .reveal {
+        opacity: 0;
+        transform: translateY(30px);
+        transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .reveal.active {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+  <body class="bg-background text-foreground transition-colors duration-500 overflow-x-hidden antialiased">
+    <div class="bg-noise"></div>
+    <div id="root" class="relative z-10"></div>
+    <script>
+      const handleReveal = () => {
+        const reveals = document.querySelectorAll('.reveal');
+        reveals.forEach(el => {
+          const windowHeight = window.innerHeight;
+          const revealTop = el.getBoundingClientRect().top;
+          const revealPoint = 50;
+          if (revealTop < windowHeight - revealPoint) {
+            el.classList.add('active');
+          }
+        });
+      };
+      window.addEventListener('scroll', handleReveal);
+      window.addEventListener('load', handleReveal);
+    </script>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
