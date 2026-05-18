@@ -16,7 +16,6 @@ import { CATEGORY_HIERARCHY } from '../constants';
 
 export const HomePage = () => {
   const { products, user } = useAppState();
-  console.log("HomePage products:", products);
   const navigate = useNavigate();
   const [activeProduct, setActiveProduct] = useState<Product | null>(null);
   const [activeStore, setActiveStore] = useState<VendorProfile | null>(null);
@@ -101,8 +100,7 @@ export const HomePage = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-24 selection:bg-primary selection:text-primary-foreground">
-        {products.length === 0 && <div className="fixed bottom-0 left-0 bg-red-500 text-white p-4 z-50">DEBUG: PRODUCTS EMPTY</div>}
-        <HeroSection 
+        <HeroSection
             heroRecommendation={heroRecommendation}
             heroSettings={heroSettings}
             greeting={greeting}

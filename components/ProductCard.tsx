@@ -1,17 +1,13 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Heart, Star, ShoppingBag, Plus, Check, Sparkles, Flame, Eye, ArrowUpRight, MapPin, Layers } from 'lucide-react';
 import { Product } from '../types';
 import { useAppState } from '../context/AppContext';
-import { useToast, VerifiedBadge } from './UI';
+import { useToast } from './UI';
 import { ProductCardImage } from './product-card/ProductCardImage';
 import { ProductCardContent } from './product-card/ProductCardContent';
 import { ProductCardActions } from './product-card/ProductCardActions';
-import { CURRENCY } from '../constants';
 import { useProductPricing } from '../hooks/useProductPricing';
-import { useVariantSelection } from '../hooks/useVariantSelection';
 
 interface ProductCardProps {
     product: Product;
@@ -24,26 +20,41 @@ interface ProductCardProps {
     index?: number;
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({ 
-    product, 
-    onClick, 
-    onQuickView, 
+/**
+ * Product card — used in grids on HomePage, ShopPage, StorePage, Wishlist.
+ *
+ * Hover behavior:
+ *   - Image gently zooms (scale-1.04, 600ms ease-out)
+ *   - Image cycles through additional images every 1500ms
+ *   - Quick-view + add-to-cart pill appears at the bottom-right of the image
+ *
+ * Click behavior:
+ *   - Whole card is clickable → onClick prop (defaults to navigate /product/:id)
+ *   - Wishlist heart and action buttons stopPropagation
+ *   - Add-to-cart: if variants exist, opens product detail page; otherwise inline add
+ */
+export const ProductCard: React.FC<ProductCardProps> = ({
+    product,
+    onClick,
+    onQuickView,
     onCompare,
     isComparing = false,
-    className = '', 
-    layout = 'grid', 
-    index = 0 
+    className = '',
+    layout = 'grid',
+    index = 0,
 }) => {
-    const { addToCart, toggleWishlist, isInWishlist } = useAppState();
+    const { addToCart } = useAppState();
     const navigate = useNavigate();
     const { addToast } = useToast();
-    
+
+    const { isInWishlist } = useAppState();
+    const isLiked = isInWishlist(product.id);
+
     const [isHovered, setIsHovered] = useState(false);
     const [currentImgIdx, setCurrentImgIdx] = useState(0);
     const [isAdding, setIsAdding] = useState(false);
-    const [imgLoaded, setImgLoaded] = useState(false);
-    const [activeVariantImage, setActiveVariantImage] = useState<string | null>(null);
-    const [activeVariantId, setActiveVariantId] = useState<string | null>(null);
+    const [activeVariantImage] = useState<string | null>(null);
+    const [activeVariantId] = useState<string | null>(null);
 
     const activeVariant = useMemo(() => {
         if (!activeVariantId) return null;
@@ -51,15 +62,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     }, [activeVariantId, product.variants]);
 
     const stats = useProductPricing(product, activeVariant);
-    const isLiked = isInWishlist(product.id);
 
     const isNew = useMemo(() => {
         if (!product.created_at) return false;
-        const createdDate = new Date(product.created_at);
-        const now = new Date();
-        const diffTime = Math.abs(now.getTime() - createdDate.getTime());
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        return diffDays <= 7;
+        const created = new Date(product.created_at).getTime();
+        const days = (Date.now() - created) / (1000 * 60 * 60 * 24);
+        return days <= 7;
     }, [product.created_at]);
 
     const images = useMemo(() => {
@@ -67,84 +75,93 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         return Array.from(new Set(list));
     }, [product]);
 
-    // Auto-rotate images on hover
+    // Auto-cycle images on hover (only when not pinned to a variant image)
     useEffect(() => {
         let timer: any;
         if (isHovered && images.length > 1 && !activeVariantImage) {
             timer = setInterval(() => {
                 setCurrentImgIdx(prev => (prev + 1) % images.length);
-            }, 1500); 
+            }, 1500);
         }
         return () => clearInterval(timer);
-    }, [isHovered, images, activeVariantImage]);
+    }, [isHovered, images.length, activeVariantImage]);
 
     const handleAdd = (e: React.MouseEvent) => {
         e.stopPropagation();
         if (stats.isOut) return;
-        
+
+        // Variants present → route to product detail so user picks one
         if (stats.hasVariants) {
-            if(onClick) onClick(); else navigate(`/product/${product.id}`);
+            if (onClick) onClick();
+            else navigate(`/product/${product.id}`);
             return;
         }
-        
+
         setIsAdding(true);
         addToCart(product);
-        setTimeout(() => setIsAdding(false), 800);
+        addToast(`${product.name} added to bag`, 'success');
+        window.setTimeout(() => setIsAdding(false), 900);
     };
 
-    const displayImage = activeVariantImage || images[currentImgIdx];
+    const handleCardClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (onClick) onClick();
+        else navigate(`/product/${product.id}`);
+    };
+
+    const rootCls = `group relative flex select-none cursor-pointer
+        ${layout === 'grid' ? 'flex-col' : 'flex-row gap-4 items-start py-3 border-b border-foreground/5 last:border-b-0'}
+        ${className}`;
 
     return (
-        <motion.div 
-            initial={{ opacity: 0, y: 20 }}
+        <motion.article
+            initial={{ opacity: 0, y: 12 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-50px" }}
-            transition={{ duration: 0.4, delay: index * 0.05 }}
-            className={`group relative flex transition-all duration-300 cursor-pointer select-none ${layout === 'grid' ? 'flex-col' : 'flex-row gap-4 items-center'} ${className}`}
-            onClick={(e) => {
-                e.stopPropagation();
-                onClick ? onClick() : navigate(`/product/${product.id}`);
-            }}
+            viewport={{ once: true, margin: '-40px' }}
+            transition={{ duration: 0.35, delay: Math.min(index * 0.035, 0.4) }}
+            className={rootCls}
+            onClick={handleCardClick}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => {
                 setIsHovered(false);
                 setCurrentImgIdx(0);
-                setActiveVariantImage(null);
-                setActiveVariantId(null);
             }}
         >
-            {/* INSET MEDIA CONTAINER */}
-            <ProductCardImage 
-                product={product}
-                images={images}
-                isNew={isNew}
-                stats={stats}
-                layout={layout}
-                isHovered={isHovered}
-            />
-
-            {/* CONTENT AREA */}
-            <div className={`flex flex-col flex-1 w-full relative z-10 ${layout === 'grid' ? 'mt-1' : ''}`}>
-                <ProductCardContent 
+            {/* Image area — relative parent for absolutely-positioned actions */}
+            <div className="relative w-full">
+                <ProductCardImage
                     product={product}
+                    images={images}
+                    isNew={isNew}
                     stats={stats}
                     layout={layout}
-                    onStoreClick={(e: any) => { e.stopPropagation(); navigate(`/store/${product.seller_id}`); }}
+                    isHovered={isHovered}
+                    currentImgIdx={currentImgIdx}
+                    activeVariantImage={activeVariantImage}
+                />
+                <ProductCardActions
+                    product={product}
+                    stats={stats}
+                    isLiked={isLiked}
+                    isComparing={isComparing}
+                    onCompare={onCompare}
+                    onQuickView={onQuickView}
+                    onAdd={handleAdd}
+                    isAdding={isAdding}
+                    layout={layout}
+                    isHovered={isHovered}
                 />
             </div>
-            
-            <ProductCardActions 
+
+            <ProductCardContent
                 product={product}
                 stats={stats}
-                isLiked={isLiked}
-                isComparing={isComparing}
-                onCompare={onCompare}
-                onQuickView={onQuickView}
-                onAdd={handleAdd}
-                isAdding={isAdding}
                 layout={layout}
+                onStoreClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/store/${product.seller_id}`);
+                }}
             />
-        </motion.div>
+        </motion.article>
     );
 };
-

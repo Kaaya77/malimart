@@ -1,5 +1,5 @@
 import React from 'react';
-import { Star } from 'lucide-react';
+import { Star, MapPin } from 'lucide-react';
 import { Product } from '../../types';
 import { VerifiedBadge } from '../UI';
 import { CURRENCY } from '../../constants';
@@ -11,44 +11,82 @@ interface ProductCardContentProps {
     onStoreClick: (e: React.MouseEvent) => void;
 }
 
-export const ProductCardContent: React.FC<ProductCardContentProps> = ({ 
-    product, 
-    stats, 
+/**
+ * Product card text. Hierarchy:
+ *   1. Eyebrow: SELLER · location (10px, semibold, tracking-wide, muted)
+ *   2. Title: product name (15px, semibold, 2-line clamp, tight tracking)
+ *   3. Meta row: rating · review count (13px, muted)
+ *   4. Price block: large price, strikethrough original, percent saved
+ */
+export const ProductCardContent: React.FC<ProductCardContentProps> = ({
+    product,
+    stats,
     layout,
-    onStoreClick
+    onStoreClick,
 }) => {
+    const isGrid = layout === 'grid';
+    const reviewCount = product.review_count || 0;
+    const rating = product.rating ? Number(product.rating).toFixed(1) : null;
+    const sellerLocation = (product as any).seller_location || product.location;
+
     return (
-        <div className={`flex flex-col ${layout === 'grid' ? 'py-4 px-1 gap-1.5' : 'flex-1 py-3 px-2 gap-2'}`}>
-            <div className="flex items-center justify-between mb-0.5">
-                <div className="flex items-center gap-1.5 overflow-hidden">
-                    <button onClick={onStoreClick} className="text-[10px] font-black uppercase tracking-widest text-foreground/40 hover:text-primary transition-colors truncate">
-                        {product.seller_name || 'Store'} {product.brand && `• ${product.brand}`}
-                    </button>
-                    {product.is_verified && (
-                        <VerifiedBadge className="scale-75 origin-left opacity-80" />
-                    )}
-                </div>
-                <div className="flex items-center gap-1">
-                    <Star className="w-3 h-3 fill-yellow-500 text-yellow-500" />
-                    <span className="text-[11px] font-black">{product.rating || '4.8'}</span>
-                </div>
+        <div className={`flex flex-col ${isGrid ? 'pt-3 gap-1' : 'pt-2 px-1 gap-1.5 flex-1'}`}>
+            {/* Eyebrow: store + verified + location */}
+            <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground/50 truncate">
+                <button
+                    onClick={onStoreClick}
+                    className="hover:text-foreground transition-colors truncate"
+                >
+                    {product.seller_name || 'Store'}
+                </button>
+                {product.is_verified && (
+                    <VerifiedBadge className="scale-[0.65] origin-left -ml-0.5 -mr-1.5 opacity-90" />
+                )}
+                {sellerLocation && (
+                    <span className="flex items-center gap-0.5 text-foreground/40 truncate">
+                        <MapPin className="w-2.5 h-2.5 stroke-[2.5]" />
+                        <span className="truncate">{sellerLocation}</span>
+                    </span>
+                )}
             </div>
-            
-            <h3 className={`font-sans font-extrabold text-foreground leading-tight line-clamp-2 w-full pr-8 ${layout === 'grid' ? 'text-sm' : 'text-xl'}`}>
+
+            {/* Title */}
+            <h3
+                className={`font-sans font-semibold text-foreground leading-snug line-clamp-2 tracking-tight
+                    ${isGrid ? 'text-[14px]' : 'text-lg'}`}
+            >
                 {product.name}
             </h3>
-            
-            <div className={`flex items-end justify-between ${layout === 'grid' ? 'mt-0' : 'mt-auto'}`}>
-                <div className="flex items-baseline gap-2">
-                    <span className={`${layout === 'grid' ? 'text-[15px]' : 'text-xl'} font-black text-foreground tracking-tight`}>
-                        {CURRENCY} {Math.round(stats.price).toLocaleString()}
-                    </span>
-                    {stats.originalPrice && stats.originalPrice > stats.price && (
-                        <span className="text-[11px] font-bold text-foreground/30 line-through">
-                            {CURRENCY} {Math.round(stats.originalPrice).toLocaleString()}
-                        </span>
+
+            {/* Rating */}
+            {rating && (
+                <div className="flex items-center gap-1 text-[11px] text-foreground/55">
+                    <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                    <span className="font-semibold text-foreground/70">{rating}</span>
+                    {reviewCount > 0 && (
+                        <span className="text-foreground/40">({reviewCount})</span>
                     )}
                 </div>
+            )}
+
+            {/* Price block */}
+            <div className="mt-1.5 flex items-baseline gap-2 flex-wrap">
+                <span
+                    className={`font-sans font-bold text-foreground tracking-tight
+                        ${isGrid ? 'text-[17px]' : 'text-2xl'}`}
+                >
+                    {CURRENCY} {Math.round(stats.price).toLocaleString()}
+                </span>
+                {stats.originalPrice && stats.originalPrice > stats.price && (
+                    <>
+                        <span className="text-[12px] font-medium text-foreground/35 line-through">
+                            {CURRENCY} {Math.round(stats.originalPrice).toLocaleString()}
+                        </span>
+                        <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                            Save {Math.round((1 - stats.price / stats.originalPrice) * 100)}%
+                        </span>
+                    </>
+                )}
             </div>
         </div>
     );
