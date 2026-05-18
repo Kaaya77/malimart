@@ -75,4 +75,15 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         output: {
           manualChunks: {
-            react: ['react', 'react-dom', 'react
+            react: ['react', 'react-dom', 'react-router-dom'],
+            ui: ['framer-motion', 'motion', 'lucide-react'],
+            charts: ['recharts'],
+            supabase: ['@supabase/supabase-js'],
+            gemini: ['@google/genai'],
+            pdf: ['jspdf', 'html2canvas'],
+          },
+        },
+      },
+    },
+  };
+});
