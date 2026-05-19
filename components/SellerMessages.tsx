@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MessageSquare, ChevronLeft, Trash2, X, Sparkles, Send, Loader2, BrainCircuit, Tag, Truck, User, Wand2, Search, Filter, Pin, Plus, Ban, ShieldAlert, Smile, MoreVertical, Reply, Paperclip, Check, CheckCheck } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { useAppState } from '../context/AppContext';
 import { Button, Input, useToast, ConfirmDialog, UserProfileModal, GraphicalTag } from './UI';
 import { ProductModal } from './ProductModal';

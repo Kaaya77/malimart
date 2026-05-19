@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Check, MapPin, Truck, ShieldCheck, X, 
   Plus, Smartphone, Banknote, Home, Receipt, 
