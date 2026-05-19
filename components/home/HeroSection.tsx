@@ -1,7 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { ArrowRight, Search, ShieldCheck, MapPin } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowRight, ShoppingBag, ChevronLeft, ChevronRight, Sparkles, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAppState } from '../../context/AppContext';
+import { Product } from '../../types';
+import { CURRENCY } from '../../constants';
 
 interface HeroSectionProps {
   heroRecommendation: any;
@@ -17,334 +20,343 @@ interface HeroSectionProps {
 }
 
 /**
- * Mobile-first image-rich hero.
+ * PRODUCT-FIRST hero.
  *
- * MOBILE (default):
- *   Full-bleed hero image fills 70vh. Soft dark gradient at the bottom
- *   anchors the content (headline + 2 CTAs + search pill) without making
- *   the imagery feel buried. Edge-to-edge by design — no padding around
- *   the hero box, the page padding starts at the next section.
+ * Source of truth (in priority order):
+ *   1. heroRecommendation.products[0]  -- admin-curated featured product
+ *   2. top boosted product from catalog
+ *   3. highest-rated product as last resort
  *
- * DESKTOP (md+):
- *   12-column split. Left 5: editorial type, social proof line, CTAs.
- *   Right 7: large rounded image with a floating product-stat card.
- *   Search bar lives at the bottom of the left column, full-width.
+ * Plus the next 3-4 boosted/top products shown as a strip behind on
+ * desktop, or as swipeable slides on mobile.
  *
- * Image strategy: curated rotating set of Tanzanian-themed photos
- * (textiles, markets, coffee) preloaded so the FIRST PAINT has imagery
- * — fixes the previous text-only flash.
+ * Mobile: 1 full-bleed product per slide, swipeable, snap-scroll. Each
+ *   slide has product image (vertical, takes ~55% of viewport height),
+ *   admin badge, product name, store, price, primary CTA "Shop this".
+ * Desktop: hero product (big card on left, 7 col), 3 stacked smaller
+ *   featured cards on right (5 col). Click anywhere on a card goes to
+ *   the product page.
  */
-
-const HERO_IMAGES = [
-  'https://images.unsplash.com/photo-1583394838336-acd977736f90?auto=format&fit=crop&q=80&w=1400', // African fabric folded, vibrant pattern
-  'https://images.unsplash.com/photo-1542831371-29b0f74f9713?auto=format&fit=crop&q=80&w=1400',   // Market scene, used in meta tags
-  'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&q=80&w=1400', // Coffee beans up close
-];
-
 export const HeroSection = ({
   heroRecommendation,
   heroSettings,
   greeting,
-  searchQuery,
-  setSearchQuery,
-  handleSearch,
-  searchPlaceholders,
-  currentPlaceholderIdx,
-  itemVariants,
 }: HeroSectionProps) => {
   const navigate = useNavigate();
-  const [imgIdx, setImgIdx] = useState(0);
-  const [imgLoaded, setImgLoaded] = useState(false);
+  const { products } = useAppState();
 
-  // Preload all hero images so transitions are instant
-  useEffect(() => {
-    HERO_IMAGES.forEach(src => {
-      const i = new Image();
-      i.src = src;
-    });
-  }, []);
+  // Resolve featured products in priority order
+  const featuredProducts = useMemo<Product[]>(() => {
+    const list: Product[] = [];
+    const seen = new Set<string>();
+    const pushUnique = (p: Product | null | undefined) => {
+      if (!p || seen.has(p.id)) return;
+      seen.add(p.id);
+      list.push(p);
+    };
 
-  // Auto-rotate hero image every 6s
+    // 1. Admin's hero recommendation
+    if (heroRecommendation?.products) {
+      const adminProduct = Array.isArray(heroRecommendation.products)
+        ? heroRecommendation.products[0]
+        : heroRecommendation.products;
+      if (adminProduct?.id) pushUnique(adminProduct as Product);
+    }
+
+    // 2. Top boosted from catalog
+    const boosted = products
+      .filter(p => p.is_boosted)
+      .sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    boosted.forEach(pushUnique);
+
+    // 3. Highest-rated to fill remaining slots
+    const topRated = [...products]
+      .sort((a, b) => (b.rating || 0) * (b.review_count || 0) - (a.rating || 0) * (a.review_count || 0));
+    topRated.forEach(pushUnique);
+
+    return list.slice(0, 4);
+  }, [heroRecommendation, products]);
+
+  const [activeIdx, setActiveIdx] = useState(0);
+
+  // Auto-advance every 7s on mobile
   useEffect(() => {
-    const t = setInterval(() => setImgIdx(i => (i + 1) % HERO_IMAGES.length), 6000);
+    if (featuredProducts.length <= 1) return;
+    const t = setInterval(() => setActiveIdx(i => (i + 1) % featuredProducts.length), 7000);
     return () => clearInterval(t);
-  }, []);
+  }, [featuredProducts.length]);
 
-  const headline = heroRecommendation?.title || 'Tanzania, in your basket.';
-  const tagline = heroRecommendation?.description
-    || 'Discover authentic local goods from verified Tanzanian sellers — fabric, coffee, crafts, electronics, and more.';
+  const adminBadge = useMemo(() => {
+    if (!heroRecommendation) return null;
+    try {
+      const offer = JSON.parse(heroRecommendation.offer_text);
+      return offer?.text || null;
+    } catch {
+      return heroRecommendation.offer_text || null;
+    }
+  }, [heroRecommendation]);
+
+  const adminHeadline = heroRecommendation?.title || heroSettings.headline;
+  const adminTagline = heroRecommendation?.description || heroSettings.subheadline;
+
+  // ─── Empty / skeleton state ─────────────────────────────────────
+  if (featuredProducts.length === 0) {
+    return (
+      <section className="pt-20 md:pt-28 pb-10 px-5 md:px-8">
+        <div className="container mx-auto">
+          <div className="aspect-[5/6] md:aspect-[16/9] rounded-3xl bg-foreground/5 animate-pulse" />
+        </div>
+      </section>
+    );
+  }
+
+  const hero = featuredProducts[activeIdx];
+  const others = featuredProducts.filter((_, i) => i !== activeIdx).slice(0, 3);
 
   return (
-    <section className="relative w-full bg-background overflow-hidden">
-      {/* ───── MOBILE (default, hidden md+) ───── */}
-      <div className="md:hidden relative w-full h-[78vh] min-h-[560px] max-h-[760px] overflow-hidden">
-        {HERO_IMAGES.map((src, i) => (
-          <motion.img
-            key={src}
-            src={src}
-            alt=""
-            aria-hidden="true"
-            onLoad={() => i === 0 && setImgLoaded(true)}
-            animate={{ opacity: i === imgIdx ? 1 : 0 }}
-            transition={{ duration: 1.2 }}
-            className="absolute inset-0 w-full h-full object-cover"
-          />
-        ))}
-
-        {/* Loading shimmer until first image lands */}
-        {!imgLoaded && (
-          <div className="absolute inset-0 bg-gradient-to-br from-foreground/10 via-foreground/5 to-foreground/10 animate-pulse" />
-        )}
-
-        {/* Bottom gradient so text reads */}
-        <div className="absolute inset-x-0 bottom-0 h-[70%] bg-gradient-to-t from-black via-black/80 to-transparent" />
-        {/* Subtle top gradient for navbar legibility */}
-        <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/40 to-transparent" />
-
-        {/* Content stack — anchored to bottom */}
-        <div className="absolute inset-x-0 bottom-0 px-5 pb-8 z-10 text-white">
-          {greeting && (
-            <motion.p
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="text-sm font-medium text-white/80 mb-2"
-            >
-              {greeting}
-            </motion.p>
-          )}
-
-          <motion.p
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
-            className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/70 mb-3"
-          >
-            <span className="inline-flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-              Tanzania marketplace
-            </span>
-          </motion.p>
-
-          <motion.h1
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-            className="font-sans text-[40px] leading-[0.98] tracking-[-0.035em] font-semibold mb-3"
-          >
-            {headline}
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="text-sm leading-relaxed text-white/75 mb-6 max-w-md"
-          >
-            {tagline}
-          </motion.p>
-
-          {/* CTAs */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.35 }}
-            className="flex gap-2.5 mb-4"
-          >
-            <button
-              onClick={() => navigate('/shop')}
-              className="flex-1 h-12 rounded-xl bg-white text-black text-sm font-semibold flex items-center justify-center gap-1.5 active:scale-[0.98] transition-transform"
-            >
-              Shop now
-              <ArrowRight className="w-4 h-4 stroke-[2.2]" />
-            </button>
-            <button
-              onClick={() => navigate('/categories')}
-              className="h-12 px-5 rounded-xl bg-white/15 backdrop-blur-md text-white text-sm font-semibold ring-1 ring-white/20 active:scale-[0.98] transition-transform"
-            >
-              Explore
-            </button>
-          </motion.div>
-
-          {/* Search pill */}
-          <motion.form
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            onSubmit={handleSearch}
-            className="relative"
-          >
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/60 stroke-[2.2]" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              placeholder={searchPlaceholders[currentPlaceholderIdx] || 'Search products, brands, sellers…'}
-              className="w-full h-12 pl-11 pr-4 rounded-xl bg-white/12 backdrop-blur-md ring-1 ring-white/20 text-white text-sm placeholder:text-white/55 focus:outline-none focus:bg-white/18 focus:ring-white/40 transition-all"
-            />
-          </motion.form>
-
-          {/* Indicator dots */}
-          <div className="flex gap-1.5 mt-5 justify-center">
-            {HERO_IMAGES.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setImgIdx(i)}
-                aria-label={`Show hero image ${i + 1}`}
-                className={`h-1 rounded-full transition-all duration-300 ${i === imgIdx ? 'w-6 bg-white' : 'w-1 bg-white/50'}`}
-              />
-            ))}
-          </div>
+    <section className="relative w-full pt-20 md:pt-24 pb-2 md:pb-6">
+      {/* Greeting eyebrow on desktop only */}
+      {greeting && (
+        <div className="hidden md:block container mx-auto px-8 mb-3">
+          <p className="text-sm font-medium text-foreground/55">{greeting}</p>
         </div>
+      )}
+
+      {/* ───── MOBILE: swipeable carousel ───── */}
+      <div className="md:hidden">
+        <div className="px-5 mb-3 flex items-center justify-between">
+          <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-foreground/55">
+            <Sparkles className="w-3 h-3 text-emerald-500" />
+            {adminBadge || 'Featured today'}
+          </span>
+          {featuredProducts.length > 1 && (
+            <span className="text-[11px] font-medium text-foreground/45 tabular-nums">
+              {activeIdx + 1} / {featuredProducts.length}
+            </span>
+          )}
+        </div>
+
+        <div className="relative overflow-hidden">
+          <AnimatePresence mode="wait">
+            <motion.button
+              key={hero.id}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.35 }}
+              onClick={() => navigate(`/product/${hero.id}`)}
+              className="block w-full text-left active:scale-[0.99] transition-transform"
+            >
+              <MobileHeroCard product={hero} headline={adminHeadline} tagline={adminTagline} />
+            </motion.button>
+          </AnimatePresence>
+
+          {/* Dot indicators */}
+          {featuredProducts.length > 1 && (
+            <div className="flex justify-center gap-1.5 mt-3">
+              {featuredProducts.map((p, i) => (
+                <button
+                  key={p.id}
+                  onClick={() => setActiveIdx(i)}
+                  aria-label={`Show featured product ${i + 1}`}
+                  className={`h-1 rounded-full transition-all duration-300 ${i === activeIdx ? 'w-6 bg-foreground' : 'w-1 bg-foreground/30'}`}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Thumbnail row of remaining featured */}
+        {others.length > 0 && (
+          <div className="mt-5 px-5 overflow-x-auto no-scrollbar -mr-5">
+            <div className="flex gap-2 pr-5">
+              {others.map(p => (
+                <button
+                  key={p.id}
+                  onClick={() => setActiveIdx(featuredProducts.findIndex(x => x.id === p.id))}
+                  className="flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden bg-foreground/5 ring-1 ring-foreground/8 hover:ring-foreground/30 transition-all"
+                >
+                  <img src={p.images?.[0]} alt={p.name} className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* ───── DESKTOP (md+) ───── */}
-      <div className="hidden md:grid grid-cols-12 gap-8 lg:gap-12 container mx-auto px-8 lg:px-12 pt-28 pb-20 lg:pt-32 lg:pb-24 items-center">
-        {/* Left: copy */}
-        <div className="col-span-5 max-w-xl">
-          {greeting && (
-            <motion.p
-              variants={itemVariants}
-              className="text-base font-medium text-foreground/55 mb-4"
-            >
-              {greeting}
-            </motion.p>
-          )}
+      {/* ───── DESKTOP: hero card + side rail ───── */}
+      <div className="hidden md:block container mx-auto px-8">
+        <div className="grid grid-cols-12 gap-5">
+          {/* Hero card */}
+          <div className="col-span-7">
+            <AnimatePresence mode="wait">
+              <motion.button
+                key={hero.id}
+                initial={{ opacity: 0, scale: 0.99 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.99 }}
+                transition={{ duration: 0.4 }}
+                onClick={() => navigate(`/product/${hero.id}`)}
+                className="group relative block w-full text-left rounded-3xl overflow-hidden bg-foreground/[0.03] aspect-[16/12] hover:ring-1 hover:ring-foreground/20 transition-all"
+              >
+                <img
+                  src={hero.images?.[0]}
+                  alt={hero.name}
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-[700ms] ease-out group-hover:scale-[1.03]"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
 
-          <motion.p
-            variants={itemVariants}
-            className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground/55 mb-5"
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            Tanzania marketplace
-          </motion.p>
+                {/* Top-left admin badge */}
+                {adminBadge && (
+                  <div className="absolute top-5 left-5 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/95 text-black backdrop-blur-md text-[11px] font-semibold tracking-wide">
+                    <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                    {adminBadge}
+                  </div>
+                )}
 
-          <motion.h1
-            variants={itemVariants}
-            className="font-sans text-6xl lg:text-7xl xl:text-[80px] leading-[0.96] tracking-[-0.038em] font-semibold text-foreground mb-6"
-          >
-            {headline}
-          </motion.h1>
-
-          <motion.p
-            variants={itemVariants}
-            className="text-base lg:text-lg text-foreground/60 font-medium leading-relaxed mb-8 max-w-md"
-          >
-            {tagline}
-          </motion.p>
-
-          {/* Social proof line */}
-          <motion.div
-            variants={itemVariants}
-            className="flex items-center gap-5 mb-8 text-sm text-foreground/55"
-          >
-            <span className="flex items-center gap-1.5">
-              <ShieldCheck className="w-4 h-4 text-emerald-500" />
-              <span className="font-medium">Verified sellers</span>
-            </span>
-            <span className="w-1 h-1 bg-foreground/20 rounded-full" />
-            <span className="flex items-center gap-1.5">
-              <MapPin className="w-4 h-4 text-foreground/40" />
-              <span className="font-medium">Nationwide delivery</span>
-            </span>
-          </motion.div>
-
-          {/* CTAs */}
-          <motion.div variants={itemVariants} className="flex gap-3 mb-8">
-            <button
-              onClick={() => navigate('/shop')}
-              className="h-13 px-7 rounded-xl bg-foreground text-background text-[15px] font-semibold flex items-center gap-2 hover:bg-primary hover:text-primary-foreground transition-colors h-12"
-            >
-              Shop now
-              <ArrowRight className="w-4 h-4 stroke-[2.2]" />
-            </button>
-            <button
-              onClick={() => navigate('/categories')}
-              className="h-12 px-6 rounded-xl bg-foreground/[0.04] text-foreground text-[15px] font-semibold ring-1 ring-foreground/10 hover:bg-foreground/[0.07] transition-colors"
-            >
-              Explore categories
-            </button>
-          </motion.div>
-
-          {/* Search */}
-          <motion.form
-            variants={itemVariants}
-            onSubmit={handleSearch}
-            className="relative max-w-md"
-          >
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40 stroke-[2.2]" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              placeholder={searchPlaceholders[currentPlaceholderIdx] || 'Search products, brands, sellers…'}
-              className="w-full h-12 pl-11 pr-4 rounded-xl bg-background ring-1 ring-foreground/12 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all placeholder:text-foreground/35"
-            />
-          </motion.form>
-        </div>
-
-        {/* Right: hero image with floating element */}
-        <motion.div
-          variants={itemVariants}
-          className="col-span-7 relative aspect-[5/6] max-h-[640px] rounded-3xl overflow-hidden"
-        >
-          {/* Soft ambient blob behind */}
-          <div className="absolute -inset-10 -z-10 bg-primary/10 blur-[100px] rounded-full pointer-events-none" />
-
-          {HERO_IMAGES.map((src, i) => (
-            <motion.img
-              key={src}
-              src={src}
-              alt=""
-              aria-hidden="true"
-              onLoad={() => i === 0 && setImgLoaded(true)}
-              animate={{ opacity: i === imgIdx ? 1 : 0, scale: i === imgIdx ? 1 : 1.05 }}
-              transition={{ duration: 1.4, ease: 'easeOut' }}
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-          ))}
-
-          {!imgLoaded && (
-            <div className="absolute inset-0 bg-gradient-to-br from-foreground/10 to-foreground/5 animate-pulse" />
-          )}
-
-          {/* Floating product/stat card */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6, duration: 0.5 }}
-            className="absolute bottom-5 left-5 right-5 lg:bottom-7 lg:left-7 lg:right-auto lg:max-w-xs"
-          >
-            <div className="bg-white/95 dark:bg-black/85 backdrop-blur-xl rounded-2xl p-4 ring-1 ring-black/5 dark:ring-white/10 shadow-2xl">
-              <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-full bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
-                  <ShieldCheck className="w-5 h-5 text-emerald-600" />
+                {/* Content */}
+                <div className="absolute inset-x-0 bottom-0 p-7 lg:p-9 text-white">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/65 mb-2">
+                    {hero.seller_name || 'Featured store'}
+                  </p>
+                  <h2 className="font-sans text-3xl lg:text-4xl xl:text-5xl font-semibold leading-[1.02] tracking-[-0.03em] mb-3 max-w-xl">
+                    {adminHeadline && adminHeadline !== heroSettings.headline ? adminHeadline : hero.name}
+                  </h2>
+                  {adminTagline && (
+                    <p className="text-sm text-white/75 max-w-md mb-5 line-clamp-2">{adminTagline}</p>
+                  )}
+                  <div className="flex items-center gap-4">
+                    <span className="inline-flex items-center gap-2 h-11 px-5 rounded-xl bg-white text-black font-semibold text-sm">
+                      <ShoppingBag className="w-4 h-4 stroke-[2.2]" />
+                      Shop {CURRENCY} {Math.round(hero.price).toLocaleString()}
+                    </span>
+                    {hero.rating != null && (
+                      <span className="inline-flex items-center gap-1 text-sm text-white/80">
+                        <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                        <span className="font-semibold">{Number(hero.rating).toFixed(1)}</span>
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-foreground/50">
-                    Buyer protection
-                  </p>
-                  <p className="text-sm font-semibold text-foreground leading-tight mt-0.5">
-                    Refund if not as described
-                  </p>
+              </motion.button>
+            </AnimatePresence>
+
+            {/* Carousel controls */}
+            {featuredProducts.length > 1 && (
+              <div className="flex items-center gap-2 mt-4">
+                <button
+                  onClick={() => setActiveIdx(i => (i - 1 + featuredProducts.length) % featuredProducts.length)}
+                  aria-label="Previous featured product"
+                  className="w-10 h-10 rounded-full bg-foreground/[0.04] hover:bg-foreground/[0.08] flex items-center justify-center text-foreground/70 hover:text-foreground transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4 stroke-[2.2]" />
+                </button>
+                <button
+                  onClick={() => setActiveIdx(i => (i + 1) % featuredProducts.length)}
+                  aria-label="Next featured product"
+                  className="w-10 h-10 rounded-full bg-foreground/[0.04] hover:bg-foreground/[0.08] flex items-center justify-center text-foreground/70 hover:text-foreground transition-colors"
+                >
+                  <ChevronRight className="w-4 h-4 stroke-[2.2]" />
+                </button>
+                <div className="flex gap-1.5 ml-2">
+                  {featuredProducts.map((p, i) => (
+                    <button
+                      key={p.id}
+                      onClick={() => setActiveIdx(i)}
+                      aria-label={`Show featured product ${i + 1}`}
+                      className={`h-1 rounded-full transition-all duration-300 ${i === activeIdx ? 'w-6 bg-foreground' : 'w-1 bg-foreground/25'}`}
+                    />
+                  ))}
                 </div>
               </div>
-            </div>
-          </motion.div>
+            )}
+          </div>
 
-          {/* Image indicator dots */}
-          <div className="absolute bottom-5 right-5 lg:top-5 lg:right-5 lg:bottom-auto flex gap-1.5">
-            {HERO_IMAGES.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setImgIdx(i)}
-                aria-label={`Show hero image ${i + 1}`}
-                className={`h-1.5 rounded-full transition-all duration-300 ${i === imgIdx ? 'w-6 bg-white' : 'w-1.5 bg-white/50'}`}
-              />
+          {/* Side rail: 3 smaller featured */}
+          <div className="col-span-5 flex flex-col gap-3">
+            {others.map((p, i) => (
+              <motion.button
+                key={p.id}
+                initial={{ opacity: 0, x: 12 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 + i * 0.06 }}
+                onClick={() => navigate(`/product/${p.id}`)}
+                className="group relative flex-1 min-h-0 text-left rounded-2xl overflow-hidden bg-foreground/[0.03] hover:ring-1 hover:ring-foreground/20 transition-all"
+              >
+                <div className="absolute inset-0 grid grid-cols-2">
+                  <img
+                    src={p.images?.[0]}
+                    alt={p.name}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                  />
+                  <div className="flex flex-col justify-center px-5">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-foreground/55 mb-1.5 truncate">
+                      {p.seller_name || 'Featured'}
+                    </p>
+                    <h3 className="font-sans text-base font-semibold tracking-tight text-foreground line-clamp-2 mb-2">
+                      {p.name}
+                    </h3>
+                    <p className="text-sm font-bold text-foreground tracking-tight">
+                      {CURRENCY} {Math.round(p.price).toLocaleString()}
+                    </p>
+                    <span className="inline-flex items-center gap-1 mt-3 text-[12px] font-semibold text-foreground/70 group-hover:text-primary transition-colors w-fit">
+                      Shop now
+                      <ArrowRight className="w-3.5 h-3.5 stroke-[2.2] transition-transform group-hover:translate-x-0.5" />
+                    </span>
+                  </div>
+                </div>
+              </motion.button>
             ))}
           </div>
-        </motion.div>
+        </div>
       </div>
     </section>
+  );
+};
+
+// ─── Subcomponent: Mobile hero card ────────────────────────────────
+const MobileHeroCard: React.FC<{
+  product: Product;
+  headline?: string;
+  tagline?: string;
+}> = ({ product }) => {
+  return (
+    <div className="mx-5 rounded-3xl overflow-hidden bg-foreground/[0.03] relative">
+      <div className="aspect-[4/5] relative">
+        <img
+          src={product.images?.[0]}
+          alt={product.name}
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+
+        {/* Top corner: rating */}
+        {product.rating != null && (
+          <div className="absolute top-4 right-4 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/90 text-black backdrop-blur-md text-xs font-semibold">
+            <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+            {Number(product.rating).toFixed(1)}
+          </div>
+        )}
+
+        {/* Content over image */}
+        <div className="absolute inset-x-0 bottom-0 p-5 text-white">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/65 mb-1.5">
+            {product.seller_name || 'Featured store'}
+          </p>
+          <h2 className="font-sans text-2xl font-semibold leading-[1.05] tracking-[-0.025em] mb-4 line-clamp-2">
+            {product.name}
+          </h2>
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-xl font-bold tabular-nums">
+              {CURRENCY} {Math.round(product.price).toLocaleString()}
+            </span>
+            <span className="inline-flex items-center gap-1.5 h-10 px-4 rounded-xl bg-white text-black text-sm font-semibold">
+              Shop
+              <ArrowRight className="w-3.5 h-3.5 stroke-[2.2]" />
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };

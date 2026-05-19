@@ -7,26 +7,26 @@ import { Product, VendorProfile } from '../types';
 import { useHomePageData } from '../hooks/useHomePageData';
 import { HeroSection } from '../components/home/HeroSection';
 import { CategoryStrip } from '../components/home/CategoryStrip';
+import { FeaturedProducts } from '../components/home/FeaturedProducts';
 import { FeaturedStores } from '../components/home/FeaturedStores';
 import { ProductGridSection } from '../components/home/ProductGridSection';
 import { TrustStrip } from '../components/home/TrustStrip';
 
 /**
- * HomePage — full redesign v2.
+ * HomePage — product-first redesign v3.
  *
  * Section order (top → bottom):
- *   1. HeroSection         — image-rich, mobile-first, rotating photography
- *   2. CategoryStrip       — horizontal scroll on mobile, grid on desktop
- *   3. Trending products   — primary product surface
- *   4. FeaturedStores      — verified sellers, swipeable on mobile
- *   5. Latest additions    — fresh inventory
- *   6. TrustStrip          — reassurance before footer
+ *   1. HeroSection         — admin-curated featured product(s), swipeable on mobile
+ *   2. CategoryStrip       — image-driven category navigation
+ *   3. FeaturedProducts    — admin-curated is_boosted products
+ *   4. ProductGrid Trending
+ *   5. FeaturedStores      — verified sellers
+ *   6. ProductGrid Just arrived
+ *   7. TrustStrip          — buyer reassurance
  *
- * What got dropped vs. the previous version:
- *   - SecondaryHeroElements (live ticker, user counts, recent avatars) — pure noise
- *   - The old emoji-only QuickCategories — replaced by image-driven CategoryStrip
- *   - Section "Curated for you" eyebrows — header alone is enough
- *   - Debug PRODUCTS EMPTY banner and console.log on initial mount
+ * Everything that ranks/curates from data is computed below and passed
+ * down. The hero pulls from heroRecommendation (admin) and falls back
+ * gracefully to the boosted/top-rated lists.
  */
 export const HomePage = () => {
   const { products, user } = useAppState();
@@ -54,7 +54,6 @@ export const HomePage = () => {
       'Search products, brands, sellers…',
       'Try "kanga fabric"',
       'Try "Tanzanian coffee"',
-      'Try "handmade jewelry"',
     ];
   }, [products]);
 
@@ -67,6 +66,15 @@ export const HomePage = () => {
     visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
   };
 
+  // Admin-curated featured (is_boosted)
+  const featuredProducts = useMemo(() => {
+    return products
+      .filter(p => p.is_boosted)
+      .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+      .slice(0, 8);
+  }, [products]);
+
+  // Trending: rating × reviews (boosted always wins ties)
   const trendingProducts = useMemo(() => {
     return [...products].sort((a, b) => {
       if (a.is_boosted && !b.is_boosted) return -1;
@@ -77,6 +85,7 @@ export const HomePage = () => {
     }).slice(0, 8);
   }, [products]);
 
+  // Newest first
   const newArrivals = useMemo(() => {
     return [...products]
       .sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
@@ -117,6 +126,12 @@ export const HomePage = () => {
       />
 
       <CategoryStrip />
+
+      <FeaturedProducts
+        products={featuredProducts}
+        navigate={navigate}
+        setActiveProduct={setActiveProduct}
+      />
 
       <ProductGridSection
         title="Trending now"
