@@ -260,4 +260,32 @@
   .markdown-body a {
     @apply text-primary hover:underline;
   }
+
+  /* === MOBILE UI/UX IMPROVEMENTS === */
+  @media (max-width: 768px) {
+    body {
+      font-size: 16px; /* Prevent zoom on iOS */
+    }
+    
+    /* Larger touch targets */
+    button, a[role="button"], .btn, input[type="button"], input[type="submit"] {
+      min-height: 48px;
+      min-width: 48px;
+    }
+    
+    /* Product cards on mobile */
+    .product-card {
+      min-height: 280px;
+    }
+    
+    /* Bottom nav safe zone */
+    .bottom-nav {
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+  }
+
+  /* Pull to refresh hint */
+  .pull-to-refresh {
+    @apply text-center text-muted-foreground text-sm py-2;
+  }
 }
