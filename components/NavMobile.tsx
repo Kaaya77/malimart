@@ -109,7 +109,6 @@ export const NavMobile = ({
               {/* Profile card */}
               <Link
                 to={accountPath}
-                onClick={() => setIsMobileMenuOpen(false)}
                 className="flex items-center gap-3 p-3.5 rounded-2xl bg-foreground/[0.04] hover:bg-foreground/[0.07] transition-colors"
               >
                 {user ? (
@@ -149,7 +148,6 @@ export const NavMobile = ({
                     <Link
                       key={item.path}
                       to={item.path}
-                      onClick={() => setIsMobileMenuOpen(false)}
                       className="flex items-center gap-3 p-3 rounded-xl hover:bg-foreground/[0.05] text-foreground transition-colors"
                     >
                       <Icon className="w-[18px] h-[18px] stroke-[2] text-foreground/70" />
@@ -165,7 +163,6 @@ export const NavMobile = ({
                 <div className="space-y-1 pt-2 border-t border-foreground/8">
                   <Link
                     to="/notifications"
-                    onClick={() => setIsMobileMenuOpen(false)}
                     className="flex items-center gap-3 p-3 rounded-xl hover:bg-foreground/[0.05] text-foreground transition-colors"
                   >
                     <BellRing className="w-[18px] h-[18px] stroke-[2] text-foreground/70" />
@@ -178,7 +175,6 @@ export const NavMobile = ({
                   </Link>
                   <Link
                     to="/messages"
-                    onClick={() => setIsMobileMenuOpen(false)}
                     className="flex items-center gap-3 p-3 rounded-xl hover:bg-foreground/[0.05] text-foreground transition-colors"
                   >
                     <MessageCircle className="w-[18px] h-[18px] stroke-[2] text-foreground/70" />
@@ -196,7 +192,6 @@ export const NavMobile = ({
               <div className="pt-2 border-t border-foreground/8">
                 <Link
                   to="/about"
-                  onClick={() => setIsMobileMenuOpen(false)}
                   className="flex items-center gap-3 p-3 rounded-xl hover:bg-foreground/[0.05] text-foreground transition-colors"
                 >
                   <Info className="w-[18px] h-[18px] stroke-[2] text-foreground/70" />
