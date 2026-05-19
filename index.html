@@ -1,9 +1,8 @@
-
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>MaliMart - Tanzanian Marketplace</title>
     <meta name="description" content="Discover authentic Tanzanian products from verified local sellers. Shop fashion, crafts, spices, and more on MaliMart." />
     
@@ -93,6 +92,11 @@
 
       .no-scrollbar::-webkit-scrollbar { display: none; }
       .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+      /* Mobile safe area improvements */
+      body {
+        padding-bottom: env(safe-area-inset-bottom);
+      }
     </style>
 </head>
   <body class="bg-background text-foreground transition-colors duration-500 overflow-x-hidden antialiased">
