@@ -76,7 +76,7 @@ export default defineConfig(({ mode }) => {
         output: {
           manualChunks: {
             react: ['react', 'react-dom', 'react-router-dom'],
-            ui: ['framer-motion', 'motion', 'lucide-react'],
+            ui: ['framer-motion', 'lucide-react'],
             charts: ['recharts'],
             supabase: ['@supabase/supabase-js'],
             gemini: ['@google/genai'],
