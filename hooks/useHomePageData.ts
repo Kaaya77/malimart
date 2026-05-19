@@ -2,6 +2,14 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { VendorProfile } from '../types';
 
+// FIX: Hero recommendation query now:
+//   1. Fetches up to 4 approved hero_recommendations (not just 1) so the
+//      hero carousel can display multiple admin-curated products.
+//   2. Joins vendor_profiles!seller_id to resolve seller store_name and
+//      is_verified — these live on vendor_profiles, not on products or profiles.
+//   3. Normalises each recommendation into a flat `heroProduct` shape that
+//      HeroSection can consume directly without further processing.
+
 export const useHomePageData = () => {
     const [data, setData] = useState({
         topShops: [] as VendorProfile[],
@@ -16,6 +24,8 @@ export const useHomePageData = () => {
             subheadline: 'Shop directly from verified artisans, farmers, and creators across Tanzania. Experience the pinnacle of local heritage and modern design.'
         },
         heroRecommendation: null as any,
+        // NEW: array of all approved featured products for multi-slide hero
+        heroFeaturedProducts: [] as any[],
         loadingShops: true
     });
 
@@ -29,7 +39,11 @@ export const useHomePageData = () => {
 
                 while (retryCount <= maxRetries) {
                     try {
-                        const { data, error } = await supabase.from('vendor_profiles').select('*').eq('is_verified', true).limit(6);
+                        const { data, error } = await supabase
+                            .from('vendor_profiles')
+                            .select('*')
+                            .eq('is_verified', true)
+                            .limit(6);
                         if (error) throw error;
                         shopsData = data;
                         break;
@@ -41,8 +55,10 @@ export const useHomePageData = () => {
                 }
 
                 // Fetch User Count
-                const { count: uCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
-                
+                const { count: uCount } = await supabase
+                    .from('profiles')
+                    .select('*', { count: 'exact', head: true });
+
                 // Fetch Recent User Avatars
                 const { data: rUsers } = await supabase
                     .from('profiles')
@@ -56,7 +72,7 @@ export const useHomePageData = () => {
                     .select('name, icon_url')
                     .eq('is_active', true)
                     .limit(6);
-                
+
                 let catsWithCounts: any[] = [];
                 if (cats && cats.length > 0) {
                     catsWithCounts = await Promise.all(cats.map(async (c) => {
@@ -110,16 +126,68 @@ export const useHomePageData = () => {
                     .gte('created_at', sevenDaysAgo.toISOString());
 
                 // Fetch Hero Settings
-                const { data: settings } = await supabase.from('platform_settings').select('hero_badge_text, hero_headline, hero_subheadline').eq('id', 1).maybeSingle();
-                
-                // Fetch Approved Hero Recommendation
+                const { data: settings } = await supabase
+                    .from('platform_settings')
+                    .select('hero_badge_text, hero_headline, hero_subheadline')
+                    .eq('id', 1)
+                    .maybeSingle();
+
+                // FIX: Fetch up to 4 approved hero recommendations, joining
+                // vendor_profiles to get store_name + is_verified on the product.
                 const { data: recommendations } = await supabase
                     .from('hero_recommendations')
-                    .select('*, products(*, profiles!seller_id(*))')
+                    .select(`
+                        *,
+                        products (
+                            id, name, description, price, base_price, sale_price,
+                            images, category, stock, rating, review_count,
+                            is_boosted, status, variants, seller_id,
+                            vendor_profiles!seller_id (
+                                store_name, is_verified, logo_url, region
+                            )
+                        )
+                    `)
                     .eq('status', 'approved')
                     .order('approved_at', { ascending: false })
-                    .limit(1);
-                
+                    .limit(4);
+
+                // Normalise into hero product shape HeroSection expects
+                const heroFeaturedProducts = (recommendations || [])
+                    .filter((rec: any) => rec.products)
+                    .map((rec: any) => {
+                        const p = rec.products;
+                        const vendor = p.vendor_profiles;
+                        return {
+                            // Product fields
+                            ...p,
+                            // Flatten vendor fields onto product (what HeroSection reads)
+                            seller_name: vendor?.store_name || null,
+                            is_verified: vendor?.is_verified || false,
+                            seller_logo: vendor?.logo_url || null,
+                            seller_region: vendor?.region || null,
+                            // price fallback chain
+                            price: p.price ?? p.sale_price ?? p.base_price ?? 0,
+                            // Hero recommendation metadata
+                            _hero: {
+                                id: rec.id,
+                                title: rec.title,
+                                description: rec.description,
+                                price_display: rec.price_display,
+                                offer_text: rec.offer_text,
+                                approved_at: rec.approved_at,
+                            },
+                        };
+                    });
+
+                // Keep backward-compat heroRecommendation (first rec, raw shape)
+                const firstRec = recommendations && recommendations.length > 0
+                    ? {
+                        ...recommendations[0],
+                        // Attach products array shape that HeroSection's old path expects
+                        products: heroFeaturedProducts[0] || null,
+                    }
+                    : null;
+
                 setData({
                     topShops: shopsData || [],
                     userCount: uCount || 0,
@@ -132,7 +200,8 @@ export const useHomePageData = () => {
                         headline: settings?.hero_headline || 'Discover Authentic Local Craftsmanship',
                         subheadline: settings?.hero_subheadline || 'Shop directly from verified artisans, farmers, and creators across Tanzania. Experience the pinnacle of local heritage and modern design.'
                     },
-                    heroRecommendation: recommendations && recommendations.length > 0 ? recommendations[0] : null,
+                    heroRecommendation: firstRec,
+                    heroFeaturedProducts,
                     loadingShops: false
                 });
 

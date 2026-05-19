@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+// FIX: Added PanInfo import for swipe-to-close gesture typing
+import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import {
   X, BellRing, MessageCircle, UserCircle, LogOut,
   Heart, ShoppingBag, Store, LayoutGrid, Info, ChevronRight,
@@ -19,13 +20,9 @@ interface NavMobileProps {
 /**
  * Mobile drawer (full-screen). Single-tap distance for every action.
  *
- * Structure:
- *   - Hero strip: user profile card (or "Sign in" card)
- *   - Primary navigation: Shop / Categories / Wishlist / Bag / Notifications / Messages
- *   - Secondary: About, account areas
- *   - Footer: Sign out (if logged in)
- *
- * Swipes down to close (via tap on backdrop or X button).
+ * FIX: Added swipe-to-close gesture on the drawer — drag right >80px or
+ *      flick with velocity >300px/s closes the menu, matching iOS/Android
+ *      nav drawer conventions. PanInfo imported from framer-motion.
  */
 export const NavMobile = ({
   isMobileMenuOpen,
@@ -69,6 +66,13 @@ export const NavMobile = ({
     ? (user.role === 'admin' ? '/admin' : user.role === 'seller' ? '/seller' : '/buyer')
     : '/login';
 
+  // FIX: Swipe-to-close handler — right drag >80px or fast flick closes drawer
+  const handleDragEnd = (_: any, info: PanInfo) => {
+    if (info.offset.x > 80 || info.velocity.x > 300) {
+      setIsMobileMenuOpen(false);
+    }
+  };
+
   return (
     <AnimatePresence>
       {isMobileMenuOpen && (
@@ -85,13 +89,17 @@ export const NavMobile = ({
             className="absolute inset-0 bg-black/55"
           />
 
-          {/* Drawer */}
+          {/* Drawer — FIX: drag="x" with swipe-to-close */}
           <motion.div
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 28, stiffness: 280 }}
-            className="absolute top-0 right-0 bottom-0 w-[88%] max-w-sm bg-background flex flex-col"
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={{ left: 0, right: 0.6 }}
+            onDragEnd={handleDragEnd}
+            className="absolute top-0 right-0 bottom-0 w-[88%] max-w-sm bg-background flex flex-col cursor-grab active:cursor-grabbing"
           >
             {/* Header */}
             <div className="flex items-center justify-between p-5 border-b border-foreground/8">
@@ -158,7 +166,7 @@ export const NavMobile = ({
                 })}
               </nav>
 
-              {/* Additional nav links passed from parent (fix for unused prop) */}
+              {/* Additional nav links passed from parent */}
               {navLinks?.length > 0 && (
                 <div className="pt-2 border-t border-foreground/8">
                   {navLinks.map(link => (

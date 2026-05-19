@@ -14,18 +14,10 @@ import { UserMenu } from './UserMenu';
 /**
  * Top navbar.
  *
- * Logo: clean sans-serif wordmark. The previous serif-weight-thin
- * mash-up depended on Tailwind v3 CDN fonts that no longer load.
- *
  * Behavior:
  *   - First 80px of scroll: transparent over the hero
  *   - After 80px: solid backdrop, shadow, compact 56px height
  *   - On non-home routes: solid by default
- *
- * Right cluster (mobile): search button, cart, hamburger. Cart shows
- *   item count badge. Bottom nav handles the rest.
- * Right cluster (desktop): search, wishlist, cart, account chip with
- *   user name initial.
  */
 export const Navbar = () => {
   const { cart, user, setUser, notifications, unreadMessages, categories } = useAppState();
@@ -230,10 +222,15 @@ export const MobileBottomNav = () => {
     path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
 
   return (
+    // FIX: Replaced unreliable `pb-safe` Tailwind class with an inline
+    // env(safe-area-inset-bottom) style. pb-safe is not a built-in Tailwind
+    // utility and may not be defined, causing the nav to overlap the iOS
+    // home indicator on notch/island devices.
     <nav
       role="navigation"
       aria-label="Primary mobile navigation"
-      className="fixed bottom-0 inset-x-0 z-40 md:hidden pb-safe"
+      className="fixed bottom-0 inset-x-0 z-40 md:hidden"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
       <div className="mx-3 mb-3 rounded-2xl bg-background/95 backdrop-blur-2xl ring-1 ring-foreground/8 shadow-[0_-2px_20px_-2px_rgba(0,0,0,0.08)]">
         <div className="grid grid-cols-5 h-16">

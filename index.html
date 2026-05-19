@@ -2,10 +2,12 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <!-- FIX #1: Removed maximum-scale=1.0 and user-scalable=no (WCAG 1.4.4 violation).
+         viewport-fit=cover retained for notch/island support. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>MaliMart - Tanzanian Marketplace</title>
     <meta name="description" content="Discover authentic Tanzanian products from verified local sellers. Shop fashion, crafts, spices, and more on MaliMart." />
-    
+
     <!-- PWA & Mobile -->
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#ffffff" />
@@ -54,12 +56,12 @@
         --glass-bg: rgba(2, 6, 23, 0.8);
         --glass-border: rgba(255, 255, 255, 0.08);
       }
-      
-      h1, h2, h3, h4, h5, h6 { 
-        font-family: 'Space Grotesk', sans-serif; 
-        letter-spacing: -0.03em; 
+
+      h1, h2, h3, h4, h5, h6 {
+        font-family: 'Space Grotesk', sans-serif;
+        letter-spacing: -0.03em;
       }
-      
+
       /* Subtle Texture */
       .bg-noise {
         position: fixed;
@@ -79,7 +81,7 @@
 
       /* Premium Scrollbar */
       ::-webkit-scrollbar { width: 0px; height: 0px; background: transparent; }
-      
+
       .reveal {
         opacity: 0;
         transform: translateY(30px);

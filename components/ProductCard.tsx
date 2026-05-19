@@ -23,15 +23,11 @@ interface ProductCardProps {
 /**
  * Product card — used in grids on HomePage, ShopPage, StorePage, Wishlist.
  *
- * Hover behavior:
- *   - Image gently zooms (scale-1.04, 600ms ease-out)
- *   - Image cycles through additional images every 1500ms
- *   - Quick-view + add-to-cart pill appears at the bottom-right of the image
- *
- * Click behavior:
- *   - Whole card is clickable → onClick prop (defaults to navigate /product/:id)
- *   - Wishlist heart and action buttons stopPropagation
- *   - Add-to-cart: if variants exist, opens product detail page; otherwise inline add
+ * FIX: Image cycling interval now has a touch-device guard. On phones/tablets
+ *      the interval fired even though hover is a no-op on touch, causing
+ *      unnecessary re-renders and scroll jitter during fast flings.
+ *      The guard checks `ontouchstart in window` (primary) and
+ *      `navigator.maxTouchPoints > 0` (covers pointer-capable touch devices).
  */
 export const ProductCard: React.FC<ProductCardProps> = ({
     product,
@@ -75,10 +71,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         return Array.from(new Set(list));
     }, [product]);
 
-    // Auto-cycle images on hover (only when not pinned to a variant image)
+    // FIX: Guard against touch devices — hover cycling causes scroll jitter on mobile.
+    // `ontouchstart in window` covers iOS/Android; maxTouchPoints covers hybrid devices.
     useEffect(() => {
         let timer: any;
-        if (isHovered && images.length > 1 && !activeVariantImage) {
+        const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        if (isHovered && images.length > 1 && !activeVariantImage && !isTouch) {
             timer = setInterval(() => {
                 setCurrentImgIdx(prev => (prev + 1) % images.length);
             }, 1500);

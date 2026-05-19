@@ -20,18 +20,12 @@ interface ProductModalProps {
 }
 
 /**
- * Product detail modal — redesigned for mobile-first UX.
+ * Product detail modal — mobile-first UX.
  *
- * Mobile (<md):
- *   - True full-screen bottom sheet with swipe-to-dismiss
- *   - Horizontal swipeable image gallery with snap scrolling
- *   - Collapsible trust strip (horizontal scroll, not cramped grid)
- *   - Sticky add-to-cart bar with safe-area padding for notch devices
- *   - Quantity stepper inline with CTA
- *
- * Desktop (≥md):
- *   - Centered card dialog, image left (60%), content right (40%)
- *   - Thumbnail rail, sticky CTA in right column
+ * FIX #1: Mobile top bar action buttons (close, wishlist, share) bumped from
+ *         w-9 h-9 (36px) to w-11 h-11 (44px) to meet minimum touch target size.
+ * FIX #2: Image pips converted from non-interactive <span> elements to <button>
+ *         elements that scroll the image carousel to the tapped index.
  */
 export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onClose }) => {
     const { addToCart, toggleWishlist, isInWishlist } = useAppState();
@@ -139,6 +133,13 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
         }
     };
 
+    // FIX #2: Pip tap handler — scrolls image strip to the selected index
+    const handlePipTap = (idx: number) => {
+        const el = imgScrollRef.current?.children[idx] as HTMLElement;
+        el?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        setSelectedImg(idx);
+    };
+
     const nextImg = () => setSelectedImg(i => (i + 1) % images.length);
     const prevImg = () => setSelectedImg(i => (i - 1 + images.length) % images.length);
 
@@ -182,12 +183,12 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
                             <div className="w-10 h-1 rounded-full bg-foreground/20" />
                         </div>
 
-                        {/* Top bar: close + share */}
+                        {/* Top bar: close + share — FIX #1: w-11 h-11 (44px) buttons */}
                         <div className="flex-shrink-0 flex items-center justify-between px-4 pb-2">
                             <button
                                 onClick={onClose}
                                 aria-label="Close"
-                                className="w-9 h-9 rounded-full bg-foreground/[0.06] flex items-center justify-center active:scale-90 transition-transform"
+                                className="w-11 h-11 rounded-full bg-foreground/[0.06] flex items-center justify-center active:scale-90 transition-transform"
                             >
                                 <X className="w-[18px] h-[18px] stroke-[2.2] text-foreground/80" />
                             </button>
@@ -195,7 +196,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
                                 <button
                                     onClick={() => toggleWishlist(product)}
                                     aria-label={isLiked ? 'Remove from wishlist' : 'Add to wishlist'}
-                                    className={`w-9 h-9 rounded-full flex items-center justify-center active:scale-90 transition-all
+                                    className={`w-11 h-11 rounded-full flex items-center justify-center active:scale-90 transition-all
                                         ${isLiked
                                             ? 'bg-rose-500/10 text-rose-500'
                                             : 'bg-foreground/[0.06] text-foreground/70'}`}
@@ -205,7 +206,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
                                 <button
                                     onClick={handleShare}
                                     aria-label="Share"
-                                    className="w-9 h-9 rounded-full bg-foreground/[0.06] flex items-center justify-center active:scale-90 transition-transform"
+                                    className="w-11 h-11 rounded-full bg-foreground/[0.06] flex items-center justify-center active:scale-90 transition-transform"
                                 >
                                     <Share2 className="w-[18px] h-[18px] stroke-[2] text-foreground/70" />
                                 </button>
@@ -245,12 +246,15 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
                                     </div>
                                 )}
 
-                                {/* Image pips */}
+                                {/* FIX #2: Image pips as tappable buttons */}
                                 {images.length > 1 && (
                                     <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5 z-10">
                                         {images.map((_, idx) => (
-                                            <span
+                                            <button
                                                 key={idx}
+                                                onClick={() => handlePipTap(idx)}
+                                                aria-label={`Image ${idx + 1}`}
+                                                aria-current={selectedImg === idx ? 'true' : undefined}
                                                 className={`h-[5px] rounded-full transition-all duration-300
                                                     ${selectedImg === idx ? 'w-5 bg-foreground/80' : 'w-[5px] bg-foreground/25'}`}
                                             />

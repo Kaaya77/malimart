@@ -8,6 +8,8 @@ import { CURRENCY } from '../../constants';
 
 interface HeroSectionProps {
   heroRecommendation: any;
+  // NEW: array of normalised admin-featured products from useHomePageData
+  heroFeaturedProducts?: any[];
   heroSettings: { badgeText: string; headline: string; subheadline: string };
   greeting: string;
   searchQuery: string;
@@ -23,81 +25,117 @@ interface HeroSectionProps {
  * PRODUCT-FIRST hero.
  *
  * Source of truth (in priority order):
- *   1. heroRecommendation.products[0]  -- admin-curated featured product
- *   2. top boosted product from catalog
- *   3. highest-rated product as last resort
+ *   1. heroFeaturedProducts[]  — admin-curated picks from hero_recommendations
+ *      (passed directly, already joined with vendor_profiles for seller_name)
+ *   2. heroRecommendation.products — legacy single-rec shape (backward compat)
+ *   3. top boosted product from catalog
+ *   4. highest-rated product as last resort
  *
- * Plus the next 3-4 boosted/top products shown as a strip behind on
- * desktop, or as swipeable slides on mobile.
+ * The first 4 products fill the carousel. Each slot shows:
+ *   - Admin badge / offer text from the recommendation
+ *   - Product image, name, price, store name
+ *   - "Shop this" CTA linking to the product page
  *
- * Mobile: 1 full-bleed product per slide, swipeable, snap-scroll. Each
- *   slide has product image (vertical, takes ~55% of viewport height),
- *   admin badge, product name, store, price, primary CTA "Shop this".
- * Desktop: hero product (big card on left, 7 col), 3 stacked smaller
- *   featured cards on right (5 col). Click anywhere on a card goes to
- *   the product page.
+ * Mobile: 1 full-bleed product per slide, swipeable, snap-scroll.
+ * Desktop: hero product (big card, 7 col) + 3 smaller cards on right (5 col).
  */
 export const HeroSection = ({
   heroRecommendation,
+  heroFeaturedProducts = [],
   heroSettings,
   greeting,
 }: HeroSectionProps) => {
   const navigate = useNavigate();
   const { products } = useAppState();
 
-  // Resolve featured products in priority order
+  // Resolve featured products — admin picks first, then fill from catalog
   const featuredProducts = useMemo<Product[]>(() => {
     const list: Product[] = [];
     const seen = new Set<string>();
-    const pushUnique = (p: Product | null | undefined) => {
-      if (!p || seen.has(p.id)) return;
+    const pushUnique = (p: any) => {
+      if (!p?.id || seen.has(p.id)) return;
       seen.add(p.id);
-      list.push(p);
+      list.push(p as Product);
     };
 
-    // 1. Admin's hero recommendation
+    // 1. Admin's hero recommendations (new array path)
+    heroFeaturedProducts.forEach(pushUnique);
+
+    // 2. Legacy single heroRecommendation.products shape
     if (heroRecommendation?.products) {
-      const adminProduct = Array.isArray(heroRecommendation.products)
-        ? heroRecommendation.products[0]
-        : heroRecommendation.products;
-      if (adminProduct?.id) pushUnique(adminProduct as Product);
+      const p = heroRecommendation.products;
+      pushUnique(Array.isArray(p) ? p[0] : p);
     }
 
-    // 2. Top boosted from catalog
+    // 3. Top boosted from catalog
     const boosted = products
       .filter(p => p.is_boosted)
       .sort((a, b) => (b.rating || 0) - (a.rating || 0));
     boosted.forEach(pushUnique);
 
-    // 3. Highest-rated to fill remaining slots
+    // 4. Highest-rated to fill remaining slots
     const topRated = [...products]
-      .sort((a, b) => (b.rating || 0) * (b.review_count || 0) - (a.rating || 0) * (a.review_count || 0));
+      .sort((a, b) =>
+        (b.rating || 0) * (b.review_count || 0) -
+        (a.rating || 0) * (a.review_count || 0)
+      );
     topRated.forEach(pushUnique);
 
     return list.slice(0, 4);
-  }, [heroRecommendation, products]);
+  }, [heroFeaturedProducts, heroRecommendation, products]);
 
   const [activeIdx, setActiveIdx] = useState(0);
 
-  // Auto-advance every 7s on mobile
+  // Auto-advance every 7s
   useEffect(() => {
     if (featuredProducts.length <= 1) return;
-    const t = setInterval(() => setActiveIdx(i => (i + 1) % featuredProducts.length), 7000);
+    const t = setInterval(
+      () => setActiveIdx(i => (i + 1) % featuredProducts.length),
+      7000
+    );
     return () => clearInterval(t);
   }, [featuredProducts.length]);
 
-  const adminBadge = useMemo(() => {
-    if (!heroRecommendation) return null;
-    try {
-      const offer = JSON.parse(heroRecommendation.offer_text);
-      return offer?.text || null;
-    } catch {
-      return heroRecommendation.offer_text || null;
-    }
-  }, [heroRecommendation]);
+  // Reset index when featured list changes (e.g. admin updates)
+  useEffect(() => {
+    setActiveIdx(0);
+  }, [heroFeaturedProducts.length]);
 
-  const adminHeadline = heroRecommendation?.title || heroSettings.headline;
-  const adminTagline = heroRecommendation?.description || heroSettings.subheadline;
+  // Resolve admin badge from the active product's _hero metadata or fallback
+  const adminBadge = useMemo(() => {
+    const active = featuredProducts[activeIdx];
+    const heroMeta = (active as any)?._hero;
+    if (heroMeta?.offer_text) {
+      try {
+        const offer = JSON.parse(heroMeta.offer_text);
+        return offer?.text || null;
+      } catch {
+        return heroMeta.offer_text || null;
+      }
+    }
+    // Legacy path
+    if (heroRecommendation?.offer_text) {
+      try {
+        const offer = JSON.parse(heroRecommendation.offer_text);
+        return offer?.text || null;
+      } catch {
+        return heroRecommendation.offer_text || null;
+      }
+    }
+    return heroSettings.badgeText || null;
+  }, [featuredProducts, activeIdx, heroRecommendation, heroSettings.badgeText]);
+
+  const adminHeadline = useMemo(() => {
+    const active = featuredProducts[activeIdx];
+    const heroMeta = (active as any)?._hero;
+    return heroMeta?.title || heroRecommendation?.title || heroSettings.headline;
+  }, [featuredProducts, activeIdx, heroRecommendation, heroSettings.headline]);
+
+  const adminTagline = useMemo(() => {
+    const active = featuredProducts[activeIdx];
+    const heroMeta = (active as any)?._hero;
+    return heroMeta?.description || heroRecommendation?.description || heroSettings.subheadline;
+  }, [featuredProducts, activeIdx, heroRecommendation, heroSettings.subheadline]);
 
   // ─── Empty / skeleton state ─────────────────────────────────────
   if (featuredProducts.length === 0) {
@@ -147,7 +185,11 @@ export const HeroSection = ({
               onClick={() => navigate(`/product/${hero.id}`)}
               className="block w-full text-left active:scale-[0.99] transition-transform"
             >
-              <MobileHeroCard product={hero} headline={adminHeadline} tagline={adminTagline} />
+              <MobileHeroCard
+                product={hero}
+                headline={adminHeadline}
+                tagline={adminTagline}
+              />
             </motion.button>
           </AnimatePresence>
 
@@ -159,7 +201,9 @@ export const HeroSection = ({
                   key={p.id}
                   onClick={() => setActiveIdx(i)}
                   aria-label={`Show featured product ${i + 1}`}
-                  className={`h-1 rounded-full transition-all duration-300 ${i === activeIdx ? 'w-6 bg-foreground' : 'w-1 bg-foreground/30'}`}
+                  className={`h-1 rounded-full transition-all duration-300 ${
+                    i === activeIdx ? 'w-6 bg-foreground' : 'w-1 bg-foreground/30'
+                  }`}
                 />
               ))}
             </div>
@@ -173,10 +217,16 @@ export const HeroSection = ({
               {others.map(p => (
                 <button
                   key={p.id}
-                  onClick={() => setActiveIdx(featuredProducts.findIndex(x => x.id === p.id))}
+                  onClick={() =>
+                    setActiveIdx(featuredProducts.findIndex(x => x.id === p.id))
+                  }
                   className="flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden bg-foreground/5 ring-1 ring-foreground/8 hover:ring-foreground/30 transition-all"
                 >
-                  <img src={p.images?.[0]} alt={p.name} className="w-full h-full object-cover" />
+                  <img
+                    src={p.images?.[0]}
+                    alt={p.name}
+                    className="w-full h-full object-cover"
+                  />
                 </button>
               ))}
             </div>
@@ -206,7 +256,7 @@ export const HeroSection = ({
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
 
-                {/* Top-left admin badge */}
+                {/* Admin badge */}
                 {adminBadge && (
                   <div className="absolute top-5 left-5 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/95 text-black backdrop-blur-md text-[11px] font-semibold tracking-wide">
                     <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
@@ -217,13 +267,17 @@ export const HeroSection = ({
                 {/* Content */}
                 <div className="absolute inset-x-0 bottom-0 p-7 lg:p-9 text-white">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/65 mb-2">
-                    {hero.seller_name || 'Featured store'}
+                    {(hero as any).seller_name || 'Featured store'}
                   </p>
                   <h2 className="font-sans text-3xl lg:text-4xl xl:text-5xl font-semibold leading-[1.02] tracking-[-0.03em] mb-3 max-w-xl">
-                    {adminHeadline && adminHeadline !== heroSettings.headline ? adminHeadline : hero.name}
+                    {adminHeadline && adminHeadline !== heroSettings.headline
+                      ? adminHeadline
+                      : hero.name}
                   </h2>
                   {adminTagline && (
-                    <p className="text-sm text-white/75 max-w-md mb-5 line-clamp-2">{adminTagline}</p>
+                    <p className="text-sm text-white/75 max-w-md mb-5 line-clamp-2">
+                      {adminTagline}
+                    </p>
                   )}
                   <div className="flex items-center gap-4">
                     <span className="inline-flex items-center gap-2 h-11 px-5 rounded-xl bg-white text-black font-semibold text-sm">
@@ -233,7 +287,9 @@ export const HeroSection = ({
                     {hero.rating != null && (
                       <span className="inline-flex items-center gap-1 text-sm text-white/80">
                         <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                        <span className="font-semibold">{Number(hero.rating).toFixed(1)}</span>
+                        <span className="font-semibold">
+                          {Number(hero.rating).toFixed(1)}
+                        </span>
                       </span>
                     )}
                   </div>
@@ -245,14 +301,20 @@ export const HeroSection = ({
             {featuredProducts.length > 1 && (
               <div className="flex items-center gap-2 mt-4">
                 <button
-                  onClick={() => setActiveIdx(i => (i - 1 + featuredProducts.length) % featuredProducts.length)}
+                  onClick={() =>
+                    setActiveIdx(
+                      i => (i - 1 + featuredProducts.length) % featuredProducts.length
+                    )
+                  }
                   aria-label="Previous featured product"
                   className="w-10 h-10 rounded-full bg-foreground/[0.04] hover:bg-foreground/[0.08] flex items-center justify-center text-foreground/70 hover:text-foreground transition-colors"
                 >
                   <ChevronLeft className="w-4 h-4 stroke-[2.2]" />
                 </button>
                 <button
-                  onClick={() => setActiveIdx(i => (i + 1) % featuredProducts.length)}
+                  onClick={() =>
+                    setActiveIdx(i => (i + 1) % featuredProducts.length)
+                  }
                   aria-label="Next featured product"
                   className="w-10 h-10 rounded-full bg-foreground/[0.04] hover:bg-foreground/[0.08] flex items-center justify-center text-foreground/70 hover:text-foreground transition-colors"
                 >
@@ -264,7 +326,9 @@ export const HeroSection = ({
                       key={p.id}
                       onClick={() => setActiveIdx(i)}
                       aria-label={`Show featured product ${i + 1}`}
-                      className={`h-1 rounded-full transition-all duration-300 ${i === activeIdx ? 'w-6 bg-foreground' : 'w-1 bg-foreground/25'}`}
+                      className={`h-1 rounded-full transition-all duration-300 ${
+                        i === activeIdx ? 'w-6 bg-foreground' : 'w-1 bg-foreground/25'
+                      }`}
                     />
                   ))}
                 </div>
@@ -291,7 +355,7 @@ export const HeroSection = ({
                   />
                   <div className="flex flex-col justify-center px-5">
                     <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-foreground/55 mb-1.5 truncate">
-                      {p.seller_name || 'Featured'}
+                      {(p as any).seller_name || 'Featured'}
                     </p>
                     <h3 className="font-sans text-base font-semibold tracking-tight text-foreground line-clamp-2 mb-2">
                       {p.name}
@@ -341,7 +405,7 @@ const MobileHeroCard: React.FC<{
         {/* Content over image */}
         <div className="absolute inset-x-0 bottom-0 p-5 text-white">
           <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/65 mb-1.5">
-            {product.seller_name || 'Featured store'}
+            {(product as any).seller_name || 'Featured store'}
           </p>
           <h2 className="font-sans text-2xl font-semibold leading-[1.05] tracking-[-0.025em] mb-4 line-clamp-2">
             {product.name}
