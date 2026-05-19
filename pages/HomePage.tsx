@@ -11,10 +11,10 @@ const HomePage: React.FC = () => {
   const featuredProducts = products.slice(0, 8);
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Hero Section - Mobile Optimized */}
+    <div className="min-h-screen bg-background pb-20">
+      {/* Hero Section - Optimized for Mobile */}
       <section className="relative h-[85vh] md:h-[95vh] flex items-center justify-center overflow-hidden bg-black text-white">
-        <div className="absolute inset-0 bg-[url('https://picsum.photos/id/1015/2000/1200')] bg-cover bg-center opacity-70" />
+        <div className="absolute inset-0 bg-[url('https://picsum.photos/id/1015/2000/1200')] bg-cover bg-center opacity-75" />
         
         <div className="relative z-10 text-center px-5 max-w-lg sm:max-w-2xl mx-auto">
           <motion.h1 
