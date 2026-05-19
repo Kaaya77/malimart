@@ -11,8 +11,8 @@ const HomePage: React.FC = () => {
   const featuredProducts = products.slice(0, 8);
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      {/* Hero Section - Optimized for Mobile */}
+    <div className="min-h-screen bg-background">
+      {/* Hero Section - Mobile First */}
       <section className="relative h-[85vh] md:h-[95vh] flex items-center justify-center overflow-hidden bg-black text-white">
         <div className="absolute inset-0 bg-[url('https://picsum.photos/id/1015/2000/1200')] bg-cover bg-center opacity-75" />
         
