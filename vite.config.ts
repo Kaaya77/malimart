@@ -14,9 +14,14 @@ import { VitePWA } from 'vite-plugin-pwa';
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
 
-  const GEMINI_API_KEY = env.GEMINI_API_KEY || env.VITE_GEMINI_API_KEY || '';
-  const SUPABASE_URL = env.SUPABASE_URL || env.VITE_SUPABASE_URL || '';
-  const SUPABASE_ANON_KEY = env.SUPABASE_ANON_KEY || env.VITE_SUPABASE_ANON_KEY || '';
+  // IMPORTANT: loadEnv() only reads .env files, NOT process.env. On Vercel,
+  // env vars set in the dashboard live in process.env at build time, so we
+  // must check both sources here or the values never get inlined into the bundle.
+  const pick = (k: string) =>
+    env[k] || env['VITE_' + k] || process.env[k] || process.env['VITE_' + k] || '';
+  const GEMINI_API_KEY = pick('GEMINI_API_KEY');
+  const SUPABASE_URL = pick('SUPABASE_URL');
+  const SUPABASE_ANON_KEY = pick('SUPABASE_ANON_KEY');
 
   return {
     server: {
