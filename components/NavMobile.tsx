@@ -158,6 +158,22 @@ export const NavMobile = ({
                 })}
               </nav>
 
+              {/* Additional nav links passed from parent (fix for unused prop) */}
+              {navLinks?.length > 0 && (
+                <div className="pt-2 border-t border-foreground/8">
+                  {navLinks.map(link => (
+                    <Link
+                      key={link.path}
+                      to={link.path}
+                      className="flex items-center gap-3 p-3 rounded-xl hover:bg-foreground/[0.05] text-foreground transition-colors"
+                    >
+                      <span className="text-[15px] font-medium flex-1">{link.name}</span>
+                      <ChevronRight className="w-4 h-4 text-foreground/30" />
+                    </Link>
+                  ))}
+                </div>
+              )}
+
               {/* User-only quick links */}
               {user && (
                 <div className="space-y-1 pt-2 border-t border-foreground/8">
