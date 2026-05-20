@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ProductCard } from '../components/ProductCard';
-import { ProductModal } from '../components/ProductModal';
+import ProductModal from '../components/ProductModal';
 import { useAppState } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
 
