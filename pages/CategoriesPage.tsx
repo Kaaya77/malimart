@@ -22,7 +22,7 @@ export const CategoriesPage = () => {
     const displayCategories = organizedCategories.length > 0 ? organizedCategories : [];
 
     return (
-        <div className="min-h-screen bg-background dark:bg-background pt-24 pb-[calc(5rem+env(safe-area-inset-bottom))] px-4 md:px-6">
+        <div className="min-h-screen bg-background pt-24 pb-[calc(5rem+env(safe-area-inset-bottom))] px-4 md:px-6">
             <div className="container mx-auto max-w-7xl">
                 {/* Header Section */}
                 <div className="mb-10 md:mb-20 flex flex-col md:flex-row md:items-end justify-between gap-8">

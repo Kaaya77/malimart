@@ -218,7 +218,7 @@ export const SellerSettingsPage = () => {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] uppercase tracking-[0.15em] transition-colors whitespace-nowrap ${
                   activeTab === tab.id 
-                    ? 'bg-primary text-background dark:bg-background dark:text-foreground' 
+                    ? 'bg-primary text-background dark:text-foreground' 
                     : 'text-foreground/60 hover:bg-foreground/[0.04]'
                 }`}
               >
@@ -238,7 +238,7 @@ export const SellerSettingsPage = () => {
                           <span className="text-lg font-serif text-foreground">{setupProgress}%</span>
                       </div>
                       <div className="w-full h-1 bg-primary/10 dark:bg-background/10 rounded-none overflow-hidden">
-                          <div className="h-full bg-primary dark:bg-background transition-all duration-1000" style={{ width: `${setupProgress}%` }}></div>
+                          <div className="h-full bg-primary transition-all duration-1000" style={{ width: `${setupProgress}%` }}></div>
                       </div>
                   </CardContent>
               </Card>
@@ -366,7 +366,7 @@ export const SellerSettingsPage = () => {
                       {socialLinks.length > 0 && (
                           <div className="space-y-2 mb-4">
                               {socialLinks.map((link, idx) => (
-                                  <div key={idx} className="flex items-center justify-between p-4 border border-foreground/10 rounded-none bg-background dark:bg-background">
+                                  <div key={idx} className="flex items-center justify-between p-4 border border-foreground/10 rounded-none bg-background">
                                       <div className="flex items-center gap-3">
                                           <Globe className="w-4 h-4 text-foreground/40" />
                                           <span className="font-serif text-sm text-foreground">{link.platform}</span>
@@ -420,7 +420,7 @@ export const SellerSettingsPage = () => {
                   {paymentMethods.length > 0 ? (
                       <div className="grid grid-cols-1 gap-3">
                           {paymentMethods.map(method => (
-                              <div key={method.id} className="flex items-center justify-between p-4 border border-foreground/10 rounded-none bg-background dark:bg-background">
+                              <div key={method.id} className="flex items-center justify-between p-4 border border-foreground/10 rounded-none bg-background">
                                   <div className="flex items-center gap-4">
                                       <div className={`w-10 h-10 rounded-none flex items-center justify-center border border-foreground/10 ${method.type === 'mobile' ? 'bg-foreground/[0.04]' : 'bg-foreground/[0.04]'}`}>
                                           <DollarSign className="w-5 h-5 text-foreground stroke-[1.5]" />
@@ -538,7 +538,7 @@ export const SellerSettingsPage = () => {
                       {shippingZones.length > 0 ? (
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                               {shippingZones.map((zone, idx) => (
-                                  <div key={idx} className="p-3 border border-foreground/10 rounded-xl flex justify-between items-center bg-background dark:bg-background">
+                                  <div key={idx} className="p-3 border border-foreground/10 rounded-xl flex justify-between items-center bg-background">
                                       <div>
                                           <span className="font-medium text-sm block">{zone.region}</span>
                                           {zone.district !== 'All Districts' && <span className="text-xs text-foreground/55">{zone.district}</span>}
@@ -558,7 +558,7 @@ export const SellerSettingsPage = () => {
 
                       <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-foreground/8 dark:border-white/5">
                           <select 
-                              className="h-10 bg-background dark:bg-background border border-foreground/10 rounded-xl px-3 text-sm outline-none flex-1"
+                              className="h-10 bg-background border border-foreground/10 rounded-xl px-3 text-sm outline-none flex-1"
                               value={newZone.region}
                               onChange={(e) => setNewZone({...newZone, region: e.target.value, district: 'All Districts'})}
                           >
@@ -567,7 +567,7 @@ export const SellerSettingsPage = () => {
                               ))}
                           </select>
                           <select 
-                              className="h-10 bg-background dark:bg-background border border-foreground/10 rounded-xl px-3 text-sm outline-none flex-1 disabled:opacity-50"
+                              className="h-10 bg-background border border-foreground/10 rounded-xl px-3 text-sm outline-none flex-1 disabled:opacity-50"
                               value={newZone.district}
                               onChange={(e) => setNewZone({...newZone, district: e.target.value})}
                               disabled={!newZone.region || !TANZANIA_DISTRICTS[newZone.region]}
@@ -593,7 +593,7 @@ export const SellerSettingsPage = () => {
                       </p>
                       <div className="flex flex-col sm:flex-row gap-3 items-center">
                           <select 
-                              className="h-10 bg-background dark:bg-background border border-emerald-200 dark:border-emerald-800/30 rounded-xl px-3 text-sm outline-none flex-1 w-full"
+                              className="h-10 bg-background border border-emerald-200 dark:border-emerald-800/30 rounded-xl px-3 text-sm outline-none flex-1 w-full"
                               value={calcRegion}
                               onChange={(e) => {
                                   setCalcRegion(e.target.value);
@@ -605,7 +605,7 @@ export const SellerSettingsPage = () => {
                               ))}
                           </select>
                           <select 
-                              className="h-10 bg-background dark:bg-background border border-emerald-200 dark:border-emerald-800/30 rounded-xl px-3 text-sm outline-none flex-1 w-full disabled:opacity-50"
+                              className="h-10 bg-background border border-emerald-200 dark:border-emerald-800/30 rounded-xl px-3 text-sm outline-none flex-1 w-full disabled:opacity-50"
                               value={calcDistrict}
                               onChange={(e) => setCalcDistrict(e.target.value)}
                               disabled={!calcRegion || !TANZANIA_DISTRICTS[calcRegion]}

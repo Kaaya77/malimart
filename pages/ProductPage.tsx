@@ -149,7 +149,18 @@ export const ProductPage = () => {
     };
 
     if (isLoading) return <div className="min-h-screen flex items-center justify-center"><Skeleton className="w-96 h-96 rounded-3xl"/></div>;
-    if (!product || !metrics) return <div className="min-h-screen flex items-center justify-center">Product not found</div>;
+    if (!product || !metrics) return (
+        <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-background px-6">
+            <div className="w-16 h-16 rounded-3xl bg-foreground/[0.06] flex items-center justify-center"><ShoppingBag className="w-7 h-7 text-foreground/30 stroke-[1.5]"/></div>
+            <div className="text-center">
+                <h2 className="font-bold text-lg text-foreground">Product not found</h2>
+                <p className="text-sm text-foreground/45 mt-1">This product may have been removed or is no longer available.</p>
+            </div>
+            <a href="/shop" className="h-11 px-6 rounded-2xl bg-foreground text-background text-sm font-bold flex items-center gap-2">
+                Browse Products →
+            </a>
+        </div>
+    );
 
     const images = selectedVariant?.image_url ? [selectedVariant.image_url, ...product.images] : product.images;
 

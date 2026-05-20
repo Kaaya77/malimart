@@ -311,7 +311,7 @@ export const BuyerSettingsPage = () => {
  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors whitespace-nowrap ${
  activeTab === tab.id 
  ? 'bg-foreground text-background' 
- : 'text-foreground/70 hover:bg-foreground/[0.05] dark:text-foreground/40 dark:hover:bg-background/5'
+ : 'text-foreground/70 hover:bg-foreground/[0.05] dark:text-foreground/40/5'
  }`}
  >
  <tab.icon className="w-4 h-4" />
@@ -366,7 +366,7 @@ export const BuyerSettingsPage = () => {
  <div className="relative">
  <Home className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40" />
  <select 
- className="w-full h-10 bg-background dark:bg-background border border-foreground/10 rounded-xl pl-10 pr-4 text-sm outline-none text-foreground appearance-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all"
+ className="w-full h-10 bg-background border border-foreground/10 rounded-xl pl-10 pr-4 text-sm outline-none text-foreground appearance-none focus:ring-2 focus:ring-slate-900 transition-all"
  value={profileData.region || ''}
  onChange={(e: any) => setProfileData({ ...profileData, region: e.target.value })}
  >
@@ -377,7 +377,7 @@ export const BuyerSettingsPage = () => {
  </div>
  </div>
  </div>
- <div className="flex justify-end pt-4 border-t border-foreground/8 dark:border-white/5">
+ <div className="flex justify-end pt-4 border-t border-foreground/8">
  <Button type="submit" variant="primary" disabled={isSavingProfile}>
  {isSavingProfile ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</> : 'Save Changes'}
  </Button>
@@ -398,7 +398,7 @@ export const BuyerSettingsPage = () => {
  <div className="relative">
  <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40" />
  <select 
- className="w-full h-10 bg-background dark:bg-background border border-foreground/10 rounded-xl pl-10 pr-4 text-sm outline-none text-foreground appearance-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all"
+ className="w-full h-10 bg-background border border-foreground/10 rounded-xl pl-10 pr-4 text-sm outline-none text-foreground appearance-none focus:ring-2 focus:ring-slate-900 transition-all"
  value={preferences.language}
  onChange={handleLanguageChange}
  >
@@ -413,7 +413,7 @@ export const BuyerSettingsPage = () => {
  <div className="relative">
  <Wallet className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40" />
  <select 
- className="w-full h-10 bg-background dark:bg-background border border-foreground/10 rounded-xl pl-10 pr-4 text-sm outline-none text-foreground appearance-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all"
+ className="w-full h-10 bg-background border border-foreground/10 rounded-xl pl-10 pr-4 text-sm outline-none text-foreground appearance-none focus:ring-2 focus:ring-slate-900 transition-all"
  value={preferences.defaultCurrency}
  onChange={(e) => {
  setPreferences({...preferences, defaultCurrency: e.target.value});
@@ -427,7 +427,7 @@ export const BuyerSettingsPage = () => {
  </div>
  </div>
  </div>
- <div className="pt-4 border-t border-foreground/8 dark:border-white/5 space-y-4">
+ <div className="pt-4 border-t border-foreground/8 space-y-4">
  <div className="flex items-center justify-between">
  <div>
  <p className="font-medium text-sm text-foreground">High Contrast Mode</p>
@@ -469,17 +469,17 @@ export const BuyerSettingsPage = () => {
  <p className="text-sm text-foreground/55 dark:text-foreground/55 mt-2 flex items-center gap-1"><Phone className="w-3 h-3"/> {addr.phone}</p>
  </div>
  </div>
- <div className="flex gap-2 justify-end mt-auto pt-4 border-t border-foreground/8 dark:border-white/5">
+ <div className="flex gap-2 justify-end mt-auto pt-4 border-t border-foreground/8">
  {!addr.is_default && <Button size="sm" variant="outline" onClick={() => handleSetDefaultAddress(addr.id)} className="text-xs">Set Default</Button>}
  <Button size="icon" variant="ghost" onClick={() => setEditingAddress(addr)}><Edit className="w-4 h-4" /></Button>
- <Button size="icon" variant="ghost" className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20" onClick={() => confirmDeleteAddress(addr.id)} disabled={isDeletingAddress && addressToDelete === addr.id}><Trash2 className="w-4 h-4" /></Button>
+ <Button size="icon" variant="ghost" className="text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => confirmDeleteAddress(addr.id)} disabled={isDeletingAddress && addressToDelete === addr.id}><Trash2 className="w-4 h-4" /></Button>
  </div>
  </div>
  ))}
  </div>
  )}
  
- <div className="pt-6 border-t border-foreground/8 dark:border-white/5">
+ <div className="pt-6 border-t border-foreground/8">
  <h3 className="font-semibold text-sm mb-4">Add New Address</h3>
  <form onSubmit={handleAddAddress} className="space-y-4">
  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -490,7 +490,7 @@ export const BuyerSettingsPage = () => {
  </div>
  <div className="md:col-span-1">
  <select 
- className="w-full h-10 bg-background dark:bg-background border border-foreground/10 rounded-xl px-3 text-sm outline-none text-foreground focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all"
+ className="w-full h-10 bg-background border border-foreground/10 rounded-xl px-3 text-sm outline-none text-foreground focus:ring-2 focus:ring-slate-900 transition-all"
  value={addressData.city}
  onChange={(e: any) => setAddressData({...addressData, city: e.target.value, district: TANZANIA_DISTRICTS[e.target.value]?.[0] || ''})}
  required
@@ -503,7 +503,7 @@ export const BuyerSettingsPage = () => {
  </div>
  <div className="md:col-span-1">
  <select 
- className="w-full h-10 bg-background dark:bg-background border border-foreground/10 rounded-xl px-3 text-sm outline-none text-foreground focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all disabled:opacity-50"
+ className="w-full h-10 bg-background border border-foreground/10 rounded-xl px-3 text-sm outline-none text-foreground focus:ring-2 focus:ring-slate-900 transition-all disabled:opacity-50"
  value={addressData.district}
  onChange={(e: any) => setAddressData({...addressData, district: e.target.value})}
  disabled={!addressData.city || !TANZANIA_DISTRICTS[addressData.city]}
@@ -534,9 +534,9 @@ export const BuyerSettingsPage = () => {
  ) : (
  <div className="space-y-3">
  {paymentMethods.map(pm => (
- <div key={pm.id} className="p-4 border border-foreground/10 rounded-xl flex justify-between items-center bg-background dark:bg-background">
+ <div key={pm.id} className="p-4 border border-foreground/8 rounded-2xl flex justify-between items-center bg-foreground/[0.02]">
  <div className="flex items-center gap-4">
- <div className={`w-12 h-8 rounded flex items-center justify-center text-white font-bold text-[10px] ${pm.type === 'visa' ? 'bg-slate-900 ' : 'bg-emerald-600'}`}>
+ <div className={`w-12 h-8 rounded flex items-center justify-center text-white font-bold text-[10px] ${pm.type === 'visa' ? 'bg-foreground' : 'bg-emerald-600'}`}>
  {pm.provider.toUpperCase()}
  </div>
  <div>
@@ -544,30 +544,30 @@ export const BuyerSettingsPage = () => {
  <p className="text-xs text-foreground/55 capitalize">{pm.provider}</p>
  </div>
  </div>
- <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20" onClick={() => confirmDeletePayment(pm.id)}>Remove</Button>
+ <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => confirmDeletePayment(pm.id)}>Remove</Button>
  </div>
  ))}
  </div>
  )}
  
- <div className="pt-6 border-t border-foreground/8 dark:border-white/5">
+ <div className="pt-6 border-t border-foreground/8">
  <h4 className="font-semibold text-sm mb-4">Add Payment Method</h4>
  <form onSubmit={handleAddPaymentMethod} className="space-y-4">
  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
- <select className="h-10 bg-background dark:bg-background rounded-xl border border-foreground/10 px-3 text-sm outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white" value={paymentData.type} onChange={(e) => setPaymentData({...paymentData, type: e.target.value, provider: e.target.value === 'visa' ? 'visa' : (e.target.value === 'mobile' ? MOBILE_MONEY_PROVIDERS[0] : BANK_PROVIDERS[0])})}>
+ <select className="h-10 bg-foreground/[0.04] rounded-2xl border border-foreground/10 px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-foreground/25 appearance-none transition-colors" value={paymentData.type} onChange={(e) => setPaymentData({...paymentData, type: e.target.value, provider: e.target.value === 'visa' ? 'visa' : (e.target.value === 'mobile' ? MOBILE_MONEY_PROVIDERS[0] : BANK_PROVIDERS[0])})}>
  <option value="visa">Card (Visa/Mastercard)</option>
  <option value="mobile">Mobile Money</option>
  <option value="bank">Bank Account</option>
  </select>
  {paymentData.type === 'mobile' && (
- <select className="h-10 bg-background dark:bg-background rounded-xl border border-foreground/10 px-3 text-sm outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white" value={paymentData.provider} onChange={(e) => setPaymentData({...paymentData, provider: e.target.value})}>
+ <select className="h-10 bg-foreground/[0.04] rounded-2xl border border-foreground/10 px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-foreground/25 appearance-none transition-colors" value={paymentData.provider} onChange={(e) => setPaymentData({...paymentData, provider: e.target.value})}>
  {MOBILE_MONEY_PROVIDERS.map(provider => (
  <option key={provider} value={provider}>{provider}</option>
  ))}
  </select>
  )}
  {paymentData.type === 'bank' && (
- <select className="h-10 bg-background dark:bg-background rounded-xl border border-foreground/10 px-3 text-sm outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white" value={paymentData.provider} onChange={(e) => setPaymentData({...paymentData, provider: e.target.value})}>
+ <select className="h-10 bg-foreground/[0.04] rounded-2xl border border-foreground/10 px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-foreground/25 appearance-none transition-colors" value={paymentData.provider} onChange={(e) => setPaymentData({...paymentData, provider: e.target.value})}>
  {BANK_PROVIDERS.map(provider => (
  <option key={provider} value={provider}>{provider}</option>
  ))}
@@ -620,7 +620,7 @@ export const BuyerSettingsPage = () => {
  ) : (
  <div className="space-y-4">
  {walletTransactions.slice(0, 5).map(tx => (
- <div key={tx.id} className="flex items-center justify-between pb-4 border-b border-foreground/8 dark:border-white/5 last:border-0 last:pb-0">
+ <div key={tx.id} className="flex items-center justify-between pb-4 border-b border-foreground/8 last:border-0 last:pb-0">
  <div className="flex items-center gap-4">
  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${tx.type === 'credit' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-foreground/[0.05] text-foreground/70 dark:text-foreground/40'}`}>
  {tx.type === 'credit' ? <ArrowDownLeft className="w-5 h-5" /> : <ArrowUpRight className="w-5 h-5" />}
@@ -648,7 +648,7 @@ export const BuyerSettingsPage = () => {
  </CardHeader>
  <CardContent className="space-y-4">
  <p className="text-sm text-emerald-800 dark:text-emerald-200">Share your code. When a friend makes their first purchase, they get 10% off and you get {CURRENCY} 5,000.</p>
- <div className="flex items-center gap-2 bg-background dark:bg-background p-2 rounded-xl border border-emerald-200 dark:border-emerald-800/50">
+ <div className="flex items-center gap-2 bg-background p-2 rounded-xl border border-emerald-200 dark:border-emerald-800/50">
  <code className="px-3 py-1 font-mono font-bold text-foreground text-sm flex-1 text-center">{user?.referral_code || 'MALI-XXXX'}</code>
  <Button variant="secondary" size="icon" onClick={copyReferralCode} className="shrink-0 h-8 w-8">
  <Copy className="w-3.5 h-3.5" />
@@ -670,14 +670,14 @@ export const BuyerSettingsPage = () => {
  <CardDescription>Control how we contact you.</CardDescription>
  </CardHeader>
  <CardContent className="space-y-4">
- <div className="flex items-center justify-between py-3 border-b border-foreground/8 dark:border-white/5">
+ <div className="flex items-center justify-between py-3 border-b border-foreground/8">
  <div>
  <p className="font-medium text-sm text-foreground">Email Notifications</p>
  <p className="text-xs text-foreground/55">Order updates and promotions</p>
  </div>
  <Switch checked={preferences.emailNotifications} onChange={() => togglePreference('emailNotifications')} />
  </div>
- <div className="flex items-center justify-between py-3 border-b border-foreground/8 dark:border-white/5">
+ <div className="flex items-center justify-between py-3 border-b border-foreground/8">
  <div>
  <p className="font-medium text-sm text-foreground">SMS Updates</p>
  <p className="text-xs text-foreground/55">Delivery tracking and alerts</p>
@@ -700,14 +700,14 @@ export const BuyerSettingsPage = () => {
  <CardDescription>Protect your account.</CardDescription>
  </CardHeader>
  <CardContent className="space-y-4">
- <div className="flex items-center justify-between py-3 border-b border-foreground/8 dark:border-white/5">
+ <div className="flex items-center justify-between py-3 border-b border-foreground/8">
  <div>
  <p className="font-medium text-sm text-foreground">Two-Factor Authentication (2FA)</p>
  <p className="text-xs text-foreground/55">Add an extra layer of security</p>
  </div>
  <Switch checked={preferences.twoFactorAuth} onChange={() => togglePreference('twoFactorAuth')} />
  </div>
- <div className="flex items-center justify-between py-3 border-b border-foreground/8 dark:border-white/5">
+ <div className="flex items-center justify-between py-3 border-b border-foreground/8">
  <div>
  <p className="font-medium text-sm text-foreground">Public Profile</p>
  <p className="text-xs text-foreground/55">Allow others to see your reviews</p>
@@ -768,7 +768,7 @@ export const BuyerSettingsPage = () => {
  <p className="text-xs text-foreground/55">Preferred format for data exports</p>
  </div>
  <select 
- className="h-9 bg-background dark:bg-background border border-foreground/10 rounded-lg px-3 text-sm outline-none"
+ className="h-9 bg-background border border-foreground/10 rounded-lg px-3 text-sm outline-none"
  value={preferences.exportFormat}
  onChange={(e) => {
  setPreferences({...preferences, exportFormat: e.target.value});
@@ -785,7 +785,7 @@ export const BuyerSettingsPage = () => {
  <Button variant="secondary" className="flex-1" onClick={handleExportData} disabled={isExporting}>
  {isExporting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Exporting...</> : <><Download className="w-4 h-4 mr-2" /> Export Data</>}
  </Button>
- <Button variant="outline" className="flex-1 border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 dark:border-red-900/50" onClick={confirmRequestAccountDeletion}>
+ <Button variant="outline" className="flex-1 border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900/50" onClick={confirmRequestAccountDeletion}>
  <LogOut className="w-4 h-4 mr-2" /> Delete Account
  </Button>
  </div>
@@ -802,7 +802,7 @@ export const BuyerSettingsPage = () => {
  <p className="text-sm text-foreground/55">No recent logins found.</p>
  ) : (
  loginHistory.map((login, idx) => (
- <div key={idx} className="flex justify-between items-center py-3 border-b border-foreground/8 dark:border-white/5 last:border-0 last:pb-0">
+ <div key={idx} className="flex justify-between items-center py-3 border-b border-foreground/8 last:border-0 last:pb-0">
  <div>
  <p className="text-sm font-medium">{login.device_info || 'Unknown Device'}</p>
  <p className="text-xs text-foreground/55">{login.ip_address || 'Unknown IP'}</p>
@@ -833,7 +833,7 @@ export const BuyerSettingsPage = () => {
  <Input placeholder="Street" value={editingAddress.street || ''} onChange={(e: any) => setEditingAddress({...editingAddress, street: e.target.value})} />
  <div className="grid grid-cols-2 gap-4">
  <select 
- className="w-full h-10 bg-background dark:bg-background border border-foreground/10 rounded-xl px-3 text-sm outline-none text-foreground focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all"
+ className="w-full h-10 bg-background border border-foreground/10 rounded-xl px-3 text-sm outline-none text-foreground focus:ring-2 focus:ring-slate-900 transition-all"
  value={editingAddress.city || ''}
  onChange={(e: any) => setEditingAddress({...editingAddress, city: e.target.value, district: TANZANIA_DISTRICTS[e.target.value]?.[0] || ''})}
  required
@@ -844,7 +844,7 @@ export const BuyerSettingsPage = () => {
  ))}
  </select>
  <select 
- className="w-full h-10 bg-background dark:bg-background border border-foreground/10 rounded-xl px-3 text-sm outline-none text-foreground focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all disabled:opacity-50"
+ className="w-full h-10 bg-background border border-foreground/10 rounded-xl px-3 text-sm outline-none text-foreground focus:ring-2 focus:ring-slate-900 transition-all disabled:opacity-50"
  value={editingAddress.district || ''}
  onChange={(e: any) => setEditingAddress({...editingAddress, district: e.target.value})}
  disabled={!editingAddress.city || !TANZANIA_DISTRICTS[editingAddress.city]}
