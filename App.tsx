@@ -146,14 +146,14 @@ const Preloader = () => {
                     initial={{ width: 0 }}
                     animate={{ width: '100%' }}
                     transition={{ duration: 1.5, delay: 0.5, ease: "easeInOut" }}
-                    className="absolute -bottom-4 left-0 h-[1px] bg-background/50"
+                    className="absolute -bottom-4 left-0 h-[1px] bg-foreground/30"
                 />
             </motion.div>
             <motion.p 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 1, ease: "easeOut" }}
-                className="mt-12 text-[10px] uppercase tracking-[0.5em] text-background/60"
+                className="mt-12 text-[10px] uppercase tracking-[0.5em] text-foreground/40"
             >
                 Curated Excellence
             </motion.p>
@@ -200,7 +200,7 @@ const AppContent = () => {
   }, [showPreloader]);
 
   useEffect(() => {
-    const timer = setTimeout(() => setShowPreloader(false), 1500);
+    const timer = setTimeout(() => setShowPreloader(false), 800);
     return () => clearTimeout(timer);
   }, []);
 

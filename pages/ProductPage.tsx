@@ -148,7 +148,7 @@ export const ProductPage = () => {
     const images = selectedVariant?.image_url ? [selectedVariant.image_url, ...product.images] : product.images;
 
     return (
-        <div className="min-h-screen bg-background dark:bg-background text-foreground dark:text-background pt-24 pb-20 font-sans">
+        <div className="min-h-screen bg-background dark:bg-background text-foreground dark:text-background pt-24 pb-[calc(5rem+env(safe-area-inset-bottom))] font-sans">
             <div className="container mx-auto px-4 md:px-8 max-w-7xl">
                 {/* Breadcrumb / Back */}
                 <div className="flex items-center gap-4 mb-8">

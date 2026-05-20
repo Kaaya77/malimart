@@ -250,10 +250,11 @@ export const Navbar = () => {
 
 // ─── Mobile bottom nav (separate export) ────────────────────────────
 export const MobileBottomNav = () => {
-  const { user, cart } = useAppState();
+  const { user, cart, notifications } = useAppState();
   const navigate = useNavigate();
   const location = useLocation();
   const cartCount = cart.reduce((acc, item) => acc + (item.quantity || 1), 0);
+  const unreadNotifs = notifications?.filter((n: any) => !n.read).length || 0;
 
   const accountPath = user
     ? (user.role === 'admin' ? '/admin' : user.role === 'seller' ? '/seller' : '/buyer')
@@ -262,9 +263,9 @@ export const MobileBottomNav = () => {
   const tabs = [
     { id: 'home', label: 'Home', icon: Home, path: '/' },
     { id: 'shop', label: 'Shop', icon: Store, path: '/shop' },
-    { id: 'cats', label: 'Categories', icon: LayoutGrid, path: '/categories' },
+    { id: 'cats', label: 'Explore', icon: LayoutGrid, path: '/categories' },
     { id: 'cart', label: 'Bag', icon: ShoppingBag, path: '/cart', count: cartCount },
-    { id: 'me', label: user ? 'Account' : 'Sign in', icon: UserCircle, path: accountPath },
+    { id: 'me', label: user ? 'Account' : 'Sign in', icon: UserCircle, path: accountPath, count: unreadNotifs > 0 ? unreadNotifs : 0 },
   ];
 
   const isActive = (path: string) =>
@@ -277,8 +278,8 @@ export const MobileBottomNav = () => {
       className="fixed bottom-0 inset-x-0 z-40 md:hidden"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
-      <div className="mx-3 mb-3 rounded-2xl bg-background/95 backdrop-blur-2xl ring-1 ring-foreground/8 shadow-[0_-2px_20px_-2px_rgba(0,0,0,0.08)]">
-        <div className="grid grid-cols-5 h-16">
+      <div className="mx-2 mb-2 rounded-2xl bg-background/96 backdrop-blur-2xl ring-1 ring-foreground/8 shadow-[0_-4px_24px_-4px_rgba(0,0,0,0.1)]">
+        <div className="grid grid-cols-5 h-[60px]">
           {tabs.map(t => {
             const Icon = t.icon;
             const active = isActive(t.path);
@@ -288,23 +289,23 @@ export const MobileBottomNav = () => {
                 onClick={() => navigate(t.path)}
                 aria-label={t.label}
                 aria-current={active ? 'page' : undefined}
-                className={`relative flex flex-col items-center justify-center gap-1 transition-colors
-                  ${active ? 'text-foreground' : 'text-foreground/40 hover:text-foreground/70'}`}
+                className={`relative flex flex-col items-center justify-center gap-[3px] transition-colors active:scale-90
+                  ${active ? 'text-foreground' : 'text-foreground/35 hover:text-foreground/60'}`}
               >
+                {active && (
+                  <span className="absolute top-1.5 w-6 h-0.5 rounded-full bg-emerald-500" />
+                )}
                 <span className="relative">
-                  <Icon className={`w-[22px] h-[22px] transition-all ${active ? 'stroke-[2.2]' : 'stroke-[1.8]'}`} />
+                  <Icon className={`w-[21px] h-[21px] transition-all ${active ? 'stroke-[2.2]' : 'stroke-[1.7]'}`} />
                   {t.count != null && t.count > 0 && (
-                    <span className="absolute -top-1.5 -right-2 min-w-[16px] h-4 px-1 rounded-full bg-foreground text-background text-[9px] font-bold flex items-center justify-center">
+                    <span className="absolute -top-1.5 -right-2 min-w-[15px] h-[15px] px-0.5 rounded-full bg-rose-500 text-white text-[9px] font-bold flex items-center justify-center">
                       {t.count > 9 ? '9+' : t.count}
                     </span>
                   )}
                 </span>
-                <span className={`text-[10px] font-semibold tracking-wide ${active ? 'opacity-100' : 'opacity-80'}`}>
+                <span className={`text-[9px] font-semibold tracking-wide transition-all ${active ? 'opacity-100' : 'opacity-80'}`}>
                   {t.label}
                 </span>
-                {active && (
-                  <span className="absolute top-1.5 w-7 h-0.5 rounded-full bg-foreground" />
-                )}
               </button>
             );
           })}

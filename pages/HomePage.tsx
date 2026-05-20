@@ -1,87 +1,166 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { ProductCard } from '../components/ProductCard';
-import { ProductModal } from '../components/ProductModal';
-import { useAppState } from '../context/AppContext';
+import React, { useState, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { useAppState } from '../context/AppContext';
+import { useHomePageData } from '../hooks/useHomePageData';
+import { HeroSection } from '../components/home/HeroSection';
+import { CategoryStrip } from '../components/home/CategoryStrip';
+import { FeaturedProducts } from '../components/home/FeaturedProducts';
+import { FeaturedStores } from '../components/home/FeaturedStores';
+import { ProductGridSection } from '../components/home/ProductGridSection';
+import { TrustStrip } from '../components/home/TrustStrip';
+import { ProductModal } from '../components/ProductModal';
+import { StoreModal } from '../components/StoreModal';
+import { HomePageSkeleton } from '../components/skeletons/HomePageSkeleton';
+import { Product, VendorProfile } from '../types';
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.05, duration: 0.4 } },
+};
+const itemVariants = {
+  hidden: { opacity: 0, y: 12 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } },
+};
+
+const SEARCH_PLACEHOLDERS = [
+  'Search kangas, spices, crafts…',
+  'Find Maasai jewelry…',
+  'Browse Tanzanian coffee…',
+  'Discover wooden carvings…',
+];
 
 const HomePage: React.FC = () => {
-  const { products = [] } = useAppState();
+  const { products = [], isLoading } = useAppState();
   const navigate = useNavigate();
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const homeData = useHomePageData();
 
-  const featuredProducts = products.slice(0, 8);
+  const [activeProduct, setActiveProduct] = useState<Product | null>(null);
+  const [activeStore, setActiveStore] = useState<VendorProfile | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPlaceholderIdx] = useState(0);
 
-  const openProduct = (product) => {
-    setSelectedProduct(product);
-    setIsModalOpen(true);
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) navigate(`/shop?q=${encodeURIComponent(searchQuery)}`);
   };
+
+  // Smart greeting
+  const greeting = useMemo(() => {
+    const hr = new Date().getHours();
+    if (hr < 12) return 'Good morning 🌅';
+    if (hr < 18) return 'Good afternoon ☀️';
+    return 'Good evening 🌙';
+  }, []);
+
+  const boostedProducts = useMemo(
+    () => products.filter(p => p.is_boosted && p.status !== 'inactive').slice(0, 8),
+    [products]
+  );
+
+  const newArrivals = useMemo(
+    () =>
+      [...products]
+        .filter(p => p.status !== 'inactive')
+        .sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
+        .slice(0, 8),
+    [products]
+  );
+
+  const topRated = useMemo(
+    () =>
+      [...products]
+        .filter(p => p.status !== 'inactive' && (p.review_count || 0) >= 1)
+        .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+        .slice(0, 8),
+    [products]
+  );
+
+  if (isLoading) return <HomePageSkeleton />;
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Section */}
-      <section className="relative h-[85vh] md:h-[95vh] flex items-center justify-center overflow-hidden bg-black text-white">
-        <div className="absolute inset-0 bg-[url('https://picsum.photos/id/1015/2000/1200')] bg-cover bg-center opacity-75" />
-        
-        <div className="relative z-10 text-center px-5 max-w-lg sm:max-w-2xl mx-auto">
-          <motion.h1 
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="text-5xl md:text-7xl font-bold tracking-tighter leading-none mb-6"
-          >
-            Malimart
-          </motion.h1>
-          
-          <p className="text-lg md:text-xl opacity-90 mb-10">
-            Discover unique products from Tanzanian sellers and creators
-          </p>
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button 
-              onClick={() => navigate('/shop')}
-              className="bg-white text-black px-10 py-4 rounded-2xl font-semibold text-lg active:scale-95 transition-all"
-            >
-              Shop Now
-            </button>
-            <button 
-              onClick={() => navigate('/sell')}
-              className="border border-white/70 hover:bg-white/10 px-10 py-4 rounded-2xl font-semibold text-lg transition-all"
-            >
-              Sell on Malimart
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Products */}
-      <section className="px-4 sm:px-6 py-12">
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl font-semibold">Featured Products</h2>
-          <a href="/shop" className="text-primary hover:underline text-sm">View all →</a>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {featuredProducts.map((product, i) => (
-            <ProductCard 
-              key={product.id} 
-              product={product} 
-              index={i} 
-              onClick={() => openProduct(product)}
-            />
-          ))}
-        </div>
-      </section>
-
-      <ProductModal 
-        product={selectedProduct} 
-        isOpen={isModalOpen} 
-        onClose={() => {
-          setIsModalOpen(false);
-          setSelectedProduct(null);
-        }} 
+      {/* Hero */}
+      <HeroSection
+        heroRecommendation={homeData.heroRecommendation}
+        heroFeaturedProducts={homeData.heroFeaturedProducts}
+        heroSettings={homeData.heroSettings}
+        greeting={greeting}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        handleSearch={handleSearch}
+        searchPlaceholders={SEARCH_PLACEHOLDERS}
+        currentPlaceholderIdx={currentPlaceholderIdx}
+        containerVariants={containerVariants}
+        itemVariants={itemVariants}
       />
+
+      {/* Categories */}
+      <CategoryStrip />
+
+      {/* Featured / Boosted Products */}
+      {boostedProducts.length > 0 && (
+        <FeaturedProducts
+          products={boostedProducts}
+          navigate={navigate}
+          setActiveProduct={setActiveProduct}
+        />
+      )}
+
+      {/* Top Rated */}
+      {topRated.length > 0 && (
+        <ProductGridSection
+          title="Top rated"
+          description="Highest-rated products by verified buyers."
+          products={topRated}
+          navigate={navigate}
+          setActiveProduct={setActiveProduct}
+        />
+      )}
+
+      {/* Featured Sellers */}
+      {homeData.topShops.length > 0 && (
+        <FeaturedStores
+          topShops={homeData.topShops}
+          setActiveStore={setActiveStore}
+          navigate={navigate}
+        />
+      )}
+
+      {/* New Arrivals */}
+      {newArrivals.length > 0 && (
+        <ProductGridSection
+          title="New arrivals"
+          description="Fresh drops from Tanzania's best sellers."
+          products={newArrivals}
+          navigate={navigate}
+          setActiveProduct={setActiveProduct}
+        />
+      )}
+
+      {/* Trust signals */}
+      <TrustStrip />
+
+      {/* Modals */}
+      <AnimatePresence>
+        {activeProduct && (
+          <ProductModal
+            product={activeProduct}
+            isOpen={!!activeProduct}
+            onClose={() => setActiveProduct(null)}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {activeStore && (
+          <StoreModal
+            store={activeStore}
+            isOpen={!!activeStore}
+            onClose={() => setActiveStore(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };
