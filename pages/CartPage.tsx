@@ -309,7 +309,7 @@ export const CartPage = () => {
   // ───────────────────────────────────────────────
   if (cart.length === 0) {
     return (
-      <div className="container mx-auto px-6 py-20 text-center animate-in fade-in zoom-in-95 font-sans min-h-[80vh] flex flex-col items-center justify-center">
+      <div className="container mx-auto px-4 py-12 text-center animate-in fade-in zoom-in-95 font-sans min-h-screen pt-24 flex flex-col items-center justify-center">
         <div className="w-48 h-48 bg-foreground/[0.04] rounded-full flex items-center justify-center mb-8 relative group">
           <ShoppingCart className="w-16 h-16 text-foreground/20 group-hover:text-foreground/60 transition-colors duration-500" />
           <div className="absolute top-8 right-10 w-4 h-4 bg-foreground/15 rounded-full animate-bounce"></div>
@@ -325,7 +325,7 @@ export const CartPage = () => {
   // Main render
   // ───────────────────────────────────────────────
   return (
-    <div className="container mx-auto px-4 md:px-6 py-6 font-sans pt-24 md:pt-36 pb-[calc(6rem+env(safe-area-inset-bottom))]">
+    <div className="container mx-auto px-4 md:px-6 font-sans pt-20 md:pt-28 pb-[calc(5rem+env(safe-area-inset-bottom))] px-4 md:px-6 py-6">
       <div className="flex flex-col lg:flex-row gap-8 lg:gap-16 relative">
         
         {/* LEFT COLUMN: Items Grouped by Vendor */}

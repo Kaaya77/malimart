@@ -56,16 +56,22 @@ export const SellerPage = () => {
                     transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
                     className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6"
                 >
-                    <div className="space-y-4">
+                    <div className="space-y-2">
                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-2xl bg-foreground flex items-center justify-center shadow-lg shadow-foreground/10">
-                                <Store className="w-5 h-5 text-background" />
+                            {vendorProfile?.logo_url ? (
+                                <img src={vendorProfile.logo_url} alt="" className="w-11 h-11 rounded-2xl object-cover ring-2 ring-foreground/10 shadow-lg shrink-0" />
+                            ) : (
+                                <div className="w-11 h-11 rounded-2xl bg-foreground flex items-center justify-center shadow-lg shadow-foreground/10 shrink-0">
+                                    <Store className="w-5 h-5 text-background" />
+                                </div>
+                            )}
+                            <div>
+                                <p className="text-[10px] uppercase tracking-[0.3em] font-black text-foreground/40">Merchant Console</p>
+                                <h1 className="text-2xl md:text-4xl font-serif font-light text-foreground tracking-tight leading-tight">
+                                    {vendorProfile?.store_name || user.name}
+                                </h1>
                             </div>
-                            <p className="text-[10px] uppercase tracking-[0.3em] font-black text-foreground/40">Merchant Console</p>
                          </div>
-                         <h1 className="text-4xl md:text-6xl font-serif font-light text-foreground tracking-tight leading-[0.9]">
-                             {vendorProfile?.store_name || user.name}'s <span className="italic font-light">Store</span>
-                         </h1>
                     </div>
                 </motion.div>
 

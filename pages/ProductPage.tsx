@@ -19,7 +19,7 @@ import { supabase } from '../services/supabaseClient';
 export const ProductPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { products, addToCart, toggleWishlist, isInWishlist, getActiveOfferForProduct, addToRecentlyViewed } = useAppState();
+    const { products, addToCart, toggleWishlist, isInWishlist, getActiveOfferForProduct, addToRecentlyViewed, user } = useAppState();
     const { addToast } = useToast();
     
     const [product, setProduct] = useState<Product | null>(null);
@@ -142,6 +142,10 @@ export const ProductPage = () => {
 
     const handleMessageSeller = () => {
         if (!product) return;
+        if (!user) {
+            navigate(`/login?redirect=${encodeURIComponent(`/buyer?tab=inbox&sellerId=${product.seller_id}&productId=${product.id}`)}`);
+            return;
+        }
         navigate(`/buyer?tab=inbox&sellerId=${product.seller_id}&productId=${product.id}`);
     };
 
@@ -151,7 +155,7 @@ export const ProductPage = () => {
     const images = selectedVariant?.image_url ? [selectedVariant.image_url, ...product.images] : product.images;
 
     return (
-        <div className="min-h-screen bg-background dark:bg-background text-foreground dark:text-background pt-24 pb-[calc(6rem+env(safe-area-inset-bottom))] lg:pb-20 font-sans">
+        <div className="min-h-screen bg-background text-foreground pt-24 pb-[calc(6rem+env(safe-area-inset-bottom))] lg:pb-20 font-sans">
             <div className="container mx-auto px-4 md:px-8 max-w-7xl">
                 {/* Breadcrumb / Back */}
                 <div className="flex items-center gap-4 mb-8">
@@ -351,27 +355,27 @@ export const ProductPage = () => {
                         </div>
 
                         {/* Secondary Actions Grid */}
-                        <div className="grid grid-cols-3 border-y border-foreground/10 mb-12">
+                        <div className="grid grid-cols-3 border-y border-foreground/10 mb-8">
                             <button 
                                 onClick={() => {
                                     toggleWishlist(product);
                                     addToast(isInWishlist(product.id) ? 'Removed from wishlist' : 'Added to wishlist', 'success');
                                 }}
-                                className="flex flex-col items-center justify-center gap-2 py-6 border-r border-foreground/10 hover:bg-primary/5 dark:hover:bg-background/5 transition-colors"
+                                className="flex flex-col items-center justify-center gap-2 py-6 border-r border-foreground/10 hover:bg-foreground/[0.04] transition-colors"
                             >
                                 <Heart className={`w-5 h-5 stroke-[1] ${isLiked ? 'fill-current' : ''}`} />
                                 <span className="text-[9px] uppercase tracking-[0.2em]">{isLiked ? 'Saved' : 'Save'}</span>
                             </button>
                             <button 
                                 onClick={handleMessageSeller}
-                                className="flex flex-col items-center justify-center gap-2 py-6 border-r border-foreground/10 hover:bg-primary/5 dark:hover:bg-background/5 transition-colors"
+                                className="flex flex-col items-center justify-center gap-2 py-6 border-r border-foreground/10 hover:bg-foreground/[0.04] transition-colors"
                             >
                                 <MessageSquare className="w-5 h-5 stroke-[1]" />
                                 <span className="text-[9px] uppercase tracking-[0.2em]">Concierge</span>
                             </button>
                             <button 
                                 onClick={handleShare}
-                                className="flex flex-col items-center justify-center gap-2 py-6 hover:bg-primary/5 dark:hover:bg-background/5 transition-colors"
+                                className="flex flex-col items-center justify-center gap-2 py-6 hover:bg-foreground/[0.04] transition-colors"
                             >
                                 <Share2 className="w-5 h-5 stroke-[1]" />
                                 <span className="text-[9px] uppercase tracking-[0.2em]">Share</span>
@@ -379,7 +383,7 @@ export const ProductPage = () => {
                         </div>
 
                         {/* Trust HUD */}
-                        <div className="space-y-8 mb-12">
+                        <div className="space-y-4 mb-8 p-4 rounded-2xl bg-foreground/[0.03] border border-foreground/8">
                             <div className="flex items-start gap-4">
                                 <Shield className="w-5 h-5 stroke-[1] mt-0.5 opacity-50" />
                                 <div>

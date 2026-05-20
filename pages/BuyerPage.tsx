@@ -292,18 +292,22 @@ export const BuyerPage = () => {
                     transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
                     className="flex flex-col md:flex-row justify-between items-end mb-6 md:mb-10 gap-4"
                 >
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                          <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 bg-foreground flex items-center justify-center rounded-2xl shadow-xl shadow-foreground/10">
-                                <User className="w-6 h-6 text-background" />
+                            {user.avatar_url ? (
+                                <img src={user.avatar_url} alt="" className="w-11 h-11 rounded-2xl object-cover ring-2 ring-foreground/10 shadow-lg" />
+                            ) : (
+                                <div className="w-11 h-11 bg-foreground flex items-center justify-center rounded-2xl shadow-lg shadow-foreground/10 shrink-0">
+                                    <span className="text-background font-bold text-lg">{(user.name || user.email || 'U')[0].toUpperCase()}</span>
+                                </div>
+                            )}
+                            <div>
+                                <p className="text-[10px] text-foreground/40 uppercase tracking-widest font-semibold">My Account</p>
+                                <h1 className="text-2xl md:text-4xl font-serif font-light tracking-tight text-foreground leading-tight">
+                                    Hello, {user.name?.split(' ')[0] || 'there'}
+                                </h1>
                             </div>
-                            <h1 className="text-3xl md:text-6xl font-serif font-light tracking-tight text-foreground">
-                                Hello, {user.name?.split(' ')[0] || 'User'}
-                            </h1>
                          </div>
-                         <p className="text-sm text-foreground/60 font-medium tracking-tight max-w-md">
-                            Welcome to your premium buyer dashboard. Manage your orders and account with ease.
-                         </p>
                     </div>
                 </motion.div>
 
