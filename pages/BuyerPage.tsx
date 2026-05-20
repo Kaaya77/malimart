@@ -290,14 +290,14 @@ export const BuyerPage = () => {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                    className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6"
+                    className="flex flex-col md:flex-row justify-between items-end mb-6 md:mb-10 gap-4"
                 >
                     <div className="space-y-4">
                          <div className="flex items-center gap-3">
                             <div className="w-12 h-12 bg-foreground flex items-center justify-center rounded-2xl shadow-xl shadow-foreground/10">
                                 <User className="w-6 h-6 text-background" />
                             </div>
-                            <h1 className="text-4xl md:text-6xl font-serif font-light tracking-tight text-foreground">
+                            <h1 className="text-3xl md:text-6xl font-serif font-light tracking-tight text-foreground">
                                 Hello, {user.name?.split(' ')[0] || 'User'}
                             </h1>
                          </div>
@@ -478,10 +478,20 @@ export const BuyerPage = () => {
                         transition={{ duration: 0.5 }}
                         className="space-y-8"
                     >
-                        <h2 className="text-2xl font-black font-display uppercase tracking-tight text-foreground">My Wishlist</h2>
-                        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
-                            {wishlist.map(p => <ProductCard key={p.id} product={p} />)}
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-xl font-bold text-foreground">Wishlist <span className="text-foreground/40 font-normal">({wishlist.length})</span></h2>
                         </div>
+                        {wishlist.length === 0 ? (
+                            <div className="py-20 text-center border border-dashed border-foreground/15 rounded-2xl">
+                                <p className="text-4xl mb-4">🤍</p>
+                                <p className="font-semibold text-foreground/70 mb-1">Your wishlist is empty</p>
+                                <p className="text-sm text-foreground/40">Tap the heart on any product to save it</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-3 gap-y-8 md:gap-x-5 md:gap-y-10">
+                                {wishlist.map((p, i) => <ProductCard key={p.id} product={p} index={i} onClick={() => navigate(`/product/${p.id}`)} />)}
+                            </div>
+                        )}
                     </motion.div>
                 )}
 

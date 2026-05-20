@@ -293,7 +293,7 @@ export const AdminPage = () => {
     }
 
     return (
-        <div className="min-h-screen bg-background font-sans pb-[calc(5rem+env(safe-area-inset-bottom))] pt-20 md:pt-28 px-4 md:px-8 selection:bg-primary selection:text-white dark:selection:bg-white dark:selection:text-black">
+        <div className="min-h-screen bg-background font-sans pb-[calc(5rem+env(safe-area-inset-bottom))] pt-20 md:pt-28 px-4 md:px-8 selection:bg-foreground selection:text-background">
             <div className="container mx-auto max-w-7xl">
                 <motion.div 
                     initial={{ opacity: 0, y: 20 }}
@@ -303,7 +303,7 @@ export const AdminPage = () => {
                 >
                     <div className="space-y-4">
                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-2xl bg-primary dark:bg-white flex items-center justify-center shadow-lg shadow-foreground/10 dark:shadow-white/10">
+                            <div className="w-10 h-10 rounded-2xl bg-foreground flex items-center justify-center shadow-lg shadow-foreground/10">
                                 <ShieldAlert className="w-5 h-5 text-white dark:text-black" />
                             </div>
                             <p className="text-[10px] uppercase tracking-widest font-black text-foreground/40 dark:text-white/40">Nexus Control</p>
@@ -334,7 +334,7 @@ export const AdminPage = () => {
                             transition: { duration: 0.6, delay: 0.1, ease: [0.22, 1, 0.36, 1], staggerChildren: 0.05 }
                         }
                     }}
-                    className="flex overflow-x-auto p-1.5 md:p-2 bg-slate-100 dark:bg-zinc-900 rounded-full mb-12 no-scrollbar border border-foreground/5 shadow-inner"
+                    className="flex overflow-x-auto p-1.5 md:p-2 bg-foreground/[0.04] rounded-full mb-8 no-scrollbar border border-foreground/5 shadow-inner"
                 >
                     {[
                         { id: 'overview', label: 'Nexus', icon: Activity },
@@ -356,9 +356,9 @@ export const AdminPage = () => {
                                 visible: { opacity: 1, x: 0, transition: { duration: 0.3 } }
                             }}
                             onClick={() => setActiveTab(tab.id as any)} 
-                            className={`flex-shrink-0 flex items-center gap-2 py-3 px-6 rounded-full text-xs font-black uppercase tracking-wider transition-all duration-300 ${activeTab === tab.id 
-                                ? 'bg-white dark:bg-black text-foreground shadow-md' 
-                                : 'text-foreground/40 dark:text-white/40 hover:text-foreground dark:hover:text-white hover:bg-white/50 dark:hover:bg-black/50'}`}
+                            className={`flex-shrink-0 flex items-center gap-2 py-3 px-6 rounded-full text-xs font-black uppercase tracking-wider transition-all duration-200 ${activeTab === tab.id 
+                                ? 'bg-background text-foreground shadow-md' 
+                                : 'text-foreground/40 hover:text-foreground hover:bg-foreground/5'}`}
                         >
                             <tab.icon className={`w-4 h-4 stroke-[2.5] ${activeTab === tab.id ? 'text-primary scale-110' : ''} transition-all`} /> 
                             <span className="whitespace-nowrap">{tab.label}</span>

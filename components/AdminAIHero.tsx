@@ -246,7 +246,7 @@ export const AdminAIHero = () => {
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {recommendations.map((rec) => (
-                            <div key={rec.id} className={`flex flex-col bg-white dark:bg-primary border rounded-2xl ${rec.status === 'approved' ? 'border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.2)]' : 'border-foreground/10 dark:border-background/10'} overflow-hidden`}>
+                            <div key={rec.id} className={`flex flex-col bg-card border rounded-2xl ${rec.status === 'approved' ? 'border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.2)]' : 'border-foreground/10 dark:border-background/10'} overflow-hidden`}>
                                 {rec.products && (
                                     <div className="relative h-48 w-full overflow-hidden bg-gray-100 dark:bg-gray-800">
                                         <img src={rec.products.images?.[0] || "https://picsum.photos/seed/luxurycraft/1920/1080"} alt={rec.products.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
@@ -362,7 +362,7 @@ export const AdminAIHero = () => {
             )}
 
             {activeTab === 'manual' && (
-                <div className="max-w-2xl bg-white dark:bg-primary p-8 rounded-2xl border border-foreground/10 dark:border-background/10">
+                <div className="max-w-2xl bg-card p-8 rounded-2xl border border-foreground/10 dark:border-background/10">
                     <div className="mb-8">
                         <h3 className="font-sans font-black text-xl mb-2">Manual Fallback Settings</h3>
                         <p className="text-sm text-foreground/60 dark:text-background/60">These settings are used if no AI recommendation is approved or if the AI service is temporarily unavailable.</p>
@@ -423,10 +423,10 @@ export const AdminAIHero = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredProducts.map(product => (
-                            <div key={product.id} className="bg-white dark:bg-primary border border-foreground/10 dark:border-background/10 rounded-2xl overflow-hidden flex flex-col">
+                            <div key={product.id} className="bg-card border border-foreground/10 dark:border-background/10 rounded-2xl overflow-hidden flex flex-col">
                                 <div className="h-48 overflow-hidden relative">
                                     <img src={product.images?.[0] || "https://picsum.photos/seed/luxurycraft/1920/1080"} alt={product.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                                    <div className="absolute top-2 right-2 bg-white/90 dark:bg-black/90 px-2 py-1 text-[10px] font-bold uppercase tracking-wider backdrop-blur-sm">
+                                    <div className="absolute top-2 right-2 bg-background/90 dark:bg-black/90 px-2 py-1 text-[10px] font-bold uppercase tracking-wider backdrop-blur-sm">
                                         {formatTZS(product.price)}
                                     </div>
                                 </div>

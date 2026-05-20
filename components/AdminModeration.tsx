@@ -168,7 +168,7 @@ export const AdminModeration = () => {
             <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-8">
                 <div className="space-y-4">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-primary dark:bg-white flex items-center justify-center shadow-md">
+                        <div className="w-10 h-10 rounded-2xl bg-primary dark:bg-background flex items-center justify-center shadow-md">
                             <Shield className="w-5 h-5 text-white dark:text-black" />
                         </div>
                         <p className="text-[10px] uppercase tracking-widest font-black text-foreground/40 dark:text-white/40">Security & Integrity</p>
@@ -184,7 +184,7 @@ export const AdminModeration = () => {
                             placeholder="Search everything..." 
                             value={search}
                             onChange={(e:any) => setSearch(e.target.value)}
-                            className="pl-12 h-14 text-xs rounded-[1.5rem] bg-white dark:bg-primary border-foreground/5 dark:border-white/5 shadow-xl shadow-foreground/5 dark:shadow-black/20 focus:ring-0 focus:border-foreground dark:focus:border-white transition-all placeholder:text-foreground/20 dark:placeholder:text-white/20"
+                            className="pl-12 h-14 text-xs rounded-[1.5rem] bg-card border-foreground/5 dark:border-white/5 shadow-xl shadow-foreground/5 dark:shadow-black/20 focus:ring-0 focus:border-foreground dark:focus:border-white transition-all placeholder:text-foreground/20 dark:placeholder:text-white/20"
                         />
                     </div>
                 </div>
@@ -232,8 +232,8 @@ export const AdminModeration = () => {
                         key={tab.id} 
                         onClick={() => setActiveTab(tab.id as any)}
                         className={`flex-shrink-0 flex items-center gap-2 py-3 px-6 rounded-full text-xs font-black uppercase tracking-wider transition-all duration-300 ${activeTab === tab.id 
-                            ? 'bg-black dark:bg-white text-white dark:text-black shadow-md' 
-                            : 'bg-slate-100 dark:bg-zinc-900 border border-foreground/5 text-foreground/40 dark:text-white/40 hover:text-foreground dark:hover:text-white hover:bg-slate-200 dark:hover:bg-zinc-800'}`}
+                            ? 'bg-black dark:bg-background text-white dark:text-black shadow-md' 
+                            : 'bg-foreground/[0.05] dark:bg-zinc-900 border border-foreground/5 text-foreground/40 dark:text-white/40 hover:text-foreground dark:hover:text-white hover:bg-slate-200 dark:hover:bg-zinc-800'}`}
                     >
                         <tab.icon className={`w-4 h-4 stroke-[2.5] ${activeTab === tab.id ? 'scale-110' : ''}`} />
                         <span className="whitespace-nowrap">{tab.label}</span>
@@ -243,27 +243,27 @@ export const AdminModeration = () => {
 
             <div className="space-y-12">
                 {(activeTab === 'content' || activeTab === 'products') && selectedItems.length > 0 && (
-                    <div className="bg-primary dark:bg-white text-white dark:text-black p-6 rounded-[2rem] flex justify-between items-center animate-in slide-in-from-bottom-4 duration-500 shadow-xl border border-white/10">
+                    <div className="bg-primary dark:bg-background text-white dark:text-black p-6 rounded-[2rem] flex justify-between items-center animate-in slide-in-from-bottom-4 duration-500 shadow-xl border border-white/10">
                         <div className="flex items-center gap-4">
-                            <div className="w-8 h-8 rounded-full bg-white/20 dark:bg-black/10 flex items-center justify-center">
+                            <div className="w-8 h-8 rounded-full bg-background/20 dark:bg-black/10 flex items-center justify-center">
                                 <span className="text-sm font-black">{selectedItems.length}</span>
                             </div>
                             <span className="text-xs font-black uppercase tracking-wider">Items Selected</span>
                         </div>
                         <div className="flex gap-3">
-                            <Button size="sm" variant="outline" className="text-xs font-bold border-white/20 dark:border-black/20 hover:bg-white/10 dark:hover:bg-black/10 rounded-xl px-6" onClick={() => handleBulkAction('approve_content')}>Bulk Approve</Button>
+                            <Button size="sm" variant="outline" className="text-xs font-bold border-white/20 dark:border-black/20 hover:bg-background/10 dark:hover:bg-black/10 rounded-xl px-6" onClick={() => handleBulkAction('approve_content')}>Bulk Approve</Button>
                             <Button size="sm" variant="outline" className="text-xs font-bold border-red-500/50 text-red-100 dark:text-red-600 hover:bg-red-500/50 rounded-xl px-6" onClick={() => handleBulkAction('delete_content')}>Bulk Delete</Button>
                         </div>
                     </div>
                 )}
 
-                <div className="bg-slate-50 dark:bg-zinc-900 p-6 md:p-8 rounded-[2rem] border border-foreground/5 shadow-sm">
+                <div className="bg-foreground/[0.02] dark:bg-zinc-900 p-6 md:p-8 rounded-[2rem] border border-foreground/5 shadow-sm">
                     <label className="text-xs font-bold text-foreground/50 mb-3 block">Moderation Note (Optional)</label>
                     <textarea 
                         value={moderationNote}
                         onChange={(e) => setModerationNote(e.target.value)}
                         placeholder="Enter reason for action..."
-                        className="w-full bg-white dark:bg-black border border-foreground/10 rounded-2xl p-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all h-24 resize-none shadow-sm"
+                        className="w-full bg-background dark:bg-black border border-foreground/10 rounded-2xl p-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all h-24 resize-none shadow-sm"
                     />
                 </div>
 
@@ -277,13 +277,13 @@ export const AdminModeration = () => {
                                     placeholder="SEARCH CONTENT..." 
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
-                                    className="w-full h-12 bg-white dark:bg-primary border border-foreground/5 dark:border-white/5 rounded-2xl py-2 pl-12 pr-4 text-[10px] font-black uppercase tracking-[0.2em] focus:outline-none focus:border-foreground/20 dark:focus:border-white/20 transition-all shadow-sm" 
+                                    className="w-full h-12 bg-card border border-foreground/5 dark:border-white/5 rounded-2xl py-2 pl-12 pr-4 text-[10px] font-black uppercase tracking-[0.2em] focus:outline-none focus:border-foreground/20 dark:focus:border-white/20 transition-all shadow-sm" 
                                 />
                             </div>
                             <select 
                                 value={filter}
                                 onChange={(e) => setFilter(e.target.value as any)}
-                                className="h-12 bg-white dark:bg-primary border border-foreground/5 dark:border-white/5 rounded-2xl px-6 text-[10px] font-black uppercase tracking-[0.2em] focus:outline-none focus:border-foreground/20 dark:focus:border-white/20 transition-all shadow-sm cursor-pointer"
+                                className="h-12 bg-card border border-foreground/5 dark:border-white/5 rounded-2xl px-6 text-[10px] font-black uppercase tracking-[0.2em] focus:outline-none focus:border-foreground/20 dark:focus:border-white/20 transition-all shadow-sm cursor-pointer"
                             >
                                 <option value="all">All Content</option>
                                 <option value="pending">Pending</option>

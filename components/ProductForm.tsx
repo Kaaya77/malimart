@@ -45,7 +45,7 @@ const PhonePreview = ({ data, variant, activeImage }: { data: Partial<Product>, 
             
             {/* Content */}
             <div className="flex-1 bg-background dark:bg-background overflow-hidden flex flex-col relative">
-                <div className="h-[60%] relative bg-primary/5 dark:bg-background/5 group">
+                <div className="h-[60%] relative bg-primary/5 group">
                     <img 
                         src={activeImage || 'https://via.placeholder.com/300x400?text=Preview'} 
                         className="w-full h-full object-cover" 
@@ -57,9 +57,9 @@ const PhonePreview = ({ data, variant, activeImage }: { data: Partial<Product>, 
                     </div>
                 </div>
                 
-                <div className="flex-1 p-5 bg-background dark:bg-background relative z-10 flex flex-col border-t border-foreground/10 dark:border-background/10">
+                <div className="flex-1 p-5 bg-background dark:bg-background relative z-10 flex flex-col border-t border-foreground/10">
                     <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-1.5 text-foreground dark:text-background opacity-60">
+                        <div className="flex items-center gap-1.5 text-foreground opacity-60">
                             {data.brand ? (
                                 <span className="text-[9px] uppercase tracking-[0.2em]">{data.brand}</span>
                             ) : (
@@ -70,20 +70,20 @@ const PhonePreview = ({ data, variant, activeImage }: { data: Partial<Product>, 
                             )}
                         </div>
                     </div>
-                    <h3 className="font-serif text-lg text-foreground dark:text-background leading-snug mb-4 line-clamp-2">{data.name || 'Product Title'}</h3>
+                    <h3 className="font-serif text-lg text-foreground leading-snug mb-4 line-clamp-2">{data.name || 'Product Title'}</h3>
                     <div className="mt-auto">
                         {salePrice && !variant && (
-                            <span className="text-[10px] text-foreground dark:text-background opacity-40 line-through mb-0.5 block">
+                            <span className="text-[10px] text-foreground opacity-40 line-through mb-0.5 block">
                                 {(data.price || 0).toLocaleString()} {CURRENCY}
                             </span>
                         )}
                         <div className="flex justify-between items-end">
                             <div className="flex items-baseline gap-1">
-                                <span className="text-2xl font-serif text-foreground dark:text-background">{(finalPrice || 0).toLocaleString()}</span>
-                                <span className="text-[9px] uppercase tracking-[0.2em] text-foreground dark:text-background opacity-60">{CURRENCY}</span>
+                                <span className="text-2xl font-serif text-foreground">{(finalPrice || 0).toLocaleString()}</span>
+                                <span className="text-[9px] uppercase tracking-[0.2em] text-foreground opacity-60">{CURRENCY}</span>
                             </div>
                             {variant && (
-                                <div className="px-2 py-1 border border-foreground/10 dark:border-background/10 text-[8px] uppercase tracking-[0.2em] text-foreground dark:text-background">
+                                <div className="px-2 py-1 border border-foreground/10 text-[8px] uppercase tracking-[0.2em] text-foreground">
                                     {Object.values(variant.attributes).join('/')}
                                 </div>
                             )}
@@ -556,11 +556,11 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
 
     return (
         <div className="fixed inset-0 z-[200] bg-primary/80 dark:bg-background/80 backdrop-blur-xl flex items-center justify-center p-2 md:p-4 animate-in fade-in duration-300">
-            <div className="w-full max-w-[95vw] xl:max-w-7xl h-[95vh] md:h-[90vh] bg-background dark:bg-background flex overflow-hidden border border-foreground/10 dark:border-background/10 relative shadow-2xl">
-                <button onClick={onClose} className="absolute top-6 right-6 z-50 p-3 bg-transparent hover:opacity-50 transition-opacity text-foreground dark:text-background"><X className="w-6 h-6" /></button>
+            <div className="w-full max-w-[95vw] xl:max-w-7xl h-[95vh] md:h-[90vh] bg-background dark:bg-background flex overflow-hidden border border-foreground/10 relative shadow-2xl">
+                <button onClick={onClose} className="absolute top-6 right-6 z-50 p-3 bg-transparent hover:opacity-50 transition-opacity text-foreground"><X className="w-6 h-6" /></button>
 
                 {/* Left Rail */}
-                <div className="w-20 lg:w-72 border-r border-foreground/10 dark:border-background/10 flex flex-col justify-between py-8 shrink-0 bg-background dark:bg-background">
+                <div className="w-20 lg:w-72 border-r border-foreground/10 flex flex-col justify-between py-8 shrink-0 bg-background dark:bg-background">
                     <div className="px-3 lg:px-10">
                         <div className="w-14 h-14 bg-primary text-background dark:bg-background dark:text-foreground flex items-center justify-center font-serif text-2xl mb-12 mx-auto lg:mx-0">M</div>
                         <nav className="space-y-3">
@@ -571,8 +571,8 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
                                 { id: 'variants', label: 'Matrix', icon: LayoutGrid },
                                 { id: 'preview', label: 'Preview', icon: Smartphone }
                             ].map((s) => (
-                                <button key={s.id} onClick={() => setStep(s.id as any)} className={`w-full flex items-center justify-center lg:justify-start gap-4 p-4 lg:px-6 transition-all group relative ${step === s.id ? 'bg-primary/5 dark:bg-background/5 text-foreground dark:text-background' : 'opacity-40 hover:opacity-100 text-foreground dark:text-background'}`}>
-                                    <s.icon className={`w-5 h-5 ${step === s.id ? 'text-foreground dark:text-background' : 'group-hover:text-foreground dark:group-hover:text-background'}`} />
+                                <button key={s.id} onClick={() => setStep(s.id as any)} className={`w-full flex items-center justify-center lg:justify-start gap-4 p-4 lg:px-6 transition-all group relative ${step === s.id ? 'bg-primary/5 text-foreground' : 'opacity-40 hover:opacity-100 text-foreground'}`}>
+                                    <s.icon className={`w-5 h-5 ${step === s.id ? 'text-foreground' : 'group-hover:text-foreground dark:group-hover:text-background'}`} />
                                     <span className="hidden lg:block text-[10px] uppercase tracking-[0.2em]">{s.label}</span>
                                     {step === s.id && <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary dark:bg-background hidden lg:block"></div>}
                                 </button>
@@ -598,12 +598,12 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
                 <div className="flex-1 overflow-y-auto no-scrollbar bg-background dark:bg-background">
                     <div className="max-w-5xl mx-auto p-10 md:p-20 space-y-16">
                         {/* Header */}
-                        <div className="flex justify-between items-end border-b border-foreground/10 dark:border-background/10 pb-10">
+                        <div className="flex justify-between items-end border-b border-foreground/10 pb-10">
                             <div>
-                                <h1 className="text-4xl font-serif text-foreground dark:text-background tracking-wide">{initialData ? 'Edit Product' : 'New Listing'}</h1>
+                                <h1 className="text-4xl font-serif text-foreground tracking-wide">{initialData ? 'Edit Product' : 'New Listing'}</h1>
                                 <div className="flex items-center gap-2 mt-2">
                                     <Switch checked={isQuickMode} onCheckedChange={setIsQuickMode} />
-                                    <span className="text-foreground dark:text-background opacity-60 text-[10px] uppercase tracking-[0.2em]">Quick Add Mode</span>
+                                    <span className="text-foreground opacity-60 text-[10px] uppercase tracking-[0.2em]">Quick Add Mode</span>
                                 </div>
                             </div>
                             <div className="flex gap-3">
@@ -650,7 +650,7 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
                                             </div>
                                             <div>
                                                 <Label>Category</Label>
-                                                <select value={formData.category || ''} onChange={(e) => setFormData({...formData, category: e.target.value})} className="w-full h-12 bg-primary/5 dark:bg-background/5 border border-foreground/10 dark:border-background/10 px-4 text-sm outline-none text-foreground dark:text-background rounded-none">
+                                                <select value={formData.category || ''} onChange={(e) => setFormData({...formData, category: e.target.value})} className="w-full h-12 bg-foreground/[0.03] border border-foreground/10 px-4 text-sm outline-none text-foreground rounded-none">
                                                     {Object.keys(CATEGORY_HIERARCHY).map(c => <option key={c} value={c}>{c}</option>)}
                                                 </select>
                                             </div>
@@ -695,7 +695,7 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
                                             <div className="col-span-2">
                                                 <div className="flex justify-between items-center mb-2">
                                                     <Label className="mb-0">Description</Label>
-                                                    <button onClick={generateMagicDescription} disabled={aiLoading} className="text-[9px] text-foreground dark:text-background uppercase tracking-[0.2em] hover:opacity-50 transition-opacity flex items-center gap-2">
+                                                    <button onClick={generateMagicDescription} disabled={aiLoading} className="text-[9px] text-foreground uppercase tracking-[0.2em] hover:opacity-50 transition-opacity flex items-center gap-2">
                                                         <Wand2 className="w-3 h-3" /> Magic Describe
                                                     </button>
                                                 </div>
@@ -706,22 +706,22 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
                                                     className="min-h-[160px] font-serif text-base leading-relaxed"
                                                 />
                                                 <div className="flex justify-end mt-2 gap-4">
-                                                    <button onClick={handleEnhanceDescription} disabled={aiLoading} className="text-[9px] text-foreground dark:text-background opacity-40 uppercase tracking-[0.2em] hover:opacity-100 transition-opacity flex items-center gap-2">
+                                                    <button onClick={handleEnhanceDescription} disabled={aiLoading} className="text-[9px] text-foreground opacity-40 uppercase tracking-[0.2em] hover:opacity-100 transition-opacity flex items-center gap-2">
                                                         <Sparkles className="w-3 h-3" /> Enhance with AI
                                                     </button>
-                                                    <button onClick={handleTranslate} disabled={aiLoading} className="text-[9px] text-foreground dark:text-background opacity-40 uppercase tracking-[0.2em] hover:opacity-100 transition-opacity flex items-center gap-2">
+                                                    <button onClick={handleTranslate} disabled={aiLoading} className="text-[9px] text-foreground opacity-40 uppercase tracking-[0.2em] hover:opacity-100 transition-opacity flex items-center gap-2">
                                                         <Languages className="w-3 h-3" /> Translate to Swahili
                                                     </button>
                                                 </div>
                                             </div>
 
-                                            <div className="col-span-2 p-10 bg-primary/5 dark:bg-background/5 border border-foreground/10 dark:border-background/10">
+                                            <div className="col-span-2 p-10 bg-foreground/[0.03] border border-foreground/10">
                                                 <div className="flex items-center justify-between mb-8">
                                                     <div className="flex items-center gap-3">
                                                         <DollarSign className="w-5 h-5 opacity-40" />
                                                         <h3 className="text-[10px] uppercase tracking-[0.3em] font-bold">Pricing Strategy</h3>
                                                     </div>
-                                                    <button onClick={handleSuggestPrice} disabled={aiLoading} className="text-[9px] text-foreground dark:text-background uppercase tracking-[0.2em] hover:opacity-50 transition-opacity flex items-center gap-2">
+                                                    <button onClick={handleSuggestPrice} disabled={aiLoading} className="text-[9px] text-foreground uppercase tracking-[0.2em] hover:opacity-50 transition-opacity flex items-center gap-2">
                                                         <Sparkles className="w-3 h-3" /> Magic Price
                                                     </button>
                                                 </div>
@@ -730,7 +730,7 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
                                                     <div className="space-y-3">
                                                         <Label className="text-[9px] uppercase tracking-[0.1em] opacity-60">Selling Price</Label>
                                                         {variants.length > 0 ? (
-                                                            <div className="h-14 flex items-center px-5 bg-white dark:bg-black/20 border border-foreground/10 dark:border-background/10 text-xs font-mono text-foreground dark:text-background">
+                                                            <div className="h-14 flex items-center px-5 bg-white dark:bg-black/20 border border-foreground/10 text-xs font-mono text-foreground">
                                                                 {formatTZS(Math.min(...variants.map(v => v.base_price || 0)))} - {formatTZS(Math.max(...variants.map(v => v.base_price || 0)))}
                                                             </div>
                                                         ) : (
@@ -764,7 +764,7 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
                                                     </div>
                                                 </div>
 
-                                                <div className="space-y-6 pt-8 border-t border-foreground/10 dark:border-background/10">
+                                                <div className="space-y-6 pt-8 border-t border-foreground/10">
                                                     <div className="flex items-center justify-between">
                                                         <Label>VAT Status</Label>
                                                         <div className="flex gap-2">
@@ -773,7 +773,7 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
                                                                     key={opt.v}
                                                                     type="button" 
                                                                     onClick={() => setFormData({...formData, vat_rate: opt.v})}
-                                                                    className={`px-4 h-10 text-[9px] uppercase tracking-[0.2em] border transition-all ${formData.vat_rate === opt.v ? 'bg-primary text-background dark:bg-background dark:text-foreground border-transparent' : 'bg-transparent border-foreground/10 dark:border-background/10 text-foreground dark:text-background'}`}
+                                                                    className={`px-4 h-10 text-[9px] uppercase tracking-[0.2em] border transition-all ${formData.vat_rate === opt.v ? 'bg-primary text-background dark:bg-background dark:text-foreground border-transparent' : 'bg-transparent border-foreground/10 text-foreground'}`}
                                                                 >
                                                                     {opt.l}
                                                                 </button>
@@ -781,7 +781,7 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
                                                         </div>
                                                     </div>
                                                     {formData.vat_rate === 0.18 && (
-                                                        <div className="flex items-center justify-between p-4 border border-foreground/10 dark:border-background/10">
+                                                        <div className="flex items-center justify-between p-4 border border-foreground/10">
                                                             <Label className="mb-0">Apply 18% VAT Adjustment (Shift to Consumer)</Label>
                                                             <Switch checked={includeVat} onCheckedChange={toggleVat} />
                                                         </div>
@@ -798,11 +798,11 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
                                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                                         <div>
                                             <h3 className="text-[10px] uppercase tracking-[0.2em]">Visual Assets</h3>
-                                            <p className="text-[10px] text-foreground dark:text-background opacity-60 mt-1">High-quality imagery is the key to conversion.</p>
+                                            <p className="text-[10px] text-foreground opacity-60 mt-1">High-quality imagery is the key to conversion.</p>
                                         </div>
                                         <div className="flex gap-3">
-                                            <Button variant="outline" size="sm" onClick={() => setShowGenImage(!showGenImage)} className="text-[9px] uppercase tracking-[0.2em] bg-transparent border-foreground/10 dark:border-background/10"><Wand2 className="w-4 h-4 mr-2"/> AI Generate</Button>
-                                            <Button variant="outline" size="sm" onClick={() => setShowRefineImage(!showRefineImage)} className="text-[9px] uppercase tracking-[0.2em] bg-transparent border-foreground/10 dark:border-background/10" disabled={!formData.images?.length}><Sparkles className="w-4 h-4 mr-2"/> AI Refine</Button>
+                                            <Button variant="outline" size="sm" onClick={() => setShowGenImage(!showGenImage)} className="text-[9px] uppercase tracking-[0.2em] bg-transparent border-foreground/10"><Wand2 className="w-4 h-4 mr-2"/> AI Generate</Button>
+                                            <Button variant="outline" size="sm" onClick={() => setShowRefineImage(!showRefineImage)} className="text-[9px] uppercase tracking-[0.2em] bg-transparent border-foreground/10" disabled={!formData.images?.length}><Sparkles className="w-4 h-4 mr-2"/> AI Refine</Button>
                                         </div>
                                     </div>
 
@@ -816,7 +816,7 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
                                                     placeholder="e.g. A premium leather bag on a minimalist marble background" 
                                                     className="bg-white/10 border-white/20 text-white placeholder:text-white/40 dark:bg-black/10 dark:border-black/20 dark:text-black dark:placeholder:text-black/40"
                                                 />
-                                                <Button onClick={handleGenerateImage} disabled={aiLoading} className="bg-background text-foreground dark:bg-primary dark:text-background">Generate</Button>
+                                                <Button onClick={handleGenerateImage} disabled={aiLoading} className="bg-background text-foreground dark:bg-primary">Generate</Button>
                                             </div>
                                         </div>
                                     )}
@@ -831,7 +831,7 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
                                                     placeholder="e.g. Change background to a lush tropical garden" 
                                                     className="bg-white/10 border-white/20 text-white placeholder:text-white/40 dark:bg-black/10 dark:border-black/20 dark:text-black dark:placeholder:text-black/40"
                                                 />
-                                                <Button onClick={handleRefineImage} disabled={aiLoading} className="bg-background text-foreground dark:bg-primary dark:text-background">Refine</Button>
+                                                <Button onClick={handleRefineImage} disabled={aiLoading} className="bg-background text-foreground dark:bg-primary">Refine</Button>
                                             </div>
                                         </div>
                                     )}
@@ -839,7 +839,7 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                                         <div className="aspect-[4/5]"><ImageDropzone onImageSelected={handleImageUpload} /></div>
                                         {(formData.images || []).map((img, i) => (
-                                            <div key={i} className="aspect-[4/5] relative group overflow-hidden border border-foreground/10 dark:border-background/10 bg-primary/5 dark:bg-background/5">
+                                            <div key={i} className="aspect-[4/5] relative group overflow-hidden border border-foreground/10 bg-primary/5">
                                                 <img src={img} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="" />
                                                 <div className="absolute inset-0 bg-primary/60 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center gap-3 flex-wrap p-2">
                                                     <button onClick={() => { const newImgs = [...(formData.images || [])]; newImgs.splice(i, 1); setFormData({...formData, images: newImgs}); }} className="p-3 bg-background text-foreground hover:bg-red-500 hover:text-white transition-all"><Trash2 className="w-5 h-5"/></button>
@@ -872,11 +872,11 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
 
                             {step === 'logistics' && (
                                 <div className="space-y-6">
-                                    <div className="p-8 bg-primary/5 dark:bg-background/5 border border-foreground/10 dark:border-background/10">
+                                    <div className="p-8 bg-foreground/[0.03] border border-foreground/10">
                                         <div className="flex items-center gap-2 mb-8"><Box className="w-5 h-5" /><h3 className="text-[10px] uppercase tracking-[0.2em]">Inventory Management</h3></div>
                                         <div className="grid md:grid-cols-2 gap-10">
-                                            <div><Label>Global Stock</Label><Input type="number" value={Number.isNaN(formData.stock) ? '' : (formData.stock ?? '')} onChange={(e: any) => setFormData({...formData, stock: e.target.value === '' ? null : Number(e.target.value)})} className={`h-12 ${variants.length > 0 ? 'bg-primary/10 dark:bg-background/10 opacity-70' : ''}`} disabled={variants.length > 0} />{variants.length > 0 && <span className="text-[9px] text-foreground dark:text-background opacity-60 uppercase tracking-[0.2em] mt-1 block">Calculated from Variants</span>}</div>
-                                            <div><div className="flex justify-between items-center mb-2"><Label className="mb-0">Product SKU</Label><button onClick={handleGenerateSKU} disabled={aiLoading} className="text-[9px] text-foreground dark:text-background uppercase tracking-[0.2em] hover:opacity-50 transition-opacity">AI Gen</button></div><Input value={formData.sku || ''} onChange={(e: any) => setFormData({...formData, sku: e.target.value.toUpperCase()})} className="h-12 font-mono" /></div>
+                                            <div><Label>Global Stock</Label><Input type="number" value={Number.isNaN(formData.stock) ? '' : (formData.stock ?? '')} onChange={(e: any) => setFormData({...formData, stock: e.target.value === '' ? null : Number(e.target.value)})} className={`h-12 ${variants.length > 0 ? 'bg-primary/10 dark:bg-background/10 opacity-70' : ''}`} disabled={variants.length > 0} />{variants.length > 0 && <span className="text-[9px] text-foreground opacity-60 uppercase tracking-[0.2em] mt-1 block">Calculated from Variants</span>}</div>
+                                            <div><div className="flex justify-between items-center mb-2"><Label className="mb-0">Product SKU</Label><button onClick={handleGenerateSKU} disabled={aiLoading} className="text-[9px] text-foreground uppercase tracking-[0.2em] hover:opacity-50 transition-opacity">AI Gen</button></div><Input value={formData.sku || ''} onChange={(e: any) => setFormData({...formData, sku: e.target.value.toUpperCase()})} className="h-12 font-mono" /></div>
                                         </div>
                                     </div>
                                     <div className="grid md:grid-cols-2 gap-6">
@@ -889,11 +889,11 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
                                 {step === 'variants' && (
                                 <div className="space-y-10">
                                     {/* Attribute Configuration */}
-                                    <div className="p-8 bg-primary/5 dark:bg-background/5 border border-foreground/10 dark:border-background/10">
+                                    <div className="p-8 bg-foreground/[0.03] border border-foreground/10">
                                         <div className="flex justify-between items-center mb-8">
-                                            <div><h3 className="text-[10px] uppercase tracking-[0.2em]">Attributes</h3><p className="text-[10px] text-foreground dark:text-background opacity-60 mt-1">Add properties like size and color.</p></div>
+                                            <div><h3 className="text-[10px] uppercase tracking-[0.2em]">Attributes</h3><p className="text-[10px] text-foreground opacity-60 mt-1">Add properties like size and color.</p></div>
                                             <div className="flex gap-2">
-                                                <Button size="sm" variant="outline" onClick={handleSuggestAttributes} disabled={aiLoading} className="text-[9px] uppercase tracking-[0.2em] h-9 bg-transparent border-foreground/10 dark:border-background/10"><Wand2 className="w-3 h-3 mr-2"/> AI Suggest</Button>
+                                                <Button size="sm" variant="outline" onClick={handleSuggestAttributes} disabled={aiLoading} className="text-[9px] uppercase tracking-[0.2em] h-9 bg-transparent border-foreground/10"><Wand2 className="w-3 h-3 mr-2"/> AI Suggest</Button>
                                                 <div className="h-9 w-px bg-primary/10 dark:bg-background/10 mx-2" />
                                                 <div className="flex gap-1">
                                                     {['Size', 'Color', 'Material'].map(attr => (
@@ -904,7 +904,7 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
                                                                     setAttributes([...attributes, { name: attr, values: [] }]);
                                                                 }
                                                             }}
-                                                            className="h-9 px-3 text-[9px] uppercase tracking-[0.1em] border border-foreground/10 dark:border-background/10 hover:bg-primary/5 dark:hover:bg-background/5 transition-colors text-foreground dark:text-background"
+                                                            className="h-9 px-3 text-[9px] uppercase tracking-[0.1em] border border-foreground/10 hover:bg-primary/5 dark:hover:bg-background/5 transition-colors text-foreground"
                                                         >
                                                             + {attr}
                                                         </button>
@@ -913,11 +913,11 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
                                             </div>
                                         </div>
                                         {attributes.length === 0 ? <div className="text-center py-10 border border-dashed border-foreground/20 dark:border-background/20"><Button size="sm" variant="outline" onClick={() => setAttributes([{ name: 'Color', values: [] }])}><Plus className="w-3 h-3 mr-2"/> Add Attribute</Button></div> : attributes.map((attr, idx) => (
-                                            <div key={idx} className="p-6 bg-transparent border border-foreground/10 dark:border-background/10 relative group mb-4">
+                                            <div key={idx} className="p-6 bg-transparent border border-foreground/10 relative group mb-4">
                                                 <button onClick={() => setAttributes(attributes.filter((_, i) => i !== idx))} className="absolute top-4 right-4 p-2 opacity-40 hover:opacity-100 transition-opacity"><Trash2 className="w-4 h-4"/></button>
                                                 <div className="grid md:grid-cols-12 gap-8">
-                                                    <div className="md:col-span-4"><Label>Attribute Name</Label><select value={Object.keys(PRESET_ATTRIBUTES).includes(attr.name) ? attr.name : (attr.name ? 'Custom' : '')} onChange={e => { const n = [...attributes]; if (e.target.value === 'Custom') n[idx].name = ''; else n[idx].name = e.target.value; setAttributes(n); }} className="w-full h-11 bg-primary/5 dark:bg-background/5 border border-foreground/10 dark:border-background/10 px-4 text-xs outline-none rounded-none text-foreground dark:text-background">{Object.keys(PRESET_ATTRIBUTES).map(k => <option key={k} value={k}>{k}</option>)}<option value="Custom">Custom</option></select>{!Object.keys(PRESET_ATTRIBUTES).includes(attr.name) && <Input className="mt-2 h-10 text-xs" value={attr.name} onChange={e => { const n = [...attributes]; n[idx].name = e.target.value; setAttributes(n); }} />}</div>
-                                                    <div className="md:col-span-8"><Label>Values</Label><div className="flex flex-wrap gap-2 mb-3 p-2 bg-primary/5 dark:bg-background/5 border border-foreground/10 dark:border-background/10 min-h-[44px] items-center">{attr.values.map((val, vIdx) => <Badge key={vIdx} variant="secondary" className="pl-3 pr-1 py-1 font-medium rounded-none">{val}<button onClick={() => { const n = [...attributes]; n[idx].values = attr.values.filter((_, i) => i !== vIdx); setAttributes(n); }} className="ml-1.5 p-0.5 hover:opacity-50 transition-opacity"><X className="w-3 h-3"/></button></Badge>)}{attr.values.length === 0 && <span className="text-[10px] opacity-40 italic px-2">None added</span>}</div><div className="flex gap-2"><select className="flex-1 h-10 bg-transparent border border-foreground/10 dark:border-background/10 px-3 text-xs rounded-none text-foreground dark:text-background" onChange={(e) => { if (e.target.value && !attr.values.includes(e.target.value)) { const n = [...attributes]; n[idx].values = [...n[idx].values, e.target.value]; setAttributes(n); e.target.value = ""; } }} value=""><option value="" disabled>Select...</option>{(PRESET_ATTRIBUTES[attr.name] || []).map(opt => <option key={opt} value={opt} disabled={attr.values.includes(opt)}>{opt}</option>)}</select><Input placeholder="Or type custom..." className="w-1/2 h-10 text-xs rounded-none" onKeyDown={(e: any) => { if (e.key === 'Enter') { e.preventDefault(); const val = e.currentTarget.value.trim(); if (val && !attr.values.includes(val)) { const n = [...attributes]; n[idx].values = [...n[idx].values, val]; setAttributes(n); e.currentTarget.value = ''; } } }} /></div></div>
+                                                    <div className="md:col-span-4"><Label>Attribute Name</Label><select value={Object.keys(PRESET_ATTRIBUTES).includes(attr.name) ? attr.name : (attr.name ? 'Custom' : '')} onChange={e => { const n = [...attributes]; if (e.target.value === 'Custom') n[idx].name = ''; else n[idx].name = e.target.value; setAttributes(n); }} className="w-full h-11 bg-foreground/[0.03] border border-foreground/10 px-4 text-xs outline-none rounded-none text-foreground">{Object.keys(PRESET_ATTRIBUTES).map(k => <option key={k} value={k}>{k}</option>)}<option value="Custom">Custom</option></select>{!Object.keys(PRESET_ATTRIBUTES).includes(attr.name) && <Input className="mt-2 h-10 text-xs" value={attr.name} onChange={e => { const n = [...attributes]; n[idx].name = e.target.value; setAttributes(n); }} />}</div>
+                                                    <div className="md:col-span-8"><Label>Values</Label><div className="flex flex-wrap gap-2 mb-3 p-2 bg-foreground/[0.03] border border-foreground/10 min-h-[44px] items-center">{attr.values.map((val, vIdx) => <Badge key={vIdx} variant="secondary" className="pl-3 pr-1 py-1 font-medium rounded-none">{val}<button onClick={() => { const n = [...attributes]; n[idx].values = attr.values.filter((_, i) => i !== vIdx); setAttributes(n); }} className="ml-1.5 p-0.5 hover:opacity-50 transition-opacity"><X className="w-3 h-3"/></button></Badge>)}{attr.values.length === 0 && <span className="text-[10px] opacity-40 italic px-2">None added</span>}</div><div className="flex gap-2"><select className="flex-1 h-10 bg-transparent border border-foreground/10 px-3 text-xs rounded-none text-foreground" onChange={(e) => { if (e.target.value && !attr.values.includes(e.target.value)) { const n = [...attributes]; n[idx].values = [...n[idx].values, e.target.value]; setAttributes(n); e.target.value = ""; } }} value=""><option value="" disabled>Select...</option>{(PRESET_ATTRIBUTES[attr.name] || []).map(opt => <option key={opt} value={opt} disabled={attr.values.includes(opt)}>{opt}</option>)}</select><Input placeholder="Or type custom..." className="w-1/2 h-10 text-xs rounded-none" onKeyDown={(e: any) => { if (e.key === 'Enter') { e.preventDefault(); const val = e.currentTarget.value.trim(); if (val && !attr.values.includes(val)) { const n = [...attributes]; n[idx].values = [...n[idx].values, val]; setAttributes(n); e.currentTarget.value = ''; } } }} /></div></div>
                                                 </div>
                                             </div>
                                         ))}
@@ -929,21 +929,21 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
                                     {variants.length > 0 && (
                                         <div className="animate-in fade-in slide-in-from-bottom-4 space-y-6">
                                             {/* Separation of Bulk Tools and Header */}
-                                            <div className="flex flex-col md:flex-row justify-between items-center bg-transparent p-4 border border-foreground/10 dark:border-background/10 gap-4">
-                                                <h3 className="text-[10px] uppercase tracking-[0.2em] text-foreground dark:text-background shrink-0">Variant Matrix ({variants.length})</h3>
+                                            <div className="flex flex-col md:flex-row justify-between items-center bg-transparent p-4 border border-foreground/10 gap-4">
+                                                <h3 className="text-[10px] uppercase tracking-[0.2em] text-foreground shrink-0">Variant Matrix ({variants.length})</h3>
                                                 <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end">
-                                                    <div className="flex items-center gap-2 p-1.5 bg-primary/5 dark:bg-background/5 border border-foreground/10 dark:border-background/10">
+                                                    <div className="flex items-center gap-2 p-1.5 bg-foreground/[0.03] border border-foreground/10">
                                                         <Input placeholder="Bulk Price.." className="h-9 w-24 text-[10px] bg-transparent border-none" value={bulkPrice} onChange={(e: any) => setBulkPrice(e.target.value)} />
                                                         <Input placeholder="Bulk Stock.." className="h-9 w-24 text-[10px] bg-transparent border-none" value={bulkStock} onChange={(e: any) => setBulkStock(e.target.value)} />
                                                         <button onClick={handleBulkApply} className="h-9 px-4 bg-primary text-background dark:bg-background dark:text-foreground text-[10px] uppercase tracking-[0.2em] hover:opacity-90 transition-opacity">Apply All</button>
                                                     </div>
-                                                    <button onClick={handleAutoSkuVariants} className="h-12 px-5 bg-transparent border border-foreground/10 dark:border-background/10 text-foreground dark:text-background text-[10px] uppercase tracking-[0.2em] flex items-center gap-2 hover:bg-primary/5 dark:hover:bg-background/5 transition-colors"><Wand2 className="w-4 h-4"/> Auto-SKU</button>
+                                                    <button onClick={handleAutoSkuVariants} className="h-12 px-5 bg-transparent border border-foreground/10 text-foreground text-[10px] uppercase tracking-[0.2em] flex items-center gap-2 hover:bg-primary/5 dark:hover:bg-background/5 transition-colors"><Wand2 className="w-4 h-4"/> Auto-SKU</button>
                                                 </div>
                                             </div>
                                             
-                                            <div className="overflow-hidden border border-foreground/10 dark:border-background/10 shadow-sm">
+                                            <div className="overflow-hidden border border-foreground/10 shadow-sm">
                                                 <table className="w-full text-left">
-                                                    <thead className="bg-primary/5 dark:bg-background/5 text-[10px] uppercase tracking-[0.2em] text-foreground dark:text-background opacity-60">
+                                                    <thead className="bg-primary/5 text-[10px] uppercase tracking-[0.2em] text-foreground opacity-60">
                                                         <tr>
                                                             <th className="p-5 w-20 text-center">Img</th>
                                                             <th className="p-5">Configuration</th>
@@ -957,7 +957,7 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
                                                         {variants.map((v, i) => (
                                                             <tr key={i} className="group hover:bg-primary/5 dark:hover:bg-background/5 transition-colors" onMouseEnter={() => setHoveredVariant(v)} onMouseLeave={() => setHoveredVariant(null)}>
                                                                 <td className="p-4 text-center">
-                                                                    <div className="relative w-12 h-12 mx-auto bg-primary/5 dark:bg-background/5 overflow-hidden shadow-inner group-hover:ring-1 ring-foreground dark:ring-background transition-all">
+                                                                    <div className="relative w-12 h-12 mx-auto bg-primary/5 overflow-hidden shadow-inner group-hover:ring-1 ring-foreground dark:ring-background transition-all">
                                                                         {v.image_url ? <img src={v.image_url} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center opacity-40"><ImageIcon className="w-5 h-5"/></div>}
                                                                         <div className="absolute inset-0 bg-primary/40 opacity-0 group-hover:opacity-100 flex flex-wrap items-center justify-center gap-1 transition-opacity p-1">
                                                                             <button onClick={() => document.getElementById(`var-img-${i}`)?.click()} className="p-1 bg-background text-foreground hover:opacity-80 rounded-sm"><Upload className="w-3 h-3"/></button>
@@ -972,15 +972,15 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
                                                                         {Object.entries(v.attributes).map(([key, val]) => (
                                                                             <div key={key} className="flex flex-col">
                                                                                 <span className="text-[7px] uppercase opacity-40 mb-0.5">{key}</span>
-                                                                                <span className="px-2.5 py-1.5 bg-primary/5 dark:bg-background/5 text-[9px] text-foreground dark:text-background border border-foreground/10 dark:border-background/10 uppercase tracking-[0.2em]">{val}</span>
+                                                                                <span className="px-2.5 py-1.5 bg-primary/5 text-[9px] text-foreground border border-foreground/10 uppercase tracking-[0.2em]">{val}</span>
                                                                             </div>
                                                                         ))}
                                                                     </div>
                                                                 </td>
-                                                                <td className="p-4"><Input type="number" className="h-10 text-xs bg-transparent border-foreground/10 dark:border-background/10" value={v.base_price || 0} onChange={e => { const n = [...variants]; n[i].base_price = Number(e.target.value); setVariants(n); }} /></td>
-                                                                <td className="p-4"><Input type="number" className="h-10 text-xs bg-transparent border-foreground/10 dark:border-background/10 text-center" value={v.stock || 0} onChange={e => { const n = [...variants]; n[i].stock = Number(e.target.value); setVariants(n); }} /></td>
-                                                                <td className="p-4"><Input type="text" className="h-10 text-[10px] font-mono font-black bg-white dark:bg-black/40 border-slate-200 dark:border-white/10 uppercase" value={v.sku || ''} onChange={e => { const n = [...variants]; n[i].sku = e.target.value.toUpperCase(); setVariants(n); }} /></td>
-                                                                <td className="p-4 text-right"><button onClick={() => setVariants(variants.filter((_, idx) => idx !== i))} className="p-2 text-slate-300 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100"><Trash2 className="w-4 h-4"/></button></td>
+                                                                <td className="p-4"><Input type="number" className="h-10 text-xs bg-transparent border-foreground/10" value={v.base_price || 0} onChange={e => { const n = [...variants]; n[i].base_price = Number(e.target.value); setVariants(n); }} /></td>
+                                                                <td className="p-4"><Input type="number" className="h-10 text-xs bg-transparent border-foreground/10 text-center" value={v.stock || 0} onChange={e => { const n = [...variants]; n[i].stock = Number(e.target.value); setVariants(n); }} /></td>
+                                                                <td className="p-4"><Input type="text" className="h-10 text-[10px] font-mono font-black bg-foreground/[0.04] border-foreground/10 uppercase" value={v.sku || ''} onChange={e => { const n = [...variants]; n[i].sku = e.target.value.toUpperCase(); setVariants(n); }} /></td>
+                                                                <td className="p-4 text-right"><button onClick={() => setVariants(variants.filter((_, idx) => idx !== i))} className="p-2 text-foreground/30 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100"><Trash2 className="w-4 h-4"/></button></td>
                                                             </tr>
                                                         ))}
                                                     </tbody>
@@ -993,7 +993,7 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
 
                                 {step === 'preview' && (
                                     <div className="max-w-md mx-auto animate-in fade-in slide-in-from-bottom-4">
-                                        <h3 className="text-center text-[10px] uppercase tracking-[0.2em] text-foreground dark:text-background opacity-60 mb-12">Real-time Buyer Experience Preview</h3>
+                                        <h3 className="text-center text-[10px] uppercase tracking-[0.2em] text-foreground opacity-60 mb-12">Real-time Buyer Experience Preview</h3>
                                         <PhonePreview 
                                             data={formData} 
                                             variant={hoveredVariant}
@@ -1003,7 +1003,7 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
                                             <button onClick={handleSubmit} disabled={isLoading} className="w-full h-16 bg-primary text-background dark:bg-background dark:text-foreground text-[10px] uppercase tracking-[0.2em] hover:opacity-90 transition-opacity flex items-center justify-center group disabled:opacity-50">
                                                 Publish Store Listing <ArrowRight className="w-4 h-4 ml-3 group-hover:translate-x-1 transition-transform stroke-[1]"/>
                                             </button>
-                                            <p className="mt-6 text-[9px] text-foreground dark:text-background opacity-40 uppercase tracking-[0.2em]">Listing will be live immediately after verification</p>
+                                            <p className="mt-6 text-[9px] text-foreground opacity-40 uppercase tracking-[0.2em]">Listing will be live immediately after verification</p>
                                         </div>
                                     </div>
                                 )}

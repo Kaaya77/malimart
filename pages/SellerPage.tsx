@@ -63,7 +63,7 @@ export const SellerPage = () => {
                             </div>
                             <p className="text-[10px] uppercase tracking-[0.3em] font-black text-foreground/40">Merchant Console</p>
                          </div>
-                         <h1 className="text-5xl md:text-7xl font-serif font-light text-foreground tracking-tight leading-[0.9]">
+                         <h1 className="text-4xl md:text-6xl font-serif font-light text-foreground tracking-tight leading-[0.9]">
                              {vendorProfile?.store_name || user.name}'s <span className="italic font-light">Store</span>
                          </h1>
                     </div>
@@ -98,9 +98,9 @@ export const SellerPage = () => {
                                 visible: { opacity: 1, x: 0, transition: { duration: 0.3 } }
                             }}
                             onClick={() => setActiveTab(tab.id as any)} 
-                            className={`flex-1 flex items-center justify-center gap-3 py-4 px-8 rounded-none text-[10px] uppercase tracking-[0.2em] transition-all duration-500 ${activeTab === tab.id 
-                                ? 'bg-foreground text-background shadow-2xl shadow-foreground/20 scale-[1.02]' 
-                                : 'text-foreground/40 hover:text-foreground'}`}
+                            className={`flex-shrink-0 flex items-center justify-center gap-2 py-3 px-4 md:px-6 rounded-xl text-[10px] uppercase tracking-[0.15em] transition-all duration-200 ${activeTab === tab.id 
+                                ? 'bg-background text-foreground shadow-sm font-bold' 
+                                : 'text-foreground/45 hover:text-foreground/70 font-semibold'}`}
                         >
                             <tab.icon className={`w-4 h-4 stroke-[1.5] ${activeTab === tab.id ? 'scale-110' : ''} transition-transform`} /> 
                             <span className="whitespace-nowrap">{tab.label}</span>

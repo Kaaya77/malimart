@@ -30,6 +30,7 @@ export const ProductPage = () => {
     
     // Variant state
     const [selectedAttributes, setSelectedAttributes] = useState<Record<string, string>>({});
+    const [isAdding, setIsAdding] = useState(false);
 
     useEffect(() => {
         const found = products.find(p => p.id === id);
@@ -132,9 +133,11 @@ export const ProductPage = () => {
     }, [product, selectedVariant]);
 
     const handleAdd = () => {
-        if (!product || !metrics) return;
+        if (!product || !metrics || isAdding) return;
+        setIsAdding(true);
         addToCart(product, selectedVariant || undefined, qty);
-        addToast(`Added ${product.name} to bag`, 'success');
+        addToast(`Added to bag`, 'success');
+        setTimeout(() => setIsAdding(false), 1500);
     };
 
     const handleMessageSeller = () => {
@@ -492,10 +495,13 @@ export const ProductPage = () => {
                     <button
                         onClick={handleAdd}
                         disabled={metrics.isOut}
-                        className={`flex-1 h-14 rounded-2xl font-bold text-[13px] flex items-center justify-center gap-2.5 active:scale-[0.98] transition-transform shadow-lg ${metrics.isOut ? 'bg-foreground/10 text-foreground/35 cursor-not-allowed' : 'bg-foreground text-background'}`}
+                        className={`flex-1 h-14 rounded-2xl font-bold text-[13px] flex items-center justify-center gap-2.5 active:scale-[0.98] transition-all shadow-lg ${metrics.isOut ? 'bg-foreground/10 text-foreground/35 cursor-not-allowed' : isAdding ? 'bg-emerald-600 text-white' : 'bg-foreground text-background'}`}
                     >
-                        <ShoppingBag className="w-4 h-4 stroke-[2.2]" />
-                        {metrics.isOut ? 'Out of Stock' : `Add to Bag · ${formatTZS(metrics.price * qty)}`}
+                        {isAdding ? (
+                            <><Check className="w-4 h-4 stroke-[2.5]" /> Added to Bag</>
+                        ) : metrics.isOut ? 'Out of Stock' : (
+                            <><ShoppingBag className="w-4 h-4 stroke-[2.2]" /> Add to Bag · {formatTZS(metrics.price * qty)}</>
+                        )}
                     </button>
                 </div>
             </div>

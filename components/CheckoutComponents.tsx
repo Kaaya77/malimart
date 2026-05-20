@@ -623,7 +623,7 @@ export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, on
 
   return (
     <div className="fixed inset-0 z-[200] flex items-end md:items-center justify-center p-0 md:p-4 bg-black/75 backdrop-blur-xl animate-in fade-in">
-      <div className="relative w-full max-w-7xl h-[95dvh] md:h-[90vh] bg-background md:rounded-[2.5rem] rounded-t-[2rem] shadow-2xl overflow-hidden flex flex-col md:flex-row border border-foreground/8">
+      <div className="relative w-full max-w-7xl h-[95dvh] md:h-[90vh] bg-background md:rounded-3xl rounded-t-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row border border-foreground/8">
         
         {/* Mobile: Collapsible Order Summary */}
         <div className="md:hidden border-b border-foreground/8 bg-background/90 backdrop-blur-md z-30">
@@ -698,7 +698,7 @@ export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, on
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {addresses.length === 0 && <div className="col-span-2 text-center py-10 text-foreground/40 text-xs font-bold uppercase border-2 border-dashed border-foreground/10 rounded-[2rem] bg-foreground/[0.02]">No saved locations found</div>}
                       {addresses.map(addr => (
-                        <div key={addr.id} onClick={() => setSelectedAddress(addr)} className={`relative p-6 rounded-[2rem] border-2 cursor-pointer transition-all group overflow-hidden ${selectedAddress?.id === addr.id ? 'border-foreground bg-background shadow-xl' : 'border-transparent bg-foreground/[0.03] hover:border-foreground/20'}`}>
+                        <div key={addr.id} onClick={() => setSelectedAddress(addr)} className={`relative p-6 rounded-3xl border-2 cursor-pointer transition-all group overflow-hidden ${selectedAddress?.id === addr.id ? 'border-foreground bg-background shadow-xl' : 'border-transparent bg-foreground/[0.03] hover:border-foreground/20'}`}>
                           {selectedAddress?.id === addr.id && <div className="absolute top-0 right-0 p-3 bg-foreground text-background rounded-bl-2xl shadow-lg"><Check className="w-4 h-4" /></div>}
                           <div className="flex items-center gap-3 mb-3">
                             <div className={`p-2 rounded-xl ${addr.label.toLowerCase().includes('home') ? 'bg-blue-100 text-blue-600' : 'bg-foreground/[0.08] text-foreground'}`}>
@@ -767,7 +767,7 @@ export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, on
                       { id: 'mobile_transfer', label: 'Bank Transfer', icon: Landmark, desc: 'Direct Deposit' },
                       { id: 'cash', label: 'Cash on Delivery', icon: Banknote, desc: 'Pay at Doorstep' }
                     ].map(m => (
-                      <button key={m.id} onClick={() => setPaymentMethod(m.id as any)} className={`relative flex flex-col items-start p-6 rounded-[2.5rem] border-2 transition-all overflow-hidden group ${paymentMethod === m.id ? 'border-foreground bg-background shadow-xl' : 'border-transparent bg-foreground/[0.03] hover:border-foreground/20'}`}>
+                      <button key={m.id} onClick={() => setPaymentMethod(m.id as any)} className={`relative flex flex-col items-start p-6 rounded-3xl border-2 transition-all overflow-hidden group ${paymentMethod === m.id ? 'border-foreground bg-background shadow-xl' : 'border-transparent bg-foreground/[0.03] hover:border-foreground/20'}`}>
                         {paymentMethod === m.id && <div className="absolute top-0 right-0 p-4 bg-foreground rounded-bl-[2rem] text-background"><Check className="w-4 h-4"/></div>}
                         <div className={`p-4 rounded-2xl mb-4 transition-colors ${paymentMethod === m.id ? 'bg-foreground/[0.05] text-foreground' : 'bg-foreground/[0.06] text-foreground/40'}`}><m.icon className="w-6 h-6" /></div>
                         <p className="font-black text-sm uppercase tracking-tight text-foreground">{m.label}</p>
@@ -778,7 +778,7 @@ export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, on
                 </section>
 
                 {paymentMethod !== 'cash' && (
-                  <div className="bg-foreground rounded-[3rem] p-8 text-background relative overflow-hidden shadow-2xl">
+                  <div className="bg-foreground rounded-3xl p-8 text-background relative overflow-hidden shadow-2xl">
                     <div className="absolute top-0 right-0 w-96 h-96 bg-background/5 blur-[100px] pointer-events-none rounded-full"></div>
                     
                     <div className="relative z-10 grid md:grid-cols-2 gap-10">

@@ -251,7 +251,7 @@ const InventoryRow: React.FC<InventoryRowProps> = ({
                 </div>
 
                 {/* Actions */}
-                <div className="col-span-2 flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="col-span-2 flex justify-end gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                     <button onClick={() => onToggleBoost(product)} title={product.is_boosted ? "Remove Boost" : "Boost Listing"} className={`p-2 transition-opacity hover:opacity-50 ${product.is_boosted ? 'text-foreground dark:text-background' : 'opacity-40 text-foreground dark:text-background'}`}>
                         <Zap className={`w-4 h-4 stroke-[1] ${product.is_boosted ? 'fill-current' : ''}`}/>
                     </button>

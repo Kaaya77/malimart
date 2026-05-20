@@ -49,7 +49,7 @@ export const AdminGrowth = () => {
             <div className="flex flex-col md:flex-row justify-between items-end mb-10 gap-6">
                 <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-xl bg-primary dark:bg-white flex items-center justify-center shadow-lg shadow-foreground/10 dark:shadow-white/10">
+                        <div className="w-8 h-8 rounded-xl bg-primary dark:bg-background flex items-center justify-center shadow-lg shadow-foreground/10 dark:shadow-white/10">
                             <TrendingUp className="w-4 h-4 text-white dark:text-black" />
                         </div>
                         <p className="text-[10px] uppercase tracking-[0.3em] font-black text-foreground/40 dark:text-white/40">Performance Scaling</p>
@@ -82,16 +82,16 @@ export const AdminGrowth = () => {
                 />
             </div>
             
-            <Card className="p-8 rounded-[2.5rem] bg-white dark:bg-primary border-foreground/5 dark:border-white/5 shadow-xl shadow-foreground/5 dark:shadow-black/20 mb-10">
+            <Card className="p-8 rounded-3xl bg-card border-foreground/5 dark:border-white/5 shadow-xl shadow-foreground/5 dark:shadow-black/20 mb-10">
                 <h3 className="text-[10px] uppercase tracking-[0.3em] font-black text-foreground/40 dark:text-white/40 mb-8">Launch New Campaign</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <div className="space-y-2">
                         <label className="text-[9px] uppercase tracking-widest font-black text-foreground/40 dark:text-white/40 ml-1">Campaign Name</label>
-                        <Input placeholder="e.g. Summer Solstice" value={name} onChange={(e: any) => setName(e.target.value)} className="h-12 text-xs rounded-2xl bg-background dark:bg-white/5 border-transparent focus:bg-white dark:focus:bg-primary focus:border-foreground dark:focus:border-white transition-all" />
+                        <Input placeholder="e.g. Summer Solstice" value={name} onChange={(e: any) => setName(e.target.value)} className="h-12 text-xs rounded-2xl bg-background dark:bg-background/5 border-transparent focus:bg-background dark:focus:bg-primary focus:border-foreground dark:focus:border-white transition-all" />
                     </div>
                     <div className="space-y-2">
                         <label className="text-[9px] uppercase tracking-widest font-black text-foreground/40 dark:text-white/40 ml-1">Type</label>
-                        <select value={type} onChange={e => setType(e.target.value)} className="w-full h-12 text-xs uppercase tracking-[0.1em] rounded-2xl bg-background dark:bg-white/5 border-transparent px-4 text-foreground dark:text-white focus:bg-white dark:focus:bg-primary focus:border-foreground dark:focus:border-white transition-all outline-none appearance-none">
+                        <select value={type} onChange={e => setType(e.target.value)} className="w-full h-12 text-xs uppercase tracking-[0.1em] rounded-2xl bg-background dark:bg-background/5 border-transparent px-4 text-foreground dark:text-white focus:bg-background dark:focus:bg-primary focus:border-foreground dark:focus:border-white transition-all outline-none appearance-none">
                             <option value="flash_sale" className="bg-background dark:bg-background">Flash Sale</option>
                             <option value="discount" className="bg-background dark:bg-background">Discount</option>
                             <option value="referral" className="bg-background dark:bg-background">Referral</option>
@@ -99,7 +99,7 @@ export const AdminGrowth = () => {
                     </div>
                     <div className="space-y-2">
                         <label className="text-[9px] uppercase tracking-widest font-black text-foreground/40 dark:text-white/40 ml-1">Target Audience</label>
-                        <select value={target} onChange={e => setTarget(e.target.value)} className="w-full h-12 text-xs uppercase tracking-[0.1em] rounded-2xl bg-background dark:bg-white/5 border-transparent px-4 text-foreground dark:text-white focus:bg-white dark:focus:bg-primary focus:border-foreground dark:focus:border-white transition-all outline-none appearance-none">
+                        <select value={target} onChange={e => setTarget(e.target.value)} className="w-full h-12 text-xs uppercase tracking-[0.1em] rounded-2xl bg-background dark:bg-background/5 border-transparent px-4 text-foreground dark:text-white focus:bg-background dark:focus:bg-primary focus:border-foreground dark:focus:border-white transition-all outline-none appearance-none">
                             <option value="all" className="bg-background dark:bg-background">All Users</option>
                             <option value="new" className="bg-background dark:bg-background">New Users</option>
                             <option value="platinum" className="bg-background dark:bg-background">Platinum Users</option>
@@ -107,7 +107,7 @@ export const AdminGrowth = () => {
                     </div>
                     <div className="space-y-2">
                         <label className="text-[9px] uppercase tracking-widest font-black text-foreground/40 dark:text-white/40 ml-1">Tier Requirement</label>
-                        <select value={tier} onChange={e => setTier(e.target.value)} className="w-full h-12 text-xs uppercase tracking-[0.1em] rounded-2xl bg-background dark:bg-white/5 border-transparent px-4 text-foreground dark:text-white focus:bg-white dark:focus:bg-primary focus:border-foreground dark:focus:border-white transition-all outline-none appearance-none">
+                        <select value={tier} onChange={e => setTier(e.target.value)} className="w-full h-12 text-xs uppercase tracking-[0.1em] rounded-2xl bg-background dark:bg-background/5 border-transparent px-4 text-foreground dark:text-white focus:bg-background dark:focus:bg-primary focus:border-foreground dark:focus:border-white transition-all outline-none appearance-none">
                             <option value="bronze" className="bg-background dark:bg-background">Bronze</option>
                             <option value="silver" className="bg-background dark:bg-background">Silver</option>
                             <option value="gold" className="bg-background dark:bg-background">Gold</option>
@@ -116,21 +116,21 @@ export const AdminGrowth = () => {
                     </div>
                     <div className="space-y-2">
                         <label className="text-[9px] uppercase tracking-widest font-black text-foreground/40 dark:text-white/40 ml-1">Start Date</label>
-                        <Input type="date" value={startDate} onChange={(e: any) => setStartDate(e.target.value)} className="h-12 text-xs uppercase tracking-[0.1em] rounded-2xl bg-background dark:bg-white/5 border-transparent text-foreground dark:text-white transition-all" />
+                        <Input type="date" value={startDate} onChange={(e: any) => setStartDate(e.target.value)} className="h-12 text-xs uppercase tracking-[0.1em] rounded-2xl bg-background dark:bg-background/5 border-transparent text-foreground dark:text-white transition-all" />
                     </div>
                     <div className="space-y-2">
                         <label className="text-[9px] uppercase tracking-widest font-black text-foreground/40 dark:text-white/40 ml-1">End Date</label>
-                        <Input type="date" value={endDate} onChange={(e: any) => setEndDate(e.target.value)} className="h-12 text-xs uppercase tracking-[0.1em] rounded-2xl bg-background dark:bg-white/5 border-transparent text-foreground dark:text-white transition-all" />
+                        <Input type="date" value={endDate} onChange={(e: any) => setEndDate(e.target.value)} className="h-12 text-xs uppercase tracking-[0.1em] rounded-2xl bg-background dark:bg-background/5 border-transparent text-foreground dark:text-white transition-all" />
                     </div>
                     <div className="space-y-2">
                         <label className="text-[9px] uppercase tracking-widest font-black text-foreground/40 dark:text-white/40 ml-1">Automation</label>
-                        <label className="flex items-center gap-3 text-xs uppercase tracking-[0.1em] text-foreground dark:text-white cursor-pointer h-12 px-4 rounded-2xl bg-background dark:bg-white/5 border-transparent transition-all">
+                        <label className="flex items-center gap-3 text-xs uppercase tracking-[0.1em] text-foreground dark:text-white cursor-pointer h-12 px-4 rounded-2xl bg-background dark:bg-background/5 border-transparent transition-all">
                             <input type="checkbox" checked={autoReward} onChange={e => setAutoReward(e.target.checked)} className="w-4 h-4 rounded-full border-foreground/20 dark:border-white/20 text-foreground dark:text-white focus:ring-0 focus:ring-offset-0 bg-transparent" />
                             Auto-Reward
                         </label>
                     </div>
                     <div className="space-y-2 flex flex-col justify-end">
-                        <Button className="h-12 rounded-2xl bg-primary dark:bg-white text-white dark:text-black text-[10px] font-black uppercase tracking-[0.2em] hover:scale-[1.02] transition-transform" onClick={createCampaign}>
+                        <Button className="h-12 rounded-2xl bg-primary dark:bg-background text-white dark:text-black text-[10px] font-black uppercase tracking-[0.2em] hover:scale-[1.02] transition-transform" onClick={createCampaign}>
                             <Plus className="w-4 h-4 mr-2" /> Launch Campaign
                         </Button>
                     </div>
@@ -139,7 +139,7 @@ export const AdminGrowth = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {campaigns.map(campaign => (
-                    <Card key={campaign.id} className="p-8 rounded-[2.5rem] bg-white dark:bg-primary border-foreground/5 dark:border-white/5 shadow-xl shadow-foreground/5 dark:shadow-black/20 group hover:border-foreground/20 dark:hover:border-white/20 transition-all duration-500">
+                    <Card key={campaign.id} className="p-8 rounded-3xl bg-card border-foreground/5 dark:border-white/5 shadow-xl shadow-foreground/5 dark:shadow-black/20 group hover:border-foreground/20 dark:hover:border-white/20 transition-all duration-500">
                         <div className="flex justify-between items-start mb-6">
                             <div className="space-y-1">
                                 <h4 className="font-sans font-black text-2xl text-foreground dark:text-white leading-tight">{campaign.title}</h4>
@@ -147,7 +147,7 @@ export const AdminGrowth = () => {
                                     <span className="text-[9px] uppercase tracking-[0.2em] font-black text-foreground/40 dark:text-white/40">
                                         {campaign.campaign_type.replace('_', ' ')}
                                     </span>
-                                    <div className="w-1 h-1 rounded-full bg-primary/20 dark:bg-white/20" />
+                                    <div className="w-1 h-1 rounded-full bg-primary/20 dark:bg-background/20" />
                                     <span className="text-[9px] uppercase tracking-[0.2em] font-black text-foreground/40 dark:text-white/40">
                                         {campaign.target_type}
                                     </span>
