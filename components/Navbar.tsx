@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   Search, ShoppingBag, Menu, Heart,
   Home, Store, LayoutGrid, UserCircle, User,
+  Sun, Moon,
 } from 'lucide-react';
 import { useAppState } from '../context/AppContext';
 import { supabase } from '../services/supabaseClient';
@@ -12,17 +13,50 @@ import { SearchModal } from './SearchModal';
 import { UserMenu } from './UserMenu';
 
 /**
+ * useDarkMode — reads/writes the `dark` class on <html> and persists
+ * the preference in localStorage under the key `theme`.
+ */
+function useDarkMode() {
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const stored = localStorage.getItem('theme');
+    if (stored) return stored === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (isDark) {
+      root.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      root.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [isDark]);
+
+  const toggle = () => setIsDark(prev => !prev);
+  return { isDark, toggle };
+}
+
+/**
  * Top navbar.
+ *
+ * Logo: clean sans-serif wordmark.
  *
  * Behavior:
  *   - First 80px of scroll: transparent over the hero
  *   - After 80px: solid backdrop, shadow, compact 56px height
  *   - On non-home routes: solid by default
+ *
+ * Right cluster (mobile): search, dark-mode toggle, cart, hamburger.
+ * Right cluster (desktop): search, dark-mode toggle, wishlist, cart, account chip.
  */
 export const Navbar = () => {
   const { cart, user, setUser, notifications, unreadMessages, categories } = useAppState();
   const navigate = useNavigate();
   const location = useLocation();
+  const { isDark, toggle: toggleDark } = useDarkMode();
 
   const [scrolled, setScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -64,6 +98,10 @@ export const Navbar = () => {
     : '/login';
   const initial = (user?.user_metadata?.full_name || user?.email || '?').trim()[0]?.toUpperCase();
 
+  /* Shared icon-button classes */
+  const iconBtn = `w-10 h-10 rounded-full flex items-center justify-center transition-colors
+    ${isOnDark ? 'hover:bg-white/15' : 'hover:bg-foreground/[0.06]'}`;
+
   return (
     <header
       className={`fixed top-0 inset-x-0 z-50 transition-all duration-300
@@ -73,6 +111,7 @@ export const Navbar = () => {
       `}
     >
       <div className={`container mx-auto px-5 md:px-8 flex items-center justify-between transition-[height] duration-300 ${scrolled ? 'h-14' : 'h-16 md:h-20'}`}>
+
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 group flex-shrink-0">
           <span
@@ -96,22 +135,32 @@ export const Navbar = () => {
 
         {/* Right cluster */}
         <div className={`flex items-center gap-1.5 md:gap-2 ${isOnDark ? 'text-white' : 'text-foreground'}`}>
+
           {/* Search */}
           <button
             onClick={() => setIsSearchOpen(true)}
             aria-label="Search"
-            className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors
-              ${isOnDark ? 'hover:bg-white/15' : 'hover:bg-foreground/[0.06]'}`}
+            className={iconBtn}
           >
             <Search className="w-[18px] h-[18px] stroke-[2]" />
+          </button>
+
+          {/* Dark / Light mode toggle */}
+          <button
+            onClick={toggleDark}
+            aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            className={iconBtn}
+          >
+            {isDark
+              ? <Sun className="w-[18px] h-[18px] stroke-[2]" />
+              : <Moon className="w-[18px] h-[18px] stroke-[2]" />}
           </button>
 
           {/* Wishlist (desktop only) */}
           <Link
             to="/wishlist"
             aria-label="Wishlist"
-            className={`hidden md:flex w-10 h-10 rounded-full items-center justify-center transition-colors
-              ${isOnDark ? 'hover:bg-white/15' : 'hover:bg-foreground/[0.06]'}`}
+            className={`hidden md:flex ${iconBtn}`}
           >
             <Heart className="w-[18px] h-[18px] stroke-[2]" />
           </Link>
@@ -120,8 +169,7 @@ export const Navbar = () => {
           <Link
             to="/cart"
             aria-label={`Cart (${cartCount} items)`}
-            className={`relative w-10 h-10 rounded-full flex items-center justify-center transition-colors
-              ${isOnDark ? 'hover:bg-white/15' : 'hover:bg-foreground/[0.06]'}`}
+            className={`relative ${iconBtn}`}
           >
             <ShoppingBag className="w-[18px] h-[18px] stroke-[2]" />
             {cartCount > 0 && (
@@ -167,8 +215,7 @@ export const Navbar = () => {
           <button
             onClick={() => setIsMobileMenuOpen(true)}
             aria-label="Open menu"
-            className={`md:hidden w-10 h-10 rounded-full flex items-center justify-center transition-colors
-              ${isOnDark ? 'hover:bg-white/15' : 'hover:bg-foreground/[0.06]'}`}
+            className={`md:hidden ${iconBtn}`}
           >
             <Menu className="w-[18px] h-[18px] stroke-[2]" />
           </button>
@@ -194,6 +241,8 @@ export const Navbar = () => {
         navLinks={navLinks}
         notifications={notifications}
         unreadMessages={unreadMessages}
+        isDark={isDark}
+        toggleDark={toggleDark}
       />
     </header>
   );
@@ -222,15 +271,11 @@ export const MobileBottomNav = () => {
     path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
 
   return (
-    // FIX: Replaced unreliable `pb-safe` Tailwind class with an inline
-    // env(safe-area-inset-bottom) style. pb-safe is not a built-in Tailwind
-    // utility and may not be defined, causing the nav to overlap the iOS
-    // home indicator on notch/island devices.
     <nav
       role="navigation"
       aria-label="Primary mobile navigation"
       className="fixed bottom-0 inset-x-0 z-40 md:hidden"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <div className="mx-3 mb-3 rounded-2xl bg-background/95 backdrop-blur-2xl ring-1 ring-foreground/8 shadow-[0_-2px_20px_-2px_rgba(0,0,0,0.08)]">
         <div className="grid grid-cols-5 h-16">

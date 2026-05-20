@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-// FIX: Added PanInfo import for swipe-to-close gesture typing
-import { motion, AnimatePresence, PanInfo } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, BellRing, MessageCircle, UserCircle, LogOut,
   Heart, ShoppingBag, Store, LayoutGrid, Info, ChevronRight,
+  Sun, Moon,
 } from 'lucide-react';
 
 interface NavMobileProps {
@@ -15,14 +15,23 @@ interface NavMobileProps {
   navLinks: { name: string; path: string }[];
   notifications: any[];
   unreadMessages: number;
+  /** Current dark-mode state, passed down from Navbar */
+  isDark: boolean;
+  /** Toggle dark/light mode */
+  toggleDark: () => void;
 }
 
 /**
  * Mobile drawer (full-screen). Single-tap distance for every action.
  *
- * FIX: Added swipe-to-close gesture on the drawer — drag right >80px or
- *      flick with velocity >300px/s closes the menu, matching iOS/Android
- *      nav drawer conventions. PanInfo imported from framer-motion.
+ * Structure:
+ *   - Header: title, dark-mode toggle, close button
+ *   - Hero strip: user profile card (or "Sign in" card)
+ *   - Primary navigation: Shop / Categories / Wishlist / Bag / Notifications / Messages
+ *   - Secondary: About, account areas
+ *   - Footer: Sign out (if logged in)
+ *
+ * Swipe left-to-right closes (via backdrop or X button).
  */
 export const NavMobile = ({
   isMobileMenuOpen,
@@ -32,6 +41,8 @@ export const NavMobile = ({
   navLinks,
   notifications,
   unreadMessages,
+  isDark,
+  toggleDark,
 }: NavMobileProps) => {
   const location = useLocation();
 
@@ -66,13 +77,6 @@ export const NavMobile = ({
     ? (user.role === 'admin' ? '/admin' : user.role === 'seller' ? '/seller' : '/buyer')
     : '/login';
 
-  // FIX: Swipe-to-close handler — right drag >80px or fast flick closes drawer
-  const handleDragEnd = (_: any, info: PanInfo) => {
-    if (info.offset.x > 80 || info.velocity.x > 300) {
-      setIsMobileMenuOpen(false);
-    }
-  };
-
   return (
     <AnimatePresence>
       {isMobileMenuOpen && (
@@ -89,28 +93,42 @@ export const NavMobile = ({
             className="absolute inset-0 bg-black/55"
           />
 
-          {/* Drawer — FIX: drag="x" with swipe-to-close */}
+          {/* Drawer */}
           <motion.div
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 28, stiffness: 280 }}
-            drag="x"
-            dragConstraints={{ left: 0, right: 0 }}
-            dragElastic={{ left: 0, right: 0.6 }}
-            onDragEnd={handleDragEnd}
-            className="absolute top-0 right-0 bottom-0 w-[88%] max-w-sm bg-background flex flex-col cursor-grab active:cursor-grabbing"
+            className="absolute top-0 right-0 bottom-0 w-[88%] max-w-sm bg-background flex flex-col"
+            style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
           >
-            {/* Header */}
-            <div className="flex items-center justify-between p-5 border-b border-foreground/8">
-              <span className="font-sans text-xl font-semibold tracking-tight text-foreground">Menu</span>
-              <button
-                onClick={() => setIsMobileMenuOpen(false)}
-                aria-label="Close menu"
-                className="w-10 h-10 rounded-full hover:bg-foreground/[0.06] flex items-center justify-center text-foreground"
-              >
-                <X className="w-5 h-5 stroke-[2]" />
-              </button>
+            {/* Header — title, dark-mode toggle, close */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-foreground/8">
+              <span className="font-sans text-xl font-semibold tracking-tight text-foreground">
+                Menu
+              </span>
+
+              <div className="flex items-center gap-1">
+                {/* Dark / Light toggle */}
+                <button
+                  onClick={toggleDark}
+                  aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+                  className="w-10 h-10 rounded-full hover:bg-foreground/[0.06] flex items-center justify-center text-foreground transition-colors"
+                >
+                  {isDark
+                    ? <Sun className="w-[18px] h-[18px] stroke-[2]" />
+                    : <Moon className="w-[18px] h-[18px] stroke-[2]" />}
+                </button>
+
+                {/* Close */}
+                <button
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  aria-label="Close menu"
+                  className="w-10 h-10 rounded-full hover:bg-foreground/[0.06] flex items-center justify-center text-foreground transition-colors"
+                >
+                  <X className="w-5 h-5 stroke-[2]" />
+                </button>
+              </div>
             </div>
 
             <div className="flex-1 overflow-y-auto p-5 space-y-5">
@@ -132,18 +150,18 @@ export const NavMobile = ({
                       </p>
                       <p className="text-xs text-foreground/55 capitalize">{user.role || 'Buyer'}</p>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-foreground/40" />
+                    <ChevronRight className="w-4 h-4 text-foreground/40 flex-shrink-0" />
                   </>
                 ) : (
                   <>
-                    <div className="w-11 h-11 rounded-full bg-foreground text-background flex items-center justify-center">
+                    <div className="w-11 h-11 rounded-full bg-foreground text-background flex items-center justify-center flex-shrink-0">
                       <UserCircle className="w-5 h-5 stroke-[2]" />
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-semibold text-foreground">Sign in</p>
                       <p className="text-xs text-foreground/55">Track orders, save favorites</p>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-foreground/40" />
+                    <ChevronRight className="w-4 h-4 text-foreground/40 flex-shrink-0" />
                   </>
                 )}
               </Link>
@@ -156,9 +174,9 @@ export const NavMobile = ({
                     <Link
                       key={item.path}
                       to={item.path}
-                      className="flex items-center gap-3 p-3 rounded-xl hover:bg-foreground/[0.05] text-foreground transition-colors"
+                      className="flex items-center gap-3 p-3 rounded-xl hover:bg-foreground/[0.05] text-foreground transition-colors min-h-[48px]"
                     >
-                      <Icon className="w-[18px] h-[18px] stroke-[2] text-foreground/70" />
+                      <Icon className="w-[18px] h-[18px] stroke-[2] text-foreground/70 flex-shrink-0" />
                       <span className="text-[15px] font-semibold flex-1">{item.name}</span>
                       <ChevronRight className="w-4 h-4 text-foreground/30" />
                     </Link>
@@ -173,7 +191,7 @@ export const NavMobile = ({
                     <Link
                       key={link.path}
                       to={link.path}
-                      className="flex items-center gap-3 p-3 rounded-xl hover:bg-foreground/[0.05] text-foreground transition-colors"
+                      className="flex items-center gap-3 p-3 rounded-xl hover:bg-foreground/[0.05] text-foreground transition-colors min-h-[48px]"
                     >
                       <span className="text-[15px] font-medium flex-1">{link.name}</span>
                       <ChevronRight className="w-4 h-4 text-foreground/30" />
@@ -187,9 +205,9 @@ export const NavMobile = ({
                 <div className="space-y-1 pt-2 border-t border-foreground/8">
                   <Link
                     to="/notifications"
-                    className="flex items-center gap-3 p-3 rounded-xl hover:bg-foreground/[0.05] text-foreground transition-colors"
+                    className="flex items-center gap-3 p-3 rounded-xl hover:bg-foreground/[0.05] text-foreground transition-colors min-h-[48px]"
                   >
-                    <BellRing className="w-[18px] h-[18px] stroke-[2] text-foreground/70" />
+                    <BellRing className="w-[18px] h-[18px] stroke-[2] text-foreground/70 flex-shrink-0" />
                     <span className="text-[15px] font-semibold flex-1">Notifications</span>
                     {unreadNotifs > 0 && (
                       <span className="px-1.5 h-5 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center min-w-[20px]">
@@ -199,9 +217,9 @@ export const NavMobile = ({
                   </Link>
                   <Link
                     to="/messages"
-                    className="flex items-center gap-3 p-3 rounded-xl hover:bg-foreground/[0.05] text-foreground transition-colors"
+                    className="flex items-center gap-3 p-3 rounded-xl hover:bg-foreground/[0.05] text-foreground transition-colors min-h-[48px]"
                   >
-                    <MessageCircle className="w-[18px] h-[18px] stroke-[2] text-foreground/70" />
+                    <MessageCircle className="w-[18px] h-[18px] stroke-[2] text-foreground/70 flex-shrink-0" />
                     <span className="text-[15px] font-semibold flex-1">Messages</span>
                     {unreadMessages > 0 && (
                       <span className="px-1.5 h-5 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center min-w-[20px]">
@@ -216,22 +234,22 @@ export const NavMobile = ({
               <div className="pt-2 border-t border-foreground/8">
                 <Link
                   to="/about"
-                  className="flex items-center gap-3 p-3 rounded-xl hover:bg-foreground/[0.05] text-foreground transition-colors"
+                  className="flex items-center gap-3 p-3 rounded-xl hover:bg-foreground/[0.05] text-foreground transition-colors min-h-[48px]"
                 >
-                  <Info className="w-[18px] h-[18px] stroke-[2] text-foreground/70" />
+                  <Info className="w-[18px] h-[18px] stroke-[2] text-foreground/70 flex-shrink-0" />
                   <span className="text-[15px] font-medium flex-1">About MaliMart</span>
                 </Link>
               </div>
             </div>
 
-            {/* Footer */}
+            {/* Footer — sign out */}
             {user && (
               <div className="p-5 border-t border-foreground/8">
                 <button
                   onClick={() => { setIsMobileMenuOpen(false); handleLogout(); }}
-                  className="flex items-center gap-3 w-full p-3 rounded-xl bg-rose-500/8 text-rose-600 hover:bg-rose-500/12 transition-colors"
+                  className="flex items-center gap-3 w-full p-3 rounded-xl bg-rose-500/8 text-rose-600 dark:text-rose-400 hover:bg-rose-500/12 transition-colors min-h-[48px]"
                 >
-                  <LogOut className="w-[18px] h-[18px] stroke-[2]" />
+                  <LogOut className="w-[18px] h-[18px] stroke-[2] flex-shrink-0" />
                   <span className="text-[15px] font-semibold">Sign out</span>
                 </button>
               </div>
