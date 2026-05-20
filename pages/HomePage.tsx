@@ -1,18 +1,26 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ProductCard } from '../components/ProductCard';
+import { ProductModal } from '../components/ProductModal';
 import { useAppState } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
 
 const HomePage: React.FC = () => {
   const { products = [] } = useAppState();
   const navigate = useNavigate();
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const featuredProducts = products.slice(0, 8);
 
+  const openProduct = (product) => {
+    setSelectedProduct(product);
+    setIsModalOpen(true);
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Section - Mobile First */}
+      {/* Hero Section */}
       <section className="relative h-[85vh] md:h-[95vh] flex items-center justify-center overflow-hidden bg-black text-white">
         <div className="absolute inset-0 bg-[url('https://picsum.photos/id/1015/2000/1200')] bg-cover bg-center opacity-75" />
         
@@ -56,10 +64,24 @@ const HomePage: React.FC = () => {
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {featuredProducts.map((product, i) => (
-            <ProductCard key={product.id} product={product} index={i} />
+            <ProductCard 
+              key={product.id} 
+              product={product} 
+              index={i} 
+              onClick={() => openProduct(product)}
+            />
           ))}
         </div>
       </section>
+
+      <ProductModal 
+        product={selectedProduct} 
+        isOpen={isModalOpen} 
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedProduct(null);
+        }} 
+      />
     </div>
   );
 };
