@@ -16,11 +16,9 @@ import { Magnetic } from './components/Effects';
 
 // Lazy Page Imports
 const HomePage = lazy(() => import('./pages/HomePage').then(m => ({ default: m.HomePage })));
-const ShopPage = lazy(() => import('./pages/ShopPage').then(m => ({ default: m.ShopPage })));
 const SellerPage = lazy(() => import('./pages/SellerPage').then(m => ({ default: m.SellerPage })));
 const BuyerPage = lazy(() => import('./pages/BuyerPage').then(m => ({ default: m.BuyerPage })));
 const CartPage = lazy(() => import('./pages/CartPage').then(m => ({ default: m.CartPage })));
-const WishlistPage = lazy(() => import('./pages/CustomerPages').then(m => ({ default: m.WishlistPage })));
 const LoginPage = lazy(() => import('./pages/AuthPage').then(m => ({ default: m.LoginPage })));
 const StorePage = lazy(() => import('./pages/StorePage').then(m => ({ default: m.StorePage })));
 const ProductPage = lazy(() => import('./pages/ProductPage').then(m => ({ default: m.ProductPage })));
@@ -31,9 +29,7 @@ const SellerSettingsPage = lazy(() => import('./pages/SellerSettingsPage').then(
 const BuyerSettingsPage = lazy(() => import('./pages/BuyerSettingsPage').then(m => ({ default: m.BuyerSettingsPage })));
 const CategoriesPage = lazy(() => import('./pages/CategoriesPage').then(m => ({ default: m.CategoriesPage })));
 const MessagesPage = lazy(() => import('./pages/MessagesPage').then(m => ({ default: m.MessagesPage })));
-const AboutPage = lazy(() => import('./pages/AboutPage').then(m => ({ default: m.AboutPage })));
 const AdminPage = lazy(() => import('./pages/AdminPage').then(m => ({ default: m.AdminPage })));
-const BannedPage = lazy(() => import('./pages/BannedPage').then(m => ({ default: m.BannedPage })));
 
 // --- SCROLL TO TOP COMPONENT ---
 const ScrollToTop = () => {
@@ -63,7 +59,8 @@ const RouteGuard = ({ children, requiredRole }: PropsWithChildren<RouteGuardProp
 
   if (!user) return <Navigate to={`/login?redirect=${encodeURIComponent(location.pathname)}`} replace />;
 
-  if (user.is_banned) return <Navigate to="/banned" replace />;
+  // Banned handling - temporarily redirect to home or login
+  if (user.is_banned) return <Navigate to="/" replace />;
 
   if (requiredRole && user.role !== requiredRole) {
     if (user.role === 'admin') return <Navigate to="/admin" replace />;
@@ -229,16 +226,14 @@ const AppContent = () => {
           >
             <Routes location={location}>
               <Route path="/" element={<HomePage />} />
-              <Route path="/shop" element={<ShopPage />} />
+              <Route path="/shop" element={<StorePage />} />  {/* Shop now uses StorePage */}
               <Route path="/product/:id" element={<ProductPage />} />
               <Route path="/store/:id" element={<StorePage />} />
               <Route path="/cart" element={<CartPage />} />
-              <Route path="/wishlist" element={<WishlistPage />} />
+              <Route path="/wishlist" element={<Navigate to="/buyer?tab=wishlist" replace />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/categories" element={<CategoriesPage />} />
               <Route path="/messages" element={<MessagesPage />} />
-              <Route path="/about" element={<AboutPage />} />
-              <Route path="/banned" element={<BannedPage />} />
               <Route path="/buyer" element={<RouteGuard requiredRole="buyer"><BuyerPage /></RouteGuard>} />
               <Route path="/seller" element={<RouteGuard requiredRole="seller"><SellerPage /></RouteGuard>} />
               <Route path="/admin" element={<RouteGuard requiredRole="admin"><AdminPage /></RouteGuard>} />
