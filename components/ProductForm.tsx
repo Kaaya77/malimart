@@ -628,7 +628,7 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
  variant="ghost" 
  onClick={handleMagicFill} 
  disabled={isMagicFilling || !formData.images?.length}
- className="bg-background/10 dark:bg-primary/10 hover:bg-background/20 dark:hover:bg-primary/20 text-background dark:text-foreground"
+ className="bg-background/10 dark:bg-foreground/[0.06] hover:bg-background/20 dark:hover:bg-primary/20 text-background dark:text-foreground"
  >
  {isMagicFilling ? <Loader2 className="w-4 h-4 animate-spin" /> : "Magic Fill"}
  </Button>
@@ -869,10 +869,10 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
 
  {step === 'logistics' && (
  <div className="space-y-6">
- <div className="p-8 bg-foreground/[0.03] border border-foreground/10">
+ <div className="p-6 bg-foreground/[0.02] border border-foreground/8 rounded-2xl">
  <div className="flex items-center gap-2 mb-8"><Box className="w-5 h-5" /><h3 className="text-[10px] uppercase tracking-[0.2em]">Inventory Management</h3></div>
  <div className="grid md:grid-cols-2 gap-10">
- <div><Label>Global Stock</Label><Input type="number" value={Number.isNaN(formData.stock) ? '' : (formData.stock ?? '')} onChange={(e: any) => setFormData({...formData, stock: e.target.value === '' ? null : Number(e.target.value)})} className={`h-12 ${variants.length > 0 ? 'bg-primary/10 dark:bg-background/10 opacity-70' : ''}`} disabled={variants.length > 0} />{variants.length > 0 && <span className="text-[9px] text-foreground opacity-60 uppercase tracking-[0.2em] mt-1 block">Calculated from Variants</span>}</div>
+ <div><Label>Global Stock</Label><Input type="number" value={Number.isNaN(formData.stock) ? '' : (formData.stock ?? '')} onChange={(e: any) => setFormData({...formData, stock: e.target.value === '' ? null : Number(e.target.value)})} className={`h-12 ${variants.length > 0 ? 'bg-foreground/[0.06] opacity-70' : ''}`} disabled={variants.length > 0} />{variants.length > 0 && <span className="text-[9px] text-foreground opacity-60 uppercase tracking-[0.2em] mt-1 block">Calculated from Variants</span>}</div>
  <div><div className="flex justify-between items-center mb-2"><Label className="mb-0">Product SKU</Label><button onClick={handleGenerateSKU} disabled={aiLoading} className="text-[9px] text-foreground uppercase tracking-[0.2em] hover:opacity-50 transition-opacity">AI Gen</button></div><Input value={formData.sku || ''} onChange={(e: any) => setFormData({...formData, sku: e.target.value.toUpperCase()})} className="h-12 font-mono" /></div>
  </div>
  </div>
@@ -886,12 +886,12 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
  {step === 'variants' && (
  <div className="space-y-10">
  {/* Attribute Configuration */}
- <div className="p-8 bg-foreground/[0.03] border border-foreground/10">
+ <div className="p-6 bg-foreground/[0.02] border border-foreground/8 rounded-2xl">
  <div className="flex justify-between items-center mb-8">
  <div><h3 className="text-[10px] uppercase tracking-[0.2em]">Attributes</h3><p className="text-[10px] text-foreground opacity-60 mt-1">Add properties like size and color.</p></div>
  <div className="flex gap-2">
  <Button size="sm" variant="outline" onClick={handleSuggestAttributes} disabled={aiLoading} className="text-[9px] uppercase tracking-[0.2em] h-9 bg-transparent border-foreground/10"><Wand2 className="w-3 h-3 mr-2"/> AI Suggest</Button>
- <div className="h-9 w-px bg-primary/10 dark:bg-background/10 mx-2" />
+ <div className="h-9 w-px bg-foreground/[0.06] mx-2" />
  <div className="flex gap-1">
  {['Size', 'Color', 'Material'].map(attr => (
  <button 
@@ -901,7 +901,7 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
  setAttributes([...attributes, { name: attr, values: [] }]);
  }
  }}
- className="h-9 px-3 text-[9px] uppercase tracking-[0.1em] border border-foreground/10 hover:bg-foreground/[0.04] transition-colors text-foreground"
+ className="h-9 px-3 text-[9px] uppercase tracking-widest font-bold border border-foreground/10 rounded-xl hover:bg-foreground/[0.06] transition-colors text-foreground/70 hover:text-foreground active:scale-95"
  >
  + {attr}
  </button>
@@ -909,12 +909,12 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
  </div>
  </div>
  </div>
- {attributes.length === 0 ? <div className="text-center py-10 border border-dashed border-foreground/20"><Button size="sm" variant="outline" onClick={() => setAttributes([{ name: 'Color', values: [] }])}><Plus className="w-3 h-3 mr-2"/> Add Attribute</Button></div> : attributes.map((attr, idx) => (
- <div key={idx} className="p-6 bg-transparent border border-foreground/10 relative group mb-4">
+ {attributes.length === 0 ? <div className="text-center py-10 border border-dashed border-foreground/15 rounded-2xl"><Button size="sm" variant="outline" onClick={() => setAttributes([{ name: 'Color', values: [] }])}><Plus className="w-3 h-3 mr-2"/> Add Attribute</Button></div> : attributes.map((attr, idx) => (
+ <div key={idx} className="p-5 bg-foreground/[0.02] border border-foreground/8 rounded-2xl relative group mb-3">
  <button onClick={() => setAttributes(attributes.filter((_, i) => i !== idx))} className="absolute top-4 right-4 p-2 opacity-40 hover:opacity-100 transition-opacity"><Trash2 className="w-4 h-4"/></button>
  <div className="grid md:grid-cols-12 gap-8">
- <div className="md:col-span-4"><Label>Attribute Name</Label><select value={Object.keys(PRESET_ATTRIBUTES).includes(attr.name) ? attr.name : (attr.name ? 'Custom' : '')} onChange={e => { const n = [...attributes]; if (e.target.value === 'Custom') n[idx].name = ''; else n[idx].name = e.target.value; setAttributes(n); }} className="w-full h-11 bg-foreground/[0.03] border border-foreground/10 px-4 text-xs outline-none rounded-none text-foreground">{Object.keys(PRESET_ATTRIBUTES).map(k => <option key={k} value={k}>{k}</option>)}<option value="Custom">Custom</option></select>{!Object.keys(PRESET_ATTRIBUTES).includes(attr.name) && <Input className="mt-2 h-10 text-xs" value={attr.name} onChange={e => { const n = [...attributes]; n[idx].name = e.target.value; setAttributes(n); }} />}</div>
- <div className="md:col-span-8"><Label>Values</Label><div className="flex flex-wrap gap-2 mb-3 p-2 bg-foreground/[0.03] border border-foreground/10 rounded-xl min-h-[44px] items-center">{attr.values.map((val, vIdx) => <Badge key={vIdx} variant="secondary" className="pl-3 pr-1 py-1 font-medium rounded-lg">{val}<button onClick={() => { const n = [...attributes]; n[idx].values = attr.values.filter((_, i) => i !== vIdx); setAttributes(n); }} className="ml-1.5 p-0.5 hover:opacity-50 transition-opacity"><X className="w-3 h-3"/></button></Badge>)}{attr.values.length === 0 && <span className="text-[10px] opacity-40 italic px-2">None added</span>}</div><div className="flex gap-2"><select className="flex-1 h-10 bg-transparent border border-foreground/10 px-3 text-xs rounded-none text-foreground" onChange={(e) => { if (e.target.value && !attr.values.includes(e.target.value)) { const n = [...attributes]; n[idx].values = [...n[idx].values, e.target.value]; setAttributes(n); e.target.value = ""; } }} value=""><option value="" disabled>Select...</option>{(PRESET_ATTRIBUTES[attr.name] || []).map(opt => <option key={opt} value={opt} disabled={attr.values.includes(opt)}>{opt}</option>)}</select><Input placeholder="Or type custom..." className="w-1/2 h-10 text-xs rounded-xl" onKeyDown={(e: any) => { if (e.key === 'Enter') { e.preventDefault(); const val = e.currentTarget.value.trim(); if (val && !attr.values.includes(val)) { const n = [...attributes]; n[idx].values = [...n[idx].values, val]; setAttributes(n); e.currentTarget.value = ''; } } }} /></div></div>
+ <div className="md:col-span-4"><Label>Attribute Name</Label><select value={Object.keys(PRESET_ATTRIBUTES).includes(attr.name) ? attr.name : (attr.name ? 'Custom' : '')} onChange={e => { const n = [...attributes]; if (e.target.value === 'Custom') n[idx].name = ''; else n[idx].name = e.target.value; setAttributes(n); }} className="w-full h-11 bg-foreground/[0.03] border border-foreground/10 px-4 text-xs outline-none rounded-xl text-foreground">{Object.keys(PRESET_ATTRIBUTES).map(k => <option key={k} value={k}>{k}</option>)}<option value="Custom">Custom</option></select>{!Object.keys(PRESET_ATTRIBUTES).includes(attr.name) && <Input className="mt-2 h-10 text-xs" value={attr.name} onChange={e => { const n = [...attributes]; n[idx].name = e.target.value; setAttributes(n); }} />}</div>
+ <div className="md:col-span-8"><Label>Values</Label><div className="flex flex-wrap gap-2 mb-3 p-2 bg-foreground/[0.03] border border-foreground/10 rounded-xl min-h-[44px] items-center">{attr.values.map((val, vIdx) => <Badge key={vIdx} variant="secondary" className="pl-3 pr-1 py-1 font-medium rounded-lg">{val}<button onClick={() => { const n = [...attributes]; n[idx].values = attr.values.filter((_, i) => i !== vIdx); setAttributes(n); }} className="ml-1.5 p-0.5 hover:opacity-50 transition-opacity"><X className="w-3 h-3"/></button></Badge>)}{attr.values.length === 0 && <span className="text-[10px] opacity-40 italic px-2">None added</span>}</div><div className="flex gap-2"><select className="flex-1 h-10 bg-foreground/[0.04] border border-foreground/10 px-3 text-xs rounded-xl text-foreground appearance-none" onChange={(e) => { if (e.target.value && !attr.values.includes(e.target.value)) { const n = [...attributes]; n[idx].values = [...n[idx].values, e.target.value]; setAttributes(n); e.target.value = ""; } }} value=""><option value="" disabled>Select...</option>{(PRESET_ATTRIBUTES[attr.name] || []).map(opt => <option key={opt} value={opt} disabled={attr.values.includes(opt)}>{opt}</option>)}</select><Input placeholder="Or type custom..." className="w-1/2 h-10 text-xs rounded-xl" onKeyDown={(e: any) => { if (e.key === 'Enter') { e.preventDefault(); const val = e.currentTarget.value.trim(); if (val && !attr.values.includes(val)) { const n = [...attributes]; n[idx].values = [...n[idx].values, val]; setAttributes(n); e.currentTarget.value = ''; } } }} /></div></div>
  </div>
  </div>
  ))}
