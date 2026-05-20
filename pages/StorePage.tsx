@@ -60,7 +60,7 @@ export const StorePage = () => {
                 sellerName={vendor.store_name} 
             />
             {/* Immersive Banner */}
-            <div className="h-[50vh] relative overflow-hidden bg-[#ebe8e3] dark:bg-[#0a0a0a]">
+            <div className="h-[45vh] md:h-[55vh] relative overflow-hidden bg-foreground/[0.03]">
                 <img 
                     src={vendor.banner_url || 'https://images.unsplash.com/photo-1542831371-29b0f74f9713?q=80&w=2070&auto=format&fit=crop'} 
                     className="w-full h-full object-cover opacity-80 transition-transform duration-[20s] ease-linear hover:scale-105" 
@@ -75,10 +75,10 @@ export const StorePage = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, margin: "-50px" }}
                     transition={{ duration: 0.6 }}
-                    className="p-8 md:p-12 border border-foreground/10 dark:border-background/10 relative overflow-hidden mb-24 bg-background/80 dark:bg-background/80 backdrop-blur-xl"
+                    className="p-8 md:p-12 border border-foreground/10 relative overflow-hidden mb-12 bg-background/90 backdrop-blur-xl rounded-3xl"
                 >
                     <div className="flex flex-col lg:flex-row gap-12 items-start">
-                        <div className="w-32 h-32 md:w-48 md:h-48 bg-[#ebe8e3] dark:bg-[#0a0a0a] overflow-hidden shrink-0 relative border border-foreground/10 dark:border-background/10">
+                        <div className="w-32 h-32 md:w-48 md:h-48 bg-foreground/[0.04] overflow-hidden shrink-0 relative border border-foreground/10">
                             <img src={vendor.logo_url || `https://ui-avatars.com/api/?name=${vendor.store_name}&background=1a1a1a&color=f5f2ed&size=400`} className="w-full h-full object-cover" />
                             {vendor.is_verified && <div className="absolute bottom-2 right-2 bg-primary text-background dark:bg-background dark:text-foreground p-1.5 rounded-full"><ShieldCheck className="w-4 h-4 stroke-[1]" /></div>}
                         </div>
@@ -92,7 +92,7 @@ export const StorePage = () => {
                                     </div>
                                     {vendor.is_verified && <span className="text-[10px] uppercase tracking-[0.2em] font-semibold opacity-60">Verified Artisan</span>}
                                 </div>
-                                <h1 className="font-serif text-5xl md:text-7xl font-light tracking-tight leading-[1] uppercase">{vendor.store_name}</h1>
+                                <h1 className="font-serif text-4xl md:text-6xl font-light tracking-tight leading-[1] uppercase">{vendor.store_name}</h1>
                             </div>
                             
                             <p className="text-sm leading-relaxed opacity-80 font-light max-w-2xl italic border-l border-foreground/20 dark:border-background/20 pl-6 py-2">"{vendor.description}"</p>
@@ -125,7 +125,7 @@ export const StorePage = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, margin: "-50px" }}
                     transition={{ duration: 0.6, delay: 0.2 }}
-                    className="flex gap-12 border-b border-foreground/10 dark:border-background/10 mb-16"
+                    className="flex gap-12 border-b border-foreground/10 mb-16"
                 >
                     <button 
                         onClick={() => setActiveTab('collection')}
@@ -146,7 +146,7 @@ export const StorePage = () => {
                 {activeTab === 'collection' ? (
                     /* Products Grid */
                     <div className="space-y-16">
-                        <div className="flex flex-col md:flex-row justify-between items-end gap-8 border-b border-foreground/10 dark:border-background/10 pb-8">
+                        <div className="flex flex-col md:flex-row justify-between items-end gap-8 border-b border-foreground/10 pb-8">
                             <div>
                                 <h2 className="font-serif text-4xl font-light mb-4">Collection</h2>
                                 <p className="text-[10px] uppercase tracking-[0.2em] font-semibold opacity-60 flex items-center gap-3">
@@ -166,7 +166,7 @@ export const StorePage = () => {
                         </div>
 
                         {storeProducts.length === 0 ? (
-                            <div className="py-32 text-center border border-foreground/10 dark:border-background/10 border-dashed">
+                            <div className="py-32 text-center border border-foreground/10 border-dashed">
                                 <Search className="w-8 h-8 mx-auto mb-4 opacity-20 stroke-[1]" />
                                 <p className="text-[10px] uppercase tracking-[0.2em] font-semibold opacity-60">No matches found in this shop.</p>
                             </div>
