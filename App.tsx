@@ -31,6 +31,7 @@ const BuyerSettingsPage = lazy(() => import('./pages/BuyerSettingsPage').then(m 
 const CategoriesPage = lazy(() => import('./pages/CategoriesPage').then(m => ({ default: m.CategoriesPage })));
 const MessagesPage = lazy(() => import('./pages/MessagesPage').then(m => ({ default: m.MessagesPage })));
 const AdminPage = lazy(() => import('./pages/AdminPage').then(m => ({ default: m.AdminPage })));
+const StaticPage = lazy(() => import('./pages/StaticPage').then(m => ({ default: m.StaticPage })));
 
 // --- SCROLL TO TOP COMPONENT ---
 const ScrollToTop = () => {
@@ -237,6 +238,9 @@ const AppContent = () => {
               <Route path="/settings" element={<RouteGuard>{user?.role === 'seller' ? <SellerSettingsPage /> : <BuyerSettingsPage />}</RouteGuard>} />
               <Route path="/notifications" element={<RouteGuard><NotificationsPage /></RouteGuard>} />
               <Route path="/order-confirmation" element={<RouteGuard><OrderConfirmationPage /></RouteGuard>} />
+              <Route path="/privacy" element={<StaticPage />} />
+              <Route path="/terms" element={<StaticPage />} />
+              <Route path="/contact" element={<StaticPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </motion.div>

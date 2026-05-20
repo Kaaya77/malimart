@@ -555,7 +555,7 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
     const profit = (formData.price || 0) - (formData.cost_price || 0);
 
     return (
-        <div className="fixed inset-0 z-[200] bg-primary/80 dark:bg-background/80 backdrop-blur-xl flex items-center justify-center p-2 md:p-4 animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-xl flex items-center justify-center p-2 md:p-4 animate-in fade-in duration-300">
             <div className="w-full max-w-[95vw] xl:max-w-7xl h-[95vh] md:h-[90vh] bg-background dark:bg-background flex overflow-hidden border border-foreground/10 relative shadow-2xl">
                 <button onClick={onClose} className="absolute top-6 right-6 z-50 p-3 bg-transparent hover:opacity-50 transition-opacity text-foreground"><X className="w-6 h-6" /></button>
 
