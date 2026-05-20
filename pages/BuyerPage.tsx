@@ -123,17 +123,17 @@ const BuyerOffers = () => {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                     {(filteredOffers as any[]).map(offer => (
-                        <div key={offer.id} className="group relative bg-background rounded-none overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 border border-foreground/10 flex flex-col h-full">
+                        <div key={offer.id} className="group relative bg-background rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 border border-foreground/10 flex flex-col h-full">
                             <div className={`h-24 bg-gradient-to-r ${getGradient(offer)} p-6 relative overflow-hidden`}>
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-background/10 rounded-full blur-[40px] pointer-events-none translate-x-10 -translate-y-10"></div>
                                 <div className="relative z-10 flex justify-between items-start">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-none bg-background p-0.5 shadow-lg overflow-hidden">
+                                        <div className="w-10 h-10 rounded-xl bg-background p-0.5 shadow-lg overflow-hidden">
                                             <img src={offer.vendor?.logo_url || `https://ui-avatars.com/api/?name=${offer.vendor?.store_name}`} className="w-full h-full object-cover" />
                                         </div>
                                         <div>
                                             <p className="text-[10px] text-white/80 uppercase tracking-[0.2em]">{offer.vendor?.store_name}</p>
-                                            {offer.vendor?.is_verified && <div className="flex items-center gap-1 text-[8px] text-white bg-background/20 px-2 py-0.5 rounded-none w-fit mt-1"><BadgeCheck className="w-2.5 h-2.5"/> Verified</div>}
+                                            {offer.vendor?.is_verified && <div className="flex items-center gap-1 text-[8px] text-white bg-background/20 px-2 py-0.5 rounded-full w-fit mt-1"><BadgeCheck className="w-2.5 h-2.5"/> Verified</div>}
                                         </div>
                                     </div>
                                     <div className="text-right">
@@ -152,9 +152,9 @@ const BuyerOffers = () => {
                                         <span className="flex items-center gap-1"><Clock className="w-3 h-3"/> {offer.end_date ? new Date(offer.end_date).toLocaleDateString() : 'No Expiry'}</span>
                                         <span className="flex items-center gap-1"><Tag className="w-3 h-3"/> Storewide</span>
                                     </div>
-                                    <button onClick={() => handleCopy(offer.code)} className="group/btn w-full h-12 relative flex items-center justify-between px-1 bg-foreground/[0.04] rounded-none border border-dashed border-foreground/20 hover:border-foreground/40 transition-all cursor-copy">
+                                    <button onClick={() => handleCopy(offer.code)} className="group/btn w-full h-12 relative flex items-center justify-between px-1 bg-foreground/[0.04] rounded-xl border border-dashed border-foreground/20 hover:border-foreground/40 transition-all cursor-copy">
                                         <div className="flex items-center gap-3 pl-3">
-                                            <div className="w-8 h-8 rounded-none bg-background flex items-center justify-center shadow-sm border border-foreground/10">
+                                            <div className="w-8 h-8 rounded-lg bg-background flex items-center justify-center shadow-sm border border-foreground/10">
                                                 <Ticket className="w-4 h-4 text-foreground/60 group-hover/btn:text-foreground" />
                                             </div>
                                             <span className="font-mono text-sm tracking-[0.1em] text-foreground">{offer.code}</span>
@@ -199,7 +199,7 @@ const ProductOrderTag = ({ product, order }: { product?: Product, order?: Order 
 const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
         return (
-            <div className="bg-background p-4 border border-foreground/10 rounded-none shadow-2xl">
+            <div className="bg-background p-4 border border-foreground/10 rounded-2xl shadow-xl">
                 <p className="text-[10px] uppercase tracking-[0.2em] text-foreground mb-1">{label || payload[0].name}</p>
                 <p className="font-serif text-lg text-foreground">
                     {formatTZS(payload[0].value)}

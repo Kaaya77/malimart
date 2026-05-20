@@ -5,7 +5,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
         return (
-            <div className="bg-background dark:bg-background p-4 border border-foreground/10 rounded-none shadow-2xl">
+            <div className="bg-background p-4 border border-foreground/10 rounded-2xl shadow-xl">
                 <p className="text-[10px] uppercase tracking-[0.2em] text-foreground mb-1">{label || payload[0].name}</p>
                 <p className="font-serif text-lg text-foreground">
                     {payload[0].value.toLocaleString()}
