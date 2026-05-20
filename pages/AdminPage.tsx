@@ -299,7 +299,7 @@ export const AdminPage = () => {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                    className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6"
+                    className="flex flex-col md:flex-row justify-between items-end mb-6 md:mb-8 gap-4"
                 >
                     <div className="space-y-4">
                          <div className="flex items-center gap-3">
@@ -390,7 +390,7 @@ export const AdminPage = () => {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.5 }}
-                                className="space-y-12"
+                                className="space-y-8"
                             >
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                                     <PremiumStatCard 
@@ -686,7 +686,7 @@ export const AdminPage = () => {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.5 }}
-                                className="space-y-12"
+                                className="space-y-8"
                             >
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <PremiumStatCard 

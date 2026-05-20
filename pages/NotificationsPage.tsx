@@ -14,7 +14,7 @@ export const NotificationsPage = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            className="flex flex-col md:flex-row md:items-center md:justify-between mb-12"
+            className="flex flex-col md:flex-row md:items-center md:justify-between mb-8"
         >
           <h1 className="text-5xl md:text-6xl font-black tracking-tighter font-display text-foreground uppercase leading-none">
             Notifications
@@ -34,7 +34,7 @@ export const NotificationsPage = () => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-center py-32 border-2 border-dashed border-foreground/10 dark:border-white/10 rounded-3xl flex flex-col items-center justify-center"
+            className="text-center py-32 border-2 border-dashed border-foreground/10 rounded-3xl flex flex-col items-center justify-center"
           >
             <Bell className="w-16 h-16 text-foreground/20 mb-6" />
             <h3 className="text-xl font-black uppercase mb-2">No new notifications</h3>
@@ -64,7 +64,7 @@ export const NotificationsPage = () => {
               >
                 <div className="flex-1">
                   <div className="flex justify-between items-start">
-                    <h4 className="font-bold text-slate-800 dark:text-white mb-1 pr-4">{notification.title || 'Notification'}</h4>
+                    <h4 className="font-bold text-foreground font-semibold mb-1 pr-4">{notification.title || 'Notification'}</h4>
                     <span className="text-[10px] font-bold text-foreground/40 uppercase tracking-widest whitespace-nowrap">
                       {new Date(notification.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </span>

@@ -318,7 +318,7 @@ export const BuyerMessages = ({ userId, initialSellerId }: { userId: string, ini
  return acc;
  }, {})
  ).map(([emoji, count]: [string, any]) => (
- <span key={emoji} className="px-1.5 py-0.5 bg-foreground/[0.05] dark:bg-slate-700 rounded-full text-[9px] flex items-center gap-1">
+ <span key={emoji} className="px-1.5 py-0.5 bg-foreground/[0.05] rounded-full text-[9px] flex items-center gap-1">
  {emoji} {count}
  </span>
  ))}
@@ -369,7 +369,7 @@ export const BuyerMessages = ({ userId, initialSellerId }: { userId: string, ini
  </div>
  <div className="p-4 bg-card border-t flex flex-col gap-2">
  {replyingTo && (
- <div className="mb-2 p-3 bg-foreground/[0.02] dark:bg-slate-800 rounded-xl border border-foreground/8 flex items-center justify-between">
+ <div className="mb-2 p-3 bg-foreground/[0.02] rounded-xl border border-foreground/8 flex items-center justify-between">
  <div className="flex flex-col gap-1">
  <span className="text-[9px] font-black uppercase tracking-widest opacity-60">Replying to</span>
  <p className="text-[11px] italic truncate max-w-md">"{replyingTo.text || replyingTo.body}"</p>
@@ -379,7 +379,7 @@ export const BuyerMessages = ({ userId, initialSellerId }: { userId: string, ini
  )}
 
  {attachment && (
- <div className="mb-2 p-3 bg-foreground/[0.02] dark:bg-slate-800 rounded-xl border border-foreground/8 flex items-center justify-between">
+ <div className="mb-2 p-3 bg-foreground/[0.02] rounded-xl border border-foreground/8 flex items-center justify-between">
  <div className="flex items-center gap-3">
  <Paperclip className="w-4 h-4 text-emerald-500" />
  <span className="text-[10px] font-black uppercase tracking-widest">{attachment.type === 'image' ? 'Image Attachment' : 'File Attachment'}</span>
@@ -415,7 +415,7 @@ export const BuyerMessages = ({ userId, initialSellerId }: { userId: string, ini
  </div>
  )}
  <form onSubmit={handleSend} className="flex gap-2">
- <Input placeholder="Type message..." value={msgText} onChange={(e:any) => setMsgText(e.target.value)} className="h-12 bg-foreground/[0.02] dark:bg-slate-800 border-none rounded-xl" />
+ <Input placeholder="Type message..." value={msgText} onChange={(e:any) => setMsgText(e.target.value)} className="h-12 bg-foreground/[0.02] border-none rounded-xl" />
  <div className="flex gap-1 items-center">
  <input 
  type="file" 

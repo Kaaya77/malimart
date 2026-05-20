@@ -115,7 +115,7 @@ export const OrderConfirmationPage = () => {
                                     <div className="flex justify-between"><span className="text-foreground/55">VAT:</span><span className="font-bold text-foreground">{formatTZS(confirmedOrder.vat)}</span></div>
                                     <div className="flex justify-between"><span className="text-foreground/55">Delivery:</span><span className="font-bold text-foreground">{formatTZS(confirmedOrder.delivery_fee)}</span></div>
                                     {confirmedOrder.discount > 0 && <div className="flex justify-between text-emerald-500"><span className="font-bold">Discount:</span><span className="font-bold">-{formatTZS(confirmedOrder.discount)}</span></div>}
-                                    <div className="flex justify-between font-black text-lg text-foreground pt-2 border-t border-foreground/10 dark:border-white/10 mt-2"><span>Total:</span><span>{formatTZS(confirmedOrder.total)}</span></div>
+                                    <div className="flex justify-between font-black text-lg text-foreground pt-2 border-t border-foreground/10 mt-2"><span>Total:</span><span>{formatTZS(confirmedOrder.total)}</span></div>
                                 </div>
                             </motion.div>
                         </motion.div>

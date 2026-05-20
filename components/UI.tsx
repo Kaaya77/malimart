@@ -95,7 +95,7 @@ export const Button = ({ variant = 'primary', size = 'default', className = '', 
         secondary: "bg-foreground/[0.06] text-foreground hover:bg-foreground/[0.1]",
         brand: "bg-emerald-500 text-white hover:bg-emerald-600 shadow-sm",
         danger: "bg-red-500 text-white hover:bg-red-600 shadow-sm",
-        outline: "border-2 border-slate-200 text-slate-900 hover:border-slate-300 dark:border-slate-700 dark:text-white dark:hover:border-slate-600",
+        outline: "border-2 border-foreground/20 text-foreground hover:border-foreground/40",
         ghost: "hover:bg-foreground/[0.06] text-foreground",
         link: "text-emerald-600 dark:text-emerald-400 hover:underline p-0 h-auto"
     };
@@ -148,7 +148,7 @@ export const Textarea = ({ className = '', ...props }: any) => (
 );
 
 export const Label = ({ className = '', ...props }: any) => (
-    <label className={`text-xs font-bold text-slate-700 dark:text-slate-300 mb-2 block ${className}`} {...props} />
+    <label className={`text-xs font-bold text-foreground/70 mb-2 block ${className}`} {...props} />
 );
 
 export const Card = ({ className = '', ...props }: any) => (
@@ -161,7 +161,7 @@ export const Card = ({ className = '', ...props }: any) => (
 );
 
 export const CardHeader = ({ className = '', ...props }: any) => (
-    <div className={`p-6 border-b border-slate-100 dark:border-slate-800 ${className}`} {...props} />
+    <div className={`p-6 border-b border-foreground/8 ${className}`} {...props} />
 );
 
 export const CardContent = ({ className = '', ...props }: any) => (
@@ -173,14 +173,14 @@ export const CardTitle = ({ className = '', ...props }: any) => (
 );
 
 export const CardDescription = ({ className = '', ...props }: any) => (
-    <p className={`text-sm font-medium text-slate-500 dark:text-slate-400 mt-1 ${className}`} {...props} />
+    <p className={`text-sm font-medium text-foreground/55 mt-1 ${className}`} {...props} />
 );
 
 export const Badge = ({ variant = 'default', className = '', ...props }: any) => {
     const variants: any = {
         default: "bg-foreground/[0.08] text-foreground",
         secondary: "bg-foreground/[0.04] text-foreground/65 border border-foreground/10",
-        outline: "border-2 border-slate-200 text-slate-700 dark:border-slate-700 dark:text-slate-300",
+        outline: "border-2 border-foreground/20 text-foreground/70",
         success: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400",
         danger: "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400"
     };
@@ -218,7 +218,7 @@ export const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, confi
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-background w-full max-w-md p-8 rounded-3xl shadow-2xl border border-foreground/8 animate-in zoom-in-95 duration-200">
                 <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">{title}</h3>
-                <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-8">{message}</p>
+                <p className="text-sm font-medium text-foreground/55 mb-8">{message}</p>
                 <div className="flex justify-end gap-3">
                     <Button 
                         variant="secondary"
@@ -320,8 +320,8 @@ export const Modal = ({ isOpen, title, onClose, children }: any) => {
                         transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
                         className="max-w-2xl w-full"
                     >
-                        <div className="p-8 space-y-8 bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl max-h-[90vh] overflow-y-auto">
-                            <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-6">
+                        <div className="p-6 md:p-8 space-y-6 bg-background rounded-3xl shadow-2xl max-h-[90dvh] overflow-y-auto">
+                            <div className="flex justify-between items-center border-b border-foreground/8 pb-6">
                                 <h3 className="text-2xl font-black tracking-tight text-foreground">{title}</h3>
                                 <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"><X className="w-6 h-6 stroke-[2] text-slate-500" /></button>
                             </div>
@@ -340,10 +340,10 @@ export const ConfirmDialog = ({ isOpen, title, message, onConfirm, onCancel, isD
     if (!isOpen) return null;
     return (
         <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in">
-            <div className="max-w-sm w-full p-8 space-y-8 bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl animate-in zoom-in-95">
+            <div className="max-w-sm w-full p-6 space-y-6 bg-background rounded-3xl shadow-2xl border border-foreground/8 animate-in zoom-in-95">
                 <div className="text-center">
                     <h3 className="text-2xl font-black tracking-tight mb-4 text-foreground">{title}</h3>
-                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-relaxed">{message}</p>
+                    <p className="text-sm font-medium text-foreground/55 leading-relaxed">{message}</p>
                 </div>
                 <div className="flex gap-3">
                     <Button variant="secondary" onClick={onCancel} className="flex-1 rounded-xl font-bold" disabled={isLoading}>Cancel</Button>
@@ -525,24 +525,24 @@ export const PremiumStatCard = ({ title, value, icon: Icon, color = "text-foregr
     const isPositive = typeof trend === 'object' ? (trend.positive ?? trend.isPositive ?? true) : true;
 
     return (
-        <Card className="p-6 rounded-[2rem] flex items-center justify-between shadow-sm border border-slate-100 dark:border-white/5 hover:shadow-md transition-all bg-white dark:bg-slate-900 overflow-hidden relative group">
-            <div className="relative z-10">
-                <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+        <Card className="p-5 md:p-6 rounded-3xl flex items-center justify-between shadow-sm hover:shadow-md transition-all overflow-hidden relative group">
+            <div className="relative z-10 min-w-0 flex-1">
+                <p className="text-[11px] font-bold text-foreground/45 uppercase tracking-widest mb-2 flex items-center gap-2 flex-wrap">
                     {title}
                     {trendValue && (
-                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${isPositive ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400'}`}>
+                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${isPositive ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600'}`}>
                             {trendValue}
                         </span>
                     )}
                 </p>
                 {loading ? (
-                    <Skeleton className="h-10 w-32 rounded-xl" />
+                    <Skeleton className="h-8 w-28 rounded-xl" />
                 ) : (
-                    <p className="text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-none">{value}</p>
+                    <p className="text-2xl md:text-3xl font-black text-foreground tracking-tight leading-none truncate">{value}</p>
                 )}
             </div>
-            <div className={`relative z-10 w-14 h-14 flex items-center justify-center rounded-2xl bg-slate-50 dark:bg-slate-800 ${color} transition-transform group-hover:scale-110`}>
-                <Icon className="w-6 h-6 stroke-[2]" />
+            <div className={`relative z-10 w-12 h-12 md:w-14 md:h-14 flex items-center justify-center rounded-2xl bg-foreground/[0.06] ${color} transition-transform group-hover:scale-110 shrink-0 ml-3`}>
+                <Icon className="w-5 h-5 md:w-6 md:h-6 stroke-[2]" />
             </div>
         </Card>
     );
