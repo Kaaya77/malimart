@@ -13,11 +13,11 @@ export const AdminVendorVerification = ({ vendor, onUpdate, onMessage }: { vendo
 
  return (
  <>
- <Card className="p-8 rounded-3xl bg-card border border-border shadow-sm group hover:shadow-md transition-all duration-300 space-y-8">
+ <Card className="p-8 rounded-3xl bg-card border border-foreground/8 shadow-sm group hover:shadow-md transition-all duration-300 space-y-8">
  <div className="flex justify-between items-start">
  <div className="space-y-1">
  <h3 className="font-sans font-bold text-xl text-foreground leading-tight tracking-tight">{vendor.store_name}</h3>
- <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Vendor Application</p>
+ <p className="text-[10px] uppercase font-bold text-foreground/50 tracking-wider">Vendor Application</p>
  </div>
  <Badge variant={vendor.is_verified ? 'secondary' : 'outline'} className="rounded-full shadow-sm text-[10px] font-bold uppercase tracking-wider">
  {vendor.is_verified ? 'Verified' : 'Pending Review'}
@@ -26,11 +26,11 @@ export const AdminVendorVerification = ({ vendor, onUpdate, onMessage }: { vendo
  
  {/* Progress Bar */}
  <div className="space-y-2">
- <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+ <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider text-foreground/50">
  <span>Verification Progress</span>
  <span>{vendor.is_verified ? '100%' : '65%'}</span>
  </div>
- <div className="w-full bg-muted/50 h-2 rounded-full overflow-hidden border border-border">
+ <div className="w-full bg-foreground/[0.06] h-2 rounded-full overflow-hidden border border-foreground/8">
  <div 
  className={`h-full transition-all duration-1000 ease-out ${vendor.is_verified ? 'bg-primary w-full' : 'bg-primary/50 w-[65%]'}`}
  />
@@ -38,7 +38,7 @@ export const AdminVendorVerification = ({ vendor, onUpdate, onMessage }: { vendo
  </div>
  
  {/* Checklist */}
- <div className="grid grid-cols-1 gap-4 py-6 border-y border-border">
+ <div className="grid grid-cols-1 gap-4 py-6 border-y border-foreground/8">
  <div className="flex items-center justify-between group/item">
  <div className="flex items-center gap-3">
  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
@@ -59,16 +59,16 @@ export const AdminVendorVerification = ({ vendor, onUpdate, onMessage }: { vendo
  </div>
  <div className="flex items-center justify-between group/item">
  <div className="flex items-center gap-3">
- <div className={`w-8 h-8 rounded-full flex items-center justify-center ${vendor.is_verified ? 'bg-primary/10' : 'bg-muted/50'}`}>
+ <div className={`w-8 h-8 rounded-full flex items-center justify-center ${vendor.is_verified ? 'bg-primary/10' : 'bg-foreground/[0.06]'}`}>
  {vendor.is_verified ? (
  <CheckCircle className="w-4 h-4 text-primary stroke-2" />
  ) : (
- <History className="w-4 h-4 text-muted-foreground stroke-2" />
+ <History className="w-4 h-4 text-foreground/50 stroke-2" />
  )}
  </div>
  <span className="text-xs font-bold text-foreground">Bank Account Details</span>
  </div>
- <span className={`text-[10px] font-bold uppercase tracking-wider ${vendor.is_verified ? 'text-primary' : 'text-muted-foreground'}`}>
+ <span className={`text-[10px] font-bold uppercase tracking-wider ${vendor.is_verified ? 'text-primary' : 'text-foreground/50'}`}>
  {vendor.is_verified ? 'Verified' : 'In Review'}
  </span>
  </div>
@@ -109,9 +109,9 @@ export const AdminVendorVerification = ({ vendor, onUpdate, onMessage }: { vendo
  { label: 'TIN Certificate', url: vendor.tin_url },
  { label: 'ID Scan', url: vendor.id_scan_url }
  ].map((doc, idx) => (
- <div key={idx} className="p-4 rounded-xl bg-card border border-border shadow-sm flex items-center justify-between">
+ <div key={idx} className="p-4 rounded-xl bg-card border border-foreground/8 shadow-sm flex items-center justify-between">
  <div className="flex items-center gap-3">
- <FileText className="w-5 h-5 text-muted-foreground stroke-2" />
+ <FileText className="w-5 h-5 text-foreground/50 stroke-2" />
  <span className="text-sm font-bold text-foreground">{doc.label}</span>
  </div>
  {doc.url ? (
@@ -119,7 +119,7 @@ export const AdminVendorVerification = ({ vendor, onUpdate, onMessage }: { vendo
  Open File
  </a>
  ) : (
- <span className="text-xs font-bold text-muted-foreground">Not Uploaded</span>
+ <span className="text-xs font-bold text-foreground/50">Not Uploaded</span>
  )}
  </div>
  ))}

@@ -40,7 +40,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
  <AlertTriangle className="w-8 h-8 text-red-500" />
  </div>
  <h2 className="text-2xl font-semibold mb-2 text-foreground">Something went wrong.</h2>
- <p className="text-muted-foreground text-sm mb-8">{this.state.error?.message}</p>
+ <p className="text-foreground/50 text-sm mb-8">{this.state.error?.message}</p>
  <button onClick={() => window.location.reload()} className="px-8 py-4 bg-primary text-primary-foreground rounded-full text-sm font-medium hover:scale-105 transition-transform">Reload Application</button>
  </div>
  </div>

@@ -17,7 +17,7 @@ export const MessagesPage = () => {
  <h1 className="text-4xl md:text-6xl font-black font-display uppercase tracking-tighter mb-4 text-foreground">
  Your <span className="text-emerald-500">Messages</span>
  </h1>
- <p className="text-muted-foreground font-medium max-w-2xl">
+ <p className="text-foreground/50 font-medium max-w-2xl">
  Communicate directly with {user?.role === 'seller' ? 'buyers' : 'sellers'} regarding products, orders, and inquiries.
  </p>
  </div>
@@ -42,7 +42,7 @@ export const MessagesPage = () => {
  <h3 className="text-2xl font-black uppercase tracking-widest text-foreground mb-4">
  Sign in to view messages
  </h3>
- <p className="text-muted-foreground max-w-md">
+ <p className="text-foreground/50 max-w-md">
  You need to be logged in to communicate with other users on MaliMart.
  </p>
  </div>

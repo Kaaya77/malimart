@@ -417,11 +417,11 @@ export const AdminPage = () => {
  </div>
 
  {/* Chart Section */}
- <div className="p-8 border border-border bg-card rounded-3xl shadow-sm">
+ <div className="p-8 border border-foreground/8 bg-foreground/[0.02] rounded-3xl shadow-sm">
  <div className="flex items-center justify-between mb-8">
  <div>
  <h3 className="font-sans font-bold text-lg mb-1 tracking-tight">Revenue Trend</h3>
- <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Last 7 days performance</p>
+ <p className="text-[10px] font-bold uppercase tracking-wider text-foreground/50">Last 7 days performance</p>
  </div>
  <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-wider rounded-full shadow-sm">
  <TrendingUp className="w-3 h-3 mr-1" /> +14.5%
@@ -459,24 +459,24 @@ export const AdminPage = () => {
  initial={{ opacity: 0, y: 20 }}
  animate={{ opacity: 1, y: 0 }}
  transition={{ duration: 0.5 }}
- className="bg-card rounded-3xl border border-border overflow-hidden shadow-sm"
+ className="bg-foreground/[0.02] rounded-3xl border border-foreground/8 overflow-hidden shadow-sm"
  >
- <div className="p-8 border-b border-border flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+ <div className="p-8 border-b border-foreground/8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
  <h3 className="font-sans font-bold text-lg tracking-tight">User Directory</h3>
  <div className="relative w-full md:w-72">
- <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground stroke-2" />
+ <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/50 stroke-2" />
  <input 
  type="text" 
  placeholder="SEARCH USERS..." 
  value={userSearch}
  onChange={(e) => setUserSearch(e.target.value)}
- className="w-full bg-muted/30 border-none rounded-2xl py-3 pl-12 pr-4 text-xs font-bold uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground" 
+ className="w-full bg-foreground/[0.04] border-none rounded-2xl py-3 pl-12 pr-4 text-xs font-bold uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-foreground/50" 
  />
  </div>
  </div>
  <div className="overflow-x-auto">
  <table className="w-full text-left">
- <thead className="bg-muted/50 text-[10px] uppercase font-bold tracking-wider text-muted-foreground border-b border-border">
+ <thead className="bg-foreground/[0.06] text-[10px] uppercase font-bold tracking-wider text-foreground/50 border-b border-foreground/8">
  <tr>
  <th className="p-6 font-sans">User</th>
  <th className="p-6 font-sans">Role</th>
@@ -491,11 +491,11 @@ export const AdminPage = () => {
  initial={{ opacity: 0, y: 10 }}
  animate={{ opacity: 1, y: 0 }}
  transition={{ delay: index * 0.05 }}
- className="hover:bg-muted/30 transition-colors"
+ className="hover:bg-foreground/[0.04] transition-colors"
  >
  <td className="p-6">
  <p className="font-sans font-bold text-sm text-foreground">{u.full_name || 'Unknown'}</p>
- <p className="text-xs text-muted-foreground mt-1">{u.email}</p>
+ <p className="text-xs text-foreground/50 mt-1">{u.email}</p>
  </td>
  <td className="p-6 flex items-center gap-2">
  <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-wider rounded-full shadow-sm">
@@ -507,14 +507,14 @@ export const AdminPage = () => {
  </Badge>
  )}
  </td>
- <td className="p-6 text-xs font-medium text-muted-foreground">{new Date(u.created_at).toLocaleDateString()}</td>
+ <td className="p-6 text-xs font-medium text-foreground/50">{new Date(u.created_at).toLocaleDateString()}</td>
  <td className="p-6 text-right flex justify-end gap-2">
  {u.role !== 'admin' && (
  <div className="flex gap-2">
  <Button 
  variant="outline"
  size="icon"
- className="h-8 w-8 rounded-xl bg-card border-border shadow-sm hover:shadow-md transition-all"
+ className="h-8 w-8 rounded-xl bg-foreground/[0.02] border-foreground/8 shadow-sm hover:shadow-md transition-all"
  onClick={() => handleMessageUser(u.id, u.full_name)}
  title="Message User"
  >
@@ -524,7 +524,7 @@ export const AdminPage = () => {
  <Button 
  variant="outline"
  size="icon"
- className="h-8 w-8 rounded-xl bg-card border-border shadow-sm hover:shadow-md transition-all"
+ className="h-8 w-8 rounded-xl bg-foreground/[0.02] border-foreground/8 shadow-sm hover:shadow-md transition-all"
  onClick={() => {
  const newRole = u.role === 'seller' ? 'buyer' : 'seller';
  supabase.from('profiles').update({ role: newRole }).eq('id', u.id).then(() => {
@@ -540,7 +540,7 @@ export const AdminPage = () => {
  <Button 
  variant={u.is_banned ? "default" : "outline"}
  size="icon"
- className={`h-8 w-8 rounded-xl shadow-sm hover:shadow-md transition-all ${u.is_banned ? 'bg-primary text-white' : 'bg-card border-border'}`}
+ className={`h-8 w-8 rounded-xl shadow-sm hover:shadow-md transition-all ${u.is_banned ? 'bg-primary text-white' : 'bg-foreground/[0.02] border-foreground/8'}`}
  onClick={() => handleToggleUserBan(u.id, u.is_banned)}
  title={u.is_banned ? 'Unban User' : 'Ban User'}
  >
@@ -550,7 +550,7 @@ export const AdminPage = () => {
  <Button 
  variant="outline"
  size="icon"
- className="h-8 w-8 rounded-xl bg-card border-destructive/20 text-destructive hover:bg-destructive hover:text-destructive-foreground shadow-sm hover:shadow-md transition-all"
+ className="h-8 w-8 rounded-xl bg-foreground/[0.02] border-destructive/20 text-destructive hover:bg-destructive hover:text-destructive-foreground shadow-sm hover:shadow-md transition-all"
  onClick={() => confirmDeleteUser(u.id)}
  title="Delete User"
  >
@@ -573,24 +573,24 @@ export const AdminPage = () => {
  initial={{ opacity: 0, y: 20 }}
  animate={{ opacity: 1, y: 0 }}
  transition={{ duration: 0.5 }}
- className="bg-card rounded-3xl border border-border overflow-hidden shadow-sm"
+ className="bg-foreground/[0.02] rounded-3xl border border-foreground/8 overflow-hidden shadow-sm"
  >
- <div className="p-8 border-b border-border flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+ <div className="p-8 border-b border-foreground/8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
  <h3 className="font-sans font-bold text-lg tracking-tight">Product Moderation</h3>
  <div className="relative w-full md:w-72">
- <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground stroke-2" />
+ <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/50 stroke-2" />
  <input 
  type="text" 
  placeholder="SEARCH PRODUCTS..." 
  value={productSearch}
  onChange={(e) => setProductSearch(e.target.value)}
- className="w-full bg-muted/30 border-none rounded-2xl py-3 pl-12 pr-4 text-xs font-bold uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground" 
+ className="w-full bg-foreground/[0.04] border-none rounded-2xl py-3 pl-12 pr-4 text-xs font-bold uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-foreground/50" 
  />
  </div>
  </div>
  <div className="overflow-x-auto">
  <table className="w-full text-left">
- <thead className="bg-muted/50 text-[10px] uppercase font-bold tracking-wider text-muted-foreground border-b border-border">
+ <thead className="bg-foreground/[0.06] text-[10px] uppercase font-bold tracking-wider text-foreground/50 border-b border-foreground/8">
  <tr>
  <th className="p-6 font-sans">Product</th>
  <th className="p-6 font-sans">Seller</th>
@@ -606,20 +606,20 @@ export const AdminPage = () => {
  initial={{ opacity: 0, y: 10 }}
  animate={{ opacity: 1, y: 0 }}
  transition={{ delay: index * 0.05 }}
- className="hover:bg-muted/30 transition-colors"
+ className="hover:bg-foreground/[0.04] transition-colors"
  >
  <td className="p-6">
  <div className="flex items-center gap-4">
- <div className="w-12 h-16 bg-muted/50 rounded-xl overflow-hidden border border-border shadow-sm flex items-center justify-center">
+ <div className="w-12 h-16 bg-foreground/[0.06] rounded-xl overflow-hidden border border-foreground/8 shadow-sm flex items-center justify-center">
  {p.images && p.images[0] ? (
  <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover" />
  ) : (
- <Package className="w-5 h-5 text-muted-foreground stroke-2" />
+ <Package className="w-5 h-5 text-foreground/50 stroke-2" />
  )}
  </div>
  <div>
  <p className="font-sans font-bold text-sm text-foreground line-clamp-1">{p.name}</p>
- <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mt-1">{p.category}</p>
+ <p className="text-[10px] font-bold uppercase tracking-wider text-foreground/50 mt-1">{p.category}</p>
  </div>
  </div>
  </td>
@@ -634,7 +634,7 @@ export const AdminPage = () => {
  <Button 
  variant="outline"
  size="icon"
- className="h-8 w-8 rounded-xl bg-card border-border shadow-sm hover:shadow-md transition-all"
+ className="h-8 w-8 rounded-xl bg-foreground/[0.02] border-foreground/8 shadow-sm hover:shadow-md transition-all"
  onClick={() => handleMessageUser(p.seller_id, p.profiles?.full_name || 'Seller', { type: 'support', label: p.name, id: p.id })}
  title="Message Seller"
  >
@@ -666,11 +666,11 @@ export const AdminPage = () => {
  className="space-y-6"
  >
  {vendorsList.length === 0 ? (
- <div className="text-center p-12 bg-card rounded-3xl border border-border shadow-sm">
- <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-6">
- <ShieldCheck className="w-8 h-8 text-muted-foreground stroke-2" />
+ <div className="text-center p-12 bg-foreground/[0.02] rounded-3xl border border-foreground/8 shadow-sm">
+ <div className="w-16 h-16 bg-foreground/[0.06] rounded-full flex items-center justify-center mx-auto mb-6">
+ <ShieldCheck className="w-8 h-8 text-foreground/50 stroke-2" />
  </div>
- <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">No vendors found</p>
+ <p className="text-[10px] font-bold uppercase tracking-wider text-foreground/50">No vendors found</p>
  </div>
  ) : vendorsList.map(vendor => (
  <AdminVendorVerification key={vendor.seller_id} vendor={vendor} onUpdate={fetchAdminData} onMessage={handleMessageUser} />
@@ -696,7 +696,7 @@ export const AdminPage = () => {
  />
  <PremiumStatCard 
  title="Avg. Resolution" 
- value="2.4 Days" 
+ value="N/A" 
  icon={Activity} 
  color="text-blue-600"
  />
@@ -718,16 +718,16 @@ export const AdminPage = () => {
  </div>
 
  {disputes.length === 0 ? (
- <div className="text-center p-12 bg-card rounded-3xl border border-border shadow-sm">
- <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-6">
- <CheckCircle2 className="w-8 h-8 text-muted-foreground stroke-2" />
+ <div className="text-center p-12 bg-foreground/[0.02] rounded-3xl border border-foreground/8 shadow-sm">
+ <div className="w-16 h-16 bg-foreground/[0.06] rounded-full flex items-center justify-center mx-auto mb-6">
+ <CheckCircle2 className="w-8 h-8 text-foreground/50 stroke-2" />
  </div>
- <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">All clear. No active disputes.</p>
+ <p className="text-[10px] font-bold uppercase tracking-wider text-foreground/50">All clear. No active disputes.</p>
  </div>
  ) : (
  <div className="grid grid-cols-1 gap-6">
  {disputes.map(dispute => (
- <div key={dispute.id} className="group relative bg-card rounded-3xl border border-border p-8 overflow-hidden transition-all shadow-sm hover:shadow-md">
+ <div key={dispute.id} className="group relative bg-foreground/[0.02] rounded-3xl border border-foreground/8 p-8 overflow-hidden transition-all shadow-sm hover:shadow-md">
  
  <div className="relative z-10 flex flex-col lg:flex-row justify-between gap-8">
  <div className="flex-1 space-y-6">
@@ -735,7 +735,7 @@ export const AdminPage = () => {
  <Badge variant="secondary" className="px-3 py-1 font-bold text-xs rounded-full shadow-sm">
  Order #{dispute.order_id.slice(0,8)}
  </Badge>
- <Badge variant="destructive" className="px-3 py-1 font-bold text-[10px] uppercase tracking-wider rounded-full shadow-sm bg-destructive/10 text-destructive hover:bg-destructive/20 border-none">
+ <Badge variant="destructive" className="px-3 py-1 font-bold text-[10px] uppercase tracking-wider rounded-full shadow-sm bg-rose-500/10 text-rose-600">
  High Priority
  </Badge>
  </div>
@@ -744,21 +744,21 @@ export const AdminPage = () => {
  <h4 className="text-2xl font-sans font-bold tracking-tight text-foreground">
  {dispute.reason.replace(/_/g, ' ')}
  </h4>
- <div className="flex items-center gap-3 text-xs font-medium text-muted-foreground">
+ <div className="flex items-center gap-3 text-xs font-medium text-foreground/50">
  <span className="flex items-center gap-1.5"><Users className="w-4 h-4" /> Buyer: <span className="text-foreground">{dispute.profiles?.full_name}</span></span>
  <span>•</span>
  <span>Opened {new Date(dispute.created_at).toLocaleDateString()}</span>
  </div>
  </div>
 
- <div className="p-6 bg-muted/30 rounded-2xl border border-border text-sm text-foreground/80 leading-relaxed font-medium">
+ <div className="p-6 bg-foreground/[0.04] rounded-2xl border border-foreground/8 text-sm text-foreground/80 leading-relaxed font-medium">
  "{dispute.description}"
  </div>
  </div>
 
  <div className="lg:w-80 space-y-6">
- <div className="p-6 bg-muted/30 rounded-2xl border border-border">
- <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Disputed Value</p>
+ <div className="p-6 bg-foreground/[0.04] rounded-2xl border border-foreground/8">
+ <p className="text-[10px] font-bold uppercase tracking-wider text-foreground/50 mb-2">Disputed Value</p>
  <p className="text-3xl font-mono font-bold text-destructive tracking-tight">{formatTZS(dispute.orders?.total)}</p>
  </div>
 
@@ -811,21 +811,21 @@ export const AdminPage = () => {
  className="space-y-6"
  >
  {payouts.length === 0 ? (
- <div className="text-center p-12 bg-card rounded-3xl border border-border shadow-sm">
- <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-6">
- <DollarSign className="w-8 h-8 text-muted-foreground stroke-2" />
+ <div className="text-center p-12 bg-foreground/[0.02] rounded-3xl border border-foreground/8 shadow-sm">
+ <div className="w-16 h-16 bg-foreground/[0.06] rounded-full flex items-center justify-center mx-auto mb-6">
+ <DollarSign className="w-8 h-8 text-foreground/50 stroke-2" />
  </div>
- <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">No pending payouts</p>
+ <p className="text-[10px] font-bold uppercase tracking-wider text-foreground/50">No pending payouts</p>
  </div>
  ) : payouts.map(payout => (
- <div key={payout.id} className="p-6 bg-card rounded-3xl border border-border shadow-sm flex flex-col md:flex-row justify-between items-center gap-6 transition-all hover:shadow-md">
+ <div key={payout.id} className="p-6 bg-foreground/[0.02] rounded-3xl border border-foreground/8 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6 transition-all hover:shadow-md">
  <div className="flex items-center gap-4">
  <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center">
  <DollarSign className="w-6 h-6 stroke-2" />
  </div>
  <div>
  <p className="font-sans font-bold text-xl text-foreground tracking-tight">{formatTZS(payout.net_payout)}</p>
- <p className="text-xs text-muted-foreground mt-1 font-medium">Requested by: <span className="text-foreground">{payout.profiles?.full_name}</span></p>
+ <p className="text-xs text-foreground/50 mt-1 font-medium">Requested by: <span className="text-foreground">{payout.profiles?.full_name}</span></p>
  </div>
  </div>
  <Button 
@@ -848,14 +848,14 @@ export const AdminPage = () => {
  transition={{ duration: 0.5 }}
  className="space-y-8"
  >
- <div className="p-8 bg-card rounded-3xl border border-border shadow-sm">
+ <div className="p-8 bg-foreground/[0.02] rounded-3xl border border-foreground/8 shadow-sm">
  <h3 className="font-sans font-bold text-2xl tracking-tight mb-8">Platform Configuration</h3>
  
  <div className="space-y-4">
- <div className="flex items-center justify-between p-6 bg-muted/30 rounded-2xl border border-border">
+ <div className="flex items-center justify-between p-6 bg-foreground/[0.04] rounded-2xl border border-foreground/8">
  <div>
  <p className="font-sans font-bold text-base text-foreground">Maintenance Mode</p>
- <p className="text-xs font-medium text-muted-foreground mt-1">Disable access for non-admin users</p>
+ <p className="text-xs font-medium text-foreground/50 mt-1">Disable access for non-admin users</p>
  </div>
  <Switch 
  checked={platformSettings.maintenanceMode} 
@@ -863,10 +863,10 @@ export const AdminPage = () => {
  />
  </div>
 
- <div className="flex items-center justify-between p-6 bg-muted/30 rounded-2xl border border-border">
+ <div className="flex items-center justify-between p-6 bg-foreground/[0.04] rounded-2xl border border-foreground/8">
  <div>
  <p className="font-sans font-bold text-base text-foreground">Allow New Signups</p>
- <p className="text-xs font-medium text-muted-foreground mt-1">Open registration for new buyers and sellers</p>
+ <p className="text-xs font-medium text-foreground/50 mt-1">Open registration for new buyers and sellers</p>
  </div>
  <Switch 
  checked={platformSettings.newSignups} 
@@ -874,10 +874,10 @@ export const AdminPage = () => {
  />
  </div>
 
- <div className="flex items-center justify-between p-6 bg-muted/30 rounded-2xl border border-border">
+ <div className="flex items-center justify-between p-6 bg-foreground/[0.04] rounded-2xl border border-foreground/8">
  <div>
  <p className="font-sans font-bold text-base text-foreground">Auto-Approve Vendors</p>
- <p className="text-xs font-medium text-muted-foreground mt-1">Bypass manual verification for new stores</p>
+ <p className="text-xs font-medium text-foreground/50 mt-1">Bypass manual verification for new stores</p>
  </div>
  <Switch 
  checked={platformSettings.autoApproveVendors} 
@@ -885,10 +885,10 @@ export const AdminPage = () => {
  />
  </div>
 
- <div className="flex items-center justify-between p-6 bg-muted/30 rounded-2xl border border-border">
+ <div className="flex items-center justify-between p-6 bg-foreground/[0.04] rounded-2xl border border-foreground/8">
  <div>
  <p className="font-sans font-bold text-base text-foreground">Require Vendor Verification</p>
- <p className="text-xs font-medium text-muted-foreground mt-1">Mandatory KYC for new sellers</p>
+ <p className="text-xs font-medium text-foreground/50 mt-1">Mandatory KYC for new sellers</p>
  </div>
  <Switch 
  checked={platformSettings.requireVendorVerification} 
@@ -896,10 +896,10 @@ export const AdminPage = () => {
  />
  </div>
 
- <div className="flex items-center justify-between p-6 bg-muted/30 rounded-2xl border border-border">
+ <div className="flex items-center justify-between p-6 bg-foreground/[0.04] rounded-2xl border border-foreground/8">
  <div>
  <p className="font-sans font-bold text-base text-foreground">Enable Loyalty Program</p>
- <p className="text-xs font-medium text-muted-foreground mt-1">Allow buyers to earn points</p>
+ <p className="text-xs font-medium text-foreground/50 mt-1">Allow buyers to earn points</p>
  </div>
  <Switch 
  checked={platformSettings.enableLoyaltyProgram} 
@@ -908,41 +908,41 @@ export const AdminPage = () => {
  </div>
 
  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
- <div className="p-6 bg-muted/30 rounded-2xl border border-border">
+ <div className="p-6 bg-foreground/[0.04] rounded-2xl border border-foreground/8">
  <label className="block font-sans font-bold text-sm text-foreground mb-1">Global Commission Rate (%)</label>
- <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-4">The percentage taken from every successful sale.</p>
+ <p className="text-[10px] font-bold uppercase tracking-wider text-foreground/50 mb-4">The percentage taken from every successful sale.</p>
  <Input 
  type="number" 
  value={platformSettings.globalCommission} 
  onChange={(e: any) => setPlatformSettings({...platformSettings, globalCommission: Number(e.target.value)})}
- className="w-full bg-background border-border text-foreground rounded-xl focus-visible:ring-1 focus-visible:ring-primary shadow-sm"
+ className="w-full bg-background border-foreground/8 text-foreground rounded-xl focus-visible:ring-1 focus-visible:ring-primary shadow-sm"
  />
  </div>
- <div className="p-6 bg-muted/30 rounded-2xl border border-border">
+ <div className="p-6 bg-foreground/[0.04] rounded-2xl border border-foreground/8">
  <label className="block font-sans font-bold text-sm text-foreground mb-1">Audit Log Retention (Days)</label>
- <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-4">How long to keep system activity logs.</p>
+ <p className="text-[10px] font-bold uppercase tracking-wider text-foreground/50 mb-4">How long to keep system activity logs.</p>
  <Input 
  type="number" 
  value={platformSettings.auditRetentionDays} 
  onChange={(e: any) => setPlatformSettings({...platformSettings, auditRetentionDays: Number(e.target.value)})}
- className="w-full bg-background border-border text-foreground rounded-xl focus-visible:ring-1 focus-visible:ring-primary shadow-sm"
+ className="w-full bg-background border-foreground/8 text-foreground rounded-xl focus-visible:ring-1 focus-visible:ring-primary shadow-sm"
  />
  </div>
- <div className="p-6 bg-muted/30 rounded-2xl border border-border">
+ <div className="p-6 bg-foreground/[0.04] rounded-2xl border border-foreground/8">
  <label className="block font-sans font-bold text-sm text-foreground mb-1">Max Products Per Vendor</label>
- <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-4">Limit the number of active products.</p>
+ <p className="text-[10px] font-bold uppercase tracking-wider text-foreground/50 mb-4">Limit the number of active products.</p>
  <Input 
  type="number" 
  value={platformSettings.maxProductsPerVendor} 
  onChange={(e: any) => setPlatformSettings({...platformSettings, maxProductsPerVendor: Number(e.target.value)})}
- className="w-full bg-background border-border text-foreground rounded-xl focus-visible:ring-1 focus-visible:ring-primary shadow-sm"
+ className="w-full bg-background border-foreground/8 text-foreground rounded-xl focus-visible:ring-1 focus-visible:ring-primary shadow-sm"
  />
  </div>
- <div className="p-6 bg-muted/30 rounded-2xl border border-border">
+ <div className="p-6 bg-foreground/[0.04] rounded-2xl border border-foreground/8">
  <label className="block font-sans font-bold text-sm text-foreground mb-1">Default Currency</label>
- <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-4">Base currency for the platform.</p>
+ <p className="text-[10px] font-bold uppercase tracking-wider text-foreground/50 mb-4">Base currency for the platform.</p>
  <select 
- className="w-full h-10 bg-background border border-border rounded-xl px-3 text-sm font-medium text-foreground outline-none focus:ring-1 focus:ring-primary transition-colors shadow-sm"
+ className="w-full h-10 bg-background border border-foreground/8 rounded-xl px-3 text-sm font-medium text-foreground outline-none focus:ring-1 focus:ring-primary transition-colors shadow-sm"
  value={platformSettings.defaultCurrency}
  onChange={(e) => setPlatformSettings({...platformSettings, defaultCurrency: e.target.value})}
  >

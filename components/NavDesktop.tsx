@@ -55,7 +55,7 @@ export const NavDesktop = ({
  <div className="grid grid-cols-4 gap-10">
  {Object.entries(CATEGORY_HIERARCHY).slice(0, 4).map(([category, subcategories]) => (
  <div key={category} className="flex flex-col gap-5">
- <h4 className="text-[11px] uppercase tracking-widest font-bold text-muted-foreground">
+ <h4 className="text-[11px] uppercase tracking-widest font-bold text-foreground/50">
  {category}
  </h4>
  <div className="flex flex-col gap-3">

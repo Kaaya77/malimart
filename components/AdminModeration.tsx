@@ -293,22 +293,22 @@ export const AdminModeration = () => {
 
  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
  {filteredPosts.map(post => (
- <Card key={post.id} className={`p-6 rounded-3xl border flex flex-col transition-all duration-300 hover:shadow-md hover:-translate-y-1 ${selectedItems.includes(post.id) ? 'border-primary ring-1 ring-primary bg-foreground/[0.05]' : 'border-border bg-card'}`} onClick={() => toggleSelect(post.id)}>
+ <Card key={post.id} className={`p-6 rounded-3xl border flex flex-col transition-all duration-300 hover:shadow-md hover:-translate-y-1 ${selectedItems.includes(post.id) ? 'border-primary ring-1 ring-primary bg-foreground/[0.05]' : 'border-foreground/8 bg-card'}`} onClick={() => toggleSelect(post.id)}>
  <div className="flex justify-between items-start mb-4">
  <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full">{post.type}</Badge>
- <span className="text-xs font-medium text-muted-foreground">{new Date(post.created_at).toLocaleDateString()}</span>
+ <span className="text-xs font-medium text-foreground/50">{new Date(post.created_at).toLocaleDateString()}</span>
  </div>
  <div className="flex-1 space-y-4 mb-6">
  <p className="text-sm font-medium text-foreground leading-relaxed">"{post.content}"</p>
- <div className="pt-4 border-t border-border mt-auto">
+ <div className="pt-4 border-t border-foreground/8 mt-auto">
  <p className="text-xs font-bold text-foreground">{post.profiles?.full_name}</p>
- <p className="text-xs text-muted-foreground">{post.profiles?.email}</p>
+ <p className="text-xs text-foreground/50">{post.profiles?.email}</p>
  </div>
  </div>
  <div className="grid grid-cols-2 gap-2">
  <Button size="sm" variant="default" className="text-xs font-bold rounded-xl" onClick={(e) => { e.stopPropagation(); handleAction(post, 'approve_content'); }}>Approve</Button>
  <Button size="sm" variant="destructive" className="text-xs font-bold rounded-xl" onClick={(e) => { e.stopPropagation(); handleAction(post, 'delete_content'); }}>Delete</Button>
- <Button size="sm" variant="outline" className="text-xs font-bold rounded-xl text-muted-foreground" onClick={(e) => { e.stopPropagation(); handleAction(post, 'shadowban_content'); }}>Shadowban</Button>
+ <Button size="sm" variant="outline" className="text-xs font-bold rounded-xl text-foreground/50" onClick={(e) => { e.stopPropagation(); handleAction(post, 'shadowban_content'); }}>Shadowban</Button>
  <Button size="sm" variant="secondary" className="text-xs font-bold rounded-xl text-blue-600 dark:text-blue-400 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950 dark:hover:bg-blue-900" onClick={(e) => { e.stopPropagation(); handleAction(post, 'boost_content'); }}>Boost</Button>
  </div>
  </Card>
@@ -320,16 +320,16 @@ export const AdminModeration = () => {
  {activeTab === 'products' && (
  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
  {products.map(product => (
- <Card key={product.id} className={`p-6 rounded-3xl border flex flex-col transition-all duration-300 hover:shadow-md hover:-translate-y-1 ${selectedItems.includes(product.id) ? 'border-primary ring-1 ring-primary bg-foreground/[0.05]' : 'border-border bg-card'}`} onClick={() => toggleSelect(product.id)}>
+ <Card key={product.id} className={`p-6 rounded-3xl border flex flex-col transition-all duration-300 hover:shadow-md hover:-translate-y-1 ${selectedItems.includes(product.id) ? 'border-primary ring-1 ring-primary bg-foreground/[0.05]' : 'border-foreground/8 bg-card'}`} onClick={() => toggleSelect(product.id)}>
  <div className="flex justify-between items-start mb-4">
  <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full">Product</Badge>
  <Badge variant={product.status === 'active' ? 'secondary' : 'destructive'} className="text-[10px] font-bold uppercase tracking-wider rounded-full">{product.status}</Badge>
  </div>
  <div className="flex-1 space-y-3 mb-6">
  <h4 className="font-sans font-bold text-lg text-foreground tracking-tight">{product.name}</h4>
- <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">{product.description}</p>
- <div className="pt-4 border-t border-border mt-auto">
- <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Seller</p>
+ <p className="text-sm text-foreground/50 line-clamp-2 leading-relaxed">{product.description}</p>
+ <div className="pt-4 border-t border-foreground/8 mt-auto">
+ <p className="text-[10px] font-bold uppercase tracking-wider text-foreground/50">Seller</p>
  <p className="text-sm font-bold text-foreground">{product.profiles?.full_name}</p>
  </div>
  </div>
@@ -345,7 +345,7 @@ export const AdminModeration = () => {
  {activeTab === 'appeals' && (
  <div className="space-y-6">
  {appeals.map(appeal => (
- <Card key={appeal.id} className="p-6 rounded-3xl border border-border bg-card hover:shadow-md transition-all duration-300">
+ <Card key={appeal.id} className="p-6 rounded-3xl border border-foreground/8 bg-card hover:shadow-md transition-all duration-300">
  <div className="flex justify-between items-start mb-6">
  <div className="flex items-center gap-4">
  <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950 flex items-center justify-center">
@@ -355,16 +355,16 @@ export const AdminModeration = () => {
  <span className="text-[10px] font-bold uppercase tracking-wider text-foreground">Appeal: {appeal.content_type}</span>
  <div className="flex items-center gap-2 mt-1">
  <Badge variant={appeal.status === 'pending' ? 'destructive' : 'secondary'} className="text-[10px] font-bold uppercase tracking-wider rounded-full">{appeal.status}</Badge>
- <span className="text-[10px] font-medium text-muted-foreground">{new Date(appeal.created_at).toLocaleString()}</span>
+ <span className="text-[10px] font-medium text-foreground/50">{new Date(appeal.created_at).toLocaleString()}</span>
  </div>
  </div>
  </div>
  </div>
  <p className="text-sm font-medium text-foreground mb-6 leading-relaxed">"{appeal.reason}"</p>
- <div className="flex flex-col md:flex-row justify-between items-center pt-6 border-t border-border gap-6">
+ <div className="flex flex-col md:flex-row justify-between items-center pt-6 border-t border-foreground/8 gap-6">
  <div className="space-y-1">
- <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">From</p>
- <p className="text-sm font-bold text-foreground">{appeal.profiles?.full_name} <span className="text-muted-foreground font-medium ml-2">{appeal.profiles?.email}</span></p>
+ <p className="text-[10px] font-bold uppercase tracking-wider text-foreground/50">From</p>
+ <p className="text-sm font-bold text-foreground">{appeal.profiles?.full_name} <span className="text-foreground/50 font-medium ml-2">{appeal.profiles?.email}</span></p>
  </div>
  <div className="flex gap-2 w-full md:w-auto">
  {appeal.status === 'pending' && (
@@ -383,7 +383,7 @@ export const AdminModeration = () => {
  {activeTab === 'reports' && (
  <div className="space-y-6">
  {reports.map(report => (
- <div key={report.id} className="p-6 rounded-3xl border border-border bg-card hover:shadow-md transition-all duration-300 flex flex-col md:flex-row justify-between gap-8">
+ <div key={report.id} className="p-6 rounded-3xl border border-foreground/8 bg-card hover:shadow-md transition-all duration-300 flex flex-col md:flex-row justify-between gap-8">
  <div className="flex-1 space-y-4">
  <div className="flex items-center gap-4">
  <div className="w-10 h-10 rounded-2xl bg-destructive/10 flex items-center justify-center">
@@ -397,13 +397,13 @@ export const AdminModeration = () => {
  </div>
  </div>
  <p className="text-sm font-medium text-foreground leading-relaxed">"{report.details}"</p>
- <div className="grid grid-cols-2 gap-8 pt-4 border-t border-border">
+ <div className="grid grid-cols-2 gap-8 pt-4 border-t border-foreground/8">
  <div className="space-y-1">
- <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Reporter</p>
+ <p className="text-[10px] font-bold uppercase tracking-wider text-foreground/50">Reporter</p>
  <p className="text-sm font-bold text-foreground">{report.reporter?.full_name}</p>
  </div>
  <div className="space-y-1">
- <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Reported Against</p>
+ <p className="text-[10px] font-bold uppercase tracking-wider text-foreground/50">Reported Against</p>
  <p className="text-sm font-bold text-foreground">{report.reported?.full_name}</p>
  </div>
  </div>
@@ -419,11 +419,11 @@ export const AdminModeration = () => {
  )}
 
  {activeTab === 'users' && (
- <div className="bg-card rounded-3xl border border-border overflow-hidden shadow-sm">
+ <div className="bg-card rounded-3xl border border-foreground/8 overflow-hidden shadow-sm">
  <div className="overflow-x-auto">
  <table className="w-full text-left border-collapse">
  <thead>
- <tr className="bg-muted/50 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+ <tr className="bg-foreground/[0.06] text-[10px] font-bold uppercase tracking-wider text-foreground/50">
  <th className="p-6 font-sans">User Identity</th>
  <th className="p-6 font-sans">Role</th>
  <th className="p-6 font-sans">Status</th>
@@ -433,10 +433,10 @@ export const AdminModeration = () => {
  </thead>
  <tbody className="text-xs">
  {users.map(u => (
- <tr key={u.id} className="border-b border-border hover:bg-muted/30 transition-colors">
+ <tr key={u.id} className="border-b border-foreground/8 hover:bg-foreground/[0.04] transition-colors">
  <td className="p-6">
  <div className="font-sans font-bold text-sm text-foreground">{u.full_name}</div>
- <div className="text-xs text-muted-foreground mt-1">{u.email}</div>
+ <div className="text-xs text-foreground/50 mt-1">{u.email}</div>
  </td>
  <td className="p-6">
  <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-wider rounded-full">{u.role}</Badge>
@@ -448,7 +448,7 @@ export const AdminModeration = () => {
  <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-wider rounded-full">Active</Badge>
  )}
  </td>
- <td className="p-6 text-muted-foreground font-bold text-xs">{new Date(u.created_at).toLocaleDateString()}</td>
+ <td className="p-6 text-foreground/50 font-bold text-xs">{new Date(u.created_at).toLocaleDateString()}</td>
  <td className="p-6 text-right">
  {u.is_banned ? (
  <Button size="sm" variant="outline" className="text-xs font-bold rounded-xl" onClick={() => handleAction(u, 'unban_user')}>Unban</Button>
@@ -467,11 +467,11 @@ export const AdminModeration = () => {
  {activeTab === 'vendors' && (
  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
  {vendors.map(v => (
- <Card key={v.seller_id} className="p-6 rounded-3xl border border-border bg-card hover:shadow-md transition-all duration-300">
+ <Card key={v.seller_id} className="p-6 rounded-3xl border border-foreground/8 bg-card hover:shadow-md transition-all duration-300">
  <div className="flex justify-between items-start mb-6">
  <div className="space-y-1">
  <h4 className="font-sans font-bold text-lg text-foreground tracking-tight">{v.store_name}</h4>
- <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{v.profiles?.full_name} <span className="font-medium ml-2">{v.profiles?.email}</span></p>
+ <p className="text-[10px] font-bold uppercase tracking-wider text-foreground/50">{v.profiles?.full_name} <span className="font-medium ml-2">{v.profiles?.email}</span></p>
  </div>
  <Badge variant={v.is_verified ? 'secondary' : 'outline'} className="text-[10px] font-bold uppercase tracking-wider rounded-full">
  {v.is_verified ? 'Verified' : 'Unverified'}
@@ -481,11 +481,11 @@ export const AdminModeration = () => {
  
  {v.documents && v.documents.length > 0 && (
  <div className="mb-8 space-y-3">
- <h5 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Verification Documents</h5>
+ <h5 className="text-[10px] font-bold uppercase tracking-wider text-foreground/50">Verification Documents</h5>
  <div className="space-y-2">
  {v.documents.map((doc: any) => (
- <div key={doc.id} className="flex justify-between items-center p-4 bg-muted/50 rounded-2xl text-xs group">
- <span className="font-bold uppercase tracking-wider text-muted-foreground">{doc.document_type}</span>
+ <div key={doc.id} className="flex justify-between items-center p-4 bg-foreground/[0.06] rounded-2xl text-xs group">
+ <span className="font-bold uppercase tracking-wider text-foreground/50">{doc.document_type}</span>
  <a href={doc.document_url} target="_blank" rel="noopener noreferrer" className="text-foreground font-bold uppercase tracking-wider hover:underline flex items-center gap-2">
  View File <FileText className="w-3 h-3" />
  </a>
@@ -510,14 +510,14 @@ export const AdminModeration = () => {
  {activeTab === 'logs' && (
  <div className="space-y-3">
  {logs.map(log => (
- <div key={log.id} className="p-4 rounded-2xl border border-border flex flex-col md:flex-row justify-between items-center bg-card hover:bg-muted/30 transition-all duration-300 gap-4 shadow-sm">
+ <div key={log.id} className="p-4 rounded-2xl border border-foreground/8 flex flex-col md:flex-row justify-between items-center bg-card hover:bg-foreground/[0.04] transition-all duration-300 gap-4 shadow-sm">
  <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
  <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-wider rounded-full">{new Date(log.created_at).toLocaleString()}</Badge>
  <span className="text-xs font-bold uppercase tracking-wider text-foreground">{log.action}</span>
- <span className="text-sm font-medium text-muted-foreground">"{log.note}"</span>
+ <span className="text-sm font-medium text-foreground/50">"{log.note}"</span>
  </div>
- <div className="text-right w-full md:w-auto pt-4 md:pt-0 border-t md:border-none border-border">
- <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mr-2">Admin:</span> 
+ <div className="text-right w-full md:w-auto pt-4 md:pt-0 border-t md:border-none border-foreground/8">
+ <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/50 mr-2">Admin:</span> 
  <span className="text-xs font-bold text-foreground">{log.admin?.full_name || 'System'}</span>
  </div>
  </div>

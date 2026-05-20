@@ -535,7 +535,7 @@ export const SellerOffers = ({ sellerId, preselectedProduct }: { sellerId: strin
  <Button variant="secondary" onClick={() => setIsCreateModalOpen(false)} className="flex-1 h-16 rounded-2xl text-sm font-bold uppercase tracking-[0.2em]">
  Cancel
  </Button>
- <Button variant="brand" onClick={handleCreate} isLoading={isSubmitting} className="flex-[2] h-16 rounded-2xl text-sm font-bold uppercase tracking-[0.2em] bg-primary text-background hover:bg-primary/90 dark:bg-background dark:text-foreground dark:hover:bg-background/90 transition-transform">
+ <Button variant="brand" onClick={handleCreate} isLoading={isSubmitting} className="flex-[2] h-16 rounded-2xl text-sm font-bold uppercase tracking-[0.2em] bg-emerald-600 text-white hover:bg-emerald-700 transition-colors">
  {editingId ? 'Update Campaign' : 'Launch Campaign'}
  </Button>
  </div>

@@ -363,7 +363,7 @@ export const HeroSection = ({
  <p className="text-sm font-bold text-foreground tracking-tight">
  {CURRENCY} {Math.round(p.price).toLocaleString()}
  </p>
- <span className="inline-flex items-center gap-1 mt-3 text-[12px] font-semibold text-foreground/70 group-hover:text-primary transition-colors w-fit">
+ <span className="inline-flex items-center gap-1 mt-3 text-[12px] font-semibold text-foreground/70 group-hover:text-emerald-500 transition-colors w-fit">
  Shop now
  <ArrowRight className="w-3.5 h-3.5 stroke-[2.2] transition-transform group-hover:translate-x-0.5" />
  </span>

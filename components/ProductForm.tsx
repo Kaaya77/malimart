@@ -558,9 +558,9 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
  <button onClick={onClose} className="absolute top-6 right-6 z-50 p-3 bg-transparent hover:opacity-50 transition-opacity text-foreground"><X className="w-6 h-6" /></button>
 
  {/* Left Rail */}
- <div className="w-20 lg:w-72 border-r border-foreground/10 flex flex-col justify-between py-8 shrink-0 bg-background dark:bg-background">
+ <div className="w-20 lg:w-72 border-r border-foreground/8 flex flex-col justify-between py-8 shrink-0 bg-foreground/[0.02]">
  <div className="px-3 lg:px-10">
- <div className="w-14 h-14 bg-primary text-background dark:bg-background dark:text-foreground flex items-center justify-center font-serif text-2xl mb-12 mx-auto lg:mx-0">M</div>
+ <div className="w-14 h-14 bg-foreground text-background flex items-center justify-center font-serif text-2xl mb-12 mx-auto lg:mx-0 rounded-2xl">M</div>
  <nav className="space-y-3">
  {[
  { id: 'details', label: 'Essentials', icon: Package },
@@ -569,8 +569,8 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
  { id: 'variants', label: 'Matrix', icon: LayoutGrid },
  { id: 'preview', label: 'Preview', icon: Smartphone }
  ].map((s) => (
- <button key={s.id} onClick={() => setStep(s.id as any)} className={`w-full flex items-center justify-center lg:justify-start gap-4 p-4 lg:px-6 transition-all group relative ${step === s.id ? 'bg-primary/5 text-foreground' : 'opacity-40 hover:opacity-100 text-foreground'}`}>
- <s.icon className={`w-5 h-5 ${step === s.id ? 'text-foreground' : 'group-hover:text-foreground dark:group-hover:text-background'}`} />
+ <button key={s.id} onClick={() => setStep(s.id as any)} className={`w-full flex items-center justify-center lg:justify-start gap-4 p-4 lg:px-6 transition-all group relative ${step === s.id ? 'bg-foreground/[0.06] text-foreground font-semibold' : 'opacity-40 hover:opacity-100 text-foreground'}`}>
+ <s.icon className={`w-5 h-5 ${step === s.id ? 'text-foreground' : 'group-hover:text-foreground'}`} />
  <span className="hidden lg:block text-[10px] uppercase tracking-[0.2em]">{s.label}</span>
  {step === s.id && <div className="absolute left-0 top-0 bottom-0 w-1 bg-foreground hidden lg:block"></div>}
  </button>
