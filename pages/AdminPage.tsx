@@ -291,7 +291,7 @@ export const AdminPage = () => {
  }
 
  return (
- <div className="min-h-screen bg-background font-sans pb-[calc(5rem+env(safe-area-inset-bottom))] pt-20 md:pt-24 selection:bg-foreground selection:text-background">
+ <div className="min-h-screen bg-background font-sans pb-[calc(5rem+env(safe-area-inset-bottom))] pt-20 md:pt-24">
  <div className="container mx-auto max-w-7xl px-4 md:px-6">
  <motion.div 
  initial={{ opacity: 0, y: 20 }}
@@ -390,7 +390,7 @@ export const AdminPage = () => {
  transition={{ duration: 0.5 }}
  className="space-y-8"
  >
- <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+ <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
  <PremiumStatCard 
  title="Total Users" 
  value={stats.totalUsers.toLocaleString()} 
@@ -417,7 +417,7 @@ export const AdminPage = () => {
  </div>
 
  {/* Chart Section */}
- <div className="p-8 border border-foreground/8 bg-foreground/[0.02] rounded-3xl shadow-sm">
+ <div className="p-5 md:p-6 border border-foreground/8 bg-foreground/[0.02] rounded-3xl shadow-sm">
  <div className="flex items-center justify-between mb-8">
  <div>
  <h3 className="font-sans font-bold text-lg mb-1 tracking-tight">Revenue Trend</h3>
@@ -708,7 +708,7 @@ export const AdminPage = () => {
  />
  </div>
 
- <div className="space-y-8">
+ <div className="space-y-6">
  <div className="flex items-center justify-between pb-6">
  <h3 className="font-sans font-bold text-2xl tracking-tight">Pending Resolutions</h3>
  <div className="flex gap-2">
