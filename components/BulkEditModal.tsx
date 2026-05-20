@@ -68,7 +68,7 @@ export const BulkEditModal = ({ isOpen, onClose, products, onSave }: { isOpen: b
                         <h2 className="font-serif text-2xl text-foreground">Bulk Inventory Edit</h2>
                         <p className="text-xs opacity-60 text-foreground mt-1">Quickly adjust prices, stock, and status for all your products.</p>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-primary/5 dark:hover:bg-background/5 rounded-full transition-colors">
+                    <button onClick={onClose} className="p-2 hover:bg-foreground/[0.04] rounded-full transition-colors">
                         <X className="w-5 h-5 text-foreground" />
                     </button>
                 </div>

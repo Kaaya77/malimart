@@ -40,7 +40,7 @@ export const AutoDiscountModal = ({ isOpen, onClose, product, onSave }: { isOpen
                         <h2 className="font-serif text-2xl text-foreground">Dynamic Pricing</h2>
                         <p className="text-xs opacity-60 text-foreground mt-1">Set auto-discount rules for {product.name}</p>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-primary/5 dark:hover:bg-background/5 rounded-full transition-colors">
+                    <button onClick={onClose} className="p-2 hover:bg-foreground/[0.04] rounded-full transition-colors">
                         <X className="w-5 h-5 text-foreground" />
                     </button>
                 </div>
@@ -70,7 +70,7 @@ export const AutoDiscountModal = ({ isOpen, onClose, product, onSave }: { isOpen
                         />
                     </div>
                     
-                    <div className="p-4 bg-primary/5 dark:bg-background/5 border border-foreground/10">
+                    <div className="p-4 bg-foreground/[0.05] dark:bg-background/5 border border-foreground/10">
                         <p className="text-xs text-foreground/80 leading-relaxed">
                             <strong>Rule Summary:</strong> If <span className="font-serif italic">{product.name}</span> does not receive any orders for {days} consecutive days, its price will be automatically reduced by {discount}%.
                         </p>

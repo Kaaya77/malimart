@@ -94,7 +94,7 @@ export const SellerAnalytics = ({ stats }: { stats: any }) => {
                 <h3 className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground mb-8">Top Customers</h3>
                 <div className="space-y-4">
                     {stats.topCustomers.length > 0 ? stats.topCustomers.map((customer: any, index: number) => (
-                        <div key={index} className="flex justify-between items-center p-4 border-b border-foreground/10 last:border-0 hover:bg-primary/5 dark:hover:bg-background/5 transition-colors">
+                        <div key={index} className="flex justify-between items-center p-4 border-b border-foreground/10 last:border-0 hover:bg-foreground/[0.04] transition-colors">
                             <span className="font-serif text-lg text-foreground">{customer.name}</span>
                             <span className="text-[10px] uppercase tracking-[0.2em] text-foreground/60">{customer.count} orders</span>
                         </div>

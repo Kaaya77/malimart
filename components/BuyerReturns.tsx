@@ -126,7 +126,7 @@ export const BuyerReturns = ({ userId, onContactSeller }: { userId: string, onCo
  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
  {filteredDisputes.map(dispute => (
  <Card key={dispute.id} className="p-10 rounded-3xl bg-card border-foreground/5 shadow-2xl shadow-foreground/5 group hover:border-foreground/20 dark:hover:border-white/20 transition-all duration-700 relative overflow-hidden">
- <div className="absolute top-0 right-0 w-40 h-40 bg-primary/5 rounded-full -mr-20 -mt-20 transition-transform group-hover:scale-110 duration-1000" />
+ <div className="absolute top-0 right-0 w-40 h-40 bg-foreground/[0.05] rounded-full -mr-20 -mt-20 transition-transform group-hover:scale-110 duration-1000" />
  
  <div className="relative z-10 flex justify-between items-start mb-8">
  <div className="space-y-4">
@@ -155,7 +155,7 @@ export const BuyerReturns = ({ userId, onContactSeller }: { userId: string, onCo
 
  <div className="relative z-10 flex items-center justify-between mt-auto pt-6 border-t border-foreground/5 ">
  <div className="flex items-center gap-4">
- <div className="w-12 h-12 rounded-full border border-foreground/10 overflow-hidden bg-primary/5 ">
+ <div className="w-12 h-12 rounded-full border border-foreground/10 overflow-hidden bg-foreground/[0.05] ">
  <img src={dispute.seller?.avatar_url || `https://ui-avatars.com/api/?name=${dispute.seller?.full_name}`} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" />
  </div>
  <div className="space-y-1">

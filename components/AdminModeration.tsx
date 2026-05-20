@@ -293,7 +293,7 @@ export const AdminModeration = () => {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                             {filteredPosts.map(post => (
-                                <Card key={post.id} className={`p-6 rounded-3xl border flex flex-col transition-all duration-300 hover:shadow-md hover:-translate-y-1 ${selectedItems.includes(post.id) ? 'border-primary ring-1 ring-primary bg-primary/5' : 'border-border bg-card'}`} onClick={() => toggleSelect(post.id)}>
+                                <Card key={post.id} className={`p-6 rounded-3xl border flex flex-col transition-all duration-300 hover:shadow-md hover:-translate-y-1 ${selectedItems.includes(post.id) ? 'border-primary ring-1 ring-primary bg-foreground/[0.05]' : 'border-border bg-card'}`} onClick={() => toggleSelect(post.id)}>
                                     <div className="flex justify-between items-start mb-4">
                                         <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full">{post.type}</Badge>
                                         <span className="text-xs font-medium text-muted-foreground">{new Date(post.created_at).toLocaleDateString()}</span>
@@ -320,7 +320,7 @@ export const AdminModeration = () => {
                 {activeTab === 'products' && (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {products.map(product => (
-                            <Card key={product.id} className={`p-6 rounded-3xl border flex flex-col transition-all duration-300 hover:shadow-md hover:-translate-y-1 ${selectedItems.includes(product.id) ? 'border-primary ring-1 ring-primary bg-primary/5' : 'border-border bg-card'}`} onClick={() => toggleSelect(product.id)}>
+                            <Card key={product.id} className={`p-6 rounded-3xl border flex flex-col transition-all duration-300 hover:shadow-md hover:-translate-y-1 ${selectedItems.includes(product.id) ? 'border-primary ring-1 ring-primary bg-foreground/[0.05]' : 'border-border bg-card'}`} onClick={() => toggleSelect(product.id)}>
                                 <div className="flex justify-between items-start mb-4">
                                     <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full">Product</Badge>
                                     <Badge variant={product.status === 'active' ? 'secondary' : 'destructive'} className="text-[10px] font-bold uppercase tracking-wider rounded-full">{product.status}</Badge>

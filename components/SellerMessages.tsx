@@ -37,7 +37,7 @@ export const ProductOrderTag = ({ product, order, onViewProduct, onViewOrder }: 
             )}
             {product && (
                 <div 
-                    className={`cursor-pointer p-4 bg-primary/5 dark:bg-background/5 border border-foreground/10 flex items-center gap-4 group hover:border-foreground/30 dark:hover:border-background/30 transition-all ${order ? 'mt-3' : ''}`}
+                    className={`cursor-pointer p-4 bg-foreground/[0.05] dark:bg-background/5 border border-foreground/10 flex items-center gap-4 group hover:border-foreground/30 dark:hover:border-background/30 transition-all ${order ? 'mt-3' : ''}`}
                     onClick={() => onViewProduct(product as Product)}
                 >
                     {product.images?.[0] && (
@@ -321,7 +321,7 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
             <SidebarContainer isVisible={!!selectedChatUser}>
                 <div className="p-6 border-b border-foreground/10 flex flex-col gap-4">
                     <h3 className="font-serif text-xl text-foreground flex items-center gap-3">
-                        Inbox <span className="text-[10px] uppercase tracking-[0.2em] font-sans bg-primary/5 dark:bg-background/5 px-2 py-1 border border-foreground/10 text-foreground/60">{users.length}</span>
+                        Inbox <span className="text-[10px] uppercase tracking-[0.2em] font-sans bg-foreground/[0.05] dark:bg-background/5 px-2 py-1 border border-foreground/10 text-foreground/60">{users.length}</span>
                     </h3>
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40 stroke-[1]" />
@@ -345,10 +345,10 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
                         <button 
                             key={u.id} 
                             onClick={() => setSelectedChatUser(u.id)} 
-                            className={`w-full text-left p-4 transition-all duration-300 group relative border-l-2 ${selectedChatUser === u.id ? 'bg-primary/5 dark:bg-background/5 border-l-foreground dark:border-l-background border-y-transparent border-r-transparent' : 'bg-transparent border-transparent hover:bg-primary/5 dark:hover:bg-background/5'}`}
+                            className={`w-full text-left p-4 transition-all duration-300 group relative border-l-2 ${selectedChatUser === u.id ? 'bg-foreground/[0.04] border-l-foreground dark:border-l-background border-y-transparent border-r-transparent' : 'bg-transparent border-transparent hover:bg-foreground/[0.04]'}`}
                         >
                             <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-full bg-primary/5 dark:bg-background/5 flex items-center justify-center font-serif text-lg shrink-0 overflow-hidden border border-foreground/10">
+                                <div className="w-12 h-12 rounded-full bg-foreground/[0.05] dark:bg-background/5 flex items-center justify-center font-serif text-lg shrink-0 overflow-hidden border border-foreground/10">
                                     {u.avatar ? <img src={u.avatar} className="w-full h-full object-cover"/> : u.name.slice(0,1).toUpperCase()}
                                 </div>
                                 <div className="flex-1 min-w-0">
@@ -382,7 +382,7 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
                 {selectedChatUser && (
                     <div className="p-6 border-b border-foreground/10 flex items-center justify-between bg-background/50 dark:bg-black/50 backdrop-blur-md sticky top-0 z-10">
                         <div className="flex items-center gap-4 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => fetchUserProfile(selectedChatUser)}>
-                            <button onClick={(e) => { e.stopPropagation(); setSelectedChatUser(null); }} className="md:hidden p-2 hover:bg-primary/5 dark:hover:bg-background/5 transition-colors">
+                            <button onClick={(e) => { e.stopPropagation(); setSelectedChatUser(null); }} className="md:hidden p-2 hover:bg-foreground/[0.04] transition-colors">
                                 <ChevronLeft className="w-5 h-5 stroke-[1]" />
                             </button>
                             <div>
@@ -430,7 +430,7 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
                         <React.Fragment key={c.id}>
                             {showDate && (
                                 <div className="flex justify-center my-8">
-                                    <span className="text-[9px] uppercase tracking-[0.2em] px-4 py-1.5 bg-primary/5 dark:bg-background/5 text-foreground/60 rounded-full">
+                                    <span className="text-[9px] uppercase tracking-[0.2em] px-4 py-1.5 bg-foreground/[0.05] dark:bg-background/5 text-foreground/60 rounded-full">
                                         {formatDateLabel(currDate)}
                                     </span>
                                 </div>
@@ -455,7 +455,7 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
                             )}
                             
                             {c.reply_to_id && (
-                                <div className={`mb-1.5 p-2.5 bg-primary/5 dark:bg-background/5 border-l-2 border-foreground/20 text-[11px] italic opacity-70 max-w-[80%] rounded-r-md ${isMe ? 'mr-1' : 'ml-1'}`}>
+                                <div className={`mb-1.5 p-2.5 bg-foreground/[0.05] dark:bg-background/5 border-l-2 border-foreground/20 text-[11px] italic opacity-70 max-w-[80%] rounded-r-md ${isMe ? 'mr-1' : 'ml-1'}`}>
                                     Replying to: {chats.find(m => m.id === c.reply_to_id)?.body?.slice(0, 50)}...
                                 </div>
                             )}
@@ -474,7 +474,7 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
                                             {c.attachment_type === 'image' ? (
                                                 <img src={c.attachment_url} className="max-w-full h-auto border border-foreground/10" referrerPolicy="no-referrer" />
                                             ) : (
-                                                <a href={c.attachment_url} target="_blank" className="flex items-center gap-2 p-2 bg-primary/5 dark:bg-background/5 text-[10px] uppercase tracking-widest">
+                                                <a href={c.attachment_url} target="_blank" className="flex items-center gap-2 p-2 bg-foreground/[0.05] dark:bg-background/5 text-[10px] uppercase tracking-widest">
                                                     <Paperclip className="w-3 h-3" /> View Attachment
                                                 </a>
                                             )}
@@ -485,10 +485,10 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
 
                                 {/* Message Actions */}
                                 <div className={`absolute top-0 ${c.sender_id === userId ? '-left-12' : '-right-12'} opacity-0 group-hover/msg:opacity-100 transition-opacity flex flex-col gap-1`}>
-                                    <button onClick={() => setReplyingTo(c)} className="p-2 hover:bg-primary/5 dark:hover:bg-background/5 rounded-full transition-colors" title="Reply">
+                                    <button onClick={() => setReplyingTo(c)} className="p-2 hover:bg-foreground/[0.04] rounded-full transition-colors" title="Reply">
                                         <Reply className="w-3.5 h-3.5" />
                                     </button>
-                                    <button onClick={() => setShowEmojiPicker(showEmojiPicker === c.id ? null : c.id)} className="p-2 hover:bg-primary/5 dark:hover:bg-background/5 rounded-full transition-colors" title="React">
+                                    <button onClick={() => setShowEmojiPicker(showEmojiPicker === c.id ? null : c.id)} className="p-2 hover:bg-foreground/[0.04] rounded-full transition-colors" title="React">
                                         <Smile className="w-3.5 h-3.5" />
                                     </button>
                                     {c.sender_id === userId && (
@@ -541,7 +541,7 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
                 {selectedChatUser && (
                 <div className="bg-background/50 dark:bg-background/50 border-t border-foreground/10 p-4 md:p-6 transition-all duration-300">
                     {replyingTo && (
-                        <div className="mb-4 p-3 bg-primary/5 dark:bg-background/5 border-l-2 border-foreground dark:border-background flex justify-between items-center">
+                        <div className="mb-4 p-3 bg-foreground/[0.05] dark:bg-background/5 border-l-2 border-foreground dark:border-background flex justify-between items-center">
                             <div className="text-[10px] italic opacity-60">
                                 Replying to: {replyingTo.body?.slice(0, 50)}...
                             </div>
@@ -551,7 +551,7 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
                         </div>
                     )}
                     {attachment && (
-                        <div className="mb-4 p-3 bg-primary/5 dark:bg-background/5 border border-foreground/20 flex justify-between items-center">
+                        <div className="mb-4 p-3 bg-foreground/[0.05] dark:bg-background/5 border border-foreground/20 flex justify-between items-center">
                             <div className="flex items-center gap-3">
                                 {attachment.type === 'image' ? <img src={attachment.url} className="w-10 h-10 object-cover" /> : <Paperclip className="w-4 h-4" />}
                                 <span className="text-[10px] uppercase tracking-widest">Attachment Ready</span>
@@ -562,10 +562,10 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
                         </div>
                     )}
                     {magicMode && (
-                        <div className="mb-4 animate-in slide-in-from-bottom-2 fade-in bg-primary/5 dark:bg-background/5 p-4 rounded-none border border-foreground/10">
+                        <div className="mb-4 animate-in slide-in-from-bottom-2 fade-in bg-foreground/[0.05] dark:bg-background/5 p-4 rounded-none border border-foreground/10">
                             <div className="flex items-center justify-between mb-4">
                                 <span className="text-[10px] uppercase tracking-[0.2em] text-foreground flex items-center gap-2"><Sparkles className="w-3.5 h-3.5 stroke-[1]"/> Magic Compose</span>
-                                <button onClick={() => setMagicMode(false)} className="p-2 hover:bg-primary/5 dark:hover:bg-background/5 transition-colors"><X className="w-3.5 h-3.5 stroke-[1] text-foreground"/></button>
+                                <button onClick={() => setMagicMode(false)} className="p-2 hover:bg-foreground/[0.04] transition-colors"><X className="w-3.5 h-3.5 stroke-[1] text-foreground"/></button>
                             </div>
                             <div className="flex gap-3">
                                 {(['professional', 'persuasive', 'friendly'] as const).map(tone => (
@@ -604,13 +604,13 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
                                 <button 
                                     type="button" 
                                     onClick={() => fileInputRef.current?.click()} 
-                                    className="p-2 rounded-lg bg-transparent text-foreground/40 hover:bg-primary/5 dark:hover:bg-background/5 hover:text-foreground dark:hover:text-background transition-all"
+                                    className="p-2 rounded-lg bg-transparent text-foreground/40 hover:bg-foreground/[0.04] hover:text-foreground dark:hover:text-background transition-all"
                                     title="Attach File"
                                     disabled={isUploading}
                                 >
                                     {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4 stroke-[1]" />}
                                 </button>
-                                <button type="button" onClick={() => magicMode ? handleMagicPolish() : setMagicMode(true)} className={`p-2 rounded-lg transition-all ${magicMode ? 'bg-primary text-background dark:bg-background dark:text-foreground' : 'bg-transparent text-foreground/40 hover:bg-primary/5 dark:hover:bg-background/5 hover:text-foreground dark:hover:text-background'}`} title="Magic Compose">
+                                <button type="button" onClick={() => magicMode ? handleMagicPolish() : setMagicMode(true)} className={`p-2 rounded-lg transition-all ${magicMode ? 'bg-primary text-background dark:bg-background dark:text-foreground' : 'bg-transparent text-foreground/40 hover:bg-foreground/[0.04] hover:text-foreground dark:hover:text-background'}`} title="Magic Compose">
                                     {isPolishing ? <Loader2 className="w-4 h-4 animate-spin stroke-[1]"/> : <Wand2 className="w-4 h-4 stroke-[1]"/>}
                                 </button>
                             </div>
@@ -630,7 +630,7 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
                         return (
                             <div className="space-y-8">
                                 <div className="flex flex-col items-center text-center space-y-4">
-                                    <div className="w-20 h-20 rounded-full bg-primary/5 dark:bg-background/5 flex items-center justify-center text-2xl font-serif overflow-hidden border border-foreground/10">
+                                    <div className="w-20 h-20 rounded-full bg-foreground/[0.05] dark:bg-background/5 flex items-center justify-center text-2xl font-serif overflow-hidden border border-foreground/10">
                                         {u.avatar ? <img src={u.avatar} className="w-full h-full object-cover" /> : u.name.slice(0, 1).toUpperCase()}
                                     </div>
                                     <div>
@@ -657,7 +657,7 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
                                 <div className="space-y-3 pt-6">
                                     <button 
                                         onClick={() => fetchUserProfile(u.id)}
-                                        className="w-full py-3 text-[10px] uppercase tracking-[0.2em] border border-foreground/10 hover:bg-primary/5 dark:hover:bg-background/5 transition-all"
+                                        className="w-full py-3 text-[10px] uppercase tracking-[0.2em] border border-foreground/10 hover:bg-foreground/[0.04] transition-all"
                                     >
                                         View Full Profile
                                     </button>
@@ -728,7 +728,7 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
                             <div className="flex gap-4">
                                 <button 
                                     onClick={() => setReportingUser(null)}
-                                    className="flex-1 h-12 text-[10px] uppercase tracking-[0.2em] border border-foreground/10 hover:bg-primary/5 dark:hover:bg-background/5 transition-all"
+                                    className="flex-1 h-12 text-[10px] uppercase tracking-[0.2em] border border-foreground/10 hover:bg-foreground/[0.04] transition-all"
                                 >
                                     Cancel
                                 </button>

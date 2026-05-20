@@ -219,7 +219,7 @@ export const SellerSettingsPage = () => {
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] uppercase tracking-[0.15em] transition-colors whitespace-nowrap ${
                   activeTab === tab.id 
                     ? 'bg-primary text-background dark:bg-background dark:text-foreground' 
-                    : 'text-foreground/60 hover:bg-primary/5 dark:hover:bg-background/5'
+                    : 'text-foreground/60 hover:bg-foreground/[0.04]'
                 }`}
               >
                 <tab.icon className="w-4 h-4 stroke-[1.5]" />
@@ -422,7 +422,7 @@ export const SellerSettingsPage = () => {
                           {paymentMethods.map(method => (
                               <div key={method.id} className="flex items-center justify-between p-4 border border-foreground/10 rounded-none bg-background dark:bg-background">
                                   <div className="flex items-center gap-4">
-                                      <div className={`w-10 h-10 rounded-none flex items-center justify-center border border-foreground/10 ${method.type === 'mobile' ? 'bg-primary/5 dark:bg-background/5' : 'bg-primary/5 dark:bg-background/5'}`}>
+                                      <div className={`w-10 h-10 rounded-none flex items-center justify-center border border-foreground/10 ${method.type === 'mobile' ? 'bg-foreground/[0.04]' : 'bg-foreground/[0.04]'}`}>
                                           <DollarSign className="w-5 h-5 text-foreground stroke-[1.5]" />
                                       </div>
                                       <div>

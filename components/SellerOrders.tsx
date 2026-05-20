@@ -382,7 +382,7 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: { sellerId: string, o
  filteredOrders.map((order, index) => (
  <div 
  key={order.id || `order-${index}`} 
- className={`p-4 rounded-2xl border transition-all cursor-pointer hover:bg-foreground/[0.04] flex items-center gap-4 ${selectedOrder?.id === order.id ? 'border-foreground bg-primary/5 dark:border-background dark:bg-background/5' : 'border-foreground/10'}`}
+ className={`p-4 rounded-2xl border transition-all cursor-pointer hover:bg-foreground/[0.04] flex items-center gap-4 ${selectedOrder?.id === order.id ? 'border-foreground bg-foreground/[0.05] dark:border-background dark:bg-background/5' : 'border-foreground/10'}`}
  >
  <div className="shrink-0" onClick={(e) => { e.stopPropagation(); toggleOrderSelection(order.id); }}>
  <div className={`w-4 h-4 rounded-2xl border ${selectedOrderIds.has(order.id) ? 'bg-primary border-foreground dark:bg-background dark:border-background' : 'border-foreground/20'} flex items-center justify-center`}>

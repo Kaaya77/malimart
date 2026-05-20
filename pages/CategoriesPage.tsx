@@ -77,7 +77,7 @@ export const CategoriesPage = () => {
                             className="group relative"
                         >
                             {/* Category Card */}
-                            <div className="relative aspect-[4/5] overflow-hidden bg-primary/5 dark:bg-background/5 mb-8">
+                            <div className="relative aspect-[4/5] overflow-hidden bg-foreground/[0.05] dark:bg-background/5 mb-8">
                                 <img 
                                     src={category.image_url || `https://picsum.photos/seed/${category.name}/800/1000`} 
                                     alt={category.name}

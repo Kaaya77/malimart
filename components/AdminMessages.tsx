@@ -372,7 +372,7 @@ export const AdminMessages = ({ initialSelectedUser }: { initialSelectedUser?: {
 
                         <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6 no-scrollbar bg-transparent">
                             {activeContext && (
-                                <div className="mb-8 p-6 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-between animate-in fade-in slide-in-from-top-4 duration-700 shadow-sm">
+                                <div className="mb-8 p-6 rounded-2xl bg-foreground/[0.05] border border-primary/10 flex items-center justify-between animate-in fade-in slide-in-from-top-4 duration-700 shadow-sm">
                                     <div className="flex items-center gap-4">
                                         <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center shadow-md shadow-primary/20">
                                             {activeContext.type === 'return' ? <AlertTriangle className="w-6 h-6 text-primary-foreground" /> : <Package className="w-6 h-6 text-primary-foreground" />}

@@ -107,7 +107,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                                 <Filter className="w-5 h-5" />
                                 <h2 className="font-serif text-2xl">Advanced Filters</h2>
                             </div>
-                            <button onClick={onClose} className="p-2 hover:bg-primary/5 dark:hover:bg-background/5 rounded-full transition-colors">
+                            <button onClick={onClose} className="p-2 hover:bg-foreground/[0.04] rounded-full transition-colors">
                                 <X className="w-6 h-6" />
                             </button>
                         </div>
@@ -270,7 +270,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                         >
                             <button
                                 onClick={handleReset}
-                                className="flex items-center justify-center gap-2 px-6 py-4 border border-foreground/20 text-[10px] uppercase tracking-[0.2em] hover:bg-primary/5 dark:hover:bg-background/5 transition-colors"
+                                className="flex items-center justify-center gap-2 px-6 py-4 border border-foreground/20 text-[10px] uppercase tracking-[0.2em] hover:bg-foreground/[0.04] transition-colors"
                             >
                                 <RotateCcw className="w-3 h-3" /> Reset
                             </button>

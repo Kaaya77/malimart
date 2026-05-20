@@ -202,7 +202,7 @@ export const AdminAIHero = () => {
                     <h2 className="text-2xl font-sans font-black">Hero Section Management</h2>
                     <p className="text-sm text-foreground/60 mt-1">Control what appears on the homepage hero section.</p>
                 </div>
-                <div className="flex gap-2 bg-primary/5 dark:bg-background/5 p-1 rounded-lg">
+                <div className="flex gap-2 bg-foreground/[0.05] dark:bg-background/5 p-1 rounded-lg">
                     <button 
                         onClick={() => setActiveTab('ai')}
                         className={`px-4 py-2 text-xs font-semibold uppercase tracking-wider rounded-md transition-colors ${activeTab === 'ai' ? 'bg-primary text-background dark:bg-background dark:text-foreground' : 'text-foreground/60 hover:text-foreground dark:hover:text-background'}`}
@@ -226,7 +226,7 @@ export const AdminAIHero = () => {
 
             {activeTab === 'ai' && (
                 <div className="space-y-6">
-                    <div className="flex justify-between items-center bg-primary/5 dark:bg-background/5 p-4 border border-foreground/10">
+                    <div className="flex justify-between items-center bg-foreground/[0.05] dark:bg-background/5 p-4 border border-foreground/10">
                         <div>
                             <h3 className="font-sans font-black text-lg">AI-Powered Curation</h3>
                             <p className="text-xs text-foreground/60">Let AI analyze top products and generate compelling hero copy.</p>
@@ -300,13 +300,13 @@ export const AdminAIHero = () => {
                                                     try {
                                                         const offer = JSON.parse(rec.offer_text);
                                                         return (
-                                                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/5 dark:bg-background/5 text-[10px] font-semibold uppercase tracking-widest">
+                                                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-foreground/[0.05] dark:bg-background/5 text-[10px] font-semibold uppercase tracking-widest">
                                                                 <Sparkles className="w-3 h-3" /> {offer.text}
                                                             </span>
                                                         );
                                                     } catch (e) {
                                                         return (
-                                                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/5 dark:bg-background/5 text-[10px] font-semibold uppercase tracking-widest">
+                                                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-foreground/[0.05] dark:bg-background/5 text-[10px] font-semibold uppercase tracking-widest">
                                                                 <Sparkles className="w-3 h-3" /> {rec.offer_text}
                                                             </span>
                                                         );
@@ -318,7 +318,7 @@ export const AdminAIHero = () => {
                                             <p className="text-sm text-foreground/70 mb-4 leading-relaxed">{rec.description}</p>
                                             
                                             {rec.products && rec.products.profiles && (
-                                                <div className="flex items-center gap-2 mt-auto mb-4 p-3 bg-primary/5 dark:bg-background/5 rounded-lg">
+                                                <div className="flex items-center gap-2 mt-auto mb-4 p-3 bg-foreground/[0.05] dark:bg-background/5 rounded-lg">
                                                     <Store className="w-4 h-4 opacity-70" />
                                                     <div className="flex flex-col">
                                                         <span className="text-[10px] uppercase tracking-widest opacity-50">Seller</span>

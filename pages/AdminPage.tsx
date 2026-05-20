@@ -374,7 +374,7 @@ export const AdminPage = () => {
                 {/* Content Area */}
                 {isLoading ? (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-pulse">
-                        {[1,2,3].map(i => <div key={i} className="h-48 bg-primary/5 dark:bg-background/5 border border-foreground/10"></div>)}
+                        {[1,2,3].map(i => <div key={i} className="h-48 bg-foreground/[0.05] dark:bg-background/5 border border-foreground/10"></div>)}
                     </div>
                 ) : (
                     <motion.div 

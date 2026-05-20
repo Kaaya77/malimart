@@ -52,7 +52,7 @@ const CampaignPreview = ({ formData, getPreviewGradient }: any) => (
             </p>
 
             {formData.campaign_mode === 'coupon' ? (
-                <div className="flex items-center justify-between px-3 py-3 bg-primary/5 dark:bg-background/5 rounded-2xl border border-dashed border-foreground/20">
+                <div className="flex items-center justify-between px-3 py-3 bg-foreground/[0.05] dark:bg-background/5 rounded-2xl border border-dashed border-foreground/20">
                     <div className="flex items-center gap-2">
                         <Ticket className="w-4 h-4 text-foreground" />
                         <span className="font-mono text-xs tracking-widest text-foreground">
@@ -62,7 +62,7 @@ const CampaignPreview = ({ formData, getPreviewGradient }: any) => (
                     <span className="text-[9px] uppercase tracking-[0.2em] text-foreground/40">Copy</span>
                 </div>
             ) : (
-                <div className="flex items-center justify-center gap-2 px-3 py-3 bg-primary/5 dark:bg-background/5 rounded-2xl border border-foreground/10">
+                <div className="flex items-center justify-center gap-2 px-3 py-3 bg-foreground/[0.05] dark:bg-background/5 rounded-2xl border border-foreground/10">
                     <CheckCircle2 className="w-4 h-4 text-foreground" />
                     <span className="text-[10px] uppercase tracking-[0.2em] text-foreground/60">Auto-Applied</span>
                 </div>
@@ -289,7 +289,7 @@ export const SellerOffers = ({ sellerId, preselectedProduct }: { sellerId: strin
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {isLoading ? (
-                    [1,2,3].map(i => <div key={i} className="h-48 rounded-2xl bg-primary/5 dark:bg-background/5 animate-pulse"></div>)
+                    [1,2,3].map(i => <div key={i} className="h-48 rounded-2xl bg-foreground/[0.05] dark:bg-background/5 animate-pulse"></div>)
                 ) : offers.length === 0 ? (
                     <div className="col-span-full py-20 text-center border border-dashed border-foreground/20 rounded-2xl text-foreground/40">
                         <Tag className="w-12 h-12 mx-auto mb-4 opacity-20" />
@@ -297,7 +297,7 @@ export const SellerOffers = ({ sellerId, preselectedProduct }: { sellerId: strin
                     </div>
                 ) : (
                     offers.map(offer => (
-                        <div key={offer.id} className={`relative group p-6 rounded-2xl border shadow-none transition-all ${offer.status === 'active' ? 'bg-background dark:bg-background border-foreground/10 hover:border-foreground/30 dark:hover:border-background/30' : 'bg-primary/5 dark:bg-background/5 border-transparent opacity-75'}`}>
+                        <div key={offer.id} className={`relative group p-6 rounded-2xl border shadow-none transition-all ${offer.status === 'active' ? 'bg-background dark:bg-background border-foreground/10 hover:border-foreground/30 dark:hover:border-background/30' : 'bg-foreground/[0.04] border-transparent opacity-75'}`}>
                             <div className="flex justify-between items-start mb-4">
                                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${offer.status === 'inactive' ? 'bg-primary/10 dark:bg-background/10 text-foreground/40' : offer.is_flash_sale ? 'bg-amber-100/50 text-amber-600' : offer.campaign_type === 'shipping' ? 'bg-emerald-100/50 text-emerald-600' : offer.campaign_type === 'bogo' ? 'bg-indigo-100/50 text-indigo-600' : 'bg-blue-100/50 text-blue-600'}`}>
                                     {offer.is_flash_sale ? <Zap className="w-6 h-6 fill-current"/> : offer.campaign_type === 'shipping' ? <Truck className="w-6 h-6"/> : offer.campaign_type === 'bogo' ? <Repeat className="w-6 h-6"/> : <Percent className="w-6 h-6"/>}
@@ -342,7 +342,7 @@ export const SellerOffers = ({ sellerId, preselectedProduct }: { sellerId: strin
                             )}
 
                             <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity bg-background dark:bg-background p-1 rounded-2xl shadow-sm border border-foreground/10">
-                                <button onClick={() => toggleStatus(offer)} className={`p-2 rounded-2xl transition-colors ${offer.status === 'active' ? 'text-emerald-500 hover:bg-emerald-50/50' : 'text-foreground/40 hover:bg-primary/5 dark:hover:bg-background/5'}`} title={offer.status === 'active' ? 'Deactivate' : 'Activate'}>
+                                <button onClick={() => toggleStatus(offer)} className={`p-2 rounded-2xl transition-colors ${offer.status === 'active' ? 'text-emerald-500 hover:bg-emerald-50/50' : 'text-foreground/40 hover:bg-foreground/[0.04]'}`} title={offer.status === 'active' ? 'Deactivate' : 'Activate'}>
                                     {offer.status === 'active' ? <Power className="w-4 h-4" /> : <PowerOff className="w-4 h-4" />}
                                 </button>
                                 <button onClick={() => handleEdit(offer)} className="p-2 text-blue-500 hover:bg-blue-50/50 rounded-2xl transition-colors" title="Edit">
@@ -363,7 +363,7 @@ export const SellerOffers = ({ sellerId, preselectedProduct }: { sellerId: strin
                     <Card className="w-full max-w-6xl h-[95vh] md:h-[90vh] p-0 rounded-2xl bg-background dark:bg-background overflow-hidden flex flex-col md:flex-row border border-foreground/10">
                         <div className="flex flex-col md:flex-row h-full">
                             {/* LEFT: Live Preview */}
-                            <div className="w-full md:w-4/12 bg-primary/5 dark:bg-background/5 p-8 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-foreground/10 relative overflow-hidden">
+                            <div className="w-full md:w-4/12 bg-foreground/[0.05] dark:bg-background/5 p-8 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-foreground/10 relative overflow-hidden">
                                 <div className="absolute top-0 right-0 w-64 h-64 bg-brand-500/10 rounded-full blur-[80px] pointer-events-none"></div>
                                 <h3 className="text-[10px] uppercase tracking-[0.2em] text-foreground/40 mb-8 relative z-10">Live Preview</h3>
                                 <CampaignPreview formData={formData} getPreviewGradient={getPreviewGradient} />
@@ -376,7 +376,7 @@ export const SellerOffers = ({ sellerId, preselectedProduct }: { sellerId: strin
                                         <h3 className="font-serif text-2xl uppercase tracking-tight text-foreground">Campaign Studio</h3>
                                         <p className="text-foreground/60 text-[10px] uppercase tracking-[0.2em] mt-1">Craft your offer strategy</p>
                                     </div>
-                                    <button onClick={() => setIsCreateModalOpen(false)} className="p-2 hover:bg-primary/5 dark:hover:bg-background/5 rounded-2xl text-foreground"><X className="w-6 h-6"/></button>
+                                    <button onClick={() => setIsCreateModalOpen(false)} className="p-2 hover:bg-foreground/[0.04] rounded-2xl text-foreground"><X className="w-6 h-6"/></button>
                                 </div>
                                 
                                 <div className="space-y-8">
@@ -421,7 +421,7 @@ export const SellerOffers = ({ sellerId, preselectedProduct }: { sellerId: strin
                                     </div>
 
                                     {/* 2. Configuration Logic */}
-                                    <div className="p-6 bg-primary/5 dark:bg-background/5 rounded-2xl border border-foreground/10 space-y-6">
+                                    <div className="p-6 bg-foreground/[0.05] dark:bg-background/5 rounded-2xl border border-foreground/10 space-y-6">
                                         {formData.campaign_type === 'bogo' && (
                                             <div className="grid grid-cols-2 gap-6 animate-in fade-in">
                                                 <div><Label>Customer Buys</Label><div className="flex items-center gap-2"><Input type="number" value={Number.isNaN(formData.buy_quantity) ? '' : (formData.buy_quantity ?? '')} onChange={(e:any) => setFormData({...formData, buy_quantity: e.target.value === '' ? null : Number(e.target.value)})} className="h-14 text-center font-serif text-lg rounded-2xl" /><span className="text-[10px] uppercase tracking-[0.2em] text-foreground/40">Items</span></div></div>
@@ -450,7 +450,7 @@ export const SellerOffers = ({ sellerId, preselectedProduct }: { sellerId: strin
                                                 <Label>Duration</Label>
                                                 <div className="grid grid-cols-3 gap-3 mb-4">
                                                     {[12, 24, 48].map(h => (
-                                                        <button key={h} onClick={() => setFlashDuration(h)} className="py-3 rounded-2xl border border-foreground/10 bg-background dark:bg-background text-[10px] uppercase tracking-[0.2em] hover:bg-primary/5 dark:hover:bg-background/5 transition-colors">{h} Hours</button>
+                                                        <button key={h} onClick={() => setFlashDuration(h)} className="py-3 rounded-2xl border border-foreground/10 bg-background dark:bg-background text-[10px] uppercase tracking-[0.2em] hover:bg-foreground/[0.04] transition-colors">{h} Hours</button>
                                                     ))}
                                                 </div>
                                                 <div className="grid grid-cols-2 gap-4">
@@ -489,7 +489,7 @@ export const SellerOffers = ({ sellerId, preselectedProduct }: { sellerId: strin
                                             <div className="animate-in slide-in-from-top-2">
                                                 <div className="relative group">
                                                     <select 
-                                                        className="w-full h-12 bg-primary/5 dark:bg-background/5 border border-foreground/10 rounded-2xl px-4 text-[10px] uppercase tracking-[0.2em] outline-none cursor-pointer pr-10 appearance-none"
+                                                        className="w-full h-12 bg-foreground/[0.05] dark:bg-background/5 border border-foreground/10 rounded-2xl px-4 text-[10px] uppercase tracking-[0.2em] outline-none cursor-pointer pr-10 appearance-none"
                                                         onChange={(e) => {
                                                             const id = e.target.value;
                                                             if (id && !formData.target_ids.includes(id)) {
@@ -527,7 +527,7 @@ export const SellerOffers = ({ sellerId, preselectedProduct }: { sellerId: strin
                                             <div className="relative group mb-6 animate-in fade-in">
                                                 <Input placeholder="SAVE2024" value={formData.code} onChange={(e:any) => setFormData({...formData, code: e.target.value.toUpperCase()})} className="h-14 pl-12 font-mono uppercase tracking-widest font-bold text-lg rounded-2xl group-focus-within:border-foreground dark:group-focus-within:border-background" />
                                                 <Ticket className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground/40 group-focus-within:text-foreground dark:group-focus-within:text-background" />
-                                                <button onClick={generateCode} className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-bold uppercase tracking-[0.2em] text-foreground hover:bg-primary/5 dark:hover:bg-background/5 px-3 py-1.5 rounded-2xl transition-colors">Auto-Gen</button>
+                                                <button onClick={generateCode} className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-bold uppercase tracking-[0.2em] text-foreground hover:bg-foreground/[0.04] px-3 py-1.5 rounded-2xl transition-colors">Auto-Gen</button>
                                             </div>
                                         )}
                                         

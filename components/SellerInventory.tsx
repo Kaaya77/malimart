@@ -120,7 +120,7 @@ const HistoryLog = ({ productId }: { productId: string }) => {
     if (logs.length === 0) return <div className="p-4 text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground italic">No recent activity recorded.</div>;
 
     return (
-        <div className="p-6 space-y-4 bg-primary/5 dark:bg-background/5 border-t border-foreground/10">
+        <div className="p-6 space-y-4 bg-foreground/[0.05] dark:bg-background/5 border-t border-foreground/10">
             <h4 className="text-[9px] uppercase tracking-[0.2em] opacity-60 flex items-center gap-2 text-foreground"><History className="w-3 h-3 stroke-[1]"/> Recent Activity</h4>
             {logs.map(log => (
                 <div key={log.id} className="flex justify-between items-center border-b border-foreground/10 pb-2 last:border-0 last:pb-0">

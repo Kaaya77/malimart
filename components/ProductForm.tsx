@@ -45,7 +45,7 @@ const PhonePreview = ({ data, variant, activeImage }: { data: Partial<Product>, 
             
             {/* Content */}
             <div className="flex-1 bg-background dark:bg-background overflow-hidden flex flex-col relative">
-                <div className="h-[60%] relative bg-primary/5 group">
+                <div className="h-[60%] relative bg-foreground/[0.05] group">
                     <img 
                         src={activeImage || 'https://via.placeholder.com/300x400?text=Preview'} 
                         className="w-full h-full object-cover" 
@@ -839,7 +839,7 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                                         <div className="aspect-[4/5]"><ImageDropzone onImageSelected={handleImageUpload} /></div>
                                         {(formData.images || []).map((img, i) => (
-                                            <div key={i} className="aspect-[4/5] relative group overflow-hidden border border-foreground/10 bg-primary/5">
+                                            <div key={i} className="aspect-[4/5] relative group overflow-hidden border border-foreground/10 bg-foreground/[0.05]">
                                                 <img src={img} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="" />
                                                 <div className="absolute inset-0 bg-primary/60 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center gap-3 flex-wrap p-2">
                                                     <button onClick={() => { const newImgs = [...(formData.images || [])]; newImgs.splice(i, 1); setFormData({...formData, images: newImgs}); }} className="p-3 bg-background text-foreground hover:bg-red-500 hover:text-white transition-all"><Trash2 className="w-5 h-5"/></button>
@@ -904,7 +904,7 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
                                                                     setAttributes([...attributes, { name: attr, values: [] }]);
                                                                 }
                                                             }}
-                                                            className="h-9 px-3 text-[9px] uppercase tracking-[0.1em] border border-foreground/10 hover:bg-primary/5 dark:hover:bg-background/5 transition-colors text-foreground"
+                                                            className="h-9 px-3 text-[9px] uppercase tracking-[0.1em] border border-foreground/10 hover:bg-foreground/[0.04] transition-colors text-foreground"
                                                         >
                                                             + {attr}
                                                         </button>
@@ -937,7 +937,7 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
                                                         <Input placeholder="Bulk Stock.." className="h-9 w-24 text-[10px] bg-transparent border-none" value={bulkStock} onChange={(e: any) => setBulkStock(e.target.value)} />
                                                         <button onClick={handleBulkApply} className="h-9 px-4 bg-primary text-background dark:bg-background dark:text-foreground text-[10px] uppercase tracking-[0.2em] hover:opacity-90 transition-opacity">Apply All</button>
                                                     </div>
-                                                    <button onClick={handleAutoSkuVariants} className="h-12 px-5 bg-transparent border border-foreground/10 text-foreground text-[10px] uppercase tracking-[0.2em] flex items-center gap-2 hover:bg-primary/5 dark:hover:bg-background/5 transition-colors"><Wand2 className="w-4 h-4"/> Auto-SKU</button>
+                                                    <button onClick={handleAutoSkuVariants} className="h-12 px-5 bg-transparent border border-foreground/10 text-foreground text-[10px] uppercase tracking-[0.2em] flex items-center gap-2 hover:bg-foreground/[0.04] transition-colors"><Wand2 className="w-4 h-4"/> Auto-SKU</button>
                                                 </div>
                                             </div>
                                             
@@ -955,9 +955,9 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
                                                     </thead>
                                                     <tbody className="divide-y divide-foreground/10 dark:divide-background/10 bg-transparent">
                                                         {variants.map((v, i) => (
-                                                            <tr key={i} className="group hover:bg-primary/5 dark:hover:bg-background/5 transition-colors" onMouseEnter={() => setHoveredVariant(v)} onMouseLeave={() => setHoveredVariant(null)}>
+                                                            <tr key={i} className="group hover:bg-foreground/[0.04] transition-colors" onMouseEnter={() => setHoveredVariant(v)} onMouseLeave={() => setHoveredVariant(null)}>
                                                                 <td className="p-4 text-center">
-                                                                    <div className="relative w-12 h-12 mx-auto bg-primary/5 overflow-hidden shadow-inner group-hover:ring-1 ring-foreground dark:ring-background transition-all">
+                                                                    <div className="relative w-12 h-12 mx-auto bg-foreground/[0.05] overflow-hidden shadow-inner group-hover:ring-1 ring-foreground dark:ring-background transition-all">
                                                                         {v.image_url ? <img src={v.image_url} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center opacity-40"><ImageIcon className="w-5 h-5"/></div>}
                                                                         <div className="absolute inset-0 bg-primary/40 opacity-0 group-hover:opacity-100 flex flex-wrap items-center justify-center gap-1 transition-opacity p-1">
                                                                             <button onClick={() => document.getElementById(`var-img-${i}`)?.click()} className="p-1 bg-background text-foreground hover:opacity-80 rounded-sm"><Upload className="w-3 h-3"/></button>
@@ -972,7 +972,7 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
                                                                         {Object.entries(v.attributes).map(([key, val]) => (
                                                                             <div key={key} className="flex flex-col">
                                                                                 <span className="text-[7px] uppercase opacity-40 mb-0.5">{key}</span>
-                                                                                <span className="px-2.5 py-1.5 bg-primary/5 text-[9px] text-foreground border border-foreground/10 uppercase tracking-[0.2em]">{val}</span>
+                                                                                <span className="px-2.5 py-1.5 bg-foreground/[0.05] text-[9px] text-foreground border border-foreground/10 uppercase tracking-[0.2em]">{val}</span>
                                                                             </div>
                                                                         ))}
                                                                     </div>
