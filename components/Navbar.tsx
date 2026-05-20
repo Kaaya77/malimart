@@ -1,21 +1,20 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Search, ShoppingBag, Menu, Heart,
+  Search, ShoppingBag, Menu, Heart, X,
   Home, Store, LayoutGrid, UserCircle, User,
-  Sun, Moon,
+  Sun, Moon, BellRing, MessageCircle, LogOut,
+  ChevronRight, Info, ArrowRight, Zap,
+  Package, Settings, ShieldAlert
 } from 'lucide-react';
 import { useAppState } from '../context/AppContext';
 import { supabase } from '../services/supabaseClient';
-import { NavDesktop } from './NavDesktop';
-import { NavMobile } from './NavMobile';
 import { SearchModal } from './SearchModal';
 import { UserMenu } from './UserMenu';
+import { CATEGORY_HIERARCHY } from '../constants';
 
-/**
- * useDarkMode — reads/writes the `dark` class on <html> and persists
- * the preference in localStorage under the key `theme`.
- */
 function useDarkMode() {
   const [isDark, setIsDark] = useState(() => {
     if (typeof window === 'undefined') return false;
@@ -23,35 +22,248 @@ function useDarkMode() {
     if (stored) return stored === 'dark';
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
-
   useEffect(() => {
     const root = document.documentElement;
-    if (isDark) {
-      root.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      root.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
+    if (isDark) { root.classList.add('dark'); localStorage.setItem('theme','dark'); }
+    else { root.classList.remove('dark'); localStorage.setItem('theme','light'); }
   }, [isDark]);
-
-  const toggle = () => setIsDark(prev => !prev);
-  return { isDark, toggle };
+  return { isDark, toggle: () => setIsDark(p=>!p) };
 }
 
-/**
- * Top navbar.
- *
- * Logo: clean sans-serif wordmark.
- *
- * Behavior:
- *   - First 80px of scroll: transparent over the hero
- *   - After 80px: solid backdrop, shadow, compact 56px height
- *   - On non-home routes: solid by default
- *
- * Right cluster (mobile): search, dark-mode toggle, cart, hamburger.
- * Right cluster (desktop): search, dark-mode toggle, wishlist, cart, account chip.
- */
+// ─── Desktop mega menu ────────────────────────────────────────────────────────
+const MegaMenu = ({ isHome, scrolled }: { isHome: boolean; scrolled: boolean }) => {
+  const textColor = (!scrolled && isHome) ? 'text-white' : 'text-foreground';
+  return (
+    <nav className="hidden md:flex items-center gap-7">
+      <Link to="/shop" className={`text-[12px] font-semibold uppercase tracking-widest ${textColor} opacity-75 hover:opacity-100 transition-opacity`}>Shop</Link>
+      <div className="relative group">
+        <button className={`text-[12px] font-semibold uppercase tracking-widest flex items-center gap-1 ${textColor} opacity-75 hover:opacity-100 transition-opacity`}>
+          Collections <ChevronRight className="w-3 h-3 rotate-90 group-hover:rotate-[270deg] transition-transform duration-300"/>
+        </button>
+        {/* Mega dropdown */}
+        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-5 w-[720px] bg-background/98 backdrop-blur-2xl rounded-3xl border border-foreground/8 shadow-2xl p-8 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 translate-y-2 group-hover:translate-y-0 z-50">
+          <div className="grid grid-cols-4 gap-8">
+            {Object.entries(CATEGORY_HIERARCHY).slice(0,4).map(([cat,subs])=>(
+              <div key={cat}>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/35 mb-3">{cat}</p>
+                <div className="space-y-2">
+                  {Array.isArray(subs) && subs.slice(0,5).map(sub=>(
+                    <Link key={sub} to={`/shop?category=${encodeURIComponent(cat)}&subcategory=${encodeURIComponent(sub)}`}
+                      className="block text-[13px] text-foreground/65 hover:text-foreground transition-colors py-0.5">{sub}</Link>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-6 pt-5 border-t border-foreground/8 flex justify-between items-center">
+            <p className="text-xs text-foreground/40">Discover Tanzania's finest products</p>
+            <Link to="/categories" className="flex items-center gap-2 text-xs font-bold text-foreground hover:opacity-70 transition-opacity">
+              View all <ArrowRight className="w-3.5 h-3.5"/>
+            </Link>
+          </div>
+        </div>
+      </div>
+    </nav>
+  );
+};
+
+// ─── Mobile full-screen drawer ────────────────────────────────────────────────
+const MobileDrawer = ({ open, onClose, user, logout, isDark, toggleDark, notifications, unreadMessages }: {
+  open: boolean; onClose: () => void; user: any; logout: () => void;
+  isDark: boolean; toggleDark: () => void; notifications: any[]; unreadMessages: number;
+}) => {
+  const location = useLocation();
+  const unread = notifications?.filter((n:any)=>!n.read).length || 0;
+
+  // Close on route change
+  useEffect(()=>{ if(open) onClose(); },[location.pathname]);
+
+  // Lock body scroll
+  useEffect(()=>{
+    if (!open) return;
+    document.body.style.overflow='hidden';
+    const onEsc=(e:KeyboardEvent)=>e.key==='Escape'&&onClose();
+    window.addEventListener('keydown',onEsc);
+    return ()=>{ document.body.style.overflow=''; window.removeEventListener('keydown',onEsc); };
+  },[open,onClose]);
+
+  const accountPath = user
+    ? (user.role==='admin'?'/admin':user.role==='seller'?'/seller':'/buyer')
+    : '/login';
+
+  const navItems = [
+    { label:'Shop', path:'/shop', icon:Store, desc:'Browse all products' },
+    { label:'Categories', path:'/categories', icon:LayoutGrid, desc:'Explore by category' },
+    { label:'Wishlist', path:'/wishlist', icon:Heart, desc:'Your saved items' },
+    { label:'Shopping Bag', path:'/cart', icon:ShoppingBag, desc:'Review your cart' },
+  ];
+
+  const accountItems = user ? [
+    { label:'Notifications', path:'/notifications', icon:BellRing, badge:unread },
+    { label:'Messages', path:'/messages', icon:MessageCircle, badge:unreadMessages },
+    { label:'My Account', path:accountPath, icon:user.role==='admin'?ShieldAlert:user.role==='seller'?Store:Package, badge:0 },
+    { label:'Settings', path:accountPath+'?tab=settings', icon:Settings, badge:0 },
+  ] : [];
+
+  return (
+    <AnimatePresence>
+      {open && (
+        <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} transition={{duration:0.2}}
+          className="fixed inset-0 z-[300] md:hidden">
+          {/* Backdrop */}
+          <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
+            onClick={onClose} className="absolute inset-0 bg-black/60 backdrop-blur-sm"/>
+
+          {/* Drawer panel */}
+          <motion.div
+            initial={{x:'100%'}} animate={{x:0}} exit={{x:'100%'}}
+            transition={{type:'spring',damping:30,stiffness:300}}
+            className="absolute inset-y-0 right-0 w-[88%] max-w-[360px] bg-background flex flex-col shadow-2xl"
+            style={{paddingBottom:'env(safe-area-inset-bottom)'}}>
+
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-foreground/8 shrink-0">
+              <span className="font-bold text-lg text-foreground tracking-tight">Menu</span>
+              <div className="flex items-center gap-1">
+                <button onClick={toggleDark} aria-label="Toggle theme"
+                  className="w-10 h-10 rounded-2xl bg-foreground/[0.06] flex items-center justify-center text-foreground hover:bg-foreground/10 transition-colors">
+                  {isDark?<Sun className="w-4 h-4 stroke-[2]"/>:<Moon className="w-4 h-4 stroke-[2]"/>}
+                </button>
+                <button onClick={onClose} aria-label="Close"
+                  className="w-10 h-10 rounded-2xl bg-foreground/[0.06] flex items-center justify-center text-foreground hover:bg-foreground/10 transition-colors">
+                  <X className="w-4 h-4 stroke-[2.5]"/>
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-5 space-y-4">
+              {/* Profile card */}
+              <Link to={accountPath}
+                className="flex items-center gap-3.5 p-4 rounded-2xl bg-foreground/[0.04] hover:bg-foreground/[0.07] active:scale-[0.98] transition-all">
+                {user ? (
+                  <>
+                    {user.avatar_url ? (
+                      <img src={user.avatar_url} alt="" className="w-12 h-12 rounded-2xl object-cover ring-2 ring-foreground/10"/>
+                    ) : (
+                      <div className="w-12 h-12 rounded-2xl bg-foreground flex items-center justify-center shrink-0">
+                        <span className="text-background font-black text-base">{(user.name||user.email||'U')[0].toUpperCase()}</span>
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-foreground truncate">{user.name||user.email}</p>
+                      <p className="text-xs text-foreground/45 capitalize mt-0.5 flex items-center gap-1">
+                        {user.role==='seller'?<Store className="w-3 h-3"/>:user.role==='admin'?<ShieldAlert className="w-3 h-3"/>:<User className="w-3 h-3"/>}
+                        {user.role||'Buyer'}
+                      </p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-foreground/30 shrink-0"/>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-12 h-12 rounded-2xl bg-foreground flex items-center justify-center shrink-0">
+                      <UserCircle className="w-6 h-6 text-background stroke-[1.8]"/>
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-bold text-foreground">Sign in</p>
+                      <p className="text-xs text-foreground/45 mt-0.5">Track orders & save favorites</p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-foreground/30 shrink-0"/>
+                  </>
+                )}
+              </Link>
+
+              {/* Main navigation */}
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/30 px-1 mb-2">Browse</p>
+                <div className="space-y-0.5">
+                  {navItems.map(item=>{
+                    const Icon=item.icon;
+                    return (
+                      <Link key={item.path} to={item.path}
+                        className="flex items-center gap-3.5 p-3.5 rounded-2xl hover:bg-foreground/[0.05] active:scale-[0.98] transition-all min-h-[52px]">
+                        <div className="w-9 h-9 rounded-xl bg-foreground/[0.06] flex items-center justify-center shrink-0">
+                          <Icon className="w-4 h-4 text-foreground/70 stroke-[2]"/>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[15px] font-semibold text-foreground">{item.label}</p>
+                          <p className="text-xs text-foreground/40 mt-0.5">{item.desc}</p>
+                        </div>
+                        <ChevronRight className="w-3.5 h-3.5 text-foreground/25 shrink-0"/>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Account section */}
+              {accountItems.length>0 && (
+                <div>
+                  <p className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/30 px-1 mb-2">Account</p>
+                  <div className="space-y-0.5">
+                    {accountItems.map(item=>{
+                      const Icon=item.icon;
+                      return (
+                        <Link key={item.path} to={item.path}
+                          className="flex items-center gap-3.5 p-3.5 rounded-2xl hover:bg-foreground/[0.05] active:scale-[0.98] transition-all min-h-[52px]">
+                          <div className="w-9 h-9 rounded-xl bg-foreground/[0.06] flex items-center justify-center shrink-0">
+                            <Icon className="w-4 h-4 text-foreground/70 stroke-[2]"/>
+                          </div>
+                          <span className="flex-1 text-[15px] font-semibold text-foreground">{item.label}</span>
+                          {item.badge>0 && (
+                            <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center">
+                              {item.badge>9?'9+':item.badge}
+                            </span>
+                          )}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Sell CTA for non-sellers */}
+              {(!user || user.role==='buyer') && (
+                <Link to="/login?mode=signup&role=seller"
+                  className="flex items-center gap-3.5 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/15 active:scale-[0.98] transition-all">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-500/20 flex items-center justify-center shrink-0">
+                    <Zap className="w-4 h-4 text-emerald-600 stroke-[2.5]"/>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-bold text-foreground">Become a Seller</p>
+                    <p className="text-xs text-foreground/45 mt-0.5">Start selling on MaliMart</p>
+                  </div>
+                  <ChevronRight className="w-3.5 h-3.5 text-emerald-500/50 shrink-0"/>
+                </Link>
+              )}
+
+              {/* Info */}
+              <div className="space-y-0.5">
+                {[{label:'About MaliMart',path:'/terms'},{label:'Privacy Policy',path:'/privacy'},{label:'Contact Us',path:'/contact'}].map(l=>(
+                  <Link key={l.path} to={l.path} className="flex items-center gap-3 p-3 rounded-xl hover:bg-foreground/[0.04] text-foreground/55 hover:text-foreground transition-colors min-h-[44px]">
+                    <span className="text-sm">{l.label}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {/* Footer */}
+            {user && (
+              <div className="px-5 py-4 border-t border-foreground/8 shrink-0">
+                <button onClick={()=>{onClose();logout();}}
+                  className="w-full flex items-center gap-3 p-3.5 rounded-2xl bg-rose-500/8 text-rose-600 hover:bg-rose-500/12 active:scale-[0.98] transition-all min-h-[52px]">
+                  <LogOut className="w-4.5 h-4.5 stroke-[2] shrink-0"/>
+                  <span className="text-[15px] font-semibold">Sign out</span>
+                </button>
+              </div>
+            )}
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
+
+// ─── Main Navbar ─────────────────────────────────────────────────────────────
 export const Navbar = () => {
   const { cart, user, setUser, notifications, unreadMessages, categories } = useAppState();
   const navigate = useNavigate();
@@ -59,125 +271,88 @@ export const Navbar = () => {
   const { isDark, toggle: toggleDark } = useDarkMode();
 
   const [scrolled, setScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const searchInputRef = useRef<HTMLInputElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
 
   const isHome = location.pathname === '/';
-  const isOnDark = isHome && !scrolled && !isMobileMenuOpen;
-  const cartCount = cart.reduce((acc, item) => acc + (item.quantity || 1), 0);
+  const isOnDark = isHome && !scrolled && !menuOpen;
+  const cartCount = cart.reduce((a,i)=>a+(i.quantity||1),0);
+  const unread = notifications?.filter((n:any)=>!n.read).length||0;
 
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 80);
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
+  useEffect(()=>{
+    const fn=()=>setScrolled(window.scrollY>60);
+    fn(); window.addEventListener('scroll',fn,{passive:true});
+    return ()=>window.removeEventListener('scroll',fn);
+  },[]);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    navigate('/');
-  };
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    navigate(`/shop?q=${encodeURIComponent(searchQuery)}`);
-    setIsSearchOpen(false);
-  };
-
-  const navLinks = [
-    { name: 'Shop', path: '/shop' },
-    { name: 'Categories', path: '/categories' },
-    { name: 'About', path: '/about' },
-  ];
+  const handleLogout = async ()=>{ await supabase.auth.signOut(); setUser(null); navigate('/'); };
+  const handleSearchSubmit = (e: React.FormEvent)=>{ e.preventDefault(); navigate(`/shop?q=${encodeURIComponent(searchQuery)}`); setSearchOpen(false); };
 
   const accountPath = user
-    ? (user.role === 'admin' ? '/admin' : user.role === 'seller' ? '/seller' : '/buyer')
-    : '/login';
-  const initial = (user?.user_metadata?.full_name || user?.email || '?').trim()[0]?.toUpperCase();
+    ? (user.role==='admin'?'/admin':user.role==='seller'?'/seller':'/buyer') : '/login';
+  const initial = (user?.user_metadata?.full_name||user?.email||'?').trim()[0]?.toUpperCase();
 
-  /* Shared icon-button classes */
-  const iconBtn = `w-10 h-10 rounded-full flex items-center justify-center transition-colors
-    ${isOnDark ? 'hover:bg-white/15' : 'hover:bg-foreground/[0.06]'}`;
+  const ibtn = `w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-90
+    ${isOnDark?'hover:bg-white/15':'hover:bg-foreground/[0.07]'}`;
 
   return (
-    <header
-      className={`fixed top-0 inset-x-0 z-50 transition-all duration-300
-        ${isOnDark
-          ? 'bg-transparent'
-          : 'bg-background/85 backdrop-blur-xl border-b border-foreground/8'}
-      `}
-    >
-      <div className={`container mx-auto px-5 md:px-8 flex items-center justify-between transition-[height] duration-300 ${scrolled ? 'h-14' : 'h-16 md:h-20'}`}>
+    <>
+    <header className={`fixed top-0 inset-x-0 z-50 transition-all duration-300
+      ${isOnDark?'bg-transparent':'bg-background/90 backdrop-blur-xl border-b border-foreground/8'}`}>
+
+      <div className={`container mx-auto px-4 md:px-6 flex items-center justify-between transition-[height] duration-300
+        ${scrolled?'h-14':'h-16 md:h-20'}`}>
 
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 group flex-shrink-0">
-          <span
-            className={`font-sans text-[22px] md:text-2xl font-semibold tracking-[-0.025em] transition-colors
-              ${isOnDark ? 'text-white' : 'text-foreground'}`}
-          >
+        <Link to="/" className="flex-shrink-0">
+          <span className={`font-sans text-xl md:text-[22px] font-bold tracking-[-0.02em] transition-colors
+            ${isOnDark?'text-white':'text-foreground'}`}>
             MaliMart
           </span>
         </Link>
 
-        {/* Desktop nav links */}
-        <NavDesktop
-          isScrolled={scrolled}
-          isHome={isHome}
-          categories={categories}
-          cart={cart}
-          user={user}
-          isSearchOpen={isSearchOpen}
-          setIsSearchOpen={setIsSearchOpen}
-        />
+        {/* Desktop nav */}
+        <MegaMenu isHome={isHome} scrolled={scrolled}/>
 
         {/* Right cluster */}
-        <div className={`flex items-center gap-1.5 md:gap-2 ${isOnDark ? 'text-white' : 'text-foreground'}`}>
+        <div className={`flex items-center gap-1 ${isOnDark?'text-white':'text-foreground'}`}>
 
           {/* Search */}
-          <button
-            onClick={() => setIsSearchOpen(true)}
-            aria-label="Search"
-            className={iconBtn}
-          >
-            <Search className="w-[18px] h-[18px] stroke-[2]" />
+          <button onClick={()=>setSearchOpen(true)} aria-label="Search" className={ibtn}>
+            <Search className="w-[18px] h-[18px] stroke-[2]"/>
           </button>
 
-          {/* Dark / Light mode toggle */}
-          <button
-            onClick={toggleDark}
-            aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-            className={iconBtn}
-          >
-            {isDark
-              ? <Sun className="w-[18px] h-[18px] stroke-[2]" />
-              : <Moon className="w-[18px] h-[18px] stroke-[2]" />}
+          {/* Dark mode */}
+          <button onClick={toggleDark} aria-label="Toggle theme" className={ibtn}>
+            {isDark?<Sun className="w-[18px] h-[18px] stroke-[2]"/>:<Moon className="w-[18px] h-[18px] stroke-[2]"/>}
           </button>
 
-          {/* Wishlist (desktop only) */}
-          <Link
-            to="/wishlist"
-            aria-label="Wishlist"
-            className={`hidden md:flex ${iconBtn}`}
-          >
-            <Heart className="w-[18px] h-[18px] stroke-[2]" />
+          {/* Wishlist (desktop) */}
+          <Link to="/wishlist" aria-label="Wishlist" className={`hidden md:flex ${ibtn}`}>
+            <Heart className="w-[18px] h-[18px] stroke-[2]"/>
           </Link>
 
+          {/* Notifications (desktop) */}
+          {user && (
+            <Link to="/notifications" aria-label="Notifications" className={`hidden md:flex relative ${ibtn}`}>
+              <span className="text-[18px]">🔔</span>
+              {unread>0 && (
+                <span className="absolute top-1.5 right-1.5 min-w-[14px] h-3.5 px-0.5 rounded-full bg-rose-500 text-white text-[8px] font-black flex items-center justify-center">
+                  {unread>9?'9+':unread}
+                </span>
+              )}
+            </Link>
+          )}
+
           {/* Cart */}
-          <Link
-            to="/cart"
-            aria-label={`Cart (${cartCount} items)`}
-            className={`relative ${iconBtn}`}
-          >
-            <ShoppingBag className="w-[18px] h-[18px] stroke-[2]" />
-            {cartCount > 0 && (
-              <span
-                className={`absolute top-1.5 right-1.5 min-w-[16px] h-4 px-1 rounded-full text-[10px] font-bold flex items-center justify-center
-                  ${isOnDark ? 'bg-white text-black' : 'bg-foreground text-background'}`}
-              >
-                {cartCount > 9 ? '9+' : cartCount}
+          <Link to="/cart" aria-label={`Cart (${cartCount})`} className={`relative ${ibtn}`}>
+            <ShoppingBag className="w-[18px] h-[18px] stroke-[2]"/>
+            {cartCount>0 && (
+              <span className={`absolute top-1.5 right-1.5 min-w-[15px] h-[15px] px-0.5 rounded-full text-[9px] font-black flex items-center justify-center
+                ${isOnDark?'bg-white text-black':'bg-foreground text-background'}`}>
+                {cartCount>9?'9+':cartCount}
               </span>
             )}
           </Link>
@@ -185,127 +360,109 @@ export const Navbar = () => {
           {/* Account chip (desktop) */}
           <div className="hidden md:block relative group">
             {user ? (
-              <Link
-                to={accountPath}
-                aria-label="Account"
-                className={`flex items-center gap-2 h-10 pl-1 pr-3 rounded-full transition-colors
-                  ${isOnDark ? 'hover:bg-white/15' : 'hover:bg-foreground/[0.06]'}`}
-              >
-                <span className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-semibold">
-                  {initial}
-                </span>
+              <Link to={accountPath}
+                className={`flex items-center gap-2 h-9 pl-1 pr-3 rounded-full transition-colors
+                  ${isOnDark?'hover:bg-white/15':'hover:bg-foreground/[0.06]'}`}>
+                {user.avatar_url ? (
+                  <img src={user.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover ring-1 ring-foreground/10"/>
+                ) : (
+                  <span className="w-7 h-7 rounded-full bg-foreground text-background flex items-center justify-center text-xs font-bold">{initial}</span>
+                )}
                 <span className="text-sm font-semibold">Account</span>
               </Link>
             ) : (
-              <Link
-                to="/login"
-                className={`flex items-center gap-2 h-10 px-4 rounded-full text-sm font-semibold transition-colors
-                  ${isOnDark
-                    ? 'bg-white text-black hover:bg-white/90'
-                    : 'bg-foreground text-background hover:bg-primary hover:text-primary-foreground'}`}
-              >
-                <User className="w-4 h-4 stroke-[2.2]" />
-                Sign in
+              <Link to="/login"
+                className={`flex items-center gap-2 h-9 px-4 rounded-full text-sm font-semibold transition-colors
+                  ${isOnDark?'bg-white text-black hover:bg-white/90':'bg-foreground text-background hover:bg-foreground/85'}`}>
+                <User className="w-3.5 h-3.5 stroke-[2.2]"/> Sign in
               </Link>
             )}
-            <UserMenu user={user} handleLogout={handleLogout} />
+            <UserMenu user={user} handleLogout={handleLogout}/>
           </div>
 
           {/* Mobile hamburger */}
-          <button
-            onClick={() => setIsMobileMenuOpen(true)}
-            aria-label="Open menu"
-            className={`md:hidden ${iconBtn}`}
-          >
-            <Menu className="w-[18px] h-[18px] stroke-[2]" />
+          <button onClick={()=>setMenuOpen(true)} aria-label="Open menu" className={`md:hidden ${ibtn}`}>
+            <Menu className="w-[18px] h-[18px] stroke-[2]"/>
           </button>
         </div>
       </div>
-
-      <SearchModal
-        isSearchOpen={isSearchOpen}
-        setIsSearchOpen={setIsSearchOpen}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        handleSearch={handleSearchSubmit}
-        isSearching={false}
-        searchResults={{ products: [], categories: [] }}
-        searchInputRef={searchInputRef}
-      />
-
-      <NavMobile
-        isMobileMenuOpen={isMobileMenuOpen}
-        setIsMobileMenuOpen={setIsMobileMenuOpen}
-        user={user}
-        handleLogout={handleLogout}
-        navLinks={navLinks}
-        notifications={notifications}
-        unreadMessages={unreadMessages}
-        isDark={isDark}
-        toggleDark={toggleDark}
-      />
     </header>
+
+    {/* Portalled overlays — outside header stacking context */}
+    {createPortal(
+      <>
+        <SearchModal
+          isSearchOpen={searchOpen}
+          setIsSearchOpen={setSearchOpen}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          handleSearch={handleSearchSubmit}
+          isSearching={false}
+          searchResults={{products:[],categories:[]}}
+          searchInputRef={searchRef}
+        />
+        <MobileDrawer
+          open={menuOpen}
+          onClose={()=>setMenuOpen(false)}
+          user={user}
+          logout={handleLogout}
+          isDark={isDark}
+          toggleDark={toggleDark}
+          notifications={notifications||[]}
+          unreadMessages={unreadMessages||0}
+        />
+      </>,
+      document.body
+    )}
+    </>
   );
 };
 
-// ─── Mobile bottom nav (separate export) ────────────────────────────
+// ─── Mobile bottom nav ────────────────────────────────────────────────────────
 export const MobileBottomNav = () => {
   const { user, cart, notifications } = useAppState();
   const navigate = useNavigate();
   const location = useLocation();
-  const cartCount = cart.reduce((acc, item) => acc + (item.quantity || 1), 0);
-  const unreadNotifs = notifications?.filter((n: any) => !n.read).length || 0;
+  const cartCount = cart.reduce((a,i)=>a+(i.quantity||1),0);
+  const unread = notifications?.filter((n:any)=>!n.read).length||0;
 
   const accountPath = user
-    ? (user.role === 'admin' ? '/admin' : user.role === 'seller' ? '/seller' : '/buyer')
-    : '/login';
+    ? (user.role==='admin'?'/admin':user.role==='seller'?'/seller':'/buyer') : '/login';
 
   const tabs = [
-    { id: 'home', label: 'Home', icon: Home, path: '/' },
-    { id: 'shop', label: 'Shop', icon: Store, path: '/shop' },
-    { id: 'cats', label: 'Explore', icon: LayoutGrid, path: '/categories' },
-    { id: 'cart', label: 'Bag', icon: ShoppingBag, path: '/cart', count: cartCount },
-    { id: 'me', label: user ? 'Account' : 'Sign in', icon: UserCircle, path: accountPath, count: unreadNotifs > 0 ? unreadNotifs : 0 },
+    { id:'home',  label:'Home',    icon:Home,      path:'/' },
+    { id:'shop',  label:'Shop',    icon:Store,     path:'/shop' },
+    { id:'cats',  label:'Explore', icon:LayoutGrid,path:'/categories' },
+    { id:'cart',  label:'Bag',     icon:ShoppingBag,path:'/cart', badge:cartCount },
+    { id:'me',    label:user?'Account':'Sign in', icon:UserCircle, path:accountPath, badge:unread },
   ];
 
-  const isActive = (path: string) =>
-    path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
+  const active = (path: string) => path==='/' ? location.pathname==='/' : location.pathname.startsWith(path);
 
   return (
-    <nav
-      role="navigation"
-      aria-label="Primary mobile navigation"
+    <nav role="navigation" aria-label="Mobile navigation"
       className="fixed bottom-0 inset-x-0 z-40 md:hidden"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-    >
-      <div className="mx-2 mb-2 rounded-2xl bg-background/96 backdrop-blur-2xl ring-1 ring-foreground/8 shadow-[0_-4px_24px_-4px_rgba(0,0,0,0.1)]">
-        <div className="grid grid-cols-5 h-[60px]">
-          {tabs.map(t => {
-            const Icon = t.icon;
-            const active = isActive(t.path);
+      style={{paddingBottom:'env(safe-area-inset-bottom)'}}>
+      <div className="mx-2 mb-2 rounded-2xl bg-background/97 backdrop-blur-2xl ring-1 ring-foreground/8 shadow-[0_-2px_20px_-4px_rgba(0,0,0,0.12)]">
+        <div className="grid grid-cols-5 h-[58px]">
+          {tabs.map(t=>{
+            const Icon=t.icon;
+            const on=active(t.path);
             return (
-              <button
-                key={t.id}
-                onClick={() => navigate(t.path)}
-                aria-label={t.label}
-                aria-current={active ? 'page' : undefined}
-                className={`relative flex flex-col items-center justify-center gap-[3px] transition-colors active:scale-90
-                  ${active ? 'text-foreground' : 'text-foreground/35 hover:text-foreground/60'}`}
-              >
-                {active && (
-                  <span className="absolute top-1.5 w-6 h-0.5 rounded-full bg-emerald-500" />
-                )}
+              <button key={t.id} onClick={()=>navigate(t.path)}
+                aria-label={t.label} aria-current={on?'page':undefined}
+                className={`relative flex flex-col items-center justify-center gap-0.5 transition-all active:scale-90
+                  ${on?'text-foreground':'text-foreground/32 hover:text-foreground/60'}`}>
+                {on && <span className="absolute top-1 w-5 h-[2px] rounded-full bg-emerald-500"/>}
                 <span className="relative">
-                  <Icon className={`w-[21px] h-[21px] transition-all ${active ? 'stroke-[2.2]' : 'stroke-[1.7]'}`} />
-                  {t.count != null && t.count > 0 && (
-                    <span className="absolute -top-1.5 -right-2 min-w-[15px] h-[15px] px-0.5 rounded-full bg-rose-500 text-white text-[9px] font-bold flex items-center justify-center">
-                      {t.count > 9 ? '9+' : t.count}
+                  <Icon className={`w-5 h-5 transition-all ${on?'stroke-[2.3]':'stroke-[1.6]'}`}/>
+                  {t.badge!=null && t.badge>0 && (
+                    <span className="absolute -top-1.5 -right-2 min-w-[14px] h-[14px] px-0.5 rounded-full bg-rose-500 text-white text-[8px] font-black flex items-center justify-center">
+                      {t.badge>9?'9+':t.badge}
                     </span>
                   )}
                 </span>
-                <span className={`text-[9px] font-semibold tracking-wide transition-all ${active ? 'opacity-100' : 'opacity-80'}`}>
-                  {t.label}
-                </span>
+                <span className={`text-[9px] font-semibold leading-none ${on?'opacity-100':'opacity-70'}`}>{t.label}</span>
               </button>
             );
           })}

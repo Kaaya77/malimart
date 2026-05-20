@@ -292,9 +292,19 @@ export const CheckoutModal = ({ total, subtotal, vat, discount, onClose, onCompl
   const [submitting, setSubmitting] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
 
+  // Auto-select default or first address when addresses load
   useEffect(()=>{
-    if (addresses.length>0 && !selectedAddr) {
+    if (addresses.length===0) return;
+    if (!selectedAddr) {
       setSelectedAddr(addresses.find(a=>a.is_default)||addresses[0]);
+    } else {
+      // When a new address is added, it'll be the last one — auto-select it
+      // (it won't have an id yet matching anything in previous selectedAddr)
+      const found = addresses.find(a=>a.id===selectedAddr.id);
+      if (!found) {
+        // Newly added - select the latest
+        setSelectedAddr(addresses[addresses.length-1]);
+      }
     }
   },[addresses]);
 
@@ -441,7 +451,15 @@ export const CheckoutModal = ({ total, subtotal, vat, discount, onClose, onCompl
                       )}
                     </div>
                     {isAddingAddr ? (
-                      <AddressForm onSave={async d=>{await addAddress(d);setIsAddingAddr(false);}} onCancel={()=>setIsAddingAddr(false)}/>
+                      <AddressForm
+                        onSave={async d=>{
+                          await addAddress(d);
+                          setIsAddingAddr(false);
+                          // The new address will appear in `addresses` after state update.
+                          // We'll auto-select it via the useEffect below.
+                        }}
+                        onCancel={()=>setIsAddingAddr(false)}
+                      />
                     ) : (
                       <div className="space-y-2.5">
                         {addresses.length===0 && (
