@@ -155,7 +155,7 @@ export const ProductPage = () => {
             <div className="container mx-auto px-4 md:px-8 max-w-7xl">
                 {/* Breadcrumb / Back */}
                 <div className="flex items-center gap-4 mb-8">
-                    <button onClick={() => navigate(-1)} className="p-3 bg-background/50 dark:bg-primary/50 backdrop-blur-md rounded-full hover:scale-110 transition-transform border border-foreground/10 dark:border-background/10"><ArrowLeft className="w-5 h-5 stroke-[1]"/></button>
+                    <button onClick={() => navigate(-1)} className="p-3 bg-background/50 dark:bg-primary/50 backdrop-blur-md rounded-full hover:scale-110 transition-transform border border-foreground/10"><ArrowLeft className="w-5 h-5 stroke-[1]"/></button>
                     <div className="text-[10px] font-semibold uppercase tracking-[0.2em] opacity-60">
                         <span>{product.category}</span> <span className="mx-2 opacity-40">/</span> <span>{product.name}</span>
                     </div>
@@ -312,7 +312,7 @@ export const ProductPage = () => {
                                                     <button key={val} onClick={() => setSelectedAttributes({...selectedAttributes, [attr.name]: val})} className={`w-12 h-12 rounded-full border transition-all ${isSelected ? 'border-foreground dark:border-background scale-110' : 'border-transparent opacity-50 hover:opacity-100'}`} style={{ backgroundColor: val.toLowerCase() }} />
                                                 );
                                                 return (
-                                                    <button key={val} onClick={() => setSelectedAttributes({...selectedAttributes, [attr.name]: val})} className={`px-6 py-3 text-xs tracking-wider transition-all border ${isSelected ? 'border-foreground bg-primary text-background dark:border-background dark:bg-background dark:text-foreground' : 'border-foreground/20 dark:border-background/20 hover:border-foreground dark:hover:border-background'}`}>{val}</button>
+                                                    <button key={val} onClick={() => setSelectedAttributes({...selectedAttributes, [attr.name]: val})} className={`px-6 py-3 text-xs tracking-wider transition-all border ${isSelected ? 'border-foreground bg-primary text-background dark:border-background dark:bg-background dark:text-foreground' : 'border-foreground/20 hover:border-foreground dark:hover:border-background'}`}>{val}</button>
                                                 );
                                             })}
                                         </div>
@@ -324,7 +324,7 @@ export const ProductPage = () => {
                         {/* Actions */}
                         <div className="flex flex-col gap-4 mb-12">
                             <div className="flex gap-4 h-14">
-                                <div className="flex items-center justify-between border border-foreground/20 dark:border-background/20 px-2 w-32 shrink-0">
+                                <div className="flex items-center justify-between border border-foreground/20 px-2 w-32 shrink-0">
                                     <button onClick={() => setQty(Math.max(1, qty - 1))} className="w-8 h-full flex items-center justify-center opacity-50 hover:opacity-100 transition-opacity" disabled={qty <= 1}>-</button>
                                     <span className="text-sm font-medium">{qty}</span>
                                     <button onClick={() => setQty(Math.min(metrics.stock, qty + 1))} className="w-8 h-full flex items-center justify-center opacity-50 hover:opacity-100 transition-opacity" disabled={qty >= metrics.stock}>+</button>
@@ -334,7 +334,7 @@ export const ProductPage = () => {
                                     whileTap={{ scale: 0.98 }}
                                     onClick={handleAdd}
                                     disabled={metrics.isOut}
-                                    className={`flex-1 border text-xs uppercase tracking-[0.2em] font-semibold transition-colors ${metrics.isOut ? 'border-foreground/20 text-foreground/40 dark:border-background/20 dark:text-background/40 cursor-not-allowed' : 'border-foreground dark:border-background hover:bg-primary hover:text-background dark:hover:bg-background dark:hover:text-foreground'}`}
+                                    className={`flex-1 border text-xs uppercase tracking-[0.2em] font-semibold transition-colors ${metrics.isOut ? 'border-foreground/20 text-foreground/40 dark:text-background/40 cursor-not-allowed' : 'border-foreground dark:border-background hover:bg-primary hover:text-background dark:hover:bg-background dark:hover:text-foreground'}`}
                                 >
                                     {metrics.isOut ? 'Out of Stock' : 'Add to Bag'}
                                 </motion.button>
@@ -351,20 +351,20 @@ export const ProductPage = () => {
                         </div>
 
                         {/* Secondary Actions Grid */}
-                        <div className="grid grid-cols-3 border-y border-foreground/10 dark:border-background/10 mb-12">
+                        <div className="grid grid-cols-3 border-y border-foreground/10 mb-12">
                             <button 
                                 onClick={() => {
                                     toggleWishlist(product);
                                     addToast(isInWishlist(product.id) ? 'Removed from wishlist' : 'Added to wishlist', 'success');
                                 }}
-                                className="flex flex-col items-center justify-center gap-2 py-6 border-r border-foreground/10 dark:border-background/10 hover:bg-primary/5 dark:hover:bg-background/5 transition-colors"
+                                className="flex flex-col items-center justify-center gap-2 py-6 border-r border-foreground/10 hover:bg-primary/5 dark:hover:bg-background/5 transition-colors"
                             >
                                 <Heart className={`w-5 h-5 stroke-[1] ${isLiked ? 'fill-current' : ''}`} />
                                 <span className="text-[9px] uppercase tracking-[0.2em]">{isLiked ? 'Saved' : 'Save'}</span>
                             </button>
                             <button 
                                 onClick={handleMessageSeller}
-                                className="flex flex-col items-center justify-center gap-2 py-6 border-r border-foreground/10 dark:border-background/10 hover:bg-primary/5 dark:hover:bg-background/5 transition-colors"
+                                className="flex flex-col items-center justify-center gap-2 py-6 border-r border-foreground/10 hover:bg-primary/5 dark:hover:bg-background/5 transition-colors"
                             >
                                 <MessageSquare className="w-5 h-5 stroke-[1]" />
                                 <span className="text-[9px] uppercase tracking-[0.2em]">Concierge</span>
@@ -397,7 +397,7 @@ export const ProductPage = () => {
                         </div>
 
                         {/* Details Accordion */}
-                        <div className="space-y-4 border-t border-foreground/10 dark:border-background/10 pt-8">
+                        <div className="space-y-4 border-t border-foreground/10 pt-8">
                         </div>
                     </div>
                 </motion.div>
@@ -408,10 +408,10 @@ export const ProductPage = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, margin: "-50px" }}
                     transition={{ duration: 0.6 }}
-                    className="mt-24 border-t border-foreground/10 dark:border-background/10 pt-24"
+                    className="mt-12 md:mt-20 border-t border-foreground/10 pt-10 md:pt-16"
                 >
                     <h3 className="font-serif text-2xl font-light mb-8">Specifications</h3>
-                    <div className="grid grid-cols-1 gap-y-0 border border-foreground/10 dark:border-background/10 rounded-sm overflow-hidden">
+                    <div className="grid grid-cols-1 gap-y-0 border border-foreground/10 rounded-sm overflow-hidden">
                         {Object.entries({
                             'Title': product.name,
                             'Brand': product.brand,
@@ -434,7 +434,7 @@ export const ProductPage = () => {
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true, margin: "-50px" }}
                         transition={{ duration: 0.6 }}
-                        className="mt-24 border-t border-foreground/10 dark:border-background/10 pt-24"
+                        className="mt-12 md:mt-20 border-t border-foreground/10 pt-10 md:pt-16"
                     >
                         <div className="grid md:grid-cols-2 gap-12 items-center">
                             <div>
@@ -446,7 +446,7 @@ export const ProductPage = () => {
                                     {vendor.website_url && <a href={vendor.website_url} target="_blank" rel="noreferrer" className="text-xs uppercase tracking-[0.2em] font-semibold opacity-60 hover:opacity-100">Website</a>}
                                 </div>
                             </div>
-                            <div className="aspect-square bg-[#ebe8e3] dark:bg-[#0a0a0a] rounded-sm overflow-hidden">
+                            <div className="aspect-square bg-foreground/[0.03] rounded-xl overflow-hidden">
                                 {vendor.logo_url ? <img src={vendor.logo_url} alt={vendor.store_name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-4xl font-serif opacity-20">{vendor.store_name[0]}</div>}
                             </div>
                         </div>
@@ -458,7 +458,7 @@ export const ProductPage = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, margin: "-50px" }}
                     transition={{ duration: 0.6 }}
-                    className="mt-24 border-t border-foreground/10 dark:border-background/10 pt-24"
+                    className="mt-12 md:mt-20 border-t border-foreground/10 pt-10 md:pt-16"
                 >
                     <h3 className="font-serif text-3xl font-light mb-12">Client Reviews</h3>
                     <ReviewSection productId={product.id} />
@@ -471,10 +471,10 @@ export const ProductPage = () => {
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true, margin: "-50px" }}
                         transition={{ duration: 0.6 }}
-                        className="mt-24 border-t border-foreground/10 dark:border-background/10 pt-24"
+                        className="mt-12 md:mt-20 border-t border-foreground/10 pt-10 md:pt-16"
                     >
-                        <h2 className="font-serif text-3xl font-light mb-12">You Might Also Like</h2>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+                        <h2 className="font-serif text-2xl font-semibold mb-6 md:mb-10">You might also like</h2>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-x-3 gap-y-8 md:gap-x-5 md:gap-y-10">
                             {relatedProducts.map((p, index) => (
                                 <ProductCard key={p.id} product={p} index={index} onClick={() => navigate(`/product/${p.id}`)} />
                             ))}

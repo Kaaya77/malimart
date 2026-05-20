@@ -65,7 +65,7 @@ export const StorePage = () => {
                     src={vendor.banner_url || 'https://images.unsplash.com/photo-1542831371-29b0f74f9713?q=80&w=2070&auto=format&fit=crop'} 
                     className="w-full h-full object-cover opacity-80 transition-transform duration-[20s] ease-linear hover:scale-105" 
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-background dark:from-background to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent" />
             </div>
 
             <div className="container mx-auto px-4 md:px-8 -mt-32 relative z-10 max-w-7xl">

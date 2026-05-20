@@ -316,7 +316,7 @@ export const CartPage = () => {
         </div>
         <h2 className="text-4xl md:text-6xl font-black text-foreground mb-6 font-display tracking-tighter uppercase leading-none">Bag Empty</h2>
         <p className="text-foreground/50 mb-12 max-w-md mx-auto font-medium text-base leading-relaxed">Your collection awaits. Discover authentic artifacts from Tanzania's finest creators.</p>
-        <Link to="/shop"><Button size="lg" variant="brand" className="px-12 h-16 rounded-full shadow-2xl shadow-brand-500/30 font-black uppercase tracking-widest text-xs hover:scale-105 transition-transform">Start Collecting</Button></Link>
+        <Link to="/shop"><Button size="lg" variant="brand" className="px-12 h-16 rounded-full shadow-2xl shadow-emerald-500/20 font-black uppercase tracking-widest text-xs hover:scale-105 transition-transform">Start Collecting</Button></Link>
       </div>
     );
   }
@@ -623,7 +623,7 @@ export const CartPage = () => {
               <Button 
                 onClick={handleCheckoutClick} 
                 variant="brand" 
-                className="w-full h-16 text-xs font-black uppercase tracking-[0.25em] shadow-2xl shadow-brand-500/30 rounded-2xl transition-all group"
+                className="w-full h-16 text-xs font-black uppercase tracking-[0.25em] shadow-2xl shadow-emerald-500/20 rounded-2xl transition-all group"
               >
                 Secure Checkout <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
               </Button>

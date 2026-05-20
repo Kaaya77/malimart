@@ -130,34 +130,27 @@ const Preloader = () => {
         <motion.div 
             initial={{ opacity: 1 }}
             animate={{ opacity: 0 }}
-            transition={{ duration: 1, delay: 2, ease: "easeInOut" }}
+            transition={{ duration: 0.4, delay: 0.5, ease: "easeOut" }}
             onAnimationComplete={() => document.body.style.overflow = 'auto'}
-            className="fixed inset-0 z-[1000] bg-background flex flex-col items-center justify-center"
+            className="fixed inset-0 z-[1000] bg-background flex flex-col items-center justify-center pointer-events-none"
         >
             <motion.div 
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
                 className="relative"
             >
-                <h1 className="text-6xl md:text-8xl font-sans font-extrabold text-foreground tracking-tight leading-none">
-                    Mali<span className="text-primary">Mart</span>
+                <h1 className="text-5xl md:text-7xl font-sans font-extrabold text-foreground tracking-tight leading-none">
+                    Mali<span className="text-emerald-500">Mart</span>
                 </h1>
                 <motion.div 
-                    initial={{ width: 0 }}
-                    animate={{ width: '100%' }}
-                    transition={{ duration: 1.5, delay: 0.5, ease: "easeInOut" }}
-                    className="absolute -bottom-4 left-0 h-[1px] bg-foreground/30"
+                    initial={{ scaleX: 0 }}
+                    animate={{ scaleX: 1 }}
+                    transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
+                    style={{ originX: 0 }}
+                    className="absolute -bottom-3 left-0 right-0 h-[2px] bg-emerald-500/60 rounded-full"
                 />
             </motion.div>
-            <motion.p 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 1, ease: "easeOut" }}
-                className="mt-12 text-[10px] uppercase tracking-[0.5em] text-foreground/40"
-            >
-                Curated Excellence
-            </motion.p>
         </motion.div>
     );
 };
@@ -201,7 +194,7 @@ const AppContent = () => {
   }, [showPreloader]);
 
   useEffect(() => {
-    const timer = setTimeout(() => setShowPreloader(false), 800);
+    const timer = setTimeout(() => setShowPreloader(false), 500);
     return () => clearTimeout(timer);
   }, []);
 

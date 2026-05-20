@@ -92,11 +92,11 @@ export const Button = ({ variant = 'primary', size = 'default', className = '', 
     
     const variants: any = {
         primary: "bg-emerald-500 text-white hover:bg-emerald-600 shadow-sm",
-        secondary: "bg-slate-100 text-slate-900 hover:bg-slate-200 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700",
+        secondary: "bg-foreground/[0.06] text-foreground hover:bg-foreground/[0.1]",
         brand: "bg-emerald-500 text-white hover:bg-emerald-600 shadow-sm",
         danger: "bg-red-500 text-white hover:bg-red-600 shadow-sm",
         outline: "border-2 border-slate-200 text-slate-900 hover:border-slate-300 dark:border-slate-700 dark:text-white dark:hover:border-slate-600",
-        ghost: "hover:bg-slate-100 text-slate-900 dark:text-white dark:hover:bg-slate-800",
+        ghost: "hover:bg-foreground/[0.06] text-foreground",
         link: "text-emerald-600 dark:text-emerald-400 hover:underline p-0 h-auto"
     };
     
@@ -137,14 +137,14 @@ export const Button = ({ variant = 'primary', size = 'default', className = '', 
 export const Input = ({ className = '', ...props }: any) => (
     <div className="relative group w-full">
         <input 
-            className={`flex h-14 w-full rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 text-sm font-medium placeholder:text-slate-400 focus:outline-none focus:border-emerald-500 focus:bg-white transition-all dark:border-slate-700 dark:bg-slate-800 dark:placeholder:text-slate-500 dark:text-white dark:focus:border-emerald-500 dark:focus:bg-slate-900 ${className}`} 
+            className={`flex h-14 w-full rounded-2xl border-2 border-foreground/15 bg-foreground/[0.04] px-4 text-sm font-medium text-foreground placeholder:text-foreground/35 focus:outline-none focus:border-foreground/30 focus:bg-background transition-all ${className}`} 
             {...props} 
         />
     </div>
 );
 
 export const Textarea = ({ className = '', ...props }: any) => (
-    <textarea className={`flex min-h-[120px] w-full rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-4 text-sm font-medium placeholder:text-slate-400 focus:outline-none focus:border-emerald-500 focus:bg-white transition-all dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-emerald-500 dark:focus:bg-slate-900 resize-none ${className}`} {...props} />
+    <textarea className={`flex min-h-[120px] w-full rounded-2xl border-2 border-foreground/15 bg-foreground/[0.04] px-4 py-4 text-sm font-medium text-foreground placeholder:text-foreground/35 focus:outline-none focus:border-foreground/30 focus:bg-background transition-all resize-none ${className}`} {...props} />
 );
 
 export const Label = ({ className = '', ...props }: any) => (
@@ -153,7 +153,7 @@ export const Label = ({ className = '', ...props }: any) => (
 
 export const Card = ({ className = '', ...props }: any) => (
     <div 
-        className={`rounded-3xl border border-slate-100 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-white relative overflow-hidden shadow-sm ${className}`} 
+        className={`rounded-3xl border border-foreground/8 bg-card text-foreground relative overflow-hidden shadow-sm ${className}`} 
         {...props}
     >
         <div className="relative z-10">{props.children}</div>
@@ -178,8 +178,8 @@ export const CardDescription = ({ className = '', ...props }: any) => (
 
 export const Badge = ({ variant = 'default', className = '', ...props }: any) => {
     const variants: any = {
-        default: "bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white",
-        secondary: "bg-slate-50 text-slate-600 border border-slate-200 dark:bg-slate-800/50 dark:text-slate-400 dark:border-slate-700",
+        default: "bg-foreground/[0.08] text-foreground",
+        secondary: "bg-foreground/[0.04] text-foreground/65 border border-foreground/10",
         outline: "border-2 border-slate-200 text-slate-700 dark:border-slate-700 dark:text-slate-300",
         success: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400",
         danger: "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400"
@@ -200,14 +200,14 @@ export const Switch = ({ checked, onCheckedChange, className = '' }: any) => (
         role="switch" 
         aria-checked={checked} 
         onClick={() => onCheckedChange(!checked)} 
-        className={`peer inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${checked ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-700'} ${className}`}
+        className={`peer inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${checked ? 'bg-emerald-500' : 'bg-foreground/20'} ${className}`}
     >
         <span className={`pointer-events-none block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${checked ? 'translate-x-5' : 'translate-x-0.5'}`} />
     </button>
 );
 
 export const Skeleton = ({ className = '' }: any) => (
-    <div className={`relative overflow-hidden bg-slate-100 dark:bg-slate-800 rounded-2xl ${className}`}>
+    <div className={`relative overflow-hidden bg-foreground/[0.06] rounded-2xl ${className}`}>
         <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/50 dark:via-white/10 to-transparent" />
     </div>
 );
@@ -215,8 +215,8 @@ export const Skeleton = ({ className = '' }: any) => (
 export const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, confirmText = "Confirm", cancelText = "Cancel", isDestructive = false }: any) => {
     if (!isOpen) return null;
     return (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white dark:bg-slate-900 w-full max-w-md p-8 rounded-[2rem] shadow-2xl animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-background w-full max-w-md p-8 rounded-3xl shadow-2xl border border-foreground/8 animate-in zoom-in-95 duration-200">
                 <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">{title}</h3>
                 <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-8">{message}</p>
                 <div className="flex justify-end gap-3">
@@ -286,12 +286,12 @@ export const ThemeToggle = () => {
 };
 
 export const ImageDropzone = ({ currentImage, onImageSelected }: any) => (
-    <div className="relative w-full h-full border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-3xl flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer overflow-hidden group" onClick={() => document.getElementById('img-upload')?.click()}>
+    <div className="relative w-full h-full border-2 border-dashed border-foreground/15 rounded-3xl flex flex-col items-center justify-center bg-foreground/[0.02] hover:bg-foreground/[0.05] transition-all cursor-pointer overflow-hidden group" onClick={() => document.getElementById('img-upload')?.click()}>
         {currentImage ? (
             <img src={currentImage} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Upload" />
         ) : (
             <div className="text-center p-6">
-                <div className="w-12 h-12 bg-white dark:bg-slate-700 rounded-2xl shadow-sm flex items-center justify-center mx-auto mb-4"><X className="w-5 h-5 text-slate-400 rotate-45 stroke-[2]" /></div>
+                <div className="w-12 h-12 bg-foreground/[0.06] rounded-2xl flex items-center justify-center mx-auto mb-4"><X className="w-5 h-5 text-slate-400 rotate-45 stroke-[2]" /></div>
                 <p className="text-xs font-bold text-slate-500">Upload Photo</p>
             </div>
         )}
@@ -311,7 +311,7 @@ export const Modal = ({ isOpen, title, onClose, children }: any) => {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
+                    className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
                 >
                     <motion.div
                         initial={{ opacity: 0, y: 20, scale: 0.95 }}

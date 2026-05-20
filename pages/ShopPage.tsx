@@ -192,12 +192,13 @@ export const ShopPage: React.FC = () => {
           </button>
 
           {/* Sort */}
-          <div className="relative hidden sm:block">
+          <div className="relative">
             <ArrowUpDown className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground/40 stroke-[2] pointer-events-none" />
             <select
               value={sortBy}
               onChange={e => setSortBy(e.target.value)}
-              className="h-11 pl-9 pr-4 rounded-xl bg-foreground/[0.04] border border-foreground/10 text-foreground text-sm font-semibold focus:outline-none appearance-none cursor-pointer hover:bg-foreground/[0.08] transition-colors"
+              className="h-11 pl-9 pr-3 rounded-xl bg-foreground/[0.04] border border-foreground/10 text-foreground text-sm font-semibold focus:outline-none appearance-none cursor-pointer hover:bg-foreground/[0.08] transition-colors sm:pr-4"
+              aria-label="Sort products"
             >
               {SORT_OPTIONS.map(opt => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -239,7 +240,17 @@ export const ShopPage: React.FC = () => {
 
       {/* Product Grid */}
       <div className="container mx-auto px-4 md:px-8">
-        {filteredProducts.length === 0 && !isLoading ? (
+        {isLoading ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-3 gap-y-8 md:gap-x-5 md:gap-y-10">
+            {Array.from({ length: 10 }).map((_, i) => (
+              <div key={i} className="space-y-2">
+                <div className="shimmer aspect-[4/5] rounded-2xl" />
+                <div className="shimmer h-3 w-3/4 rounded-full" />
+                <div className="shimmer h-4 w-1/2 rounded-full" />
+              </div>
+            ))}
+          </div>
+        ) : filteredProducts.length === 0 ? (
           <div className="py-24 text-center">
             <p className="text-4xl mb-4">🔍</p>
             <p className="text-lg font-semibold text-foreground mb-2">No products found</p>

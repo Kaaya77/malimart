@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
+import { useAppState } from '../../context/AppContext';
 
 /**
  * Mobile-first category navigation.
@@ -29,6 +30,23 @@ const CATEGORIES: Array<{ name: string; img: string }> = [
 
 export const CategoryStrip: React.FC = () => {
   const navigate = useNavigate();
+  const { categories: liveCategories } = useAppState();
+
+  // Merge live DB categories with our curated fallback images
+  const displayCategories = React.useMemo(() => {
+    if (liveCategories && liveCategories.length > 0) {
+      return liveCategories
+        .filter(c => c.is_active !== false)
+        .slice(0, 10)
+        .map(c => ({
+          name: c.name,
+          img: CATEGORIES.find(fc => fc.name === c.name)?.img ||
+               c.image_url ||
+               'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&q=80&w=500'
+        }));
+    }
+    return CATEGORIES;
+  }, [liveCategories]);
 
   return (
     <section className="pt-12 md:pt-20 pb-2">
@@ -53,7 +71,7 @@ export const CategoryStrip: React.FC = () => {
       {/* Mobile: horizontal snap scroll */}
       <div className="md:hidden overflow-x-auto no-scrollbar pl-5 -mr-5">
         <div className="flex gap-3 pr-5 snap-x snap-mandatory">
-          {CATEGORIES.map((c, i) => (
+          {displayCategories.map((c, i) => (
             <motion.button
               key={c.name}
               initial={{ opacity: 0, x: 12 }}
@@ -80,7 +98,7 @@ export const CategoryStrip: React.FC = () => {
 
       {/* Desktop: grid */}
       <div className="hidden md:grid container mx-auto px-8 grid-cols-5 gap-4">
-        {CATEGORIES.slice(0, 10).map((c, i) => (
+        {displayCategories.slice(0, 10).map((c, i) => (
           <motion.button
             key={c.name}
             initial={{ opacity: 0, y: 12 }}

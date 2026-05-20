@@ -619,16 +619,16 @@ export const SellerInventory = ({ products: initialProducts, userId, refresh, on
                             <button onClick={() => setSelectedIds(new Set())} className="hover:opacity-50 transition-opacity"><X className="w-4 h-4 stroke-[1]"/></button>
                         </div>
                     )}
-                    <button className="h-12 px-8 bg-primary text-background dark:bg-background dark:text-foreground text-[10px] uppercase tracking-[0.2em] hover:opacity-90 transition-opacity flex items-center gap-3" onClick={() => { setEditingProduct(null); setIsFormOpen(true); }}>
+                    <button className="h-12 px-6 bg-foreground text-background text-[10px] uppercase tracking-[0.15em] font-bold rounded-xl hover:bg-foreground/90 transition-all active:scale-95 flex items-center gap-2" onClick={() => { setEditingProduct(null); setIsFormOpen(true); }}>
                         <Plus className="w-4 h-4 stroke-[1]" /> Add Product
                     </button>
-                    <button className="h-12 px-8 bg-background text-foreground dark:bg-background dark:text-background border border-foreground/20 dark:border-background/20 text-[10px] uppercase tracking-[0.2em] hover:opacity-90 transition-opacity flex items-center gap-3" onClick={() => { setIsQuickFormOpen(true); }}>
+                    <button className="h-12 px-6 bg-foreground/[0.05] text-foreground text-[10px] uppercase tracking-[0.15em] font-semibold rounded-xl border border-foreground/10 hover:bg-foreground/[0.08] transition-all active:scale-95 flex items-center gap-2" onClick={() => { setIsQuickFormOpen(true); }}>
                         <Zap className="w-4 h-4 stroke-[1]" /> Quick Add
                     </button>
-                    <button className="h-12 px-8 bg-background text-foreground dark:bg-background dark:text-background border border-foreground/20 dark:border-background/20 text-[10px] uppercase tracking-[0.2em] hover:opacity-90 transition-opacity flex items-center gap-3" onClick={() => { setIsBulkEditOpen(true); }}>
+                    <button className="h-12 px-6 bg-foreground/[0.05] text-foreground text-[10px] uppercase tracking-[0.15em] font-semibold rounded-xl border border-foreground/10 hover:bg-foreground/[0.08] transition-all active:scale-95 flex items-center gap-2" onClick={() => { setIsBulkEditOpen(true); }}>
                         <Layers className="w-4 h-4 stroke-[1]" /> Bulk Edit
                     </button>
-                    <button className="h-12 px-8 bg-background text-foreground dark:bg-background dark:text-background border border-foreground/20 dark:border-background/20 text-[10px] uppercase tracking-[0.2em] hover:opacity-90 transition-opacity flex items-center gap-3" onClick={() => { setIsCSVImportOpen(true); }}>
+                    <button className="h-12 px-6 bg-foreground/[0.05] text-foreground text-[10px] uppercase tracking-[0.15em] font-semibold rounded-xl border border-foreground/10 hover:bg-foreground/[0.08] transition-all active:scale-95 flex items-center gap-2" onClick={() => { setIsCSVImportOpen(true); }}>
                         <Upload className="w-4 h-4 stroke-[1]" /> Import CSV
                     </button>
                 </div>
