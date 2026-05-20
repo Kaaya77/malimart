@@ -250,11 +250,11 @@ export const ProductPage = () => {
                             
                             <div className="flex flex-wrap items-center gap-4 text-[10px] uppercase tracking-[0.2em] opacity-60 mb-8">
                                 <span>{product.review_count} Reviews</span>
-                                <span className="w-1 h-1 bg-primary/20 dark:bg-background/20 rounded-full"></span>
+                                <span className="w-1 h-1 bg-foreground/20 rounded-full"></span>
                                 <span>SKU: {metrics.sku || 'N/A'}</span>
                                 {product.location && (
                                     <>
-                                        <span className="w-1 h-1 bg-primary/20 dark:bg-background/20 rounded-full"></span>
+                                        <span className="w-1 h-1 bg-foreground/20 rounded-full"></span>
                                         {product.latitude && product.longitude ? (
                                             <a href={`https://www.google.com/maps/search/?api=1&query=${product.latitude},${product.longitude}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:underline text-blue-600 dark:text-blue-400">
                                                 <MapPin className="w-3 h-3" /> {product.location}
@@ -266,13 +266,13 @@ export const ProductPage = () => {
                                 )}
                                 {product.condition && (
                                     <>
-                                        <span className="w-1 h-1 bg-primary/20 dark:bg-background/20 rounded-full"></span>
+                                        <span className="w-1 h-1 bg-foreground/20 rounded-full"></span>
                                         <span>{product.condition}</span>
                                     </>
                                 )}
                                 {product.warranty_period && (
                                     <>
-                                        <span className="w-1 h-1 bg-primary/20 dark:bg-background/20 rounded-full"></span>
+                                        <span className="w-1 h-1 bg-foreground/20 rounded-full"></span>
                                         <span>{product.warranty_period}</span>
                                     </>
                                 )}
@@ -348,7 +348,7 @@ export const ProductPage = () => {
                                 whileTap={{ scale: 0.98 }}
                                 onClick={() => { handleAdd(); navigate('/cart'); }}
                                 disabled={metrics.isOut}
-                                className={`w-full h-14 text-xs uppercase tracking-[0.2em] font-semibold transition-opacity ${metrics.isOut ? 'bg-primary/10 text-foreground/40 dark:bg-background/10 cursor-not-allowed' : 'bg-primary text-background dark:bg-background dark:text-foreground hover:opacity-90'}`}
+                                className={`w-full h-14 text-xs uppercase tracking-[0.2em] font-semibold transition-opacity ${metrics.isOut ? 'bg-foreground/10 text-foreground/40 cursor-not-allowed' : 'bg-primary text-background dark:bg-background dark:text-foreground hover:opacity-90'}`}
                             >
                                 Purchase Now
                             </motion.button>
@@ -401,7 +401,25 @@ export const ProductPage = () => {
                         </div>
 
                         {/* Details Accordion */}
-                        <div className="space-y-4 border-t border-foreground/10 pt-8">
+                        <div className="border-t border-foreground/10 pt-6">
+                            {product.description && (
+                                <Accordion title="Description" defaultOpen>
+                                    <p className="text-sm text-foreground/65 leading-relaxed">{product.description}</p>
+                                </Accordion>
+                            )}
+                            <Accordion title="Delivery & Returns">
+                                <div className="space-y-2 text-sm text-foreground/65">
+                                    <p>📦 Delivery within 2-5 business days across Tanzania</p>
+                                    <p>🔄 7-day return window from delivery date</p>
+                                    <p>💳 Payment via M-Pesa, Tigo Pesa, Airtel Money or bank transfer</p>
+                                    {vendor?.region && <p>📍 Ships from {vendor.region}</p>}
+                                </div>
+                            </Accordion>
+                            {product.brand && (
+                                <Accordion title="Brand">
+                                    <p className="text-sm text-foreground/65">{product.brand}</p>
+                                </Accordion>
+                            )}
                         </div>
                     </div>
                 </motion.div>
@@ -415,7 +433,7 @@ export const ProductPage = () => {
                     className="mt-12 md:mt-20 border-t border-foreground/10 pt-10 md:pt-16"
                 >
                     <h3 className="font-serif text-2xl font-light mb-8">Specifications</h3>
-                    <div className="grid grid-cols-1 gap-y-0 border border-foreground/10 rounded-sm overflow-hidden">
+                    <div className="grid grid-cols-1 gap-y-0 border border-foreground/10 rounded-2xl overflow-hidden">
                         {Object.entries({
                             'Title': product.name,
                             'Brand': product.brand,
@@ -423,7 +441,7 @@ export const ProductPage = () => {
                             'Weight': product.weight ? `${product.weight} kg` : null,
                             'Dimensions': product.dimensions ? `${product.dimensions.length}x${product.dimensions.width}x${product.dimensions.height} cm` : null,
                         }).filter(([_, value]) => value).map(([label, value], idx) => (
-                            <div key={label} className={`flex justify-between items-center p-4 ${idx % 2 === 0 ? 'bg-primary/5 dark:bg-background/5' : ''}`}>
+                            <div key={label} className={`flex justify-between items-center p-4 ${idx % 2 === 0 ? 'bg-foreground/[0.03]' : ''}`}>
                                 <span className="text-[10px] uppercase tracking-[0.2em] opacity-60">{label}</span>
                                 <span className="text-sm font-light">{value?.toString() || 'N/A'}</span>
                             </div>

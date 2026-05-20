@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { 
     Search, Filter, Plus, Zap, Archive, Trash2, 
     CheckSquare, Square, Copy, Eye, Star, ChevronDown, 
-    Edit3, Package, ArrowUpRight, AlertTriangle, X,
+    Edit3, Edit2, Package, ArrowUpRight, AlertTriangle, X,
     Download, ArrowUpDown, TrendingUp, Minus, MoreHorizontal,
     Calendar, History, Layers, ArrowRight, GripVertical, Check,
     DollarSign, BarChart3, AlertCircle, Clock, Percent, Share2, Upload, Wand2
@@ -181,9 +181,33 @@ const InventoryRow: React.FC<InventoryRowProps> = ({
             onDragStart={(e) => onDragStart(e, product.id)}
             onDragOver={onDragOver}
             onDrop={(e) => onDrop(e, product.id)}
-            className={`group relative transition-all duration-300 border-b border-foreground/10 hover:bg-primary/5 dark:hover:bg-background/5 ${isSelected ? 'bg-primary/5 dark:bg-background/5' : ''}`}
+            className={`group relative transition-all duration-300 border-b border-foreground/10 hover:bg-foreground/[0.04] ${isSelected ? 'bg-foreground/[0.04]' : ''}`}
         >
-            <div className="grid grid-cols-12 gap-6 items-center p-6">
+            {/* Mobile card layout */}
+            <div className="flex md:hidden items-center gap-3 p-4">
+                <div className="relative w-14 h-18 min-w-[56px] bg-foreground/[0.03] overflow-hidden rounded-xl border border-foreground/10 cursor-pointer" onClick={() => onEdit(product)}>
+                    {product.images?.[0]
+                        ? <img src={product.images[0]} className="w-full h-full object-cover" alt="" />
+                        : <div className="w-full h-full flex items-center justify-center"><Package className="w-4 h-4 text-foreground/30 stroke-[1]"/></div>
+                    }
+                </div>
+                <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground truncate">{product.name}</p>
+                    <p className="text-[11px] text-foreground/45 truncate">{product.category}</p>
+                    <div className="flex items-center gap-3 mt-1">
+                        <span className="text-[12px] font-bold text-foreground">{CURRENCY} {Math.round(product.price).toLocaleString()}</span>
+                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${product.stock <= 0 ? 'bg-red-500/10 text-red-600' : product.stock <= 5 ? 'bg-amber-500/10 text-amber-600' : 'bg-emerald-500/10 text-emerald-600'}`}>
+                            {product.stock <= 0 ? 'Out of stock' : `${product.stock} left`}
+                        </span>
+                    </div>
+                </div>
+                <div className="flex gap-1 shrink-0">
+                    <button onClick={() => onEdit(product)} className="w-9 h-9 rounded-xl bg-foreground/[0.05] flex items-center justify-center text-foreground/60 active:scale-90 transition-transform"><Edit2 className="w-3.5 h-3.5 stroke-[2]"/></button>
+                    <button onClick={() => onDelete(product.id)} className="w-9 h-9 rounded-xl bg-red-500/8 flex items-center justify-center text-red-500/70 active:scale-90 transition-transform"><Trash2 className="w-3.5 h-3.5 stroke-[2]"/></button>
+                </div>
+            </div>
+            {/* Desktop table row */}
+            <div className="hidden md:grid grid-cols-12 gap-6 items-center p-6">
                 {/* Drag Handle & Checkbox */}
                 <div className="col-span-1 flex items-center justify-center gap-4">
                     <div className="cursor-grab opacity-30 hover:opacity-100 transition-opacity active:cursor-grabbing text-foreground"><GripVertical className="w-4 h-4 stroke-[1]"/></div>
@@ -194,7 +218,7 @@ const InventoryRow: React.FC<InventoryRowProps> = ({
 
                 {/* Product Info */}
                 <div className="col-span-4 flex items-center gap-6">
-                    <div className="relative w-16 h-20 bg-background dark:bg-background overflow-hidden shrink-0 border border-foreground/10 group/img cursor-pointer" onClick={() => onEdit(product)}>
+                    <div className="relative w-16 h-20 bg-foreground/[0.03] overflow-hidden shrink-0 border border-foreground/10 group/img cursor-pointer" onClick={() => onEdit(product)}>
                         {product.images?.[0] ? <img src={product.images[0]} className="w-full h-full object-cover transition-transform duration-700 group-hover/img:scale-110" /> : <div className="w-full h-full flex items-center justify-center opacity-20"><Package className="w-5 h-5 stroke-[1]"/></div>}
                         {product.is_boosted && <div className="absolute top-0 right-0 p-1 bg-primary text-background dark:bg-background dark:text-foreground"><Zap className="w-3 h-3 fill-current"/></div>}
                     </div>
@@ -284,11 +308,11 @@ const InventoryRow: React.FC<InventoryRowProps> = ({
                     <div className="relative group/menu">
                         <button className="p-2 transition-opacity hover:opacity-50 opacity-40 text-foreground"><MoreHorizontal className="w-4 h-4 stroke-[1]"/></button>
                         <div className="absolute right-0 top-full mt-2 w-56 bg-background dark:bg-background border border-foreground/10 shadow-2xl hidden group-hover/menu:block z-50 animate-in fade-in zoom-in-95">
-                            <button onClick={() => onEdit(product)} className="w-full text-left px-6 py-4 text-[10px] uppercase tracking-[0.2em] hover:bg-primary/5 dark:hover:bg-background/5 flex items-center gap-4 text-foreground transition-colors"><Edit3 className="w-3 h-3 stroke-[1]"/> Edit</button>
-                            <button onClick={() => onCreatePromo(product)} className="w-full text-left px-6 py-4 text-[10px] uppercase tracking-[0.2em] hover:bg-primary/5 dark:hover:bg-background/5 flex items-center gap-4 text-foreground transition-colors"><Percent className="w-3 h-3 stroke-[1]"/> Create Promo</button>
-                            <button onClick={() => onAutoDiscount(product)} className="w-full text-left px-6 py-4 text-[10px] uppercase tracking-[0.2em] hover:bg-primary/5 dark:hover:bg-background/5 flex items-center gap-4 text-foreground transition-colors"><Clock className="w-3 h-3 stroke-[1]"/> Auto-Discount Rule</button>
-                            <button onClick={() => onDuplicate(product)} className="w-full text-left px-6 py-4 text-[10px] uppercase tracking-[0.2em] hover:bg-primary/5 dark:hover:bg-background/5 flex items-center gap-4 text-foreground transition-colors"><Copy className="w-3 h-3 stroke-[1]"/> Duplicate</button>
-                            <button onClick={() => onDuplicateVariant(product)} className="w-full text-left px-6 py-4 text-[10px] uppercase tracking-[0.2em] hover:bg-primary/5 dark:hover:bg-background/5 flex items-center gap-4 text-foreground transition-colors"><Layers className="w-3 h-3 stroke-[1]"/> Copy to Variant</button>
+                            <button onClick={() => onEdit(product)} className="w-full text-left px-6 py-4 text-[10px] uppercase tracking-[0.2em] hover:bg-foreground/[0.04] flex items-center gap-4 text-foreground transition-colors"><Edit3 className="w-3 h-3 stroke-[1]"/> Edit</button>
+                            <button onClick={() => onCreatePromo(product)} className="w-full text-left px-6 py-4 text-[10px] uppercase tracking-[0.2em] hover:bg-foreground/[0.04] flex items-center gap-4 text-foreground transition-colors"><Percent className="w-3 h-3 stroke-[1]"/> Create Promo</button>
+                            <button onClick={() => onAutoDiscount(product)} className="w-full text-left px-6 py-4 text-[10px] uppercase tracking-[0.2em] hover:bg-foreground/[0.04] flex items-center gap-4 text-foreground transition-colors"><Clock className="w-3 h-3 stroke-[1]"/> Auto-Discount Rule</button>
+                            <button onClick={() => onDuplicate(product)} className="w-full text-left px-6 py-4 text-[10px] uppercase tracking-[0.2em] hover:bg-foreground/[0.04] flex items-center gap-4 text-foreground transition-colors"><Copy className="w-3 h-3 stroke-[1]"/> Duplicate</button>
+                            <button onClick={() => onDuplicateVariant(product)} className="w-full text-left px-6 py-4 text-[10px] uppercase tracking-[0.2em] hover:bg-foreground/[0.04] flex items-center gap-4 text-foreground transition-colors"><Layers className="w-3 h-3 stroke-[1]"/> Copy to Variant</button>
                             <div className="h-px bg-primary/10 dark:bg-background/10"></div>
                             <button onClick={() => onDelete(product.id)} className="w-full text-left px-6 py-4 text-[10px] uppercase tracking-[0.2em] hover:bg-red-50 dark:hover:bg-red-900/10 text-red-600 flex items-center gap-4 transition-colors"><Trash2 className="w-3 h-3 stroke-[1]"/> Delete</button>
                         </div>
@@ -637,7 +661,7 @@ export const SellerInventory = ({ products: initialProducts, userId, refresh, on
             {/* 3. Inventory Table */}
             <div className="bg-background dark:bg-background border border-foreground/10 overflow-hidden flex flex-col min-h-[500px]">
                 {/* Table Header */}
-                <div className="grid grid-cols-12 gap-6 px-6 py-6 border-b border-foreground/10 text-[9px] uppercase tracking-[0.2em] opacity-60 text-foreground sticky top-0 z-10 bg-background/95 dark:bg-background/95 backdrop-blur-xl">
+                <div className="hidden md:grid grid-cols-12 gap-6 px-6 py-6 border-b border-foreground/10 text-[9px] uppercase tracking-[0.2em] opacity-60 text-foreground sticky top-0 z-10 bg-background/95 backdrop-blur-xl">
                     <div className="col-span-1 text-center">Order</div>
                     <div className="col-span-4 pl-6">Product Details</div>
                     <div className="col-span-2 text-right cursor-pointer hover:opacity-100 transition-opacity flex justify-end gap-2" onClick={() => setSort({ key: 'price', asc: !sort.asc })}>

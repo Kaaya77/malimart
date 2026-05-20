@@ -216,7 +216,7 @@ export const SellerSettingsPage = () => {
                     visible: { opacity: 1, x: 0, transition: { duration: 0.3 } }
                 }}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-none text-[10px] uppercase tracking-[0.2em] transition-colors whitespace-nowrap ${
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] uppercase tracking-[0.15em] transition-colors whitespace-nowrap ${
                   activeTab === tab.id 
                     ? 'bg-primary text-background dark:bg-background dark:text-foreground' 
                     : 'text-foreground/60 hover:bg-primary/5 dark:hover:bg-background/5'
