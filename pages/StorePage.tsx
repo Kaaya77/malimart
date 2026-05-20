@@ -1,3 +1,4 @@
+import { ShopPage } from "./ShopPage";
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -42,8 +43,13 @@ export const StorePage = () => {
             .sort((a, b) => (b.is_verified ? 1 : 0) - (a.is_verified ? 1 : 0));
     }, [products, id, searchQuery]);
 
-    if (isLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-10 h-10 animate-spin text-brand-600" /></div>;
-    if (!vendor) return <div className="min-h-screen flex items-center justify-center font-black uppercase">Merchant Profile Disconnected</div>;
+    // Shop mode: no seller ID — show all products
+    if (!id) {
+        return <ShopPage />;
+    }
+
+    if (isLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-10 h-10 animate-spin" /></div>;
+    if (!vendor) return <div className="min-h-screen flex items-center justify-center font-black uppercase text-foreground/50">Store not found</div>;
 
     return (
         <div className="min-h-screen bg-background text-foreground font-sans pb-[calc(5rem+env(safe-area-inset-bottom))]">
