@@ -58,7 +58,7 @@ export const ActivityCenter = () => {
         <div className="relative" ref={containerRef}>
             <button 
                 onClick={() => setIsOpen(!isOpen)} 
-                className="relative p-3 rounded-2xl hover:bg-background dark:hover:bg-white/5 text-foreground dark:text-white transition-all duration-300 group active:scale-95"
+                className="relative p-3 rounded-2xl hover:bg-background text-foreground transition-all duration-300 group active:scale-95"
             >
                 <div className="flex gap-2">
                     <Bell className={`w-4 h-4 transition-transform duration-500 group-hover:rotate-12 ${isOpen && activeTab === 'notifications' ? 'fill-current' : ''}`} />
@@ -70,34 +70,34 @@ export const ActivityCenter = () => {
             </button>
 
             {isOpen && (
-                <div className="absolute top-full right-0 mt-4 w-[380px] md:w-[420px] bg-white/95 dark:bg-primary/95 backdrop-blur-3xl rounded-[2.5rem] shadow-2xl border border-foreground/5 dark:border-white/5 overflow-hidden z-50 animate-in fade-in zoom-in-95 slide-in-from-top-4 duration-500">
+                <div className="absolute top-full right-0 mt-4 w-[380px] md:w-[420px] bg-white/95 dark:bg-primary/95 backdrop-blur-3xl rounded-[2.5rem] shadow-2xl border border-foreground/5 overflow-hidden z-50 animate-in fade-in zoom-in-95 slide-in-from-top-4 duration-500">
                     
                     {/* Header */}
-                    <div className="p-8 pb-6 border-b border-foreground/5 dark:border-white/5">
+                    <div className="p-8 pb-6 border-b border-foreground/5">
                         <div className="flex justify-between items-center mb-8">
                             <div className="space-y-1">
-                                <h3 className="text-xl font-sans font-extrabold text-foreground dark:text-white">Activity</h3>
-                                <p className="text-[9px] uppercase tracking-[0.2em] font-black text-foreground/40 dark:text-white/40">Real-time updates</p>
+                                <h3 className="text-xl font-sans font-extrabold text-foreground">Activity</h3>
+                                <p className="text-[9px] uppercase tracking-[0.2em] font-black text-foreground/40/40">Real-time updates</p>
                             </div>
                             <div className="flex gap-3">
                                 <button onClick={activeTab === 'messages' ? loadMessages : refreshNotifications} className="p-2 rounded-xl bg-background dark:bg-white/5 hover:bg-primary/5 dark:hover:bg-white/10 transition-all active:rotate-180 duration-500">
-                                    <RefreshCw className="w-3.5 h-3.5 text-foreground dark:text-white"/>
+                                    <RefreshCw className="w-3.5 h-3.5 text-foreground"/>
                                 </button>
                                 <button onClick={() => setIsOpen(false)} className="p-2 rounded-xl bg-background dark:bg-white/5 hover:bg-primary/5 dark:hover:bg-white/10 transition-all">
-                                    <X className="w-3.5 h-3.5 text-foreground dark:text-white"/>
+                                    <X className="w-3.5 h-3.5 text-foreground"/>
                                 </button>
                             </div>
                         </div>
                         <div className="flex gap-2 p-1 bg-background dark:bg-white/5 rounded-2xl">
                             <button 
                                 onClick={() => setActiveTab('notifications')}
-                                className={`flex-1 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === 'notifications' ? 'bg-primary text-white dark:bg-white dark:text-black shadow-lg shadow-foreground/10 dark:shadow-white/10' : 'text-foreground/40 dark:text-white/40 hover:text-foreground dark:hover:text-white'}`}
+                                className={`flex-1 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === 'notifications' ? 'bg-primary text-white dark:bg-white dark:text-black shadow-lg shadow-foreground/10 dark:shadow-white/10' : 'text-foreground/40/40 hover:text-foreground dark:hover:text-white'}`}
                             >
                                 Notifications ({unreadNotifCount})
                             </button>
                             <button 
                                 onClick={() => setActiveTab('messages')}
-                                className={`flex-1 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === 'messages' ? 'bg-primary text-white dark:bg-white dark:text-black shadow-lg shadow-foreground/10 dark:shadow-white/10' : 'text-foreground/40 dark:text-white/40 hover:text-foreground dark:hover:text-white'}`}
+                                className={`flex-1 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === 'messages' ? 'bg-primary text-white dark:bg-white dark:text-black shadow-lg shadow-foreground/10 dark:shadow-white/10' : 'text-foreground/40/40 hover:text-foreground dark:hover:text-white'}`}
                             >
                                 Messages ({unreadMessages})
                             </button>
@@ -109,26 +109,26 @@ export const ActivityCenter = () => {
                         {activeTab === 'notifications' ? (
                             <>
                                 {unreadNotifCount > 0 && (
-                                    <button onClick={markAllNotificationsRead} className="w-full text-center py-4 text-[9px] font-black uppercase tracking-[0.3em] text-foreground/40 dark:text-white/40 hover:text-foreground dark:hover:text-white transition-colors border-b border-foreground/5 dark:border-white/5">
+                                    <button onClick={markAllNotificationsRead} className="w-full text-center py-4 text-[9px] font-black uppercase tracking-[0.3em] text-foreground/40/40 hover:text-foreground dark:hover:text-white transition-colors border-b border-foreground/5">
                                         Mark all as read
                                     </button>
                                 )}
                                 {notifications.length === 0 ? (
                                     <div className="py-20 text-center flex flex-col items-center justify-center space-y-4">
                                         <div className="w-16 h-16 rounded-full bg-background dark:bg-white/5 flex items-center justify-center">
-                                            <Bell className="w-6 h-6 text-foreground/20 dark:text-white/20" />
+                                            <Bell className="w-6 h-6 text-foreground/20/20" />
                                         </div>
-                                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground dark:text-white">All Caught Up</p>
+                                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground">All Caught Up</p>
                                     </div>
                                 ) : (
                                     <div className="px-4 space-y-2">
                                         {notifications.map((notif) => (
                                             <div key={notif.id} className={`p-6 rounded-[1.5rem] transition-all duration-300 cursor-pointer ${!notif.read ? 'bg-background dark:bg-white/5' : 'hover:bg-background/50 dark:hover:bg-white/[0.02]'}`} onClick={() => { markNotificationRead(notif.id); setIsOpen(false); navigate(notif.link || '/notifications'); }}>
                                                 <div className="flex justify-between items-start mb-2">
-                                                    <h4 className={`text-xs font-sans font-bold ${!notif.read ? 'text-foreground dark:text-white' : 'text-foreground/60 dark:text-white/60'}`}>{notif.title}</h4>
-                                                    <span className="text-[8px] font-black uppercase tracking-widest text-foreground/30 dark:text-white/30">{timeAgo(notif.created_at)}</span>
+                                                    <h4 className={`text-xs font-sans font-bold ${!notif.read ? 'text-foreground' : 'text-foreground/60/60'}`}>{notif.title}</h4>
+                                                    <span className="text-[8px] font-black uppercase tracking-widest text-foreground/30/30">{timeAgo(notif.created_at)}</span>
                                                 </div>
-                                                <p className="text-[11px] text-foreground/60 dark:text-white/60 line-clamp-2 font-sans font-medium leading-relaxed">{notif.message}</p>
+                                                <p className="text-[11px] text-foreground/60/60 line-clamp-2 font-sans font-medium leading-relaxed">{notif.message}</p>
                                             </div>
                                         ))}
                                     </div>
@@ -151,19 +151,19 @@ export const ActivityCenter = () => {
                             ) : messages.length === 0 ? (
                                 <div className="py-20 text-center flex flex-col items-center justify-center space-y-4">
                                     <div className="w-16 h-16 rounded-full bg-background dark:bg-white/5 flex items-center justify-center">
-                                        <MessageSquare className="w-6 h-6 text-foreground/20 dark:text-white/20" />
+                                        <MessageSquare className="w-6 h-6 text-foreground/20/20" />
                                     </div>
-                                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground dark:text-white">No Messages</p>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground">No Messages</p>
                                 </div>
                             ) : (
                                 <div className="px-4 space-y-2">
                                     {messages.map((msg) => (
-                                        <div key={msg.id} className="p-6 rounded-[1.5rem] bg-background/50 dark:bg-white/[0.02] hover:bg-background dark:hover:bg-white/5 transition-all duration-300 cursor-pointer" onClick={() => { setIsOpen(false); navigate('/messages'); }}>
+                                        <div key={msg.id} className="p-6 rounded-[1.5rem] bg-background/50 dark:bg-white/[0.02] hover:bg-background transition-all duration-300 cursor-pointer" onClick={() => { setIsOpen(false); navigate('/messages'); }}>
                                             <div className="flex justify-between items-start mb-2">
-                                                <h4 className="text-xs font-sans font-bold text-foreground dark:text-white truncate">Message from {msg.sender_name || 'User'}</h4>
-                                                <span className="text-[8px] font-black uppercase tracking-widest text-foreground/30 dark:text-white/30">{timeAgo(msg.created_at)}</span>
+                                                <h4 className="text-xs font-sans font-bold text-foreground truncate">Message from {msg.sender_name || 'User'}</h4>
+                                                <span className="text-[8px] font-black uppercase tracking-widest text-foreground/30/30">{timeAgo(msg.created_at)}</span>
                                             </div>
-                                            <p className="text-[11px] text-foreground/60 dark:text-white/60 line-clamp-2 font-sans font-medium leading-relaxed">{msg.text || msg.body}</p>
+                                            <p className="text-[11px] text-foreground/60/60 line-clamp-2 font-sans font-medium leading-relaxed">{msg.text || msg.body}</p>
                                         </div>
                                     ))}
                                 </div>
@@ -172,9 +172,9 @@ export const ActivityCenter = () => {
                     </div>
                     
                     {/* Footer */}
-                    <div className="p-6 bg-background/50 dark:bg-white/[0.02] border-t border-foreground/5 dark:border-white/5 text-center">
+                    <div className="p-6 bg-background/50 dark:bg-white/[0.02] border-t border-foreground/5 text-center">
                         <button 
-                            className="text-[9px] font-black uppercase tracking-[0.3em] text-foreground/40 dark:text-white/40 hover:text-foreground dark:hover:text-white transition-colors" 
+                            className="text-[9px] font-black uppercase tracking-[0.3em] text-foreground/40/40 hover:text-foreground dark:hover:text-white transition-colors" 
                             onClick={() => { setIsOpen(false); navigate(activeTab === 'notifications' ? '/notifications' : '/messages'); }}
                         >
                             View All Activity
