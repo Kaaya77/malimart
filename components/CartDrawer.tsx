@@ -82,7 +82,7 @@ export const CartDrawer = () => {
             className={`
               fixed inset-x-0 bottom-0 z-[201]
               bg-background/95 backdrop-blur-xl
-              border-t border-foreground/10 dark:border-background/10
+              border-t border-foreground/10
               rounded-t-3xl shadow-2xl
               flex flex-col
               max-h-[90dvh]
@@ -97,9 +97,9 @@ export const CartDrawer = () => {
             </div>
 
             {/* Header */}
-            <div className="flex-shrink-0 px-6 pt-4 pb-4 border-b border-foreground/10 dark:border-background/10">
+            <div className="flex-shrink-0 px-6 pt-4 pb-4 border-b border-foreground/10">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-[10px] uppercase tracking-[0.2em] font-semibold text-foreground dark:text-background">
+                <h2 className="text-[10px] uppercase tracking-[0.2em] font-semibold text-foreground">
                   Bag <span className="opacity-60">({cart.length})</span>
                 </h2>
                 <div className="flex items-center gap-4">
@@ -117,14 +117,14 @@ export const CartDrawer = () => {
                     aria-label="Close cart"
                     className="w-9 h-9 flex items-center justify-center hover:opacity-60 transition-opacity rounded-full"
                   >
-                    <X className="w-4 h-4 stroke-[1] text-foreground dark:text-background"/>
+                    <X className="w-4 h-4 stroke-[1] text-foreground"/>
                   </button>
                 </div>
               </div>
 
               {/* Free Shipping Progress */}
               {cart.length > 0 && (
-                <div className="bg-[#ebe8e3] dark:bg-[#0a0a0a] p-4 border border-foreground/10 dark:border-background/10">
+                <div className="bg-foreground/[0.04] p-4 border border-foreground/10">
                   <p className="text-[9px] uppercase tracking-[0.2em] font-semibold opacity-80 mb-3">
                     {progress < 100 ? (
                       <>Add <span className="font-bold">{remainingForFree.toLocaleString()} {CURRENCY}</span> for Free Delivery</>
@@ -134,9 +134,9 @@ export const CartDrawer = () => {
                       </span>
                     )}
                   </p>
-                  <div className="h-1 w-full bg-primary/10 dark:bg-background/10 overflow-hidden">
+                  <div className="h-1 w-full bg-primary/10 overflow-hidden">
                     <div
-                      className="h-full transition-all duration-1000 ease-out relative bg-primary dark:bg-background"
+                      className="h-full transition-all duration-1000 ease-out relative bg-primary"
                       style={{ width: `${progress}%` }}
                     />
                   </div>
@@ -174,7 +174,7 @@ export const CartDrawer = () => {
                       className="flex gap-4 group transition-all"
                     >
                       <div
-                        className="w-20 h-24 bg-[#ebe8e3] dark:bg-[#0a0a0a] overflow-hidden flex-shrink-0 relative cursor-pointer border border-foreground/10 dark:border-background/10"
+                        className="w-20 h-24 bg-foreground/[0.04] overflow-hidden flex-shrink-0 relative cursor-pointer border border-foreground/10"
                         onClick={() => navigate(`/shop?search=${encodeURIComponent(item.name)}`)}
                       >
                         <img
@@ -183,7 +183,7 @@ export const CartDrawer = () => {
                           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                         />
                         {isLowStock && (
-                          <div className="absolute bottom-0 left-0 right-0 bg-primary text-background dark:bg-background dark:text-foreground text-[8px] uppercase tracking-[0.2em] font-semibold text-center py-1">
+                          <div className="absolute bottom-0 left-0 right-0 bg-foreground text-background text-[8px] uppercase tracking-[0.2em] font-semibold text-center py-1">
                             Only {stock} Left
                           </div>
                         )}
@@ -226,7 +226,7 @@ export const CartDrawer = () => {
                           </div>
 
                           {/* FIX #2: Stepper buttons enlarged to 44px (w-11 h-11) */}
-                          <div className="flex items-center gap-1 border border-foreground/20 dark:border-background/20">
+                          <div className="flex items-center gap-1 border border-foreground/20">
                             <button
                               onClick={() => updateQuantity(item.id, -1, variantId)}
                               disabled={item.quantity <= 1}
@@ -256,7 +256,7 @@ export const CartDrawer = () => {
             {cart.length > 0 && (
               // FIX #5: Safe-area padding so footer clears iOS home indicator
               <div
-                className="flex-shrink-0 px-6 pt-4 border-t border-foreground/10 dark:border-background/10 bg-transparent"
+                className="flex-shrink-0 px-6 pt-4 border-t border-foreground/10 bg-transparent"
                 style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}
               >
                 <div className="space-y-3 mb-6">
@@ -274,7 +274,7 @@ export const CartDrawer = () => {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => { closeCart(); navigate('/cart'); }}
-                  className="w-full h-12 bg-primary text-background dark:bg-background dark:text-foreground text-[10px] uppercase tracking-[0.2em] font-semibold flex items-center justify-center gap-2 shadow-sm group"
+                  className="w-full h-12 bg-foreground text-background text-[10px] uppercase tracking-[0.2em] font-semibold flex items-center justify-center gap-2 shadow-sm group"
                 >
                   Review & Checkout
                   <ArrowRight className="w-4 h-4 stroke-[1] group-hover:translate-x-1 transition-transform"/>

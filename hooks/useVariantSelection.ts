@@ -1,7 +1,14 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Product, ProductVariant } from '../types';
 
-export const useVariantSelection = (product: Product) => {
+/**
+ * Derives variant attribute structure, tracks the user's selected options,
+ * and resolves the matching ProductVariant.
+ *
+ * Safe to call with `product = null` — returns empty / null values so callers
+ * don't need to guard every field (Rules of Hooks: always call unconditionally).
+ */
+export const useVariantSelection = (product: Product | null) => {
     const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
     const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
 
@@ -25,13 +32,16 @@ export const useVariantSelection = (product: Product) => {
                 variantStructure.forEach(attr => defaults[attr.name] = validVariant.attributes[attr.name]);
                 setSelectedOptions(defaults);
             }
+        } else {
+            // Reset when product is null or has no variants
+            setSelectedOptions({});
         }
     }, [product, variantStructure]);
 
     useEffect(() => {
         if (product?.variants?.length && Object.keys(selectedOptions).length > 0) {
-            const findVariant = product.variants.find(variant => 
-                Object.entries(selectedOptions).every(([key, value]) => 
+            const findVariant = product.variants.find(variant =>
+                Object.entries(selectedOptions).every(([key, value]) =>
                     variant.attributes[key] === value
                 )
             );
@@ -47,6 +57,6 @@ export const useVariantSelection = (product: Product) => {
         selectedOptions,
         setSelectedOptions,
         selectedVariant,
-        variantStructure
+        variantStructure,
     };
 };

@@ -95,7 +95,7 @@ const BuyerOffers = () => {
 
     if (isLoading) return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
-            {[1,2,3].map(i => <div key={i} className="h-48 rounded-none bg-primary/5 dark:bg-background/5"></div>)}
+            {[1,2,3].map(i => <div key={i} className="h-48 rounded-none bg-foreground/[0.04]"></div>)}
         </div>
     );
 
@@ -103,12 +103,12 @@ const BuyerOffers = () => {
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
             <div className="flex flex-col md:flex-row justify-between items-end gap-6">
                 <div>
-                    <h2 className="text-2xl font-serif font-light text-foreground dark:text-background">Wallet & Rewards</h2>
-                    <p className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground dark:text-background mt-1">Exclusive vouchers curated for you</p>
+                    <h2 className="text-2xl font-serif font-light text-foreground">Wallet & Rewards</h2>
+                    <p className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground mt-1">Exclusive vouchers curated for you</p>
                 </div>
-                <div className="flex bg-primary/5 dark:bg-background/5 p-1 rounded-none">
+                <div className="flex bg-foreground/[0.04] p-1 rounded-none">
                     {['all', 'high_value', 'expiring'].map(f => (
-                        <button key={f} onClick={() => setFilter(f as any)} className={`px-4 py-2.5 rounded-none text-[10px] uppercase tracking-[0.2em] transition-all ${filter === f ? 'bg-primary dark:bg-background text-background dark:text-foreground shadow-sm' : 'text-foreground/60 dark:text-background/60 hover:text-foreground dark:hover:text-background'}`}>
+                        <button key={f} onClick={() => setFilter(f as any)} className={`px-4 py-2.5 rounded-none text-[10px] uppercase tracking-[0.2em] transition-all ${filter === f ? 'bg-foreground text-background shadow-sm' : 'text-foreground/60 hover:text-foreground'}`}>
                             {f.replace('_', ' ')}
                         </button>
                     ))}
@@ -116,14 +116,14 @@ const BuyerOffers = () => {
             </div>
 
             {filteredOffers.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-24 border border-dashed border-foreground/20 dark:border-background/20 rounded-none text-foreground/40 dark:text-background/40">
+                <div className="flex flex-col items-center justify-center py-24 border border-dashed border-foreground/20 rounded-none text-foreground/40">
                     <Ticket className="w-16 h-16 mb-4 opacity-20" />
                     <p className="text-[10px] uppercase tracking-[0.2em]">No active offers found</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                     {(filteredOffers as any[]).map(offer => (
-                        <div key={offer.id} className="group relative bg-background dark:bg-background rounded-none overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 border border-foreground/10 dark:border-background/10 flex flex-col h-full">
+                        <div key={offer.id} className="group relative bg-background rounded-none overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 border border-foreground/10 flex flex-col h-full">
                             <div className={`h-24 bg-gradient-to-r ${getGradient(offer)} p-6 relative overflow-hidden`}>
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-[40px] pointer-events-none translate-x-10 -translate-y-10"></div>
                                 <div className="relative z-10 flex justify-between items-start">
@@ -144,22 +144,22 @@ const BuyerOffers = () => {
                             </div>
                             <div className="p-6 flex-1 flex flex-col relative">
                                 <div className="mb-6">
-                                    <h3 className="font-serif text-foreground dark:text-background text-lg leading-snug mb-2">{offer.title}</h3>
-                                    <p className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground dark:text-background leading-relaxed">{offer.min_order_value > 0 ? `Valid on orders above ${formatTZS(offer.min_order_value)}.` : 'No minimum spend required.'}</p>
+                                    <h3 className="font-serif text-foreground text-lg leading-snug mb-2">{offer.title}</h3>
+                                    <p className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground leading-relaxed">{offer.min_order_value > 0 ? `Valid on orders above ${formatTZS(offer.min_order_value)}.` : 'No minimum spend required.'}</p>
                                 </div>
                                 <div className="mt-auto space-y-4">
-                                    <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground dark:text-background">
+                                    <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground">
                                         <span className="flex items-center gap-1"><Clock className="w-3 h-3"/> {offer.end_date ? new Date(offer.end_date).toLocaleDateString() : 'No Expiry'}</span>
                                         <span className="flex items-center gap-1"><Tag className="w-3 h-3"/> Storewide</span>
                                     </div>
-                                    <button onClick={() => handleCopy(offer.code)} className="group/btn w-full h-12 relative flex items-center justify-between px-1 bg-primary/5 dark:bg-background/5 rounded-none border border-dashed border-foreground/20 dark:border-background/20 hover:border-foreground/40 dark:hover:border-background/40 transition-all cursor-copy">
+                                    <button onClick={() => handleCopy(offer.code)} className="group/btn w-full h-12 relative flex items-center justify-between px-1 bg-foreground/[0.04] rounded-none border border-dashed border-foreground/20 hover:border-foreground/40 transition-all cursor-copy">
                                         <div className="flex items-center gap-3 pl-3">
-                                            <div className="w-8 h-8 rounded-none bg-background dark:bg-background flex items-center justify-center shadow-sm border border-foreground/10 dark:border-background/10">
-                                                <Ticket className="w-4 h-4 text-foreground/60 dark:text-background/60 group-hover/btn:text-foreground dark:group-hover/btn:text-background" />
+                                            <div className="w-8 h-8 rounded-none bg-background flex items-center justify-center shadow-sm border border-foreground/10">
+                                                <Ticket className="w-4 h-4 text-foreground/60 group-hover/btn:text-foreground" />
                                             </div>
-                                            <span className="font-mono text-sm tracking-[0.1em] text-foreground dark:text-background">{offer.code}</span>
+                                            <span className="font-mono text-sm tracking-[0.1em] text-foreground">{offer.code}</span>
                                         </div>
-                                        <div className="pr-4 text-[9px] uppercase tracking-[0.2em] text-foreground dark:text-background opacity-0 group-hover/btn:opacity-100 transition-opacity flex items-center gap-1">Copy <Copy className="w-3 h-3"/></div>
+                                        <div className="pr-4 text-[9px] uppercase tracking-[0.2em] text-foreground opacity-0 group-hover/btn:opacity-100 transition-opacity flex items-center gap-1">Copy <Copy className="w-3 h-3"/></div>
                                     </button>
                                 </div>
                             </div>
@@ -182,7 +182,7 @@ const ProductOrderTag = ({ product, order }: { product?: Product, order?: Order 
                 id={order?.id || product?.id}
             />
             {product && (
-                <div className="mt-2 p-3 bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center gap-3 border border-slate-200 dark:border-white/5">
+                <div className="mt-2 p-3 bg-foreground/[0.05] rounded-xl flex items-center gap-3 border border-foreground/10">
                     {product.images?.[0] && (
                         <img src={product.images[0]} alt={product.name} className="w-10 h-10 rounded-lg object-cover" />
                     )}
@@ -199,9 +199,9 @@ const ProductOrderTag = ({ product, order }: { product?: Product, order?: Order 
 const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
         return (
-            <div className="bg-background dark:bg-background p-4 border border-foreground/10 dark:border-background/10 rounded-none shadow-2xl">
-                <p className="text-[10px] uppercase tracking-[0.2em] text-foreground dark:text-background mb-1">{label || payload[0].name}</p>
-                <p className="font-serif text-lg text-foreground dark:text-background">
+            <div className="bg-background p-4 border border-foreground/10 rounded-none shadow-2xl">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-foreground mb-1">{label || payload[0].name}</p>
+                <p className="font-serif text-lg text-foreground">
                     {formatTZS(payload[0].value)}
                 </p>
             </div>
@@ -284,7 +284,7 @@ export const BuyerPage = () => {
     };
 
     return (
-        <div className="min-h-screen bg-background dark:bg-background font-sans pb-20 pt-28 px-4 md:px-8 selection:bg-primary selection:text-white dark:selection:bg-white dark:selection:text-black">
+        <div className="min-h-screen bg-background font-sans pb-20 pt-28 px-4 md:px-8 selection:bg-foreground selection:text-background">
             <div className="container mx-auto max-w-7xl">
                 <motion.div 
                     initial={{ opacity: 0, y: 20 }}
@@ -294,14 +294,14 @@ export const BuyerPage = () => {
                 >
                     <div className="space-y-4">
                          <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 bg-primary dark:bg-white flex items-center justify-center rounded-2xl shadow-xl shadow-foreground/10 dark:shadow-white/10">
-                                <User className="w-6 h-6 text-white dark:text-black" />
+                            <div className="w-12 h-12 bg-foreground flex items-center justify-center rounded-2xl shadow-xl shadow-foreground/10">
+                                <User className="w-6 h-6 text-background" />
                             </div>
-                            <h1 className="text-4xl md:text-6xl font-serif font-light tracking-tight text-foreground dark:text-white">
+                            <h1 className="text-4xl md:text-6xl font-serif font-light tracking-tight text-foreground">
                                 Hello, {user.name?.split(' ')[0] || 'User'}
                             </h1>
                          </div>
-                         <p className="text-sm text-foreground/60 dark:text-white/60 font-medium tracking-tight max-w-md">
+                         <p className="text-sm text-foreground/60 font-medium tracking-tight max-w-md">
                             Welcome to your premium buyer dashboard. Manage your orders and account with ease.
                          </p>
                     </div>
@@ -318,7 +318,7 @@ export const BuyerPage = () => {
                             transition: { duration: 0.6, delay: 0.1, ease: [0.22, 1, 0.36, 1], staggerChildren: 0.05 }
                         }
                     }}
-                    className="flex overflow-x-auto p-2 bg-primary/5 dark:bg-background/5 backdrop-blur-md rounded-none mb-12 no-scrollbar border border-foreground/10 dark:border-background/10"
+                    className="flex overflow-x-auto p-2 bg-foreground/[0.04] backdrop-blur-md rounded-none mb-12 no-scrollbar border border-foreground/10"
                 >
                     {[
                         { id: 'dashboard', label: 'Overview', icon: LayoutGrid },
@@ -339,8 +339,8 @@ export const BuyerPage = () => {
                             onClick={() => changeTab(tab.id)} 
                             className={`flex-1 flex items-center justify-center gap-3 py-3.5 px-8 rounded-none text-[10px] uppercase tracking-[0.2em] transition-all duration-300 ${
                                 activeTab === tab.id 
-                                ? 'bg-primary dark:bg-background text-background dark:text-foreground shadow-xl shadow-foreground/10 dark:shadow-background/10' 
-                                : 'text-foreground/40 dark:text-background/40 hover:text-foreground dark:hover:text-background'
+                                ? 'bg-foreground text-background shadow-xl shadow-foreground/10' 
+                                : 'text-foreground/40 hover:text-foreground'
                             }`}
                         >
                             <tab.icon className={`w-4 h-4 stroke-[1.5] ${activeTab === tab.id ? 'scale-110' : ''}`} /> 
@@ -369,9 +369,9 @@ export const BuyerPage = () => {
                         </div>
 
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                            <Card className="group lg:col-span-2 p-8 rounded-none shadow-none border border-foreground/10 dark:border-background/10 bg-transparent hover:border-foreground/30 dark:hover:border-background/30 transition-all duration-500">
+                            <Card className="group lg:col-span-2 p-8 rounded-none shadow-none border border-foreground/10 bg-transparent hover:border-foreground/30 transition-all duration-500">
                                 <div className="flex items-center justify-between mb-8">
-                                    <h3 className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground dark:text-background">Spending History (Last 6 Months)</h3>
+                                    <h3 className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground">Spending History (Last 6 Months)</h3>
                                 </div>
                                 <div className="h-64 min-w-0 relative">
                                     <ResponsiveContainer width="100%" height="100%">
@@ -388,7 +388,7 @@ export const BuyerPage = () => {
                                             <Bar 
                                                 dataKey="amount" 
                                                 fill="currentColor" 
-                                                className="text-foreground dark:text-background"
+                                                className="text-foreground"
                                                 radius={[2, 2, 0, 0]} 
                                             />
                                         </BarChart>
@@ -396,8 +396,8 @@ export const BuyerPage = () => {
                                 </div>
                             </Card>
 
-                            <Card className="group p-8 rounded-none shadow-none border border-foreground/10 dark:border-background/10 bg-transparent hover:border-foreground/30 dark:hover:border-background/30 transition-all duration-500">
-                                <h3 className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground dark:text-background mb-8">Category Split</h3>
+                            <Card className="group p-8 rounded-none shadow-none border border-foreground/10 bg-transparent hover:border-foreground/30 transition-all duration-500">
+                                <h3 className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground mb-8">Category Split</h3>
                                 <div className="h-64 min-w-0 relative">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <PieChart>
@@ -411,7 +411,7 @@ export const BuyerPage = () => {
                                                 dataKey="value"
                                                 nameKey="name"
                                                 fill="currentColor"
-                                                className="text-foreground dark:text-background"
+                                                className="text-foreground"
                                             >
                                                 {buyerStats.categoryDistribution.map((_, index) => (
                                                     <Cell key={`cell-${index}`} fillOpacity={1 - (index * 0.15)} />
@@ -425,32 +425,32 @@ export const BuyerPage = () => {
                         </div>
 
                         <div className="grid md:grid-cols-2 gap-6">
-                            <Card className="group p-8 rounded-none shadow-none border border-foreground/10 dark:border-background/10 bg-transparent hover:border-foreground/30 dark:hover:border-background/30 transition-all duration-500">
-                                <h3 className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground dark:text-background mb-8">Recent Orders</h3>
+                            <Card className="group p-8 rounded-none shadow-none border border-foreground/10 bg-transparent hover:border-foreground/30 transition-all duration-500">
+                                <h3 className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground mb-8">Recent Orders</h3>
                                 <div className="space-y-4">
                                     {orders.slice(0,3).map(o => (
-                                        <div key={o.id} className="flex justify-between items-center p-4 border-b border-foreground/10 dark:border-background/10 last:border-0 hover:bg-primary/5 dark:hover:bg-background/5 transition-colors">
+                                        <div key={o.id} className="flex justify-between items-center p-4 border-b border-foreground/10 last:border-0 hover:bg-foreground/[0.04] transition-colors">
                                             <div className="flex items-center gap-4">
-                                                <div className="w-10 h-10 rounded-none bg-primary/5 dark:bg-background/5 flex items-center justify-center"><Package className="w-5 h-5 text-foreground dark:text-background"/></div>
+                                                <div className="w-10 h-10 rounded-none bg-foreground/[0.04] flex items-center justify-center"><Package className="w-5 h-5 text-foreground"/></div>
                                                 <div>
-                                                    <p className="font-serif text-lg text-foreground dark:text-background">Order #{o.id.slice(0,8)}</p>
-                                                    <p className="text-[10px] uppercase tracking-[0.2em] text-foreground/60 dark:text-background/60">{o.status}</p>
+                                                    <p className="font-serif text-lg text-foreground">Order #{o.id.slice(0,8)}</p>
+                                                    <p className="text-[10px] uppercase tracking-[0.2em] text-foreground/60">{o.status}</p>
                                                 </div>
                                             </div>
-                                            <button onClick={() => changeTab('orders')} className="p-2 hover:bg-primary/10 dark:hover:bg-background/10 transition-colors"><ChevronLeft className="w-4 h-4 rotate-180 text-foreground dark:text-background"/></button>
+                                            <button onClick={() => changeTab('orders')} className="p-2 hover:bg-foreground/10 transition-colors"><ChevronLeft className="w-4 h-4 rotate-180 text-foreground"/></button>
                                         </div>
                                     ))}
                                     {orders.length === 0 && (
-                                        <div className="flex items-center justify-center h-48 text-[10px] uppercase tracking-[0.2em] opacity-40 text-foreground dark:text-background">No orders yet</div>
+                                        <div className="flex items-center justify-center h-48 text-[10px] uppercase tracking-[0.2em] opacity-40 text-foreground">No orders yet</div>
                                     )}
                                 </div>
                             </Card>
-                            <Card className="group p-8 rounded-none shadow-none border border-foreground/10 dark:border-background/10 bg-primary dark:bg-background hover:opacity-90 transition-all duration-500 relative overflow-hidden">
-                                <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 dark:bg-black/5 rounded-full blur-[80px] pointer-events-none group-hover:scale-110 transition-transform duration-700"></div>
+                            <Card className="group p-8 rounded-none shadow-none border border-foreground/10 bg-primary hover:opacity-90 transition-all duration-500 relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-[80px] pointer-events-none group-hover:scale-110 transition-transform duration-700"></div>
                                 <div className="relative z-10">
-                                    <h3 className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-background dark:text-foreground mb-8">Estimated Savings</h3>
-                                    <p className="text-background/80 dark:text-foreground/80 text-sm font-medium mb-8">You've saved approximately {formatTZS(buyerStats.savings)} this month using platform vouchers and offers.</p>
-                                    <Button variant="outline" onClick={() => changeTab('offers')} className="bg-transparent border-background/20 dark:border-foreground/20 text-background dark:text-foreground hover:bg-background/10 dark:hover:bg-primary/10 h-12 rounded-none text-[10px] font-black uppercase tracking-widest">Explore More Deals</Button>
+                                    <h3 className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-background mb-8">Estimated Savings</h3>
+                                    <p className="text-background/80 text-sm font-medium mb-8">You've saved approximately {formatTZS(buyerStats.savings)} this month using platform vouchers and offers.</p>
+                                    <Button variant="outline" onClick={() => changeTab('offers')} className="bg-transparent border-background/20 text-background hover:bg-background/10 h-12 rounded-none text-[10px] font-black uppercase tracking-widest">Explore More Deals</Button>
                                 </div>
                             </Card>
                         </div>
@@ -478,7 +478,7 @@ export const BuyerPage = () => {
                         transition={{ duration: 0.5 }}
                         className="space-y-8"
                     >
-                        <h2 className="text-2xl font-black font-display uppercase tracking-tight text-slate-900 dark:text-white">My Wishlist</h2>
+                        <h2 className="text-2xl font-black font-display uppercase tracking-tight text-foreground">My Wishlist</h2>
                         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
                             {wishlist.map(p => <ProductCard key={p.id} product={p} />)}
                         </div>
@@ -494,16 +494,16 @@ export const BuyerPage = () => {
                     >
                         <div className="flex justify-between items-end">
                             <div>
-                                <h2 className="text-2xl font-black font-display uppercase tracking-tight text-slate-900 dark:text-white">Followed Brands</h2>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Stores you're keeping an eye on</p>
+                                <h2 className="text-2xl font-black font-display uppercase tracking-tight text-foreground">Followed Brands</h2>
+                                <p className="text-[10px] font-bold text-foreground/40 uppercase tracking-widest mt-1">Stores you're keeping an eye on</p>
                             </div>
                         </div>
                         {isFollowsLoading ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
-                                {[1,2,3].map(i => <div key={i} className="h-64 bg-primary/5 dark:bg-background/5 rounded-none"></div>)}
+                                {[1,2,3].map(i => <div key={i} className="h-64 bg-foreground/[0.04] rounded-none"></div>)}
                             </div>
                         ) : followedVendors.length === 0 ? (
-                            <div className="text-center py-20 text-foreground/40 dark:text-background/40 font-black uppercase text-[10px] tracking-[0.2em] border border-dashed border-foreground/20 dark:border-background/20 rounded-none">No brands followed yet</div>
+                            <div className="text-center py-20 text-foreground/40 font-black uppercase text-[10px] tracking-[0.2em] border border-dashed border-foreground/20 rounded-none">No brands followed yet</div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {followedVendors.map(v => (

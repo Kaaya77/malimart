@@ -20,36 +20,36 @@ interface ProductModalProps {
 }
 
 /**
- * Product detail modal — mobile-first UX.
+ * Product detail modal — mobile-first.
  *
- * FIX #1: Mobile top bar action buttons (close, wishlist, share) bumped from
- *         w-9 h-9 (36px) to w-11 h-11 (44px) to meet minimum touch target size.
- * FIX #2: Image pips converted from non-interactive <span> elements to <button>
- *         elements that scroll the image carousel to the tapped index.
+ * IMPORTANT — Rules of Hooks:
+ * All hooks must be called unconditionally at the top of the component,
+ * before any early return. useVariantSelection and useProductPricing now
+ * accept null and return safe defaults, so this is safe.
  */
 export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onClose }) => {
     const { addToCart, toggleWishlist, isInWishlist } = useAppState();
     const { addToast } = useToast();
     const navigate = useNavigate();
 
+    // ── ALL hooks called unconditionally ──────────────────────────────────────
     const [selectedImg, setSelectedImg] = useState(0);
     const [quantity, setQuantity] = useState(1);
     const [isAdding, setIsAdding] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
     const imgScrollRef = useRef<HTMLDivElement>(null);
 
-    const { selectedOptions, setSelectedOptions, selectedVariant, variantStructure } = useVariantSelection(product!);
-    const stats = useProductPricing(product!, selectedVariant);
+    // These hooks handle null product internally — no "!" assertion needed
+    const { selectedOptions, setSelectedOptions, selectedVariant, variantStructure } = useVariantSelection(product);
+    const stats = useProductPricing(product, selectedVariant);
 
-    /* ──── Swipe-to-dismiss (mobile only) ──── */
+    /* ── Swipe-to-dismiss (mobile) ── */
     const dragY = useMotionValue(0);
     const sheetOpacity = useTransform(dragY, [0, 300], [1, 0.2]);
     const backdropOpacity = useTransform(dragY, [0, 300], [1, 0]);
 
     const handleDragEnd = useCallback((_: any, info: PanInfo) => {
-        if (info.offset.y > 120 || info.velocity.y > 500) {
-            onClose();
-        }
+        if (info.offset.y > 120 || info.velocity.y > 500) onClose();
     }, [onClose]);
 
     const deliveryDate = useMemo(() => {
@@ -58,7 +58,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
         return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
     }, []);
 
-    /* ──── Lock body scroll ──── */
+    /* ── Lock body scroll ── */
     useEffect(() => {
         if (!isOpen) return;
         const prev = document.body.style.overflow;
@@ -71,27 +71,27 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
         };
     }, [isOpen, onClose]);
 
-    /* ──── Reset state on product change ──── */
+    /* ── Reset on product change ── */
     useEffect(() => {
         setSelectedImg(0);
         setQuantity(1);
         if (scrollRef.current) scrollRef.current.scrollTop = 0;
     }, [product?.id]);
 
-    /* ──── Image list ──── */
+    /* ── Image list ── */
     const images = useMemo(() => {
         const base = product?.images || [];
         if (selectedVariant?.image_url) return [selectedVariant.image_url, ...base];
         return base.length ? base : ['https://via.placeholder.com/800x800?text=No+Image'];
     }, [product?.images, selectedVariant?.image_url]);
 
-    /* ──── Mobile horizontal image scroll snap observer ──── */
+    /* ── Mobile scroll-snap image observer ── */
     useEffect(() => {
         const el = imgScrollRef.current;
         if (!el) return;
         const observer = new IntersectionObserver(
             (entries) => {
-                entries.forEach((entry) => {
+                entries.forEach(entry => {
                     if (entry.isIntersecting) {
                         const idx = Number(entry.target.getAttribute('data-idx'));
                         if (!isNaN(idx)) setSelectedImg(idx);
@@ -100,16 +100,17 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
             },
             { root: el, threshold: 0.6 }
         );
-        el.querySelectorAll('[data-idx]').forEach((child) => observer.observe(child));
+        el.querySelectorAll('[data-idx]').forEach(child => observer.observe(child));
         return () => observer.disconnect();
     }, [images, isOpen]);
 
+    // ── Early return AFTER all hooks ─────────────────────────────────────────
     if (!product) return null;
 
     const isLiked = isInWishlist(product.id);
     const finalPrice = stats.price;
-    const onSale = stats.originalPrice && stats.originalPrice > stats.price;
-    const savingsPct = onSale ? Math.round((1 - stats.price / stats.originalPrice) * 100) : 0;
+    const onSale = !!(stats.originalPrice && stats.originalPrice > stats.price);
+    const savingsPct = onSale ? Math.round((1 - stats.price / (stats.originalPrice as number)) * 100) : 0;
     const sellerLocation = (product as any).seller_location || product.location;
 
     const handleAddToCart = (redirect = false) => {
@@ -126,18 +127,11 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
     const handleShare = async () => {
         const url = `${window.location.origin}/product/${product.id}`;
         if (navigator.share) {
-            try { await navigator.share({ title: product.name, url }); } catch { /* user cancelled */ }
+            try { await navigator.share({ title: product.name, url }); } catch { /* cancelled */ }
         } else {
             await navigator.clipboard.writeText(url);
             addToast('Link copied', 'success');
         }
-    };
-
-    // FIX #2: Pip tap handler — scrolls image strip to the selected index
-    const handlePipTap = (idx: number) => {
-        const el = imgScrollRef.current?.children[idx] as HTMLElement;
-        el?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-        setSelectedImg(idx);
     };
 
     const nextImg = () => setSelectedImg(i => (i + 1) % images.length);
@@ -148,7 +142,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
             {isOpen && (
                 <div className="fixed inset-0 z-[300] flex items-end md:items-center justify-center p-0 md:p-6 font-sans">
 
-                    {/* ──── Backdrop ──── */}
+                    {/* Backdrop */}
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -159,7 +153,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
                         className="absolute inset-0 bg-black/60 backdrop-blur-[2px]"
                     />
 
-                    {/* ──── MOBILE bottom sheet (< md) ──── */}
+                    {/* ── MOBILE bottom sheet ── */}
                     <motion.div
                         role="dialog"
                         aria-modal="true"
@@ -175,20 +169,19 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
                         onDragEnd={handleDragEnd}
                         className="relative z-50 w-full bg-background text-foreground
                             rounded-t-[20px] overflow-hidden shadow-2xl
-                            flex flex-col h-[96dvh]
-                            md:hidden"
+                            flex flex-col h-[96dvh] md:hidden"
                     >
                         {/* Drag handle */}
                         <div className="flex-shrink-0 flex justify-center pt-2 pb-1 cursor-grab active:cursor-grabbing">
                             <div className="w-10 h-1 rounded-full bg-foreground/20" />
                         </div>
 
-                        {/* Top bar: close + share — FIX #1: w-11 h-11 (44px) buttons */}
+                        {/* Top bar */}
                         <div className="flex-shrink-0 flex items-center justify-between px-4 pb-2">
                             <button
                                 onClick={onClose}
                                 aria-label="Close"
-                                className="w-11 h-11 rounded-full bg-foreground/[0.06] flex items-center justify-center active:scale-90 transition-transform"
+                                className="w-10 h-10 rounded-full bg-foreground/[0.06] flex items-center justify-center active:scale-90 transition-transform"
                             >
                                 <X className="w-[18px] h-[18px] stroke-[2.2] text-foreground/80" />
                             </button>
@@ -196,7 +189,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
                                 <button
                                     onClick={() => toggleWishlist(product)}
                                     aria-label={isLiked ? 'Remove from wishlist' : 'Add to wishlist'}
-                                    className={`w-11 h-11 rounded-full flex items-center justify-center active:scale-90 transition-all
+                                    className={`w-10 h-10 rounded-full flex items-center justify-center active:scale-90 transition-all
                                         ${isLiked
                                             ? 'bg-rose-500/10 text-rose-500'
                                             : 'bg-foreground/[0.06] text-foreground/70'}`}
@@ -206,7 +199,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
                                 <button
                                     onClick={handleShare}
                                     aria-label="Share"
-                                    className="w-11 h-11 rounded-full bg-foreground/[0.06] flex items-center justify-center active:scale-90 transition-transform"
+                                    className="w-10 h-10 rounded-full bg-foreground/[0.06] flex items-center justify-center active:scale-90 transition-transform"
                                 >
                                     <Share2 className="w-[18px] h-[18px] stroke-[2] text-foreground/70" />
                                 </button>
@@ -216,7 +209,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
                         {/* Scrollable body */}
                         <div ref={scrollRef} className="flex-1 overflow-y-auto overscroll-y-contain no-scrollbar">
 
-                            {/* ── Image carousel (native scroll snap) ── */}
+                            {/* Image carousel */}
                             <div className="relative">
                                 <div
                                     ref={imgScrollRef}
@@ -239,22 +232,23 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
                                     ))}
                                 </div>
 
-                                {/* Badges */}
                                 {onSale && (
                                     <div className="absolute top-3 left-3 z-10 px-2.5 py-1 rounded-lg bg-emerald-500 text-white text-[11px] font-bold tracking-wide shadow-sm">
                                         −{savingsPct}%
                                     </div>
                                 )}
 
-                                {/* FIX #2: Image pips as tappable buttons */}
                                 {images.length > 1 && (
                                     <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5 z-10">
                                         {images.map((_, idx) => (
                                             <button
                                                 key={idx}
-                                                onClick={() => handlePipTap(idx)}
                                                 aria-label={`Image ${idx + 1}`}
-                                                aria-current={selectedImg === idx ? 'true' : undefined}
+                                                onClick={() => {
+                                                    setSelectedImg(idx);
+                                                    const el = imgScrollRef.current;
+                                                    if (el) el.children[idx]?.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+                                                }}
                                                 className={`h-[5px] rounded-full transition-all duration-300
                                                     ${selectedImg === idx ? 'w-5 bg-foreground/80' : 'w-[5px] bg-foreground/25'}`}
                                             />
@@ -263,7 +257,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
                                 )}
                             </div>
 
-                            {/* ── Product info ── */}
+                            {/* Product info */}
                             <div className="px-5 pt-5 pb-4">
                                 {/* Seller eyebrow */}
                                 <div className="flex items-center gap-2 mb-2">
@@ -282,12 +276,10 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
                                     )}
                                 </div>
 
-                                {/* Product name */}
                                 <h2 className="text-[22px] font-semibold tracking-tight leading-tight text-foreground mb-2">
                                     {product.name}
                                 </h2>
 
-                                {/* Rating */}
                                 {product.rating && (
                                     <div className="flex items-center gap-1.5 mb-4">
                                         <div className="flex">
@@ -312,7 +304,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
                                     </span>
                                     {onSale && (
                                         <span className="text-[15px] font-medium text-foreground/35 line-through">
-                                            {CURRENCY} {Math.round(stats.originalPrice).toLocaleString()}
+                                            {CURRENCY} {Math.round(stats.originalPrice as number).toLocaleString()}
                                         </span>
                                     )}
                                     {onSale && (
@@ -322,7 +314,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
                                     )}
                                 </div>
 
-                                {/* Trust strip — horizontal scroll on mobile */}
+                                {/* Trust strip */}
                                 <div className="flex gap-2.5 overflow-x-auto no-scrollbar -mx-5 px-5 pb-1 mb-5">
                                     {[
                                         { icon: Truck, label: 'Delivery', value: `By ${deliveryDate}` },
@@ -342,7 +334,6 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
                                     ))}
                                 </div>
 
-                                {/* Description */}
                                 {product.description && (
                                     <p className="text-[14px] text-foreground/65 leading-relaxed mb-5 whitespace-pre-line">
                                         {product.description}
@@ -365,7 +356,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
                                                             <button
                                                                 key={val}
                                                                 onClick={() => setSelectedOptions({ ...selectedOptions, [attr.name]: val })}
-                                                                className={`px-3.5 py-2.5 rounded-xl text-[13px] font-semibold transition-all active:scale-95
+                                                                className={`px-3.5 py-2.5 rounded-xl text-[13px] font-semibold transition-all active:scale-95 min-h-[44px]
                                                                     ${isSelected
                                                                         ? 'bg-foreground text-background ring-1 ring-foreground'
                                                                         : 'bg-transparent text-foreground/75 ring-1 ring-foreground/12 active:ring-foreground/30'}`}
@@ -380,20 +371,18 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
                                     </div>
                                 )}
 
-                                {/* Reviews */}
                                 <div className="pt-5 border-t border-foreground/8">
                                     <ReviewSection productId={product.id} />
                                 </div>
                             </div>
                         </div>
 
-                        {/* ──── Mobile sticky CTA bar ──── */}
+                        {/* Mobile sticky CTA */}
                         <div
                             className="flex-shrink-0 px-4 pt-3 border-t border-foreground/8 bg-background/95 backdrop-blur-xl"
                             style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom, 12px))' }}
                         >
                             <div className="flex items-center gap-2.5">
-                                {/* Quantity stepper */}
                                 <div className="flex items-center bg-foreground/[0.04] rounded-xl ring-1 ring-foreground/10 h-[48px]">
                                     <button
                                         onClick={() => setQuantity(q => Math.max(1, q - 1))}
@@ -412,7 +401,6 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
                                     </button>
                                 </div>
 
-                                {/* Add to bag CTA */}
                                 <motion.button
                                     whileTap={{ scale: 0.97 }}
                                     onClick={() => handleAddToCart(false)}
@@ -424,16 +412,13 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
                                 >
                                     {isAdding ? 'Adding…' : stats.isOut
                                         ? 'Out of stock'
-                                        : <>
-                                            <ShoppingBag className="w-[18px] h-[18px] stroke-[2]" />
-                                            Add · {CURRENCY} {(finalPrice * quantity).toLocaleString()}
-                                        </>}
+                                        : <><ShoppingBag className="w-[18px] h-[18px] stroke-[2]" /> Add · {CURRENCY} {(finalPrice * quantity).toLocaleString()}</>}
                                 </motion.button>
                             </div>
                         </div>
                     </motion.div>
 
-                    {/* ──── DESKTOP dialog (≥ md) ──── */}
+                    {/* ── DESKTOP dialog ── */}
                     <motion.div
                         role="dialog"
                         aria-modal="true"
@@ -446,27 +431,27 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
                             rounded-3xl overflow-hidden shadow-2xl ring-1 ring-foreground/5
                             hidden md:flex flex-row max-h-[88vh]"
                     >
-                        {/* Close + share — top-right */}
+                        {/* Close + share */}
                         <div className="absolute top-5 right-5 z-[60] flex gap-2">
                             <button
                                 onClick={handleShare}
                                 aria-label="Share"
-                                className="w-9 h-9 rounded-full bg-white/80 dark:bg-black/70 text-foreground ring-1 ring-foreground/10 backdrop-blur-md flex items-center justify-center hover:bg-white dark:hover:bg-black transition-colors"
+                                className="w-9 h-9 rounded-full bg-background/80 text-foreground ring-1 ring-foreground/10 backdrop-blur-md flex items-center justify-center hover:bg-background transition-colors"
                             >
                                 <Share2 className="w-4 h-4 stroke-[2.2]" />
                             </button>
                             <button
                                 onClick={onClose}
                                 aria-label="Close"
-                                className="w-9 h-9 rounded-full bg-white/80 dark:bg-black/70 text-foreground ring-1 ring-foreground/10 backdrop-blur-md flex items-center justify-center hover:bg-white dark:hover:bg-black transition-colors"
+                                className="w-9 h-9 rounded-full bg-background/80 text-foreground ring-1 ring-foreground/10 backdrop-blur-md flex items-center justify-center hover:bg-background transition-colors"
                             >
                                 <X className="w-4 h-4 stroke-[2.5]" />
                             </button>
                         </div>
 
-                        {/* ── Left: Image gallery (desktop) ── */}
-                        <div className="relative w-3/5 flex-shrink-0 bg-foreground/[0.03] dark:bg-white/[0.03]">
-                            <div className="relative aspect-auto h-full w-full overflow-hidden">
+                        {/* Left: image gallery */}
+                        <div className="relative w-3/5 flex-shrink-0 bg-foreground/[0.03]">
+                            <div className="relative h-full w-full overflow-hidden">
                                 <AnimatePresence mode="wait">
                                     <motion.img
                                         key={images[selectedImg]}
@@ -482,18 +467,12 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
 
                                 {images.length > 1 && (
                                     <>
-                                        <button
-                                            onClick={prevImg}
-                                            aria-label="Previous image"
-                                            className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/80 dark:bg-black/60 text-foreground ring-1 ring-foreground/10 backdrop-blur-md flex items-center justify-center hover:bg-white dark:hover:bg-black transition-colors"
-                                        >
+                                        <button onClick={prevImg} aria-label="Previous image"
+                                            className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-background/80 text-foreground ring-1 ring-foreground/10 backdrop-blur-md flex items-center justify-center hover:bg-background transition-colors">
                                             <ChevronLeft className="w-5 h-5 stroke-[2.2]" />
                                         </button>
-                                        <button
-                                            onClick={nextImg}
-                                            aria-label="Next image"
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/80 dark:bg-black/60 text-foreground ring-1 ring-foreground/10 backdrop-blur-md flex items-center justify-center hover:bg-white dark:hover:bg-black transition-colors"
-                                        >
+                                        <button onClick={nextImg} aria-label="Next image"
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-background/80 text-foreground ring-1 ring-foreground/10 backdrop-blur-md flex items-center justify-center hover:bg-background transition-colors">
                                             <ChevronRight className="w-5 h-5 stroke-[2.2]" />
                                         </button>
                                     </>
@@ -513,7 +492,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
                                             key={`${src}-${idx}`}
                                             onClick={() => setSelectedImg(idx)}
                                             className={`w-12 h-12 rounded-lg overflow-hidden ring-2 transition-all
-                                                ${selectedImg === idx ? 'ring-foreground' : 'ring-white/0 hover:ring-white/40'}`}
+                                                ${selectedImg === idx ? 'ring-foreground' : 'ring-foreground/0 hover:ring-foreground/30'}`}
                                         >
                                             <img src={src} alt="" className="w-full h-full object-cover" />
                                         </button>
@@ -522,7 +501,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
                             )}
                         </div>
 
-                        {/* ── Right: Content + sticky CTA (desktop) ── */}
+                        {/* Right: content + CTA */}
                         <div className="flex-1 w-2/5 flex flex-col min-h-0">
                             <div className="flex-1 overflow-y-auto no-scrollbar px-8 pt-10 pb-6">
                                 <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-foreground/55 mb-4">
@@ -549,8 +528,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
                                     <div className="flex items-center gap-1.5 mb-5 text-sm">
                                         <div className="flex">
                                             {[1, 2, 3, 4, 5].map(n => (
-                                                <Star
-                                                    key={n}
+                                                <Star key={n}
                                                     className={`w-3.5 h-3.5 ${n <= Math.round(product.rating || 0) ? 'fill-amber-400 text-amber-400' : 'text-foreground/15'}`}
                                                 />
                                             ))}
@@ -568,7 +546,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
                                     </span>
                                     {onSale && (
                                         <span className="text-base font-medium text-foreground/40 line-through">
-                                            {CURRENCY} {Math.round(stats.originalPrice).toLocaleString()}
+                                            {CURRENCY} {Math.round(stats.originalPrice as number).toLocaleString()}
                                         </span>
                                     )}
                                     {onSale && (
@@ -578,7 +556,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
                                     )}
                                 </div>
 
-                                <div className="grid grid-cols-3 gap-3 mb-7 -mx-1">
+                                <div className="grid grid-cols-3 gap-3 mb-7">
                                     <div className="flex flex-col gap-1 p-3 rounded-xl bg-foreground/[0.03]">
                                         <Truck className="w-4 h-4 text-foreground/60" />
                                         <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground/45">Delivery</span>
@@ -639,7 +617,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
                                 </div>
                             </div>
 
-                            {/* Desktop sticky CTA */}
+                            {/* Desktop CTA */}
                             <div className="px-8 py-5 border-t border-foreground/8 bg-background/95 backdrop-blur-xl flex items-center gap-3">
                                 <button
                                     onClick={() => toggleWishlist(product)}
@@ -653,19 +631,13 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
                                 </button>
 
                                 <div className="flex items-center bg-foreground/[0.04] rounded-xl ring-1 ring-foreground/10 h-12">
-                                    <button
-                                        onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                                        aria-label="Decrease quantity"
-                                        className="w-10 h-full flex items-center justify-center text-foreground/70 hover:text-foreground"
-                                    >
+                                    <button onClick={() => setQuantity(q => Math.max(1, q - 1))} aria-label="Decrease quantity"
+                                        className="w-10 h-full flex items-center justify-center text-foreground/70 hover:text-foreground">
                                         <Minus className="w-4 h-4 stroke-[2.2]" />
                                     </button>
                                     <span className="w-7 text-center text-sm font-semibold tabular-nums">{quantity}</span>
-                                    <button
-                                        onClick={() => setQuantity(q => q + 1)}
-                                        aria-label="Increase quantity"
-                                        className="w-10 h-full flex items-center justify-center text-foreground/70 hover:text-foreground"
-                                    >
+                                    <button onClick={() => setQuantity(q => q + 1)} aria-label="Increase quantity"
+                                        className="w-10 h-full flex items-center justify-center text-foreground/70 hover:text-foreground">
                                         <Plus className="w-4 h-4 stroke-[2.2]" />
                                     </button>
                                 </div>
@@ -681,12 +653,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
                                 >
                                     {isAdding ? 'Adding…' : stats.isOut
                                         ? 'Out of stock'
-                                        : <>
-                                            Add to bag
-                                            <span className="font-bold tabular-nums">
-                                                · {CURRENCY} {(finalPrice * quantity).toLocaleString()}
-                                            </span>
-                                        </>}
+                                        : <> Add to bag <span className="font-bold tabular-nums">· {CURRENCY} {(finalPrice * quantity).toLocaleString()}</span></>}
                                 </motion.button>
                             </div>
                         </div>

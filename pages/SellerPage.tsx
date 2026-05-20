@@ -48,7 +48,7 @@ export const SellerPage = () => {
     if (!user || user.role !== 'seller') return null;
 
     return (
-        <div className="min-h-screen bg-[#f5f2ed] dark:bg-[#121212] font-sans pb-20 pt-28 px-4 md:px-8 selection:bg-[#1a1a1a] selection:text-white dark:selection:bg-white dark:selection:text-black">
+        <div className="min-h-screen bg-background font-sans pb-20 pt-28 px-4 md:px-8 selection:bg-foreground selection:text-background">
             <div className="container mx-auto max-w-7xl">
                 <motion.div 
                     initial={{ opacity: 0, y: 20 }}
@@ -58,12 +58,12 @@ export const SellerPage = () => {
                 >
                     <div className="space-y-4">
                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-2xl bg-[#1a1a1a] dark:bg-white flex items-center justify-center shadow-lg shadow-[#1a1a1a]/10 dark:shadow-white/10">
-                                <Store className="w-5 h-5 text-white dark:text-black" />
+                            <div className="w-10 h-10 rounded-2xl bg-foreground flex items-center justify-center shadow-lg shadow-foreground/10">
+                                <Store className="w-5 h-5 text-background" />
                             </div>
-                            <p className="text-[10px] uppercase tracking-[0.3em] font-black text-[#1a1a1a]/40 dark:text-white/40">Merchant Console</p>
+                            <p className="text-[10px] uppercase tracking-[0.3em] font-black text-foreground/40">Merchant Console</p>
                          </div>
-                         <h1 className="text-5xl md:text-7xl font-serif font-light text-[#1a1a1a] dark:text-white tracking-tight leading-[0.9]">
+                         <h1 className="text-5xl md:text-7xl font-serif font-light text-foreground tracking-tight leading-[0.9]">
                              {vendorProfile?.store_name || user.name}'s <span className="italic font-light">Store</span>
                          </h1>
                     </div>
@@ -80,7 +80,7 @@ export const SellerPage = () => {
                             transition: { duration: 0.6, delay: 0.1, ease: [0.22, 1, 0.36, 1], staggerChildren: 0.05 }
                         }
                     }}
-                    className="flex overflow-x-auto p-2 bg-[#1a1a1a]/5 dark:bg-[#f5f2ed]/5 backdrop-blur-xl rounded-none mb-12 no-scrollbar border border-[#1a1a1a]/10 dark:border-[#f5f2ed]/10 shadow-xl shadow-[#1a1a1a]/5 dark:shadow-black/20"
+                    className="flex overflow-x-auto p-2 bg-foreground/[0.05] backdrop-blur-xl rounded-none mb-12 no-scrollbar border border-foreground/10 shadow-xl shadow-foreground/5"
                 >
                     {[
                         { id: 'dashboard', label: 'Overview', icon: LayoutGrid },
@@ -99,8 +99,8 @@ export const SellerPage = () => {
                             }}
                             onClick={() => setActiveTab(tab.id as any)} 
                             className={`flex-1 flex items-center justify-center gap-3 py-4 px-8 rounded-none text-[10px] uppercase tracking-[0.2em] transition-all duration-500 ${activeTab === tab.id 
-                                ? 'bg-[#1a1a1a] dark:bg-[#f5f2ed] text-[#f5f2ed] dark:text-[#1a1a1a] shadow-2xl shadow-[#1a1a1a]/20 dark:shadow-black/40 scale-[1.02]' 
-                                : 'text-[#1a1a1a]/40 dark:text-[#f5f2ed]/40 hover:text-[#1a1a1a] dark:hover:text-[#f5f2ed]'}`}
+                                ? 'bg-foreground text-background shadow-2xl shadow-foreground/20 scale-[1.02]' 
+                                : 'text-foreground/40 hover:text-foreground'}`}
                         >
                             <tab.icon className={`w-4 h-4 stroke-[1.5] ${activeTab === tab.id ? 'scale-110' : ''} transition-transform`} /> 
                             <span className="whitespace-nowrap">{tab.label}</span>
