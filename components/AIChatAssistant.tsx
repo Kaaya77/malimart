@@ -338,14 +338,12 @@ export const AIChatAssistant = () => {
                     },
                     onclose: () => stopLiveSession(),
                     onerror: (e) => {
-                        console.error("Live Error", e);
                         stopLiveSession();
                     },
                 }
             });
             sessionRef.current = sessionPromise;
         } catch (e) {
-            console.error("Pulse Link Failed", e);
             stopLiveSession();
         }
     };
@@ -418,7 +416,6 @@ export const AIChatAssistant = () => {
             }
             setMessages(prev => [...prev, ...newMessages]);
         } catch (err) {
-            console.error(err);
             setMessages(prev => [...prev, { role: 'assistant', text: "Sorry! Something went wrong. Please try again.", type: 'text' }]);
         } finally {
             setIsTyping(false);
@@ -438,7 +435,6 @@ export const AIChatAssistant = () => {
             const refined = response.text?.trim() || input;
             setInput(refined);
         } catch (error) {
-            console.error("Magic Compose Error:", error);
         } finally {
             setIsTyping(false);
         }

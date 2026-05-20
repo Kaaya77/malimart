@@ -32,7 +32,6 @@ export const ShareButton: React.FC<ShareButtonProps> = ({ title, text, url, clas
                 await navigator.share({ title, text, url });
                 addToast('Shared successfully', 'success');
             } catch (err) {
-                console.error('Error sharing:', err);
             }
         } else {
             // Fallback: Copy to clipboard

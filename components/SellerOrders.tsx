@@ -125,10 +125,8 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: { sellerId: string, o
  .order('created_at', { ascending: false });
 
  if (error) {
- console.error(error);
  addToast("Failed to load orders", "error");
  } else {
- console.log('Fetched order items:', data);
  const grouped = data.reduce((acc: any, item: any) => {
  let orderData = item.order;
  if (Array.isArray(orderData)) orderData = orderData[0];
@@ -145,7 +143,6 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: { sellerId: string, o
  };
  }
  acc[item.order_id].items.push(item);
- console.log('Item:', item, 'Price:', item.price_at_purchase, 'Qty:', item.quantity);
  acc[item.order_id].seller_total += (item.price_at_purchase || 0) * (item.quantity || 0);
  return acc;
  }, {});
@@ -198,7 +195,6 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: { sellerId: string, o
  };
 
  const handleExportCSV = () => {
- console.log("Exporting CSV...");
  if (filteredOrders.length === 0) return addToast("No orders to export", "info");
  
  const headers = ['Order ID', 'Date', 'Customer Name', 'Customer Email', 'Status', 'Total Amount', 'Items'];
@@ -390,7 +386,6 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: { sellerId: string, o
  </div>
  </div>
  <div className="flex-1 grid grid-cols-[1fr_auto] gap-2" onClick={() => {
- console.log('Order:', order);
  setSelectedOrder(order);
  }}>
  <div className="flex flex-col gap-1 min-w-0">
@@ -451,7 +446,6 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: { sellerId: string, o
  setReceiptOrder({ order: selectedOrder, seller: seller || {} as VendorProfile });
  }}>Print Receipt</Button>
  <Button size="sm" variant="danger" className="rounded-2xl uppercase tracking-[0.1em] text-[9px]" onClick={async () => {
- console.log("Clearing order:", selectedOrder.id);
  await supabase.from('orders').update({ deleted_at: new Date().toISOString() }).eq('id', selectedOrder.id);
  addToast("Order cleared", "success");
  setSelectedOrder(null);
@@ -641,7 +635,6 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: { sellerId: string, o
  addToast("Order cancelled successfully", "success");
  fetchOrders();
  } catch (e: any) {
- console.error("Failed to cancel order", e);
  addToast(e.message || "Failed to cancel order", "error");
  }
  }

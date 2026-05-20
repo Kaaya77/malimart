@@ -146,7 +146,6 @@ export const AdminPage = () => {
             }
 
         } catch (error) {
-            console.error("Admin fetch error:", error);
             addToast("Failed to load admin data", "error");
         } finally {
             setIsLoading(false);
@@ -211,7 +210,7 @@ export const AdminPage = () => {
         try {
             await supabase.from('profiles').update({ is_banned: !isBanned }).eq('id', userId);
             
-            if (!isBanned) { // If currently NOT banned, we are banning them
+            if (!isBanned) { // We are banning them
                 await supabase.from('notifications').insert({
                     user_id: userId,
                     type: 'system',
@@ -281,7 +280,6 @@ export const AdminPage = () => {
             if (error) throw error;
             addToast("Platform settings updated", "success");
         } catch (error) {
-            console.error("Error saving settings:", error);
             addToast("Failed to update settings", "error");
         }
     };

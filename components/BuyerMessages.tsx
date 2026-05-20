@@ -52,9 +52,7 @@ export const BuyerMessages = ({ userId, initialSellerId }: { userId: string, ini
  useEffect(() => {
  if (!user) return;
  const load = async () => {
- console.log('BuyerMessages: Loading messages for userId:', userId);
  const msgs = await fetchMessages();
- console.log('BuyerMessages: Fetched messages:', msgs);
  setChats(msgs);
  };
  load();

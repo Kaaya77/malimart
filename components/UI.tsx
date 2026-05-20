@@ -375,7 +375,6 @@ export const ReceiptModal = ({ isOpen, order, seller, onClose }: { isOpen: boole
                     url: window.location.href
                 });
             } catch (err) {
-                console.error('Error sharing:', err);
             }
         } else {
             // Fallback: Copy link to clipboard

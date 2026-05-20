@@ -267,7 +267,6 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
                 handleVisionAnalyze(url);
             }
         } catch (e: any) {
-            console.error("Image upload error:", e);
             addToast(`Failed to upload image: ${e.message || 'Unknown error'}`, "error");
         } finally {
             setIsLoading(false);
@@ -427,7 +426,6 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
                 addToast("Video generation failed or timed out", "error");
             }
         } catch (e: any) {
-            console.error(e);
             addToast("Failed to generate video", "error");
         } finally {
             setAiLoading(false);
@@ -679,7 +677,6 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
                                                                             if (locStr) setFormData(prev => ({ ...prev, location: locStr, latitude, longitude }));
                                                                         }
                                                                     } catch (e) {
-                                                                        console.error(e);
                                                                     }
                                                                     addToast("Location updated", "success");
                                                                 },
@@ -1000,7 +997,7 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
                                             activeImage={hoveredVariant?.image_url || formData.images?.[0] || ''} 
                                         />
                                         <div className="mt-12 text-center">
-                                            <button onClick={handleSubmit} disabled={isLoading} className="w-full h-16 bg-primary text-background dark:bg-background dark:text-foreground text-[10px] uppercase tracking-[0.2em] hover:opacity-90 transition-opacity flex items-center justify-center group disabled:opacity-50">
+                                            <button onClick={handleSubmit} disabled={isLoading} className="w-full h-16 bg-foreground text-background text-[10px] uppercase tracking-[0.15em] font-bold hover:bg-foreground/85 transition-colors flex items-center justify-center gap-2.5 disabled:opacity-40 rounded-b-3xl">
                                                 Publish Store Listing <ArrowRight className="w-4 h-4 ml-3 group-hover:translate-x-1 transition-transform stroke-[1]"/>
                                             </button>
                                             <p className="mt-6 text-[9px] text-foreground opacity-40 uppercase tracking-[0.2em]">Listing will be live immediately after verification</p>

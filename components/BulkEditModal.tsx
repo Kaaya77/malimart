@@ -51,7 +51,6 @@ export const BulkEditModal = ({ isOpen, onClose, products, onSave }: { isOpen: b
             onSave();
             onClose();
         } catch (error) {
-            console.error("Bulk update failed", error);
             addToast("Failed to save some changes", "error");
         } finally {
             setIsSaving(false);

@@ -540,7 +540,6 @@ export const SellerInventory = ({ products: initialProducts, userId, refresh, on
             // For now, simple toast to indicate drag success.
             addToast("Order updated locally (Save not persisted in demo)", "info"); 
         } catch (e) {
-            console.error("Sort failed", e);
         }
     };
 

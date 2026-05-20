@@ -86,13 +86,11 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
             const msgs = await fetchMessages();
             // Filter out messages from/to blocked users
             const filteredMsgs = msgs.filter(m => !blockedUsers.has(m.sender_id) && !blockedUsers.has(m.receiver_id));
-            console.log('Messages loaded:', filteredMsgs);
             setChats(filteredMsgs);
         };
         load();
         const channel = supabase.channel('messages_channel')
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
-                console.log('New message received via real-time:', payload);
                 if(payload.new.receiver_id === userId || payload.new.sender_id === userId) load();
             })
             .subscribe();
@@ -198,7 +196,6 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
     const handleSend = async (e?: React.FormEvent, textOverride?: string) => {
         if (e) e.preventDefault();
         const text = textOverride || newMsg;
-        console.log('handleSend called, selectedChatUser:', selectedChatUser, 'text:', text);
         if (!selectedChatUser || (!text.trim() && !attachment)) return;
         await sendMessage(selectedChatUser, text, undefined, undefined, attachment || undefined, replyingTo?.id);
         setNewMsg('');

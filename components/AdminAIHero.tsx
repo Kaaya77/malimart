@@ -93,7 +93,6 @@ export const AdminAIHero = () => {
             fetchRecommendations();
             addToast("New recommendation generated", "success");
         } catch (error) {
-            console.error('Error generating:', error);
             addToast("Failed to generate recommendation", "error");
         } finally {
             setIsLoading(false);

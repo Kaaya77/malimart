@@ -192,7 +192,6 @@ export const BuyerOrders = ({
                             await onCancel(selectedOrder.id, reason);
                             setIsCancelModalOpen(false);
                         } catch (e) {
-                            console.error("Failed to cancel order", e);
                         }
                     }
                 }}

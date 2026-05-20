@@ -218,7 +218,6 @@ export const CartPage = () => {
   const total = Math.max(0, subtotal + shippingFee - autoApplyDiscount - couponDiscountOnSubtotal);
   const totalDiscountAmount = (() => {
     const val = autoApplyDiscount + couponDiscountOnSubtotal + (Number(deliveryFeeTotal) - shippingFee);
-    console.log('totalDiscountAmount:', val, 'autoApplyDiscount:', autoApplyDiscount, 'couponDiscountOnSubtotal:', couponDiscountOnSubtotal, 'deliveryFeeTotal:', deliveryFeeTotal, 'shippingFee:', shippingFee);
     return val;
   })();
 
@@ -299,7 +298,6 @@ export const CartPage = () => {
       navigate('/order-confirmation', { state: { order: newOrder } });
       addToast("Order placed successfully!", "success");
     } catch (e: any) {
-      console.error(e);
       addToast(e.message || "Failed to place order.", "error");
     }
   };

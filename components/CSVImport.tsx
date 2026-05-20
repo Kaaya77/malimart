@@ -54,7 +54,6 @@ export const CSVImport = ({ onClose, onSuccess }: { onClose: () => void, onSucce
                     addToast("Products imported successfully", "success");
                     onSuccess();
                 } catch (error) {
-                    console.error(error);
                     setStatus('error');
                     addToast("Import failed", "error");
                 } finally {
