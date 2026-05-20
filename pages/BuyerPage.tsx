@@ -8,7 +8,8 @@ import {
  ChevronRight, Repeat, Sparkles, Search, ZapOff, Gift, Eye
 } from 'lucide-react';
 import { useAppState } from '../context/AppContext';
-import { Button, Card, Badge, Input, useToast, PremiumStatCard, ModernFollowCard, GraphicalTag, ReceiptModal } from '../components/UI';
+import { Button, Card, Badge, Input, useToast, PremiumStatCard, ModernFollowCard, GraphicalTag } from '../components/UI';
+import { ReceiptModal } from '../components/ReceiptModal';
 import { supabase } from '../services/supabaseClient';
 import { OrderTracking } from '../components/CheckoutComponents';
 import { formatTZS, CURRENCY } from '../constants';

@@ -2,7 +2,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Search, Loader2, Printer, ChevronLeft, Receipt, User, Truck, ShoppingBag, AlertCircle, Download, Calendar, ArrowUpDown, CheckSquare, Clock } from 'lucide-react';
 import { useAppState } from '../context/AppContext';
-import { Button, Input, Card, Badge, useToast, ReceiptModal, SatisfyingOrderGraphic } from './UI';
+import { Button, Input, Card, Badge, useToast, SatisfyingOrderGraphic } from './UI';
+import { ReceiptModal } from './ReceiptModal';
 import { supabase } from '../services/supabaseClient';
 import { formatTZS } from '../constants';
 import { OrderTracking } from './CheckoutComponents';

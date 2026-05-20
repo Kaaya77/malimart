@@ -2,7 +2,8 @@ import { OrderTracking } from './CheckoutComponents';
 
 import React, { useState, useMemo } from 'react';
 import { Search, Package, Clock, ChevronLeft, Receipt, RotateCcw, AlertCircle, ShoppingBag, CheckSquare } from 'lucide-react';
-import { Button, Card, Badge, Input, ReceiptModal, SatisfyingOrderGraphic } from './UI';
+import { Button, Card, Badge, Input, SatisfyingOrderGraphic } from './UI';
+import { ReceiptModal } from './ReceiptModal';
 import { formatTZS } from '../constants';
 import { Order, VendorProfile } from '../types';
 import { CancelOrderModal } from './CancelOrderModal';
