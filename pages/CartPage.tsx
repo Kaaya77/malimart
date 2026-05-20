@@ -340,7 +340,7 @@ export const CartPage = () => {
           {upsellOpportunity && (
             <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl p-6 text-white shadow-xl shadow-indigo-500/20 flex items-center justify-between gap-4 animate-in slide-in-from-top-4">
               <div className="flex items-center gap-4">
-                <div className="p-3 bg-white/20 backdrop-blur-md rounded-full">
+                <div className="p-3 bg-background/20 backdrop-blur-md rounded-full">
                   <upsellOpportunity.icon className="w-6 h-6"/>
                 </div>
                 <div>
@@ -348,7 +348,7 @@ export const CartPage = () => {
                   <p className="text-xs font-medium opacity-90">{upsellOpportunity.msg}</p>
                 </div>
               </div>
-              <button onClick={upsellOpportunity.action} className="px-5 py-2 bg-white text-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white/90 transition-colors shadow-sm whitespace-nowrap">
+              <button onClick={upsellOpportunity.action} className="px-5 py-2 bg-background text-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-background/90 transition-colors shadow-sm whitespace-nowrap">
                 {upsellOpportunity.type === 'bogo' ? 'Add Now' : 'Shop Now'}
               </button>
             </div>
@@ -388,7 +388,7 @@ export const CartPage = () => {
                         transition: { staggerChildren: 0.05 }
                       }
                     }}
-                    className="bg-background rounded-[2.5rem] border border-foreground/8 overflow-hidden shadow-sm divide-y divide-foreground/5"
+                    className="bg-background rounded-3xl border border-foreground/8 overflow-hidden shadow-sm divide-y divide-foreground/5"
                   >
                     {items.map((item, index) => {
                       const variant = item.selectedVariant;
@@ -537,7 +537,7 @@ export const CartPage = () => {
           className="lg:w-[420px] shrink-0 relative"
         >
           <div className="space-y-6 lg:sticky lg:top-32">
-            <Card className="p-6 md:p-8 rounded-[3rem] bg-background border border-foreground/8 shadow-2xl relative overflow-hidden">
+            <Card className="p-6 md:p-8 rounded-3xl bg-background border border-foreground/8 shadow-2xl relative overflow-hidden">
               <div className="absolute top-0 right-0 w-64 h-64 bg-brand-500/5 blur-[80px] rounded-full pointer-events-none"></div>
               
               <h3 className="font-black text-lg mb-8 uppercase tracking-tight flex items-center gap-3">

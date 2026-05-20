@@ -125,15 +125,15 @@ const BuyerOffers = () => {
                     {(filteredOffers as any[]).map(offer => (
                         <div key={offer.id} className="group relative bg-background rounded-none overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 border border-foreground/10 flex flex-col h-full">
                             <div className={`h-24 bg-gradient-to-r ${getGradient(offer)} p-6 relative overflow-hidden`}>
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-[40px] pointer-events-none translate-x-10 -translate-y-10"></div>
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-background/10 rounded-full blur-[40px] pointer-events-none translate-x-10 -translate-y-10"></div>
                                 <div className="relative z-10 flex justify-between items-start">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-none bg-white p-0.5 shadow-lg overflow-hidden">
+                                        <div className="w-10 h-10 rounded-none bg-background p-0.5 shadow-lg overflow-hidden">
                                             <img src={offer.vendor?.logo_url || `https://ui-avatars.com/api/?name=${offer.vendor?.store_name}`} className="w-full h-full object-cover" />
                                         </div>
                                         <div>
                                             <p className="text-[10px] text-white/80 uppercase tracking-[0.2em]">{offer.vendor?.store_name}</p>
-                                            {offer.vendor?.is_verified && <div className="flex items-center gap-1 text-[8px] text-white bg-white/20 px-2 py-0.5 rounded-none w-fit mt-1"><BadgeCheck className="w-2.5 h-2.5"/> Verified</div>}
+                                            {offer.vendor?.is_verified && <div className="flex items-center gap-1 text-[8px] text-white bg-background/20 px-2 py-0.5 rounded-none w-fit mt-1"><BadgeCheck className="w-2.5 h-2.5"/> Verified</div>}
                                         </div>
                                     </div>
                                     <div className="text-right">
@@ -446,7 +446,7 @@ export const BuyerPage = () => {
                                 </div>
                             </Card>
                             <Card className="group p-8 rounded-none shadow-none border border-foreground/10 bg-primary hover:opacity-90 transition-all duration-500 relative overflow-hidden">
-                                <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-[80px] pointer-events-none group-hover:scale-110 transition-transform duration-700"></div>
+                                <div className="absolute top-0 right-0 w-64 h-64 bg-background/5 rounded-full blur-[80px] pointer-events-none group-hover:scale-110 transition-transform duration-700"></div>
                                 <div className="relative z-10">
                                     <h3 className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-background mb-8">Estimated Savings</h3>
                                     <p className="text-background/80 text-sm font-medium mb-8">You've saved approximately {formatTZS(buyerStats.savings)} this month using platform vouchers and offers.</p>

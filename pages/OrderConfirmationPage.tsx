@@ -31,8 +31,8 @@ export const OrderConfirmationPage = () => {
         return (
             <div className="container mx-auto px-6 py-20 text-center min-h-[80vh] flex flex-col items-center justify-center">
                 <div className="animate-pulse">
-                    <h2 className="text-3xl font-bold text-slate-700 dark:text-slate-300">Loading your order details...</h2>
-                    <p className="text-slate-500 mt-2">If you are not redirected, please check your orders page.</p>
+                    <h2 className="text-3xl font-bold text-foreground/80">Loading your order details...</h2>
+                    <p className="text-foreground/55 mt-2">If you are not redirected, please check your orders page.</p>
                 </div>
             </div>
         );
@@ -55,13 +55,13 @@ export const OrderConfirmationPage = () => {
                             >
                                 <CheckCircle2 className="w-20 h-20 text-emerald-500 mx-auto mb-6" />
                             </motion.div>
-                            <h1 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white font-display uppercase tracking-tighter">Thank You, {user?.user_metadata?.full_name || 'Valued Customer'}!</h1>
-                            <p className="text-slate-500 mt-4 text-lg font-medium">Your order has been placed successfully.</p>
-                            <p className="text-xs text-slate-400 mt-2 font-bold uppercase tracking-widest">Order ID: #{confirmedOrder.id.slice(0, 8)}</p>
+                            <h1 className="text-4xl md:text-5xl font-black text-foreground font-display uppercase tracking-tighter">Thank You, {user?.user_metadata?.full_name || 'Valued Customer'}!</h1>
+                            <p className="text-foreground/55 mt-4 text-lg font-medium">Your order has been placed successfully.</p>
+                            <p className="text-xs text-foreground/40 mt-2 font-bold uppercase tracking-widest">Order ID: #{confirmedOrder.id.slice(0, 8)}</p>
                         </div>
 
                         <div className="mb-12">
-                            <h3 className="text-sm font-black uppercase tracking-widest text-slate-900 dark:text-white mb-6 flex items-center gap-2"><Package className="w-4 h-4 text-brand-500" /> Order Progress</h3>
+                            <h3 className="text-sm font-black uppercase tracking-widest text-foreground mb-6 flex items-center gap-2"><Package className="w-4 h-4 text-brand-500" /> Order Progress</h3>
                             <OrderTracking order={confirmedOrder} />
                         </div>
 
@@ -82,23 +82,23 @@ export const OrderConfirmationPage = () => {
                                     hidden: { opacity: 0, y: 20 },
                                     visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } }
                                 }}
-                                className="bg-slate-50 dark:bg-white/5 p-6 rounded-[2rem]"
+                                className="bg-foreground/[0.02] dark:bg-background/5 p-6 rounded-[2rem]"
                             >
-                                <h4 className="font-black uppercase tracking-widest text-xs text-slate-400 mb-4">Shipping To</h4>
+                                <h4 className="font-black uppercase tracking-widest text-xs text-foreground/40 mb-4">Shipping To</h4>
                                 {(() => {
                                     const addr = confirmedOrder.address;
                                     if (addr && typeof addr === 'object') {
                                         const a = addr as Address;
                                         return (
                                             <>
-                                                <p className="font-bold text-slate-800 dark:text-slate-200">{a.street}</p>
-                                                <p className="text-slate-500">{a.city || ''}, {a.postal_code || ''}</p>
-                                                <p className="text-slate-500">{a.phone || ''}</p>
+                                                <p className="font-bold text-foreground">{a.street}</p>
+                                                <p className="text-foreground/55">{a.city || ''}, {a.postal_code || ''}</p>
+                                                <p className="text-foreground/55">{a.phone || ''}</p>
                                             </>
                                         );
                                     }
                                     return (
-                                        <p className="font-bold text-slate-800 dark:text-slate-200">{addr || 'N/A'}</p>
+                                        <p className="font-bold text-foreground">{addr || 'N/A'}</p>
                                     );
                                 })()}
                             </motion.div>
@@ -107,15 +107,15 @@ export const OrderConfirmationPage = () => {
                                     hidden: { opacity: 0, y: 20 },
                                     visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } }
                                 }}
-                                className="bg-slate-50 dark:bg-white/5 p-6 rounded-[2rem]"
+                                className="bg-foreground/[0.02] dark:bg-background/5 p-6 rounded-[2rem]"
                             >
-                                <h4 className="font-black uppercase tracking-widest text-xs text-slate-400 mb-4">Order Summary</h4>
+                                <h4 className="font-black uppercase tracking-widest text-xs text-foreground/40 mb-4">Order Summary</h4>
                                 <div className="space-y-2">
-                                    <div className="flex justify-between"><span className="text-slate-500">Subtotal:</span><span className="font-bold text-slate-800 dark:text-slate-200">{formatTZS(confirmedOrder.subtotal)}</span></div>
-                                    <div className="flex justify-between"><span className="text-slate-500">VAT:</span><span className="font-bold text-slate-800 dark:text-slate-200">{formatTZS(confirmedOrder.vat)}</span></div>
-                                    <div className="flex justify-between"><span className="text-slate-500">Delivery:</span><span className="font-bold text-slate-800 dark:text-slate-200">{formatTZS(confirmedOrder.delivery_fee)}</span></div>
+                                    <div className="flex justify-between"><span className="text-foreground/55">Subtotal:</span><span className="font-bold text-foreground">{formatTZS(confirmedOrder.subtotal)}</span></div>
+                                    <div className="flex justify-between"><span className="text-foreground/55">VAT:</span><span className="font-bold text-foreground">{formatTZS(confirmedOrder.vat)}</span></div>
+                                    <div className="flex justify-between"><span className="text-foreground/55">Delivery:</span><span className="font-bold text-foreground">{formatTZS(confirmedOrder.delivery_fee)}</span></div>
                                     {confirmedOrder.discount > 0 && <div className="flex justify-between text-emerald-500"><span className="font-bold">Discount:</span><span className="font-bold">-{formatTZS(confirmedOrder.discount)}</span></div>}
-                                    <div className="flex justify-between font-black text-lg text-slate-900 dark:text-white pt-2 border-t border-slate-200 dark:border-white/10 mt-2"><span>Total:</span><span>{formatTZS(confirmedOrder.total)}</span></div>
+                                    <div className="flex justify-between font-black text-lg text-foreground pt-2 border-t border-foreground/10 dark:border-white/10 mt-2"><span>Total:</span><span>{formatTZS(confirmedOrder.total)}</span></div>
                                 </div>
                             </motion.div>
                         </motion.div>

@@ -85,7 +85,7 @@ export const BulkEditModal = ({ isOpen, onClose, products, onSave }: { isOpen: b
 
                         <div className="space-y-2">
                             {editedProducts.map(product => (
-                                <div key={product.id} className="grid grid-cols-12 gap-4 items-center bg-white dark:bg-primary p-2 border border-foreground/5 dark:border-background/5">
+                                <div key={product.id} className="grid grid-cols-12 gap-4 items-center bg-background dark:bg-primary p-2 border border-foreground/5 dark:border-background/5">
                                     <div className="col-span-4">
                                         <Input 
                                             value={product.name} 

@@ -507,7 +507,7 @@ export const SellerSettingsPage = () => {
                             </select>
                         </div>
                     </div>
-                    <div className="flex justify-end pt-6 border-t border-slate-100 dark:border-white/5">
+                    <div className="flex justify-end pt-6 border-t border-foreground/8 dark:border-white/5">
                         <Button variant="primary" onClick={() => handleGenericSave({ ...businessData, payment_methods: paymentMethods }, "Business info saved")} disabled={isSaving}>
                             {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : 'Save Business Info'}
                         </Button>
@@ -538,7 +538,7 @@ export const SellerSettingsPage = () => {
                       {shippingZones.length > 0 ? (
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                               {shippingZones.map((zone, idx) => (
-                                  <div key={idx} className="p-3 border border-foreground/10 rounded-xl flex justify-between items-center bg-white dark:bg-background">
+                                  <div key={idx} className="p-3 border border-foreground/10 rounded-xl flex justify-between items-center bg-background dark:bg-background">
                                       <div>
                                           <span className="font-medium text-sm block">{zone.region}</span>
                                           {zone.district !== 'All Districts' && <span className="text-xs text-foreground/55">{zone.district}</span>}
@@ -556,9 +556,9 @@ export const SellerSettingsPage = () => {
                           <p className="text-xs text-foreground/55">No specific regional fees added. The base fee will apply everywhere.</p>
                       )}
 
-                      <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-slate-100 dark:border-white/5">
+                      <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-foreground/8 dark:border-white/5">
                           <select 
-                              className="h-10 bg-white dark:bg-background border border-foreground/10 rounded-xl px-3 text-sm outline-none flex-1"
+                              className="h-10 bg-background dark:bg-background border border-foreground/10 rounded-xl px-3 text-sm outline-none flex-1"
                               value={newZone.region}
                               onChange={(e) => setNewZone({...newZone, region: e.target.value, district: 'All Districts'})}
                           >
@@ -567,7 +567,7 @@ export const SellerSettingsPage = () => {
                               ))}
                           </select>
                           <select 
-                              className="h-10 bg-white dark:bg-background border border-foreground/10 rounded-xl px-3 text-sm outline-none flex-1 disabled:opacity-50"
+                              className="h-10 bg-background dark:bg-background border border-foreground/10 rounded-xl px-3 text-sm outline-none flex-1 disabled:opacity-50"
                               value={newZone.district}
                               onChange={(e) => setNewZone({...newZone, district: e.target.value})}
                               disabled={!newZone.region || !TANZANIA_DISTRICTS[newZone.region]}
@@ -593,7 +593,7 @@ export const SellerSettingsPage = () => {
                       </p>
                       <div className="flex flex-col sm:flex-row gap-3 items-center">
                           <select 
-                              className="h-10 bg-white dark:bg-background border border-emerald-200 dark:border-emerald-800/30 rounded-xl px-3 text-sm outline-none flex-1 w-full"
+                              className="h-10 bg-background dark:bg-background border border-emerald-200 dark:border-emerald-800/30 rounded-xl px-3 text-sm outline-none flex-1 w-full"
                               value={calcRegion}
                               onChange={(e) => {
                                   setCalcRegion(e.target.value);
@@ -605,7 +605,7 @@ export const SellerSettingsPage = () => {
                               ))}
                           </select>
                           <select 
-                              className="h-10 bg-white dark:bg-background border border-emerald-200 dark:border-emerald-800/30 rounded-xl px-3 text-sm outline-none flex-1 w-full disabled:opacity-50"
+                              className="h-10 bg-background dark:bg-background border border-emerald-200 dark:border-emerald-800/30 rounded-xl px-3 text-sm outline-none flex-1 w-full disabled:opacity-50"
                               value={calcDistrict}
                               onChange={(e) => setCalcDistrict(e.target.value)}
                               disabled={!calcRegion || !TANZANIA_DISTRICTS[calcRegion]}
@@ -624,7 +624,7 @@ export const SellerSettingsPage = () => {
                       </div>
                   </div>
 
-                  <div className="flex justify-end pt-6 border-t border-slate-100 dark:border-white/5">
+                  <div className="flex justify-end pt-6 border-t border-foreground/8 dark:border-white/5">
                       <Button variant="primary" onClick={() => handleGenericSave({ ...deliveryData, shipping_zones: shippingZones }, "Delivery settings saved")} disabled={isSaving}>
                           {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : 'Save Delivery Settings'}
                       </Button>

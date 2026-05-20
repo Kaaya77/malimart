@@ -123,17 +123,17 @@ export const StorePage = () => {
                 >
                     <button 
                         onClick={() => setActiveTab('collection')}
-                        className={`pb-4 text-[10px] uppercase tracking-[0.2em] font-black transition-all relative ${activeTab === 'collection' ? 'text-slate-900 dark:text-white' : 'text-slate-400 hover:text-slate-600'}`}
+                        className={`pb-4 text-[10px] uppercase tracking-[0.2em] font-black transition-all relative ${activeTab === 'collection' ? 'text-foreground' : 'text-foreground/40 hover:text-foreground/65'}`}
                     >
                         Collection
-                        {activeTab === 'collection' && <motion.div layoutId="store-tab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900 dark:bg-white" />}
+                        {activeTab === 'collection' && <motion.div layoutId="store-tab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900 dark:bg-background" />}
                     </button>
                     <button 
                         onClick={() => setActiveTab('info')}
-                        className={`pb-4 text-[10px] uppercase tracking-[0.2em] font-black transition-all relative ${activeTab === 'info' ? 'text-slate-900 dark:text-white' : 'text-slate-400 hover:text-slate-600'}`}
+                        className={`pb-4 text-[10px] uppercase tracking-[0.2em] font-black transition-all relative ${activeTab === 'info' ? 'text-foreground' : 'text-foreground/40 hover:text-foreground/65'}`}
                     >
                         Store Info
-                        {activeTab === 'info' && <motion.div layoutId="store-tab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900 dark:bg-white" />}
+                        {activeTab === 'info' && <motion.div layoutId="store-tab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900 dark:bg-background" />}
                     </button>
                 </motion.div>
 
@@ -183,22 +183,22 @@ export const StorePage = () => {
                     >
                         <div className="md:col-span-2 space-y-12">
                             <section className="space-y-6">
-                                <h3 className="text-[10px] uppercase tracking-[0.3em] font-black text-slate-400 flex items-center gap-3">
+                                <h3 className="text-[10px] uppercase tracking-[0.3em] font-black text-foreground/40 flex items-center gap-3">
                                     <FileText className="w-4 h-4" /> Store Policy
                                 </h3>
-                                <div className="p-8 bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-[2rem] text-sm leading-relaxed opacity-80 font-light italic">
+                                <div className="p-8 bg-background dark:bg-background/5 border border-foreground/8 dark:border-white/10 rounded-[2rem] text-sm leading-relaxed opacity-80 font-light italic">
                                     {vendor.store_policy || "No specific store policy provided. Standard marketplace terms apply."}
                                 </div>
                             </section>
 
                             <section className="space-y-6">
-                                <h3 className="text-[10px] uppercase tracking-[0.3em] font-black text-slate-400 flex items-center gap-3">
+                                <h3 className="text-[10px] uppercase tracking-[0.3em] font-black text-foreground/40 flex items-center gap-3">
                                     <Tag className="w-4 h-4" /> Specialties
                                 </h3>
                                 <div className="flex flex-wrap gap-3">
                                     {vendor.tags && vendor.tags.length > 0 ? (
                                         vendor.tags.map((tag: string) => (
-                                            <span key={tag} className="px-6 py-3 bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-full text-[10px] uppercase tracking-widest font-black">
+                                            <span key={tag} className="px-6 py-3 bg-background dark:bg-background/5 border border-foreground/8 dark:border-white/10 rounded-full text-[10px] uppercase tracking-widest font-black">
                                                 {tag}
                                             </span>
                                         ))
@@ -209,27 +209,27 @@ export const StorePage = () => {
                             </section>
 
                             <section className="space-y-6">
-                                <h3 className="text-[10px] uppercase tracking-[0.3em] font-black text-slate-400 flex items-center gap-3">
+                                <h3 className="text-[10px] uppercase tracking-[0.3em] font-black text-foreground/40 flex items-center gap-3">
                                     <Globe className="w-4 h-4" /> Social Presence
                                 </h3>
                                 <div className="flex gap-4">
                                     {vendor.social_links?.find(l => l.platform === 'Instagram') && (
-                                        <a href={vendor.social_links.find(l => l.platform === 'Instagram')?.url} target="_blank" rel="noopener noreferrer" className="w-14 h-14 rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 flex items-center justify-center hover:scale-110 transition-transform">
+                                        <a href={vendor.social_links.find(l => l.platform === 'Instagram')?.url} target="_blank" rel="noopener noreferrer" className="w-14 h-14 rounded-2xl bg-background dark:bg-background/5 border border-foreground/8 dark:border-white/10 flex items-center justify-center hover:scale-110 transition-transform">
                                             <Instagram className="w-5 h-5" />
                                         </a>
                                     )}
                                     {vendor.social_links?.find(l => l.platform === 'Twitter' || l.platform === 'X') && (
-                                        <a href={vendor.social_links.find(l => l.platform === 'Twitter' || l.platform === 'X')?.url} target="_blank" rel="noopener noreferrer" className="w-14 h-14 rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 flex items-center justify-center hover:scale-110 transition-transform">
+                                        <a href={vendor.social_links.find(l => l.platform === 'Twitter' || l.platform === 'X')?.url} target="_blank" rel="noopener noreferrer" className="w-14 h-14 rounded-2xl bg-background dark:bg-background/5 border border-foreground/8 dark:border-white/10 flex items-center justify-center hover:scale-110 transition-transform">
                                             <Twitter className="w-5 h-5" />
                                         </a>
                                     )}
                                     {vendor.social_links?.find(l => l.platform === 'Facebook') && (
-                                        <a href={vendor.social_links.find(l => l.platform === 'Facebook')?.url} target="_blank" rel="noopener noreferrer" className="w-14 h-14 rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 flex items-center justify-center hover:scale-110 transition-transform">
+                                        <a href={vendor.social_links.find(l => l.platform === 'Facebook')?.url} target="_blank" rel="noopener noreferrer" className="w-14 h-14 rounded-2xl bg-background dark:bg-background/5 border border-foreground/8 dark:border-white/10 flex items-center justify-center hover:scale-110 transition-transform">
                                             <Facebook className="w-5 h-5" />
                                         </a>
                                     )}
                                     {vendor.social_links?.find(l => l.platform === 'WhatsApp') && (
-                                        <a href={`https://wa.me/${vendor.social_links.find(l => l.platform === 'WhatsApp')?.url?.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="w-14 h-14 rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 flex items-center justify-center hover:scale-110 transition-transform">
+                                        <a href={`https://wa.me/${vendor.social_links.find(l => l.platform === 'WhatsApp')?.url?.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="w-14 h-14 rounded-2xl bg-background dark:bg-background/5 border border-foreground/8 dark:border-white/10 flex items-center justify-center hover:scale-110 transition-transform">
                                             <Phone className="w-5 h-5" />
                                         </a>
                                     )}
@@ -240,10 +240,10 @@ export const StorePage = () => {
 
                         <div className="space-y-12">
                             <section className="space-y-6">
-                                <h3 className="text-[10px] uppercase tracking-[0.3em] font-black text-slate-400 flex items-center gap-3">
+                                <h3 className="text-[10px] uppercase tracking-[0.3em] font-black text-foreground/40 flex items-center gap-3">
                                     <Clock className="w-4 h-4" /> Opening Hours
                                 </h3>
-                                <div className="p-8 bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-[2rem] space-y-4">
+                                <div className="p-8 bg-background dark:bg-background/5 border border-foreground/8 dark:border-white/10 rounded-[2rem] space-y-4">
                                     {vendor.opening_hours ? (
                                         Object.entries(vendor.opening_hours).map(([day, hours]: [string, any]) => (
                                             <div key={day} className="flex justify-between text-[11px] font-bold uppercase tracking-wider">
@@ -258,15 +258,15 @@ export const StorePage = () => {
                             </section>
 
                             <section className="space-y-6">
-                                <h3 className="text-[10px] uppercase tracking-[0.3em] font-black text-slate-400 flex items-center gap-3">
+                                <h3 className="text-[10px] uppercase tracking-[0.3em] font-black text-foreground/40 flex items-center gap-3">
                                     <Star className="w-4 h-4" /> Performance
                                 </h3>
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className="p-6 bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-3xl text-center">
+                                    <div className="p-6 bg-background dark:bg-background/5 border border-foreground/8 dark:border-white/10 rounded-3xl text-center">
                                         <p className="text-2xl font-display font-black leading-none mb-2">{vendor.total_sales || 0}</p>
                                         <p className="text-[8px] uppercase tracking-widest opacity-40 font-black">Total Sales</p>
                                     </div>
-                                    <div className="p-6 bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-3xl text-center">
+                                    <div className="p-6 bg-background dark:bg-background/5 border border-foreground/8 dark:border-white/10 rounded-3xl text-center">
                                         <p className="text-2xl font-display font-black leading-none mb-2">{vendor.rating || '5.0'}</p>
                                         <p className="text-[8px] uppercase tracking-widest opacity-40 font-black">Rating</p>
                                     </div>

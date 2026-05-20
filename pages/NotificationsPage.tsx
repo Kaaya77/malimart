@@ -34,7 +34,7 @@ export const NotificationsPage = () => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-center py-32 border-2 border-dashed border-slate-200 dark:border-white/10 rounded-[3rem] flex flex-col items-center justify-center"
+            className="text-center py-32 border-2 border-dashed border-foreground/10 dark:border-white/10 rounded-3xl flex flex-col items-center justify-center"
           >
             <Bell className="w-16 h-16 text-foreground/20 mb-6" />
             <h3 className="text-xl font-black uppercase mb-2">No new notifications</h3>
@@ -65,11 +65,11 @@ export const NotificationsPage = () => {
                 <div className="flex-1">
                   <div className="flex justify-between items-start">
                     <h4 className="font-bold text-slate-800 dark:text-white mb-1 pr-4">{notification.title || 'Notification'}</h4>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
+                    <span className="text-[10px] font-bold text-foreground/40 uppercase tracking-widest whitespace-nowrap">
                       {new Date(notification.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </span>
                   </div>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">{notification.message}</p>
+                  <p className="text-sm text-foreground/55 mb-4">{notification.message}</p>
                   <div className="flex items-center gap-2">
                     {!notification.read && (
                       <Button size="sm" variant="secondary" onClick={() => markNotificationRead(notification.id)} className="text-xs">
@@ -79,7 +79,7 @@ export const NotificationsPage = () => {
                     {notification.link && (
                       <Button asChild size="sm" variant="outline" className="text-xs"><a href={notification.link}><span>View Details</span></a></Button>
                     )}
-                    <Button size="icon" variant="ghost" onClick={() => dismissNotification(notification.id)} className="ml-auto text-slate-400 hover:text-red-500 w-8 h-8">
+                    <Button size="icon" variant="ghost" onClick={() => dismissNotification(notification.id)} className="ml-auto text-foreground/40 hover:text-red-500 w-8 h-8">
                       <X className="w-4 h-4" />
                     </Button>
                   </div>

@@ -311,7 +311,7 @@ export const BuyerSettingsPage = () => {
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors whitespace-nowrap ${
                   activeTab === tab.id 
                     ? 'bg-foreground text-background' 
-                    : 'text-foreground/70 hover:bg-foreground/[0.05] dark:text-slate-400 dark:hover:bg-white/5'
+                    : 'text-foreground/70 hover:bg-foreground/[0.05] dark:text-foreground/40 dark:hover:bg-background/5'
                 }`}
               >
                 <tab.icon className="w-4 h-4" />
@@ -339,7 +339,7 @@ export const BuyerSettingsPage = () => {
                         {profileData.avatar_url ? (
                           <img src={profileData.avatar_url} alt="Avatar" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                         ) : (
-                          <UserIcon className="w-8 h-8 text-slate-400" />
+                          <UserIcon className="w-8 h-8 text-foreground/40" />
                         )}
                       </div>
                       <div className="flex-1">
@@ -355,7 +355,7 @@ export const BuyerSettingsPage = () => {
                         </div>
                         <div className="space-y-1">
                           <label className="text-xs font-semibold text-foreground/55 uppercase tracking-wider">Email Address</label>
-                          <Input icon={Mail} placeholder="Email Address" value={user?.email || ''} disabled className="bg-slate-50 dark:bg-background/50 opacity-70" />
+                          <Input icon={Mail} placeholder="Email Address" value={user?.email || ''} disabled className="bg-foreground/[0.02] dark:bg-background/50 opacity-70" />
                         </div>
                         <div className="space-y-1">
                           <label className="text-xs font-semibold text-foreground/55 uppercase tracking-wider">Phone Number</label>
@@ -364,9 +364,9 @@ export const BuyerSettingsPage = () => {
                         <div className="space-y-1">
                           <label className="text-xs font-semibold text-foreground/55 uppercase tracking-wider">Region</label>
                           <div className="relative">
-                              <Home className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                              <Home className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40" />
                               <select 
-                                  className="w-full h-10 bg-white dark:bg-background border border-foreground/10 rounded-xl pl-10 pr-4 text-sm outline-none text-foreground appearance-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all"
+                                  className="w-full h-10 bg-background dark:bg-background border border-foreground/10 rounded-xl pl-10 pr-4 text-sm outline-none text-foreground appearance-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all"
                                   value={profileData.region || ''}
                                   onChange={(e: any) => setProfileData({ ...profileData, region: e.target.value })}
                               >
@@ -377,7 +377,7 @@ export const BuyerSettingsPage = () => {
                           </div>
                         </div>
                     </div>
-                    <div className="flex justify-end pt-4 border-t border-slate-100 dark:border-white/5">
+                    <div className="flex justify-end pt-4 border-t border-foreground/8 dark:border-white/5">
                       <Button type="submit" variant="primary" disabled={isSavingProfile}>
                         {isSavingProfile ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</> : 'Save Changes'}
                       </Button>
@@ -396,9 +396,9 @@ export const BuyerSettingsPage = () => {
                     <div className="space-y-1">
                         <label className="text-xs font-semibold text-foreground/55 uppercase tracking-wider">Language</label>
                         <div className="relative">
-                            <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                            <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40" />
                             <select 
-                                className="w-full h-10 bg-white dark:bg-background border border-foreground/10 rounded-xl pl-10 pr-4 text-sm outline-none text-foreground appearance-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all"
+                                className="w-full h-10 bg-background dark:bg-background border border-foreground/10 rounded-xl pl-10 pr-4 text-sm outline-none text-foreground appearance-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all"
                                 value={preferences.language}
                                 onChange={handleLanguageChange}
                             >
@@ -411,9 +411,9 @@ export const BuyerSettingsPage = () => {
                     <div className="space-y-1">
                         <label className="text-xs font-semibold text-foreground/55 uppercase tracking-wider">Default Currency</label>
                         <div className="relative">
-                            <Wallet className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                            <Wallet className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40" />
                             <select 
-                                className="w-full h-10 bg-white dark:bg-background border border-foreground/10 rounded-xl pl-10 pr-4 text-sm outline-none text-foreground appearance-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all"
+                                className="w-full h-10 bg-background dark:bg-background border border-foreground/10 rounded-xl pl-10 pr-4 text-sm outline-none text-foreground appearance-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all"
                                 value={preferences.defaultCurrency}
                                 onChange={(e) => {
                                     setPreferences({...preferences, defaultCurrency: e.target.value});
@@ -427,7 +427,7 @@ export const BuyerSettingsPage = () => {
                         </div>
                     </div>
                   </div>
-                  <div className="pt-4 border-t border-slate-100 dark:border-white/5 space-y-4">
+                  <div className="pt-4 border-t border-foreground/8 dark:border-white/5 space-y-4">
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="font-medium text-sm text-foreground">High Contrast Mode</p>
@@ -452,24 +452,24 @@ export const BuyerSettingsPage = () => {
                 <CardContent className="space-y-6">
                   {addresses.length === 0 ? (
                       <div className="text-center py-10 text-foreground/55 bg-foreground/[0.03] rounded-2xl border border-dashed border-foreground/10">
-                          <MapPin className="w-8 h-8 mx-auto mb-3 text-slate-400 opacity-50" />
+                          <MapPin className="w-8 h-8 mx-auto mb-3 text-foreground/40 opacity-50" />
                           <p className="text-sm font-medium">No addresses found. Add one below.</p>
                       </div>
                   ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {[...addresses].sort((a, b) => (b.is_default ? 1 : 0) - (a.is_default ? 1 : 0)).map((addr, idx) => (
-                          <div key={addr.id} className={`p-5 border rounded-2xl flex flex-col justify-between transition-all ${addr.is_default ? 'border-slate-900 dark:border-white bg-slate-50/50 dark:bg-white/5 shadow-sm' : 'border-foreground/10 hover:border-slate-300 dark:hover:border-white/20'}`}>
+                          <div key={addr.id} className={`p-5 border rounded-2xl flex flex-col justify-between transition-all ${addr.is_default ? 'border-slate-900 dark:border-white bg-foreground/[0.02]/50 dark:bg-background/5 shadow-sm' : 'border-foreground/10 hover:border-slate-300 dark:hover:border-white/20'}`}>
                               <div className="flex justify-between items-start mb-4">
                                   <div>
                                       <div className="flex items-center gap-2 mb-2">
                                           <p className="font-semibold text-foreground">{addr.label}</p>
                                           {addr.is_default && <Badge variant="secondary" className="text-[10px] py-0 h-5 bg-foreground text-background">Default</Badge>}
                                       </div>
-                                      <p className="text-sm text-foreground/70 dark:text-slate-400 leading-relaxed">{addr.street}<br/>{addr.district ? `${addr.district}, ` : ''}{addr.city}</p>
+                                      <p className="text-sm text-foreground/70 dark:text-foreground/40 leading-relaxed">{addr.street}<br/>{addr.district ? `${addr.district}, ` : ''}{addr.city}</p>
                                       <p className="text-sm text-foreground/55 dark:text-foreground/55 mt-2 flex items-center gap-1"><Phone className="w-3 h-3"/> {addr.phone}</p>
                                   </div>
                               </div>
-                              <div className="flex gap-2 justify-end mt-auto pt-4 border-t border-slate-100 dark:border-white/5">
+                              <div className="flex gap-2 justify-end mt-auto pt-4 border-t border-foreground/8 dark:border-white/5">
                                   {!addr.is_default && <Button size="sm" variant="outline" onClick={() => handleSetDefaultAddress(addr.id)} className="text-xs">Set Default</Button>}
                                   <Button size="icon" variant="ghost" onClick={() => setEditingAddress(addr)}><Edit className="w-4 h-4" /></Button>
                                   <Button size="icon" variant="ghost" className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20" onClick={() => confirmDeleteAddress(addr.id)} disabled={isDeletingAddress && addressToDelete === addr.id}><Trash2 className="w-4 h-4" /></Button>
@@ -479,7 +479,7 @@ export const BuyerSettingsPage = () => {
                       </div>
                   )}
                   
-                  <div className="pt-6 border-t border-slate-100 dark:border-white/5">
+                  <div className="pt-6 border-t border-foreground/8 dark:border-white/5">
                     <h3 className="font-semibold text-sm mb-4">Add New Address</h3>
                     <form onSubmit={handleAddAddress} className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -490,7 +490,7 @@ export const BuyerSettingsPage = () => {
                           </div>
                           <div className="md:col-span-1">
                               <select 
-                                  className="w-full h-10 bg-white dark:bg-background border border-foreground/10 rounded-xl px-3 text-sm outline-none text-foreground focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all"
+                                  className="w-full h-10 bg-background dark:bg-background border border-foreground/10 rounded-xl px-3 text-sm outline-none text-foreground focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all"
                                   value={addressData.city}
                                   onChange={(e: any) => setAddressData({...addressData, city: e.target.value, district: TANZANIA_DISTRICTS[e.target.value]?.[0] || ''})}
                                   required
@@ -503,7 +503,7 @@ export const BuyerSettingsPage = () => {
                           </div>
                           <div className="md:col-span-1">
                               <select 
-                                  className="w-full h-10 bg-white dark:bg-background border border-foreground/10 rounded-xl px-3 text-sm outline-none text-foreground focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all disabled:opacity-50"
+                                  className="w-full h-10 bg-background dark:bg-background border border-foreground/10 rounded-xl px-3 text-sm outline-none text-foreground focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all disabled:opacity-50"
                                   value={addressData.district}
                                   onChange={(e: any) => setAddressData({...addressData, district: e.target.value})}
                                   disabled={!addressData.city || !TANZANIA_DISTRICTS[addressData.city]}
@@ -534,7 +534,7 @@ export const BuyerSettingsPage = () => {
                       ) : (
                           <div className="space-y-3">
                             {paymentMethods.map(pm => (
-                                <div key={pm.id} className="p-4 border border-foreground/10 rounded-xl flex justify-between items-center bg-white dark:bg-background">
+                                <div key={pm.id} className="p-4 border border-foreground/10 rounded-xl flex justify-between items-center bg-background dark:bg-background">
                                     <div className="flex items-center gap-4">
                                         <div className={`w-12 h-8 rounded flex items-center justify-center text-white font-bold text-[10px] ${pm.type === 'visa' ? 'bg-slate-900 dark:bg-slate-700' : 'bg-emerald-600'}`}>
                                           {pm.provider.toUpperCase()}
@@ -550,24 +550,24 @@ export const BuyerSettingsPage = () => {
                           </div>
                       )}
                       
-                      <div className="pt-6 border-t border-slate-100 dark:border-white/5">
+                      <div className="pt-6 border-t border-foreground/8 dark:border-white/5">
                         <h4 className="font-semibold text-sm mb-4">Add Payment Method</h4>
                         <form onSubmit={handleAddPaymentMethod} className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <select className="h-10 bg-white dark:bg-background rounded-xl border border-foreground/10 px-3 text-sm outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white" value={paymentData.type} onChange={(e) => setPaymentData({...paymentData, type: e.target.value, provider: e.target.value === 'visa' ? 'visa' : (e.target.value === 'mobile' ? MOBILE_MONEY_PROVIDERS[0] : BANK_PROVIDERS[0])})}>
+                                <select className="h-10 bg-background dark:bg-background rounded-xl border border-foreground/10 px-3 text-sm outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white" value={paymentData.type} onChange={(e) => setPaymentData({...paymentData, type: e.target.value, provider: e.target.value === 'visa' ? 'visa' : (e.target.value === 'mobile' ? MOBILE_MONEY_PROVIDERS[0] : BANK_PROVIDERS[0])})}>
                                     <option value="visa">Card (Visa/Mastercard)</option>
                                     <option value="mobile">Mobile Money</option>
                                     <option value="bank">Bank Account</option>
                                 </select>
                                 {paymentData.type === 'mobile' && (
-                                    <select className="h-10 bg-white dark:bg-background rounded-xl border border-foreground/10 px-3 text-sm outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white" value={paymentData.provider} onChange={(e) => setPaymentData({...paymentData, provider: e.target.value})}>
+                                    <select className="h-10 bg-background dark:bg-background rounded-xl border border-foreground/10 px-3 text-sm outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white" value={paymentData.provider} onChange={(e) => setPaymentData({...paymentData, provider: e.target.value})}>
                                         {MOBILE_MONEY_PROVIDERS.map(provider => (
                                             <option key={provider} value={provider}>{provider}</option>
                                         ))}
                                     </select>
                                 )}
                                 {paymentData.type === 'bank' && (
-                                    <select className="h-10 bg-white dark:bg-background rounded-xl border border-foreground/10 px-3 text-sm outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white" value={paymentData.provider} onChange={(e) => setPaymentData({...paymentData, provider: e.target.value})}>
+                                    <select className="h-10 bg-background dark:bg-background rounded-xl border border-foreground/10 px-3 text-sm outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white" value={paymentData.provider} onChange={(e) => setPaymentData({...paymentData, provider: e.target.value})}>
                                         {BANK_PROVIDERS.map(provider => (
                                             <option key={provider} value={provider}>{provider}</option>
                                         ))}
@@ -594,13 +594,13 @@ export const BuyerSettingsPage = () => {
             <div className="space-y-6 animate-in fade-in">
               <Card className="overflow-hidden border-none bg-foreground text-background">
                 <CardContent className="p-8 md:p-10 relative">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 dark:bg-black/5 blur-[80px] rounded-full pointer-events-none"></div>
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-background/10 dark:bg-black/5 blur-[80px] rounded-full pointer-events-none"></div>
                     <div className="relative z-10">
                       <p className="text-sm font-medium opacity-80 mb-2 flex items-center gap-2"><Wallet className="w-4 h-4" /> Available Balance</p>
                       <h2 className="text-5xl md:text-6xl font-display font-bold tracking-tight">{CURRENCY} {(user?.wallet_balance || 0).toLocaleString()}</h2>
                       <div className="mt-8 flex gap-3">
-                        <Button variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20 dark:bg-black/5 dark:border-black/10 dark:text-slate-900 dark:hover:bg-black/10">Top Up</Button>
-                        <Button variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20 dark:bg-black/5 dark:border-black/10 dark:text-slate-900 dark:hover:bg-black/10">Withdraw</Button>
+                        <Button variant="outline" className="bg-background/10 border-white/20 text-white hover:bg-background/20 dark:bg-black/5 dark:border-black/10 dark:text-foreground dark:hover:bg-black/10">Top Up</Button>
+                        <Button variant="outline" className="bg-background/10 border-white/20 text-white hover:bg-background/20 dark:bg-black/5 dark:border-black/10 dark:text-foreground dark:hover:bg-black/10">Withdraw</Button>
                       </div>
                     </div>
                 </CardContent>
@@ -620,9 +620,9 @@ export const BuyerSettingsPage = () => {
                         ) : (
                             <div className="space-y-4">
                                 {walletTransactions.slice(0, 5).map(tx => (
-                                    <div key={tx.id} className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-white/5 last:border-0 last:pb-0">
+                                    <div key={tx.id} className="flex items-center justify-between pb-4 border-b border-foreground/8 dark:border-white/5 last:border-0 last:pb-0">
                                         <div className="flex items-center gap-4">
-                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${tx.type === 'credit' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-foreground/[0.05] text-foreground/70 dark:bg-slate-800 dark:text-slate-400'}`}>
+                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${tx.type === 'credit' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-foreground/[0.05] text-foreground/70 dark:bg-slate-800 dark:text-foreground/40'}`}>
                                                 {tx.type === 'credit' ? <ArrowDownLeft className="w-5 h-5" /> : <ArrowUpRight className="w-5 h-5" />}
                                             </div>
                                             <div>
@@ -648,7 +648,7 @@ export const BuyerSettingsPage = () => {
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <p className="text-sm text-emerald-800 dark:text-emerald-200">Share your code. When a friend makes their first purchase, they get 10% off and you get {CURRENCY} 5,000.</p>
-                        <div className="flex items-center gap-2 bg-white dark:bg-background p-2 rounded-xl border border-emerald-200 dark:border-emerald-800/50">
+                        <div className="flex items-center gap-2 bg-background dark:bg-background p-2 rounded-xl border border-emerald-200 dark:border-emerald-800/50">
                             <code className="px-3 py-1 font-mono font-bold text-foreground text-sm flex-1 text-center">{user?.referral_code || 'MALI-XXXX'}</code>
                             <Button variant="secondary" size="icon" onClick={copyReferralCode} className="shrink-0 h-8 w-8">
                                 <Copy className="w-3.5 h-3.5" />
@@ -670,14 +670,14 @@ export const BuyerSettingsPage = () => {
                       <CardDescription>Control how we contact you.</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                      <div className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-white/5">
+                      <div className="flex items-center justify-between py-3 border-b border-foreground/8 dark:border-white/5">
                           <div>
                               <p className="font-medium text-sm text-foreground">Email Notifications</p>
                               <p className="text-xs text-foreground/55">Order updates and promotions</p>
                           </div>
                           <Switch checked={preferences.emailNotifications} onChange={() => togglePreference('emailNotifications')} />
                       </div>
-                      <div className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-white/5">
+                      <div className="flex items-center justify-between py-3 border-b border-foreground/8 dark:border-white/5">
                           <div>
                               <p className="font-medium text-sm text-foreground">SMS Updates</p>
                               <p className="text-xs text-foreground/55">Delivery tracking and alerts</p>
@@ -700,14 +700,14 @@ export const BuyerSettingsPage = () => {
                       <CardDescription>Protect your account.</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                      <div className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-white/5">
+                      <div className="flex items-center justify-between py-3 border-b border-foreground/8 dark:border-white/5">
                           <div>
                               <p className="font-medium text-sm text-foreground">Two-Factor Authentication (2FA)</p>
                               <p className="text-xs text-foreground/55">Add an extra layer of security</p>
                           </div>
                           <Switch checked={preferences.twoFactorAuth} onChange={() => togglePreference('twoFactorAuth')} />
                       </div>
-                      <div className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-white/5">
+                      <div className="flex items-center justify-between py-3 border-b border-foreground/8 dark:border-white/5">
                           <div>
                               <p className="font-medium text-sm text-foreground">Public Profile</p>
                               <p className="text-xs text-foreground/55">Allow others to see your reviews</p>
@@ -736,7 +736,7 @@ export const BuyerSettingsPage = () => {
                               return (
                                   <div key={provider} className="flex items-center justify-between p-4 border border-foreground/10 rounded-xl bg-foreground/[0.03]">
                                       <div className="flex items-center gap-3">
-                                          <div className={`w-8 h-8 rounded-full flex items-center justify-center shadow-sm ${provider === 'google' ? 'bg-white' : 'bg-[#1877F2]'}`}>
+                                          <div className={`w-8 h-8 rounded-full flex items-center justify-center shadow-sm ${provider === 'google' ? 'bg-background' : 'bg-[#1877F2]'}`}>
                                               {provider === 'google' ? (
                                                   <svg className="w-4 h-4" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
                                               ) : (
@@ -768,7 +768,7 @@ export const BuyerSettingsPage = () => {
                               <p className="text-xs text-foreground/55">Preferred format for data exports</p>
                           </div>
                           <select 
-                              className="h-9 bg-white dark:bg-background border border-foreground/10 rounded-lg px-3 text-sm outline-none"
+                              className="h-9 bg-background dark:bg-background border border-foreground/10 rounded-lg px-3 text-sm outline-none"
                               value={preferences.exportFormat}
                               onChange={(e) => {
                                   setPreferences({...preferences, exportFormat: e.target.value});
@@ -802,7 +802,7 @@ export const BuyerSettingsPage = () => {
                               <p className="text-sm text-foreground/55">No recent logins found.</p>
                           ) : (
                               loginHistory.map((login, idx) => (
-                                  <div key={idx} className="flex justify-between items-center py-3 border-b border-slate-100 dark:border-white/5 last:border-0 last:pb-0">
+                                  <div key={idx} className="flex justify-between items-center py-3 border-b border-foreground/8 dark:border-white/5 last:border-0 last:pb-0">
                                       <div>
                                           <p className="text-sm font-medium">{login.device_info || 'Unknown Device'}</p>
                                           <p className="text-xs text-foreground/55">{login.ip_address || 'Unknown IP'}</p>
@@ -833,7 +833,7 @@ export const BuyerSettingsPage = () => {
                         <Input placeholder="Street" value={editingAddress.street || ''} onChange={(e: any) => setEditingAddress({...editingAddress, street: e.target.value})} />
                         <div className="grid grid-cols-2 gap-4">
                             <select 
-                                className="w-full h-10 bg-white dark:bg-background border border-foreground/10 rounded-xl px-3 text-sm outline-none text-foreground focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all"
+                                className="w-full h-10 bg-background dark:bg-background border border-foreground/10 rounded-xl px-3 text-sm outline-none text-foreground focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all"
                                 value={editingAddress.city || ''}
                                 onChange={(e: any) => setEditingAddress({...editingAddress, city: e.target.value, district: TANZANIA_DISTRICTS[e.target.value]?.[0] || ''})}
                                 required
@@ -844,7 +844,7 @@ export const BuyerSettingsPage = () => {
                                 ))}
                             </select>
                             <select 
-                                className="w-full h-10 bg-white dark:bg-background border border-foreground/10 rounded-xl px-3 text-sm outline-none text-foreground focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all disabled:opacity-50"
+                                className="w-full h-10 bg-background dark:bg-background border border-foreground/10 rounded-xl px-3 text-sm outline-none text-foreground focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all disabled:opacity-50"
                                 value={editingAddress.district || ''}
                                 onChange={(e: any) => setEditingAddress({...editingAddress, district: e.target.value})}
                                 disabled={!editingAddress.city || !TANZANIA_DISTRICTS[editingAddress.city]}

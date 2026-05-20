@@ -152,7 +152,7 @@ export const ProductPage = () => {
             <div className="container mx-auto px-4 md:px-8 max-w-7xl">
                 {/* Breadcrumb / Back */}
                 <div className="flex items-center gap-4 mb-8">
-                    <button onClick={() => navigate(-1)} className="p-3 bg-white/50 dark:bg-primary/50 backdrop-blur-md rounded-full hover:scale-110 transition-transform border border-foreground/10 dark:border-background/10"><ArrowLeft className="w-5 h-5 stroke-[1]"/></button>
+                    <button onClick={() => navigate(-1)} className="p-3 bg-background/50 dark:bg-primary/50 backdrop-blur-md rounded-full hover:scale-110 transition-transform border border-foreground/10 dark:border-background/10"><ArrowLeft className="w-5 h-5 stroke-[1]"/></button>
                     <div className="text-[10px] font-semibold uppercase tracking-[0.2em] opacity-60">
                         <span>{product.category}</span> <span className="mx-2 opacity-40">/</span> <span>{product.name}</span>
                     </div>
@@ -200,7 +200,7 @@ export const ProductPage = () => {
                             {images.length > 1 && (
                                 <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 md:hidden">
                                     {images.map((_, i) => (
-                                        <button key={i} onClick={() => setActiveImage(i)} className={`h-1.5 rounded-full transition-all ${i === activeImage ? 'w-5 bg-white' : 'w-1.5 bg-white/50'}`} />
+                                        <button key={i} onClick={() => setActiveImage(i)} className={`h-1.5 rounded-full transition-all ${i === activeImage ? 'w-5 bg-background' : 'w-1.5 bg-background/50'}`} />
                                     ))}
                                 </div>
                             )}
