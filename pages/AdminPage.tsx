@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
     ShieldAlert, Users, Store, DollarSign, Activity, 
     CheckCircle2, XCircle, AlertTriangle, Search, 
@@ -293,32 +293,30 @@ export const AdminPage = () => {
     }
 
     return (
-        <div className="min-h-screen bg-background font-sans pb-[calc(5rem+env(safe-area-inset-bottom))] pt-20 md:pt-28 px-4 md:px-8 selection:bg-foreground selection:text-background">
-            <div className="container mx-auto max-w-7xl">
+        <div className="min-h-screen bg-background font-sans pb-[calc(5rem+env(safe-area-inset-bottom))] pt-20 md:pt-24 selection:bg-foreground selection:text-background">
+            <div className="container mx-auto max-w-7xl px-4 md:px-6">
                 <motion.div 
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                    className="flex flex-col md:flex-row justify-between items-end mb-6 md:mb-8 gap-4"
+                    className="flex flex-col md:flex-row justify-between items-center py-6 md:py-8 gap-4 px-4 md:px-6"
                 >
-                    <div className="space-y-4">
-                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-2xl bg-foreground flex items-center justify-center shadow-lg shadow-foreground/10">
-                                <ShieldAlert className="w-5 h-5 text-white dark:text-black" />
-                            </div>
-                            <p className="text-[10px] uppercase tracking-widest font-black text-foreground/40 dark:text-white/40">Nexus Control</p>
-                         </div>
-                         <h1 className="text-4xl md:text-6xl font-sans font-extrabold text-foreground dark:text-white tracking-tight leading-none">
-                             System Overview
-                         </h1>
+                    <div className="flex items-center gap-3.5">
+                        <div className="w-12 h-12 rounded-2xl bg-foreground flex items-center justify-center shadow-md shrink-0">
+                            <ShieldAlert className="w-5 h-5 text-background" />
+                        </div>
+                        <div>
+                            <p className="text-[10px] text-foreground/35 uppercase tracking-[0.2em] font-bold">Admin Panel</p>
+                            <h1 className="text-xl md:text-2xl font-bold text-foreground tracking-tight">System Overview</h1>
+                        </div>
                     </div>
-                    <div className="flex items-center gap-6">
-                        <button onClick={fetchAdminData} className="flex items-center text-[10px] uppercase tracking-[0.2em] font-black hover:opacity-50 transition-opacity">
-                            <RefreshCw className={`w-3.5 h-3.5 mr-2 stroke-[2.5] ${isLoading ? 'animate-spin' : ''}`} /> Refresh
+                    <div className="flex items-center gap-3">
+                        <button onClick={fetchAdminData} className="flex items-center gap-1.5 h-9 px-3 rounded-xl bg-foreground/[0.06] text-foreground/60 text-xs font-semibold hover:bg-foreground/10 transition-colors">
+                            <RefreshCw className={`w-3.5 h-3.5 stroke-[2] ${isLoading ? 'animate-spin' : ''}`} /> Refresh
                         </button>
-                        <div className="text-right hidden md:block border-l border-foreground/10 dark:border-white/10 pl-6">
-                            <p className="text-[9px] uppercase tracking-widest text-foreground/40 dark:text-white/40 font-black mb-1">SERVER TIME</p>
-                            <p className="text-xs font-sans font-bold tracking-widest text-foreground dark:text-white">{new Date().toISOString().replace('T', ' ').slice(0, 19)} UTC</p>
+                        <div className="text-right hidden md:block pl-4 border-l border-foreground/8">
+                            <p className="text-[9px] uppercase tracking-widest text-foreground/35 font-bold">Server Time</p>
+                            <p className="text-xs font-mono font-bold text-foreground/60">{new Date().toISOString().replace('T', ' ').slice(0, 19)} UTC</p>
                         </div>
                     </div>
                 </motion.div>
@@ -334,7 +332,7 @@ export const AdminPage = () => {
                             transition: { duration: 0.6, delay: 0.1, ease: [0.22, 1, 0.36, 1], staggerChildren: 0.05 }
                         }
                     }}
-                    className="flex overflow-x-auto p-1.5 md:p-2 bg-foreground/[0.04] rounded-full mb-8 no-scrollbar border border-foreground/5 shadow-inner"
+                    className="flex overflow-x-auto p-1.5 bg-foreground/[0.04] rounded-2xl mb-6 no-scrollbar border border-foreground/8 sticky top-[60px] z-20 backdrop-blur-xl"
                 >
                     {[
                         { id: 'overview', label: 'Nexus', icon: Activity },
@@ -356,14 +354,14 @@ export const AdminPage = () => {
                                 visible: { opacity: 1, x: 0, transition: { duration: 0.3 } }
                             }}
                             onClick={() => setActiveTab(tab.id as any)} 
-                            className={`flex-shrink-0 flex items-center gap-2 py-3 px-6 rounded-full text-xs font-black uppercase tracking-wider transition-all duration-200 ${activeTab === tab.id 
-                                ? 'bg-background text-foreground shadow-md' 
-                                : 'text-foreground/40 hover:text-foreground hover:bg-foreground/5'}`}
+                            className={`flex-shrink-0 flex items-center gap-2 py-2.5 px-3.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all duration-200 whitespace-nowrap ${activeTab === tab.id 
+                                ? 'bg-background text-foreground shadow-sm' 
+                                : 'text-foreground/40 hover:text-foreground/65'}`}
                         >
-                            <tab.icon className={`w-4 h-4 stroke-[2.5] ${activeTab === tab.id ? 'text-primary scale-110' : ''} transition-all`} /> 
+                            <tab.icon className={`w-3.5 h-3.5 stroke-[2] ${activeTab === tab.id ? 'scale-110' : 'opacity-70'} transition-all`} /> 
                             <span className="whitespace-nowrap">{tab.label}</span>
                             {tab.count !== undefined && tab.count > 0 && (
-                                <span className={`ml-1 px-1.5 rounded-full flex items-center justify-center text-[10px] font-black tracking-normal ${activeTab === tab.id ? 'bg-primary text-white' : 'bg-primary/20 text-primary'}`}>
+                                <span className="min-w-[16px] h-4 px-1 rounded-full bg-rose-500 text-white text-[8px] font-black flex items-center justify-center">
                                     {tab.count}
                                 </span>
                             )}
@@ -373,15 +371,17 @@ export const AdminPage = () => {
 
                 {/* Content Area */}
                 {isLoading ? (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-pulse">
-                        {[1,2,3].map(i => <div key={i} className="h-48 bg-foreground/[0.05] dark:bg-background/5 border border-foreground/10"></div>)}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-pulse">
+                        {[1,2,3].map(i => <div key={i} className="h-48 shimmer rounded-2xl"></div>)}
                     </div>
                 ) : (
-                    <motion.div 
-                        initial={{ opacity: 0, y: 20 }}
+                    <AnimatePresence mode="wait">
+                    <motion.div
+                        key={activeTab}
+                        initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5 }}
-                        className="duration-700"
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
                     >
                         
                         {/* OVERVIEW TAB */}
@@ -992,6 +992,7 @@ export const AdminPage = () => {
                         )}
 
                     </motion.div>
+                    </AnimatePresence>
                 )}
             </div>
             
