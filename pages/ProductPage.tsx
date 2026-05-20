@@ -1,3 +1,4 @@
+import { ProductShare } from '../components/ProductShare';
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
