@@ -546,7 +546,7 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: { sellerId: string, o
  <h4 className="text-[9px] uppercase tracking-[0.2em] text-foreground/40 mb-6 flex items-center gap-3"><Clock className="w-4 h-4"/> Order Timeline</h4>
  <div className="space-y-6 relative before:absolute before:inset-0 before:ml-2 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-px before:bg-primary/10 dark:before:bg-background/10">
  <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
- <div className="flex items-center justify-center w-3 h-3 rounded-2xl border border-foreground dark:border-background bg-primary dark:bg-background shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2"></div>
+ <div className="flex items-center justify-center w-3 h-3 rounded-2xl border border-foreground dark:border-background bg-foreground shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2"></div>
  <div className="w-[calc(100%-2.5rem)] md:w-[calc(50%-1.5rem)] p-4 rounded-2xl bg-foreground/[0.04] border border-foreground/10">
  <div className="flex items-center justify-between mb-1">
  <div className="font-serif text-sm text-foreground">Order Placed</div>
@@ -556,7 +556,7 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: { sellerId: string, o
  </div>
  {['processing', 'in_transit', 'shipped', 'delivered'].includes(selectedOrder.status) && (
  <div className="relative flex items-center justify-between md:justify-normal md:even:flex-row-reverse group is-active">
- <div className="flex items-center justify-center w-3 h-3 rounded-2xl border border-foreground dark:border-background bg-primary dark:bg-background shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2"></div>
+ <div className="flex items-center justify-center w-3 h-3 rounded-2xl border border-foreground dark:border-background bg-foreground shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2"></div>
  <div className="w-[calc(100%-2.5rem)] md:w-[calc(50%-1.5rem)] p-4 rounded-2xl bg-foreground/[0.04] border border-foreground/10">
  <div className="flex items-center justify-between mb-1">
  <div className="font-serif text-sm text-foreground">Processing</div>
@@ -566,7 +566,7 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: { sellerId: string, o
  )}
  {['in_transit', 'shipped', 'delivered'].includes(selectedOrder.status) && (
  <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
- <div className="flex items-center justify-center w-3 h-3 rounded-2xl border border-foreground dark:border-background bg-primary dark:bg-background shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2"></div>
+ <div className="flex items-center justify-center w-3 h-3 rounded-2xl border border-foreground dark:border-background bg-foreground shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2"></div>
  <div className="w-[calc(100%-2.5rem)] md:w-[calc(50%-1.5rem)] p-4 rounded-2xl bg-foreground/[0.04] border border-foreground/10">
  <div className="flex items-center justify-between mb-1">
  <div className="font-serif text-sm text-foreground">Shipped</div>
@@ -576,7 +576,7 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: { sellerId: string, o
  )}
  {['delivered'].includes(selectedOrder.status) && (
  <div className="relative flex items-center justify-between md:justify-normal md:even:flex-row-reverse group is-active">
- <div className="flex items-center justify-center w-3 h-3 rounded-2xl border border-foreground dark:border-background bg-primary dark:bg-background shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2"></div>
+ <div className="flex items-center justify-center w-3 h-3 rounded-2xl border border-foreground dark:border-background bg-foreground shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2"></div>
  <div className="w-[calc(100%-2.5rem)] md:w-[calc(50%-1.5rem)] p-4 rounded-2xl bg-foreground/[0.04] border border-foreground/10">
  <div className="flex items-center justify-between mb-1">
  <div className="font-serif text-sm text-foreground">Delivered</div>

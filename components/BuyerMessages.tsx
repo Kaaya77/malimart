@@ -468,7 +468,7 @@ export const BuyerMessages = ({ userId, initialSellerId }: { userId: string, ini
  <select 
  value={reportReason} 
  onChange={(e) => setReportReason(e.target.value)}
- className="w-full h-12 bg-transparent border border-foreground/10 px-4 text-sm focus:outline-none focus:border-foreground dark:focus:border-background transition-colors"
+ className="w-full h-12 bg-transparent border border-foreground/10 px-4 text-sm focus:outline-none focus:border-foreground transition-colors"
  >
  <option value="Spam">Spam</option>
  <option value="Harassment">Harassment</option>
@@ -483,7 +483,7 @@ export const BuyerMessages = ({ userId, initialSellerId }: { userId: string, ini
  value={reportDetails}
  onChange={(e) => setReportDetails(e.target.value)}
  placeholder="Please provide more information..."
- className="w-full h-32 bg-transparent border border-foreground/10 p-4 text-sm focus:outline-none focus:border-foreground dark:focus:border-background transition-colors resize-none"
+ className="w-full h-32 bg-transparent border border-foreground/10 p-4 text-sm focus:outline-none focus:border-foreground transition-colors resize-none"
  />
  </div>
  <div className="flex gap-4 pt-4">

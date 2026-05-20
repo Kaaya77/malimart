@@ -69,7 +69,7 @@ export const SellerReturns = ({ userId, onContactBuyer }: { userId: string, onCo
  <div className="flex flex-col h-full animate-in fade-in duration-700">
  <div className="flex flex-col md:flex-row justify-between items-end mb-10 gap-6">
  <div className="flex items-center gap-3">
- <div className="w-12 h-12 rounded-none bg-primary dark:bg-background flex items-center justify-center shadow-none relative group overflow-hidden border border-foreground/10">
+ <div className="w-12 h-12 rounded-none bg-foreground flex items-center justify-center shadow-none relative group overflow-hidden border border-foreground/10">
  <div className="absolute inset-0 bg-noise opacity-[0.05] pointer-events-none" />
  <RefreshCcw className="w-6 h-6 text-white relative z-10 group-hover:rotate-12 transition-transform duration-500" />
  <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-white/10 dark:bg-black/10 rounded-full blur-xl group-hover:scale-150 transition-transform duration-700" />
@@ -125,7 +125,7 @@ export const SellerReturns = ({ userId, onContactBuyer }: { userId: string, onCo
  >
  {status}
  {statusFilter === status && (
- <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary dark:bg-background rounded-full" />
+ <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground rounded-full" />
  )}
  </button>
  ))}
@@ -190,7 +190,7 @@ export const SellerReturns = ({ userId, onContactBuyer }: { userId: string, onCo
  <>
  <Button 
  onClick={() => handleUpdateStatus(dispute.id, 'resolved', dispute.order_id)}
- className="flex-1 h-14 rounded-none bg-primary dark:bg-background text-white text-[10px] font-black uppercase tracking-[0.2em] hover:scale-[1.02] transition-transform"
+ className="flex-1 h-14 rounded-none bg-foreground text-white text-[10px] font-black uppercase tracking-[0.2em] hover:scale-[1.02] transition-transform"
  >
  <CheckCircle className="w-4 h-4 mr-3 stroke-[1.5]" />
  Resolve
@@ -208,7 +208,7 @@ export const SellerReturns = ({ userId, onContactBuyer }: { userId: string, onCo
  <Button 
  onClick={() => onContactBuyer(dispute.buyer_id, dispute.order?.product_id, dispute.order_id)}
  variant="secondary"
- className="w-full h-14 rounded-none border-foreground/10 text-foreground dark:text-white text-[10px] font-black uppercase tracking-[0.2em] hover:bg-primary hover:text-background dark:hover:bg-background dark:hover:text-foreground transition-all"
+ className="w-full h-14 rounded-none border-foreground/10 text-foreground dark:text-white text-[10px] font-black uppercase tracking-[0.2em] hover:bg-primary hover:text-background dark:hover:text-foreground transition-all"
  >
  <MessageSquare className="w-4 h-4 mr-3 stroke-[1.5]" />
  Contact Customer
