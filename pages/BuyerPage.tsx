@@ -95,7 +95,7 @@ const BuyerOffers = () => {
 
     if (isLoading) return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
-            {[1,2,3].map(i => <div key={i} className="h-48 rounded-none bg-foreground/[0.04]"></div>)}
+            {[1,2,3].map(i => <div key={i} className="h-48 rounded-2xl bg-foreground/[0.04]"></div>)}
         </div>
     );
 
@@ -106,9 +106,9 @@ const BuyerOffers = () => {
                     <h2 className="text-2xl font-serif font-light text-foreground">Wallet & Rewards</h2>
                     <p className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground mt-1">Exclusive vouchers curated for you</p>
                 </div>
-                <div className="flex bg-foreground/[0.04] p-1 rounded-none">
+                <div className="flex bg-foreground/[0.04] p-1 rounded-xl">
                     {['all', 'high_value', 'expiring'].map(f => (
-                        <button key={f} onClick={() => setFilter(f as any)} className={`px-4 py-2.5 rounded-none text-[10px] uppercase tracking-[0.2em] transition-all ${filter === f ? 'bg-foreground text-background shadow-sm' : 'text-foreground/60 hover:text-foreground'}`}>
+                        <button key={f} onClick={() => setFilter(f as any)} className={`px-4 py-2.5 rounded-lg text-[10px] uppercase tracking-[0.2em] transition-all ${filter === f ? 'bg-foreground text-background shadow-sm' : 'text-foreground/60 hover:text-foreground'}`}>
                             {f.replace('_', ' ')}
                         </button>
                     ))}
@@ -116,7 +116,7 @@ const BuyerOffers = () => {
             </div>
 
             {filteredOffers.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-24 border border-dashed border-foreground/20 rounded-none text-foreground/40">
+                <div className="flex flex-col items-center justify-center py-24 border border-dashed border-foreground/20 rounded-2xl text-foreground/40">
                     <Ticket className="w-16 h-16 mb-4 opacity-20" />
                     <p className="text-[10px] uppercase tracking-[0.2em]">No active offers found</p>
                 </div>
@@ -517,7 +517,7 @@ export const BuyerPage = () => {
                                 {[1,2,3].map(i => <div key={i} className="h-64 bg-foreground/[0.04] rounded-none"></div>)}
                             </div>
                         ) : followedVendors.length === 0 ? (
-                            <div className="text-center py-20 text-foreground/40 font-black uppercase text-[10px] tracking-[0.2em] border border-dashed border-foreground/20 rounded-none">No brands followed yet</div>
+                            <div className="text-center py-20 text-foreground/40 font-black uppercase text-[10px] tracking-[0.2em] border border-dashed border-foreground/20 rounded-2xl">No brands followed yet</div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {followedVendors.map(v => (

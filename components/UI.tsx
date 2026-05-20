@@ -656,7 +656,7 @@ export const UserProfileModal = ({ isOpen, onClose, user }: { isOpen: boolean, o
                         </div>
                     </div>
 
-                    <Button variant="primary" className="w-full h-12 rounded-none text-[10px] uppercase tracking-[0.2em]" onClick={onClose}>Close Profile</Button>
+                    <Button variant="primary" className="w-full h-12 rounded-xl text-[10px] uppercase tracking-[0.15em]" onClick={onClose}>Close Profile</Button>
                 </div>
             </div>
         </div>

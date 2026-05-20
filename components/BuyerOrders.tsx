@@ -154,7 +154,7 @@ export const BuyerOrders = ({
                         {receiptOrder && <ReceiptModal isOpen={!!receiptOrder} order={receiptOrder.order} seller={receiptOrder.seller} onClose={() => setReceiptOrder(null)} />}
                     </div>
                 ) : (
-                    <div className="hidden lg:flex flex-1 flex-col items-center justify-center text-slate-300">
+                    <div className="hidden lg:flex flex-1 flex-col items-center justify-center text-foreground/20">
                         <Receipt className="w-16 h-16 mb-4 opacity-20"/>
                         <p className="font-black uppercase tracking-widest text-xs">Select an order to view details</p>
                     </div>
