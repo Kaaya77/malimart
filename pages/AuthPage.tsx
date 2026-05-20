@@ -119,7 +119,7 @@ export const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen w-full flex font-sans selection:bg-brand-500 selection:text-white bg-white dark:bg-black overflow-hidden relative">
+    <div className="min-h-screen w-full flex font-sans bg-background overflow-hidden relative">
       
       {/* LEFT PANEL: VISUAL & BRANDING */}
       <div className="hidden lg:flex w-1/2 relative flex-col justify-between p-16 bg-slate-900 text-white overflow-hidden">
@@ -171,7 +171,7 @@ export const LoginPage = () => {
       </div>
 
       {/* RIGHT PANEL: INTERACTION */}
-      <div className="flex-1 flex items-center justify-center p-6 md:p-12 relative z-10 bg-white dark:bg-black">
+      <div className="flex-1 flex items-center justify-center p-6 md:p-12 relative z-10 bg-background">
          <div className="w-full max-w-[440px] animate-in slide-in-from-right-8 duration-700">
             
             {/* Mobile Header */}
@@ -184,10 +184,10 @@ export const LoginPage = () => {
             </div>
 
             <div className="mb-10">
-                <h2 className="text-5xl md:text-6xl font-black font-display text-slate-900 dark:text-white mb-4 tracking-tight leading-[0.9]">
+                <h2 className="text-5xl md:text-6xl font-black font-display text-foreground mb-4 tracking-tight leading-[0.9]">
                     {mode === 'login' ? 'Welcome Back' : mode === 'signup' ? 'Join the Hub' : 'Recovery'}
                 </h2>
-                <p className="text-slate-500 dark:text-slate-400 text-base font-medium">
+                <p className="text-foreground/55 text-base font-medium">
                     {mode === 'login' ? 'Enter your credentials to access your account.' : mode === 'signup' ? 'Create an account to start trading.' : 'We will send you a link to reset your password.'}
                 </p>
             </div>
@@ -246,7 +246,7 @@ export const LoginPage = () => {
                                 placeholder="e.g. Juma Hamisi" 
                                 value={formData.name} 
                                 onChange={handleInputChange} 
-                                className="pl-12 h-16 bg-slate-50 dark:bg-slate-900 border-transparent focus:border-brand-500/30 focus:bg-white dark:focus:bg-slate-950 font-bold text-lg"
+                                className="pl-12 h-16 bg-foreground/[0.04] border-transparent focus:border-foreground/20 focus:bg-foreground/[0.06] font-bold text-lg"
                             />
                         </div>
                     </motion.div>
@@ -268,7 +268,7 @@ export const LoginPage = () => {
                             placeholder="name@example.com" 
                             value={formData.email} 
                             onChange={handleInputChange} 
-                            className="pl-12 h-16 bg-slate-50 dark:bg-slate-900 border-transparent focus:border-brand-500/30 focus:bg-white dark:focus:bg-slate-950 font-bold text-lg"
+                            className="pl-12 h-16 bg-foreground/[0.04] border-transparent focus:border-foreground/20 focus:bg-foreground/[0.06] font-bold text-lg"
                         />
                     </div>
                 </motion.div>
@@ -293,7 +293,7 @@ export const LoginPage = () => {
                                 placeholder="••••••••" 
                                 value={formData.password} 
                                 onChange={handleInputChange} 
-                                className="pl-12 pr-12 h-16 bg-slate-50 dark:bg-slate-900 border-transparent focus:border-brand-500/30 focus:bg-white dark:focus:bg-slate-950 font-bold text-lg"
+                                className="pl-12 pr-12 h-16 bg-foreground/[0.04] border-transparent focus:border-foreground/20 focus:bg-foreground/[0.06] font-bold text-lg"
                             />
                             <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
                                 {showPassword ? <EyeOff className="w-5 h-5"/> : <Eye className="w-5 h-5"/>}

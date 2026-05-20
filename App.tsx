@@ -117,7 +117,7 @@ const BackToTop = () => {
     return (
         <button 
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="fixed bottom-24 right-6 md:bottom-10 md:right-10 z-[100] w-12 h-12 bg-background dark:bg-background border border-foreground/20 dark:border-background/20 rounded-full flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all text-foreground dark:text-background group"
+            className="fixed bottom-[90px] right-4 md:bottom-10 md:right-10 z-[89] w-11 h-11 bg-background border border-foreground/15 rounded-full flex items-center justify-center shadow-xl hover:scale-110 active:scale-95 transition-all text-foreground group"
         >
             <ChevronUp className="w-5 h-5 stroke-[1] group-hover:-translate-y-1 transition-transform" />
         </button>
@@ -179,7 +179,7 @@ const ScrollProgress = () => {
     return (
         <div className="fixed top-0 left-0 w-full h-[2px] z-[100] pointer-events-none">
             <motion.div 
-                className="h-full bg-primary dark:bg-background origin-left"
+                className="h-full bg-emerald-500 origin-left"
                 style={{ scaleX: progress / 100 }}
             />
         </div>

@@ -293,7 +293,7 @@ export const AdminPage = () => {
     }
 
     return (
-        <div className="min-h-screen bg-background dark:bg-background font-sans pb-20 pt-28 px-4 md:px-8 selection:bg-primary selection:text-white dark:selection:bg-white dark:selection:text-black">
+        <div className="min-h-screen bg-background font-sans pb-[calc(5rem+env(safe-area-inset-bottom))] pt-20 md:pt-28 px-4 md:px-8 selection:bg-primary selection:text-white dark:selection:bg-white dark:selection:text-black">
             <div className="container mx-auto max-w-7xl">
                 <motion.div 
                     initial={{ opacity: 0, y: 20 }}

@@ -526,9 +526,9 @@ export const SellerSettingsPage = () => {
                   <CardDescription>Set delivery fees based on Tanzanian regions.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="space-y-1 p-4 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10">
-                      <label className="text-sm font-bold text-slate-900 dark:text-white">Base Delivery Fee (Default)</label>
-                      <p className="text-xs text-slate-500 mb-3">Applied to any region not specified below.</p>
+                  <div className="space-y-1 p-4 bg-foreground/[0.03] rounded-xl border border-foreground/10">
+                      <label className="text-sm font-bold text-foreground">Base Delivery Fee (Default)</label>
+                      <p className="text-xs text-foreground/55 mb-3">Applied to any region not specified below.</p>
                       <Input type="number" icon={Truck} placeholder="Amount" value={deliveryData.delivery_fee} onChange={(e: any) => setDeliveryData({...deliveryData, delivery_fee: Number(e.target.value)})} />
                   </div>
                   
@@ -538,10 +538,10 @@ export const SellerSettingsPage = () => {
                       {shippingZones.length > 0 ? (
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                               {shippingZones.map((zone, idx) => (
-                                  <div key={idx} className="p-3 border border-slate-200 dark:border-white/10 rounded-xl flex justify-between items-center bg-white dark:bg-slate-900">
+                                  <div key={idx} className="p-3 border border-foreground/10 rounded-xl flex justify-between items-center bg-white dark:bg-background">
                                       <div>
                                           <span className="font-medium text-sm block">{zone.region}</span>
-                                          {zone.district !== 'All Districts' && <span className="text-xs text-slate-500">{zone.district}</span>}
+                                          {zone.district !== 'All Districts' && <span className="text-xs text-foreground/55">{zone.district}</span>}
                                       </div>
                                       <div className="flex items-center gap-3">
                                           <span className="font-black font-mono text-sm">{CURRENCY} {zone.fee.toLocaleString()}</span>
@@ -553,12 +553,12 @@ export const SellerSettingsPage = () => {
                               ))}
                           </div>
                       ) : (
-                          <p className="text-xs text-slate-500">No specific regional fees added. The base fee will apply everywhere.</p>
+                          <p className="text-xs text-foreground/55">No specific regional fees added. The base fee will apply everywhere.</p>
                       )}
 
                       <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-slate-100 dark:border-white/5">
                           <select 
-                              className="h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl px-3 text-sm outline-none flex-1"
+                              className="h-10 bg-white dark:bg-background border border-foreground/10 rounded-xl px-3 text-sm outline-none flex-1"
                               value={newZone.region}
                               onChange={(e) => setNewZone({...newZone, region: e.target.value, district: 'All Districts'})}
                           >
@@ -567,7 +567,7 @@ export const SellerSettingsPage = () => {
                               ))}
                           </select>
                           <select 
-                              className="h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl px-3 text-sm outline-none flex-1 disabled:opacity-50"
+                              className="h-10 bg-white dark:bg-background border border-foreground/10 rounded-xl px-3 text-sm outline-none flex-1 disabled:opacity-50"
                               value={newZone.district}
                               onChange={(e) => setNewZone({...newZone, district: e.target.value})}
                               disabled={!newZone.region || !TANZANIA_DISTRICTS[newZone.region]}
@@ -593,7 +593,7 @@ export const SellerSettingsPage = () => {
                       </p>
                       <div className="flex flex-col sm:flex-row gap-3 items-center">
                           <select 
-                              className="h-10 bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-800/30 rounded-xl px-3 text-sm outline-none flex-1 w-full"
+                              className="h-10 bg-white dark:bg-background border border-emerald-200 dark:border-emerald-800/30 rounded-xl px-3 text-sm outline-none flex-1 w-full"
                               value={calcRegion}
                               onChange={(e) => {
                                   setCalcRegion(e.target.value);
@@ -605,7 +605,7 @@ export const SellerSettingsPage = () => {
                               ))}
                           </select>
                           <select 
-                              className="h-10 bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-800/30 rounded-xl px-3 text-sm outline-none flex-1 w-full disabled:opacity-50"
+                              className="h-10 bg-white dark:bg-background border border-emerald-200 dark:border-emerald-800/30 rounded-xl px-3 text-sm outline-none flex-1 w-full disabled:opacity-50"
                               value={calcDistrict}
                               onChange={(e) => setCalcDistrict(e.target.value)}
                               disabled={!calcRegion || !TANZANIA_DISTRICTS[calcRegion]}
@@ -643,17 +643,17 @@ export const SellerSettingsPage = () => {
                       <CardDescription>Manage alerts and availability.</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-2">
-                      <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 rounded-xl">
+                      <div className="flex items-center justify-between p-4 bg-foreground/[0.03] rounded-xl">
                           <div>
-                              <p className="font-bold text-sm text-slate-900 dark:text-white">Order Notifications</p>
-                              <p className="text-xs text-slate-500">Get alerts for new orders</p>
+                              <p className="font-bold text-sm text-foreground">Order Notifications</p>
+                              <p className="text-xs text-foreground/55">Get alerts for new orders</p>
                           </div>
                           <Switch checked={preferences.orderNotifications} onChange={() => setPreferences({...preferences, orderNotifications: !preferences.orderNotifications})} />
                       </div>
-                      <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 rounded-xl">
+                      <div className="flex items-center justify-between p-4 bg-foreground/[0.03] rounded-xl">
                           <div>
-                              <p className="font-bold text-sm text-slate-900 dark:text-white">Low Stock Alerts</p>
-                              <p className="text-xs text-slate-500">Notify when inventory is low</p>
+                              <p className="font-bold text-sm text-foreground">Low Stock Alerts</p>
+                              <p className="text-xs text-foreground/55">Notify when inventory is low</p>
                           </div>
                           <Switch checked={preferences.stockAlerts} onChange={() => setPreferences({...preferences, stockAlerts: !preferences.stockAlerts})} />
                       </div>

@@ -1,121 +1,68 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 
 /**
- * HomePageSkeleton — full-page loading skeleton.
- *
- * Shown while useHomePageData fetches shops and recommendations from Supabase.
- * Matches the HomePage layout structure with shimmer animation.
+ * HomePageSkeleton — uses CSS shimmer for better mobile perf (no Framer overhead).
+ * Matches the real layout: hero 2-col on desktop, single card on mobile; 
+ * horizontal category scroll; 2/4-col product grids.
  */
 export const HomePageSkeleton: React.FC = () => {
-  const shimmer = {
-    opacity: [0.6, 1, 0.6],
-    transition: { duration: 1.5, repeat: Infinity },
-  };
-
   return (
-    <div className="min-h-screen bg-background">
-      {/* Hero Skeleton */}
-      <motion.div
-        animate={shimmer}
-        className="h-[85vh] md:h-[95vh] bg-foreground/5 flex items-center justify-center"
-      >
-        <div className="text-center space-y-4 w-full max-w-2xl px-4">
-          <div className="h-4 bg-foreground/10 rounded w-32 mx-auto" />
-          <div className="h-12 bg-foreground/10 rounded w-64 mx-auto" />
-          <div className="h-4 bg-foreground/10 rounded w-48 mx-auto" />
-          <div className="flex gap-3 justify-center pt-4">
-            <div className="h-12 bg-foreground/10 rounded-full w-32" />
-            <div className="h-12 bg-foreground/10 rounded-full w-32" />
+    <div className="min-h-screen bg-background pt-16 md:pt-20">
+      {/* Hero skeleton */}
+      <div className="px-4 md:px-8 pt-6 pb-4 container mx-auto">
+        {/* Mobile: single tall card */}
+        <div className="md:hidden">
+          <div className="shimmer aspect-[4/5] rounded-3xl mb-3" />
+          <div className="flex gap-2">
+            {[1,2,3].map(i => <div key={i} className="shimmer w-16 h-16 rounded-xl flex-shrink-0" />)}
           </div>
         </div>
-      </motion.div>
+        {/* Desktop: hero + side rail */}
+        <div className="hidden md:grid grid-cols-12 gap-5">
+          <div className="col-span-7 shimmer aspect-[16/12] rounded-3xl" />
+          <div className="col-span-5 flex flex-col gap-3">
+            {[1,2,3].map(i => <div key={i} className="shimmer flex-1 rounded-2xl" />)}
+          </div>
+        </div>
+      </div>
 
-      {/* Categories Skeleton */}
-      <motion.div
-        animate={shimmer}
-        className="py-8 md:py-12 border-b border-foreground/10"
-      >
-        <div className="container mx-auto px-5 md:px-8">
-          <div className="h-6 bg-foreground/10 rounded w-40 mb-6" />
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-32 bg-foreground/10 rounded-2xl" />
+      {/* Categories skeleton */}
+      <div className="py-10 container mx-auto px-4 md:px-8">
+        <div className="shimmer h-6 w-44 rounded-full mb-5" />
+        <div className="flex gap-3 overflow-hidden">
+          {[1,2,3,4,5,6].map(i => (
+            <div key={i} className="shimmer w-[140px] h-[180px] flex-shrink-0 rounded-2xl md:hidden" />
+          ))}
+          <div className="hidden md:grid grid-cols-5 gap-4 w-full">
+            {[1,2,3,4,5].map(i => (
+              <div key={i} className="shimmer aspect-[4/5] rounded-2xl" />
             ))}
           </div>
         </div>
-      </motion.div>
+      </div>
 
-      {/* Featured Products Skeleton */}
-      <motion.div
-        animate={shimmer}
-        className="py-12 md:py-16 border-b border-foreground/10"
-      >
-        <div className="container mx-auto px-5 md:px-8">
-          <div className="h-6 bg-foreground/10 rounded w-40 mb-6" />
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="space-y-3">
-                <div className="h-48 bg-foreground/10 rounded-lg" />
-                <div className="h-4 bg-foreground/10 rounded w-24" />
-                <div className="h-4 bg-foreground/10 rounded w-16" />
-              </div>
-            ))}
-          </div>
+      {/* Products grid skeleton */}
+      <div className="py-10 container mx-auto px-4 md:px-8">
+        <div className="shimmer h-6 w-36 rounded-full mb-5" />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-5">
+          {[1,2,3,4,5,6,7,8].map(i => (
+            <div key={i} className="space-y-2">
+              <div className="shimmer aspect-[4/5] rounded-2xl" />
+              <div className="shimmer h-3 w-3/4 rounded-full" />
+              <div className="shimmer h-4 w-1/2 rounded-full" />
+            </div>
+          ))}
         </div>
-      </motion.div>
+      </div>
 
-      {/* Trending Skeleton */}
-      <motion.div
-        animate={shimmer}
-        className="py-12 md:py-16 border-b border-foreground/10"
-      >
-        <div className="container mx-auto px-5 md:px-8">
-          <div className="h-6 bg-foreground/10 rounded w-40 mb-6" />
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="space-y-3">
-                <div className="h-48 bg-foreground/10 rounded-lg" />
-                <div className="h-4 bg-foreground/10 rounded w-24" />
-                <div className="h-4 bg-foreground/10 rounded w-16" />
-              </div>
-            ))}
-          </div>
+      {/* Trust strip skeleton */}
+      <div className="py-8 container mx-auto px-4 md:px-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[1,2,3,4].map(i => (
+            <div key={i} className="shimmer h-20 rounded-2xl" />
+          ))}
         </div>
-      </motion.div>
-
-      {/* Featured Stores Skeleton */}
-      <motion.div
-        animate={shimmer}
-        className="py-12 md:py-16 border-b border-foreground/10"
-      >
-        <div className="container mx-auto px-5 md:px-8">
-          <div className="h-6 bg-foreground/10 rounded w-40 mb-6" />
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="space-y-3">
-                <div className="h-40 bg-foreground/10 rounded-lg" />
-                <div className="h-4 bg-foreground/10 rounded w-24" />
-                <div className="h-3 bg-foreground/10 rounded w-16" />
-              </div>
-            ))}
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Trust Strip Skeleton */}
-      <motion.div
-        animate={shimmer}
-        className="py-10 md:py-16"
-      >
-        <div className="container mx-auto px-5 md:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-24 bg-foreground/10 rounded-2xl" />
-            ))}
-          </div>
-        </div>
-      </motion.div>
+      </div>
     </div>
   );
 };

@@ -46,7 +46,7 @@ export const StorePage = () => {
     if (!vendor) return <div className="min-h-screen flex items-center justify-center font-black uppercase">Merchant Profile Disconnected</div>;
 
     return (
-        <div className="min-h-screen bg-background dark:bg-background text-foreground dark:text-background font-sans pb-32">
+        <div className="min-h-screen bg-background text-foreground font-sans pb-[calc(5rem+env(safe-area-inset-bottom))]">
             <SendMessageModal 
                 isOpen={isMessageModalOpen} 
                 onClose={() => setIsMessageModalOpen(false)} 

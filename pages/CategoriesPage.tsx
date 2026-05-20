@@ -22,10 +22,10 @@ export const CategoriesPage = () => {
     const displayCategories = organizedCategories.length > 0 ? organizedCategories : [];
 
     return (
-        <div className="min-h-screen bg-background dark:bg-background pt-32 pb-24 px-6">
+        <div className="min-h-screen bg-background dark:bg-background pt-24 pb-[calc(5rem+env(safe-area-inset-bottom))] px-4 md:px-6">
             <div className="container mx-auto max-w-7xl">
                 {/* Header Section */}
-                <div className="mb-24 flex flex-col md:flex-row md:items-end justify-between gap-8">
+                <div className="mb-10 md:mb-20 flex flex-col md:flex-row md:items-end justify-between gap-8">
                     <div className="max-w-3xl">
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
@@ -36,7 +36,7 @@ export const CategoriesPage = () => {
                             <span className="text-[10px] uppercase tracking-[0.4em] text-foreground/40 dark:text-background/40 font-semibold mb-4 block">
                                 Curated Collections
                             </span>
-                            <h1 className="text-6xl md:text-8xl font-serif font-light tracking-tight text-foreground dark:text-background leading-[0.9]">
+                            <h1 className="text-4xl md:text-7xl font-serif font-light tracking-tight text-foreground dark:text-background leading-[0.9]">
                                 Explore <br />
                                 <span className="italic opacity-80">Our Universe</span>
                             </h1>

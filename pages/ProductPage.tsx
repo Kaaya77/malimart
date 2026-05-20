@@ -148,7 +148,7 @@ export const ProductPage = () => {
     const images = selectedVariant?.image_url ? [selectedVariant.image_url, ...product.images] : product.images;
 
     return (
-        <div className="min-h-screen bg-background dark:bg-background text-foreground dark:text-background pt-24 pb-[calc(5rem+env(safe-area-inset-bottom))] font-sans">
+        <div className="min-h-screen bg-background dark:bg-background text-foreground dark:text-background pt-24 pb-[calc(6rem+env(safe-area-inset-bottom))] lg:pb-20 font-sans">
             <div className="container mx-auto px-4 md:px-8 max-w-7xl">
                 {/* Breadcrumb / Back */}
                 <div className="flex items-center gap-4 mb-8">
@@ -165,33 +165,60 @@ export const ProductPage = () => {
                     className="grid lg:grid-cols-12 gap-12 lg:gap-20"
                 >
                     {/* Left: Gallery (7 cols) */}
-                    <div className="lg:col-span-7 flex flex-col-reverse lg:flex-row gap-6">
-                        {/* Thumbnails */}
-                        <div className="flex lg:flex-col gap-4 overflow-x-auto lg:overflow-y-auto lg:max-h-[80vh] no-scrollbar shrink-0">
-                            {images.map((img, i) => (
-                                <button 
-                                    key={i} 
-                                    onClick={() => setActiveImage(i)} 
-                                    className={`w-20 h-24 lg:w-24 lg:h-32 overflow-hidden transition-all flex-shrink-0 ${i === activeImage ? 'opacity-100' : 'opacity-40 hover:opacity-80'}`}
-                                >
-                                    <img src={img} className="w-full h-full object-cover" />
-                                    {i === activeImage && <div className="h-[1px] w-full bg-primary dark:bg-background mt-2" />}
-                                </button>
-                            ))}
-                        </div>
-                        
+                    <div className="lg:col-span-7 flex flex-col gap-4">
                         {/* Main Image */}
-                        <div className="flex-1 aspect-[4/5] lg:aspect-auto lg:h-[80vh] bg-[#ebe8e3] dark:bg-[#0a0a0a] overflow-hidden relative group">
-                            <img src={images[activeImage]} className="w-full h-full object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-105" alt={product.name} />
-                            {product.is_boosted && <div className="absolute top-6 left-6 text-[10px] uppercase tracking-[0.3em] font-medium bg-background/80 dark:bg-background/80 backdrop-blur-md px-4 py-2 border border-foreground/10 dark:border-background/10">Elite Choice</div>}
-                            
-                            {/* Vertical Text Accent */}
-                            <div className="absolute left-6 top-1/2 -translate-y-1/2 hidden md:block">
-                                <span className="writing-vertical-rl rotate-180 text-[10px] uppercase tracking-[0.3em] font-medium opacity-50">
-                                    Collection N° {product.id.slice(0, 4)}
-                                </span>
-                            </div>
+                        <div className="relative aspect-[4/5] lg:aspect-[3/4] bg-foreground/[0.03] overflow-hidden rounded-2xl group">
+                            <AnimatePresence mode="wait">
+                                <motion.img
+                                    key={activeImage}
+                                    src={images[activeImage]}
+                                    alt={product.name}
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ duration: 0.25 }}
+                                    className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+                                />
+                            </AnimatePresence>
+                            {product.is_boosted && (
+                                <div className="absolute top-4 left-4 text-[10px] uppercase tracking-[0.2em] font-semibold bg-background/90 backdrop-blur-md px-3 py-1.5 rounded-full border border-foreground/10">
+                                    ⚡ Featured
+                                </div>
+                            )}
+                            {/* Prev/Next arrows (desktop) */}
+                            {images.length > 1 && (
+                                <>
+                                    <button onClick={() => setActiveImage(i => (i - 1 + images.length) % images.length)} className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-background/80 backdrop-blur-md border border-foreground/10 flex items-center justify-center text-foreground/70 hover:text-foreground transition-colors hidden md:flex">
+                                        <ArrowLeft className="w-4 h-4 stroke-[2]" />
+                                    </button>
+                                    <button onClick={() => setActiveImage(i => (i + 1) % images.length)} className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-background/80 backdrop-blur-md border border-foreground/10 flex items-center justify-center text-foreground/70 hover:text-foreground transition-colors hidden md:flex">
+                                        <ArrowLeft className="w-4 h-4 stroke-[2] rotate-180" />
+                                    </button>
+                                </>
+                            )}
+                            {/* Mobile dot indicators */}
+                            {images.length > 1 && (
+                                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 md:hidden">
+                                    {images.map((_, i) => (
+                                        <button key={i} onClick={() => setActiveImage(i)} className={`h-1.5 rounded-full transition-all ${i === activeImage ? 'w-5 bg-white' : 'w-1.5 bg-white/50'}`} />
+                                    ))}
+                                </div>
+                            )}
                         </div>
+                        {/* Thumbnails (desktop only) */}
+                        {images.length > 1 && (
+                            <div className="hidden md:flex gap-3 overflow-x-auto no-scrollbar">
+                                {images.map((img, i) => (
+                                    <button
+                                        key={i}
+                                        onClick={() => setActiveImage(i)}
+                                        className={`w-20 h-24 flex-shrink-0 rounded-xl overflow-hidden border-2 transition-all ${i === activeImage ? 'border-foreground opacity-100' : 'border-transparent opacity-40 hover:opacity-70'}`}
+                                    >
+                                        <img src={img} className="w-full h-full object-cover" alt="" />
+                                    </button>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     {/* Right: Info (5 cols) */}
@@ -453,29 +480,25 @@ export const ProductPage = () => {
                 )}
             </div>
 
-            {/* Sticky Mobile Add to Cart */}
-            <AnimatePresence>
-                <motion.div 
-                    initial={{ y: 100 }}
-                    animate={{ y: 0 }}
-                    exit={{ y: 100 }}
-                    className="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-background/80 backdrop-blur-xl border-t border-foreground/10 dark:border-background/10 p-4 z-50 lg:hidden"
-                >
-                    <div className="flex items-center gap-4 max-w-md mx-auto">
-                        <div className="flex-1">
-                            <p className="text-[10px] uppercase tracking-widest opacity-60 truncate">{product.name}</p>
-                            <p className="text-sm font-serif">{formatTZS(metrics.price)}</p>
-                        </div>
-                        <Button 
-                            onClick={handleAdd}
-                            disabled={metrics.isOut}
-                            className="flex-1 h-12 rounded-full text-[10px] font-black uppercase tracking-widest"
-                        >
-                            {metrics.isOut ? 'Out of Stock' : 'Add to Bag'}
-                        </Button>
-                    </div>
-                </motion.div>
-            </AnimatePresence>
+            {/* Sticky Mobile CTA Bar */}
+            <div className="fixed bottom-0 inset-x-0 z-[60] lg:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+                <div className="mx-3 mb-3 flex gap-2.5">
+                    <button
+                        onClick={() => { toggleWishlist(product); addToast(isLiked ? 'Removed from wishlist' : 'Saved to wishlist', 'success'); }}
+                        className={`w-14 h-14 rounded-2xl flex items-center justify-center border bg-background/96 backdrop-blur-xl transition-all active:scale-95 shadow-lg ${isLiked ? 'border-rose-400/50 text-rose-500' : 'border-foreground/12 text-foreground/60'}`}
+                    >
+                        <Heart className={`w-5 h-5 ${isLiked ? 'fill-current stroke-none' : 'stroke-[1.8]'}`} />
+                    </button>
+                    <button
+                        onClick={handleAdd}
+                        disabled={metrics.isOut}
+                        className={`flex-1 h-14 rounded-2xl font-bold text-[13px] flex items-center justify-center gap-2.5 active:scale-[0.98] transition-transform shadow-lg ${metrics.isOut ? 'bg-foreground/10 text-foreground/35 cursor-not-allowed' : 'bg-foreground text-background'}`}
+                    >
+                        <ShoppingBag className="w-4 h-4 stroke-[2.2]" />
+                        {metrics.isOut ? 'Out of Stock' : `Add to Bag · ${formatTZS(metrics.price * qty)}`}
+                    </button>
+                </div>
+            </div>
         </div>
     );
 };

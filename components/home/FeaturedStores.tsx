@@ -51,7 +51,7 @@ export const FeaturedStores: React.FC<FeaturedStoresProps> = ({
         <div className="flex gap-3 pr-5 snap-x snap-mandatory">
           {topShops.slice(0, 8).map((s, i) => (
             <StoreCard
-              key={s.id}
+              key={s.seller_id}
               shop={s}
               i={i}
               onClick={() => setActiveStore(s)}
@@ -64,7 +64,7 @@ export const FeaturedStores: React.FC<FeaturedStoresProps> = ({
       {/* Desktop: 4-col grid */}
       <div className="hidden md:grid container mx-auto px-8 grid-cols-4 gap-4">
         {topShops.slice(0, 4).map((s, i) => (
-          <StoreCard key={s.id} shop={s} i={i} onClick={() => setActiveStore(s)} />
+          <StoreCard key={s.seller_id} shop={s} i={i} onClick={() => setActiveStore(s)} />
         ))}
       </div>
     </section>
@@ -108,17 +108,17 @@ const StoreCard: React.FC<{
         {/* Avatar overlapping cover */}
         <div className="absolute -top-7 left-4 w-12 h-12 rounded-full overflow-hidden ring-3 ring-background bg-foreground/5 flex items-center justify-center">
           {avatar ? (
-            <img src={avatar} alt={shop.shop_name || 'Store'} className="w-full h-full object-cover" />
+            <img src={avatar} alt={shop.store_name || 'Store'} className="w-full h-full object-cover" />
           ) : (
             <span className="text-sm font-bold text-foreground/60">
-              {(shop.shop_name || 'S').slice(0, 2).toUpperCase()}
+              {(shop.store_name || 'S').slice(0, 2).toUpperCase()}
             </span>
           )}
         </div>
 
         <div className="flex items-center gap-1.5 mb-1 mt-5">
           <h3 className="font-sans text-[15px] font-semibold text-foreground tracking-tight truncate">
-            {shop.shop_name || 'Untitled store'}
+            {shop.store_name || 'Untitled store'}
           </h3>
           {(shop as any).is_verified && (
             <VerifiedBadge className="scale-75 origin-left opacity-90 flex-shrink-0" />

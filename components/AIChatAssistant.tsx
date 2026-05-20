@@ -470,7 +470,7 @@ export const AIChatAssistant = () => {
                         <img src={m.image} alt="User upload" className="w-full h-full object-cover" />
                     </div>
                 )}
-                <div className={`px-3.5 py-2.5 rounded-2xl text-[11px] font-medium shadow-sm max-w-[85%] leading-relaxed ${m.role === 'user' ? 'bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-tr-none' : 'bg-white dark:bg-slate-900 dark:text-slate-200 border border-slate-100 dark:border-slate-800 rounded-tl-none'}`}>
+                <div className={`px-3.5 py-2.5 rounded-2xl text-[11px] font-medium shadow-sm max-w-[85%] leading-relaxed ${m.role === 'user' ? 'bg-foreground text-background rounded-tr-none' : 'bg-card border border-foreground/10 rounded-tl-none'}`}>
                     {m.role === 'assistant' ? (
                         <div className="markdown-body">
                             <ReactMarkdown>{m.text}</ReactMarkdown>
@@ -485,16 +485,16 @@ export const AIChatAssistant = () => {
 
     if (!isOpen) {
         return (
-            <button onClick={() => setIsOpen(true)} className="fixed bottom-20 right-4 md:bottom-6 md:right-4 z-[100] w-12 h-12 bg-slate-950 dark:bg-brand-600 text-white rounded-2xl flex items-center justify-center shadow-lg hover:scale-110 transition-all duration-500 group animate-in zoom-in">
+            <button onClick={() => setIsOpen(true)} className="fixed bottom-[84px] right-4 md:bottom-6 md:right-4 z-[90] w-12 h-12 bg-foreground text-white rounded-2xl flex items-center justify-center shadow-lg hover:scale-110 transition-all duration-500 group animate-in zoom-in">
                 <Sparkles className="w-5 h-5 group-hover:rotate-12 transition-transform" />
             </button>
         );
     }
 
     return (
-        <div className={`fixed bottom-20 right-4 md:bottom-4 md:right-4 z-[100] w-[calc(100vw-2rem)] md:w-[320px] transition-all duration-500 ${isMinimized ? 'h-16' : 'h-[450px] md:h-[500px]'} animate-in slide-in-from-bottom-4 shadow-2xl rounded-[2rem]`}>
+        <div className={`fixed bottom-[84px] right-4 md:bottom-4 md:right-4 z-[90] w-[calc(100vw-2rem)] md:w-[320px] transition-all duration-500 ${isMinimized ? 'h-16' : 'h-[450px] md:h-[500px]'} animate-in slide-in-from-bottom-4 shadow-2xl rounded-[2rem]`}>
             <Card className="flex flex-col h-full rounded-[2rem] overflow-hidden bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl border border-slate-200 dark:border-slate-800 shadow-2xl">
-                <div className="p-3 md:p-4 bg-slate-50/80 dark:bg-slate-900/80 border-b border-slate-100 dark:border-white/5 flex justify-between items-center shrink-0 backdrop-blur-md z-20">
+                <div className="p-3 md:p-4 bg-background/90 border-b border-foreground/10 flex justify-between items-center shrink-0 backdrop-blur-md z-20">
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-gradient-to-tr from-brand-500 to-emerald-400 rounded-xl flex items-center justify-center shadow-lg relative overflow-hidden">
                             <Bot className="w-5 h-5 text-white relative z-10" />
@@ -525,7 +525,7 @@ export const AIChatAssistant = () => {
                     <>
                         <div className="flex-1 overflow-y-auto relative bg-slate-50/50 dark:bg-black/20">
                             {isLive && (
-                                <div className="absolute inset-0 z-20 bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center p-6 animate-in fade-in">
+                                <div className="absolute inset-0 z-20 bg-background/95 backdrop-blur-md flex flex-col items-center justify-center p-6 animate-in fade-in">
                                     <div className="mb-8 relative">
                                         <div className="w-20 h-20 rounded-full bg-brand-500/20 flex items-center justify-center animate-pulse">
                                             <div className="w-16 h-16 rounded-full bg-brand-500/40 flex items-center justify-center">
@@ -565,7 +565,7 @@ export const AIChatAssistant = () => {
                                 )}
                             </div>
                         </div>
-                        <div className="p-3 bg-white dark:bg-slate-900 border-t relative z-10 space-y-3">
+                        <div className="p-3 bg-background border-t border-foreground/10 relative z-10 space-y-3">
                             <form onSubmit={(e) => handleSend(e)} className="flex gap-2 items-center">
                                 <button type="button" onClick={() => fileInputRef.current?.click()} className="p-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-500 hover:text-brand-500 transition-all flex-shrink-0">
                                     <Paperclip className="w-4 h-4" />
@@ -590,7 +590,7 @@ export const AIChatAssistant = () => {
                                         <ArrowRight className="w-5 h-5" />
                                     </Button>
                                 ) : (
-                                    <button type="button" onClick={() => isLive ? stopLiveSession() : startLiveSession()} disabled={isConnecting} className={`h-[44px] w-[44px] flex items-center justify-center rounded-2xl transition-all shadow-lg flex-shrink-0 ${isLive ? 'bg-red-500 text-white animate-pulse' : 'bg-slate-900 dark:bg-white text-white dark:text-slate-900'}`}>
+                                    <button type="button" onClick={() => isLive ? stopLiveSession() : startLiveSession()} disabled={isConnecting} className={`h-[44px] w-[44px] flex items-center justify-center rounded-2xl transition-all shadow-lg flex-shrink-0 ${isLive ? 'bg-red-500 text-white animate-pulse' : 'bg-foreground text-background'}`}>
                                         {isConnecting ? <Loader2 className="w-5 h-5 animate-spin" /> : (isLive ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />)}
                                     </button>
                                 )}

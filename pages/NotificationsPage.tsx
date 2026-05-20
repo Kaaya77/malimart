@@ -8,7 +8,7 @@ export const NotificationsPage = () => {
   const { notifications, markNotificationRead, markAllNotificationsRead, dismissNotification } = useAppState();
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-black pt-24 md:pt-28 font-sans pb-24">
+    <div className="min-h-screen bg-background pt-24 md:pt-28 font-sans pb-[calc(5rem+env(safe-area-inset-bottom))]">
       <div className="container mx-auto max-w-3xl px-4">
         <motion.div 
             initial={{ opacity: 0, y: 20 }}
@@ -16,7 +16,7 @@ export const NotificationsPage = () => {
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
             className="flex flex-col md:flex-row md:items-center md:justify-between mb-12"
         >
-          <h1 className="text-5xl md:text-6xl font-black tracking-tighter font-display text-slate-900 dark:text-white uppercase leading-none">
+          <h1 className="text-5xl md:text-6xl font-black tracking-tighter font-display text-foreground uppercase leading-none">
             Notifications
           </h1>
           {notifications.length > 0 && (
@@ -36,9 +36,9 @@ export const NotificationsPage = () => {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="text-center py-32 border-2 border-dashed border-slate-200 dark:border-white/10 rounded-[3rem] flex flex-col items-center justify-center"
           >
-            <Bell className="w-16 h-16 text-slate-200 mb-6" />
+            <Bell className="w-16 h-16 text-foreground/20 mb-6" />
             <h3 className="text-xl font-black uppercase mb-2">No new notifications</h3>
-            <p className="text-slate-400 text-sm">You're all caught up!</p>
+            <p className="text-foreground/50 text-sm">You're all caught up!</p>
           </motion.div>
         ) : (
           <motion.div 
@@ -60,7 +60,7 @@ export const NotificationsPage = () => {
                     hidden: { opacity: 0, y: 20 },
                     visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } }
                 }}
-                className={`p-6 rounded-3xl flex items-start gap-6 transition-all duration-300 ${notification.read ? 'bg-white dark:bg-slate-900/50 opacity-60' : 'bg-white dark:bg-slate-900 shadow-lg'}`}
+                className={`p-6 rounded-3xl flex items-start gap-6 transition-all duration-300 ${notification.read ? 'bg-card/50 opacity-60 border border-foreground/5' : 'bg-card border border-foreground/8 shadow-sm'}`}
               >
                 <div className="flex-1">
                   <div className="flex justify-between items-start">
