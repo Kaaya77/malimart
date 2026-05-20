@@ -451,11 +451,11 @@ export const AIChatAssistant = () => {
             return (
                 <div key={i} className="mb-4 ml-2 animate-in fade-in slide-in-from-bottom-2 w-[85%]">
                     <div className="bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-white/10 shadow-lg flex gap-3 items-center">
-                        <div className="w-16 h-16 rounded-xl overflow-hidden bg-slate-100 shrink-0 relative">
+                        <div className="w-16 h-16 rounded-xl overflow-hidden bg-foreground/8 shrink-0 relative">
                             <img src={product.images?.[0]} className="w-full h-full object-cover" alt={product.name} />
                         </div>
                         <div className="flex-1 min-w-0">
-                            <h4 className="font-bold text-[10px] text-slate-900 dark:text-white truncate mb-0.5">{product.name}</h4>
+                            <h4 className="font-bold text-[10px] text-foreground truncate mb-0.5">{product.name}</h4>
                             <p className="text-[10px] font-black text-brand-600 mb-2">{product.price.toLocaleString()} {CURRENCY}</p>
                             <Button variant="brand" size="sm" onClick={() => { addToCart(product); addToast(`Added ${product.name}`, "success"); }} className="h-7 w-full text-[8px] rounded-lg uppercase font-black">Add to Bag</Button>
                         </div>
@@ -501,21 +501,21 @@ export const AIChatAssistant = () => {
                             <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
                         </div>
                         <div>
-                            <h3 className="font-black text-xs uppercase tracking-tight text-slate-900 dark:text-white">Mali Assistant</h3>
+                            <h3 className="font-black text-xs uppercase tracking-tight text-foreground">Mali Assistant</h3>
                             <div className="flex items-center gap-1.5">
                                 <div className={`w-1.5 h-1.5 rounded-full ${isLive ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'}`}></div>
-                                <span className="text-[7px] font-bold uppercase tracking-widest text-slate-400">{isLive ? 'Voice Active' : 'Online'}</span>
+                                <span className="text-[7px] font-bold uppercase tracking-widest text-foreground/40">{isLive ? 'Voice Active' : 'Online'}</span>
                             </div>
                         </div>
                     </div>
                     <div className="flex gap-1">
-                        <button onClick={clearChat} className="p-1.5 hover:bg-slate-200 rounded-lg" title="Clear Chat">
-                            <Trash2 className="w-3.5 h-3.5 text-slate-500" />
+                        <button onClick={clearChat} className="p-1.5 hover:bg-foreground/10 rounded-lg" title="Clear Chat">
+                            <Trash2 className="w-3.5 h-3.5 text-foreground/55" />
                         </button>
-                        <button onClick={() => setIsMinimized(!isMinimized)} className="p-1.5 hover:bg-slate-200 rounded-lg">
-                            {isMinimized ? <Maximize2 className="w-3.5 h-3.5 text-slate-500" /> : <Minimize2 className="w-3.5 h-3.5 text-slate-500" />}
+                        <button onClick={() => setIsMinimized(!isMinimized)} className="p-1.5 hover:bg-foreground/10 rounded-lg">
+                            {isMinimized ? <Maximize2 className="w-3.5 h-3.5 text-foreground/55" /> : <Minimize2 className="w-3.5 h-3.5 text-foreground/55" />}
                         </button>
-                        <button onClick={() => { stopLiveSession(); setIsOpen(false); }} className="p-1.5 hover:bg-red-100 text-slate-500 hover:text-red-500 rounded-lg">
+                        <button onClick={() => { stopLiveSession(); setIsOpen(false); }} className="p-1.5 hover:bg-red-100 text-foreground/55 hover:text-red-500 rounded-lg">
                             <X className="w-3.5 h-3.5" />
                         </button>
                     </div>
@@ -547,38 +547,38 @@ export const AIChatAssistant = () => {
                                             <button 
                                                 key={i}
                                                 onClick={() => handleSend(undefined, action.query)}
-                                                className="flex flex-col items-center justify-center p-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 rounded-2xl hover:border-brand-500/50 transition-all group"
+                                                className="flex flex-col items-center justify-center p-3 bg-card border border-foreground/8 rounded-2xl hover:border-emerald-500/50 transition-all group"
                                             >
                                                 <action.icon className="w-5 h-5 mb-2 text-brand-500 group-hover:scale-110 transition-transform" />
-                                                <span className="text-[9px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-400">{action.label}</span>
+                                                <span className="text-[9px] font-black uppercase tracking-widest text-foreground/60">{action.label}</span>
                                             </button>
                                         ))}
                                     </div>
                                 )}
 
                                 {isTyping && (
-                                    <div className="flex items-center gap-1.5 text-slate-400 text-xs ml-3 animate-pulse mb-3">
-                                        <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"></div>
-                                        <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce delay-100"></div>
-                                        <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce delay-200"></div>
+                                    <div className="flex items-center gap-1.5 text-foreground/40 text-xs ml-3 animate-pulse mb-3">
+                                        <div className="w-1.5 h-1.5 bg-foreground/40 rounded-full animate-bounce"></div>
+                                        <div className="w-1.5 h-1.5 bg-foreground/40 rounded-full animate-bounce delay-100"></div>
+                                        <div className="w-1.5 h-1.5 bg-foreground/40 rounded-full animate-bounce delay-200"></div>
                                     </div>
                                 )}
                             </div>
                         </div>
                         <div className="p-3 bg-background border-t border-foreground/10 relative z-10 space-y-3">
                             <form onSubmit={(e) => handleSend(e)} className="flex gap-2 items-center">
-                                <button type="button" onClick={() => fileInputRef.current?.click()} className="p-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-500 hover:text-brand-500 transition-all flex-shrink-0">
+                                <button type="button" onClick={() => fileInputRef.current?.click()} className="p-2.5 bg-foreground/8 rounded-xl text-foreground/55 hover:text-brand-500 transition-all flex-shrink-0">
                                     <Paperclip className="w-4 h-4" />
                                 </button>
                                 <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileSelect} />
-                                <div className="flex-1 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center px-4 min-h-[44px] border-2 border-transparent focus-within:border-brand-500/20 transition-all gap-2">
+                                <div className="flex-1 bg-foreground/8 rounded-2xl flex items-center px-4 min-h-[44px] border-2 border-transparent focus-within:border-brand-500/20 transition-all gap-2">
                                     <Input placeholder="Ask anything..." value={input} onChange={e => setInput(e.target.value)} disabled={isLive} className="bg-transparent border-none p-0 h-auto text-[11px] font-bold focus:ring-0 w-full" />
                                     {input.trim() && !isLive && (
                                         <button 
                                             type="button"
                                             onClick={magicCompose}
                                             disabled={isTyping}
-                                            className="p-1 text-slate-400 hover:text-brand-500 transition-colors disabled:opacity-50"
+                                            className="p-1 text-foreground/40 hover:text-emerald-500 transition-colors disabled:opacity-50"
                                             title="Magic Compose"
                                         >
                                             <Sparkles className="w-3.5 h-3.5" />

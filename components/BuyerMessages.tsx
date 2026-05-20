@@ -216,28 +216,28 @@ export const BuyerMessages = ({ userId, initialSellerId }: { userId: string, ini
     return (
         <MessageContainer>
             <SidebarContainer isVisible={!!selectedSeller}>
-                <div className="p-4 border-b border-slate-100 dark:border-white/5 flex flex-col gap-3">
-                    <h3 className="font-black uppercase tracking-widest text-sm text-slate-900 dark:text-white">Conversations</h3>
+                <div className="p-4 border-b border-foreground/8 flex flex-col gap-3">
+                    <h3 className="font-black uppercase tracking-widest text-sm text-foreground">Conversations</h3>
                     <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40" />
                         <Input 
                             placeholder="Search sellers..." 
                             value={searchTerm}
                             onChange={(e: any) => setSearchTerm(e.target.value)}
-                            className="h-9 pl-9 text-xs rounded-xl bg-slate-50 dark:bg-white/5 border-transparent"
+                            className="h-9 pl-9 text-xs rounded-xl bg-foreground/[0.02] dark:bg-background/5 border-transparent"
                         />
                     </div>
                 </div>
                 <div className="flex-1 overflow-y-auto p-2 space-y-1">
                     {vendorList.map(v => (
-                        <button key={v.seller_id} onClick={() => setSelectedSeller(v.seller_id)} className={`w-full text-left p-4 rounded-[1.2rem] transition-all group relative ${selectedSeller === v.seller_id ? 'bg-slate-900 text-white' : 'hover:bg-slate-50 dark:hover:bg-white/5 text-slate-600 dark:text-slate-400'}`}>
+                        <button key={v.seller_id} onClick={() => setSelectedSeller(v.seller_id)} className={`w-full text-left p-4 rounded-[1.2rem] transition-all group relative ${selectedSeller === v.seller_id ? 'bg-background text-white' : 'hover:bg-foreground/[0.02] dark:hover:bg-background/5 text-foreground/65'}`}>
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden shrink-0">
                                     <img src={v.logo_url || `https://ui-avatars.com/api/?name=${v.store_name}`} className="w-full h-full object-cover" />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2">
-                                        <p className={`font-black uppercase text-xs truncate ${selectedSeller === v.seller_id ? 'text-white' : 'text-slate-900 dark:text-white'}`}>{v.store_name}</p>
+                                        <p className={`font-black uppercase text-xs truncate ${selectedSeller === v.seller_id ? 'text-white' : 'text-foreground'}`}>{v.store_name}</p>
                                         {v.is_verified && <BadgeCheck className="w-3 h-3 text-emerald-500" />}
                                         {pinnedSellers.has(v.seller_id) && <Pin className="w-3 h-3 text-emerald-500" />}
                                     </div>
@@ -245,7 +245,7 @@ export const BuyerMessages = ({ userId, initialSellerId }: { userId: string, ini
                                 </div>
                             </div>
                             <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <div onClick={(e) => togglePin(e, v.seller_id)} className="p-1.5 bg-slate-200 dark:bg-slate-800/80 backdrop-blur rounded-full hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-500 cursor-pointer">
+                                <div onClick={(e) => togglePin(e, v.seller_id)} className="p-1.5 bg-slate-200 dark:bg-slate-800/80 backdrop-blur rounded-full hover:bg-slate-300 dark:hover:bg-slate-700 text-foreground/55 cursor-pointer">
                                     <Pin className="w-3 h-3" />
                                 </div>
                             </div>
@@ -255,29 +255,29 @@ export const BuyerMessages = ({ userId, initialSellerId }: { userId: string, ini
             </SidebarContainer>
             <ChatAreaContainer isVisible={!selectedSeller}>
                 {!selectedSeller ? (
-                    <div className="flex-1 flex flex-col items-center justify-center text-slate-400">
+                    <div className="flex-1 flex flex-col items-center justify-center text-foreground/40">
                         <MessageSquare className="w-16 h-16 opacity-10 mb-3" />
                         <p className="text-[10px] font-black uppercase tracking-widest">Select a Seller to Chat</p>
                     </div>
                 ) : (
                     <>
-                        <div className="p-4 border-b border-slate-50 dark:border-white/5 flex items-center gap-3">
-                            <button onClick={() => setSelectedSeller(null)} className="md:hidden p-2 bg-slate-50 rounded-xl"><ChevronLeft className="w-4 h-4" /></button>
+                        <div className="p-4 border-b border-slate-50 dark:border-foreground/5 flex items-center gap-3">
+                            <button onClick={() => setSelectedSeller(null)} className="md:hidden p-2 bg-foreground/[0.02] rounded-xl"><ChevronLeft className="w-4 h-4" /></button>
                             <div className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => fetchUserProfile(selectedSeller || '')}>
                                 <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden">
                                     <img src={currentVendor?.logo_url || `https://ui-avatars.com/api/?name=${currentVendor?.store_name}`} className="w-full h-full object-cover" />
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <p className="font-black text-sm text-slate-900 dark:text-white uppercase">{currentVendor?.store_name}</p>
+                                    <p className="font-black text-sm text-foreground uppercase">{currentVendor?.store_name}</p>
                                     {currentVendor?.is_verified && <BadgeCheck className="w-4 h-4 text-emerald-500" />}
                                 </div>
                             </div>
                         </div>
-                        <div className="flex-1 overflow-y-auto p-6 space-y-4 no-scrollbar bg-slate-50/30 dark:bg-black/20">
+                        <div className="flex-1 overflow-y-auto p-6 space-y-4 no-scrollbar bg-foreground/[0.02]/30 dark:bg-black/20">
                             {activeMessages.map(c => (
                                 <div key={c.id} className={`flex flex-col ${c.sender_id === userId ? 'items-end' : 'items-start'} group animate-in slide-in-from-bottom-2`}>
                                     {c.reply_to && (
-                                        <div className="mb-1 p-2 bg-slate-100 dark:bg-slate-800/50 border-l-2 border-slate-300 dark:border-slate-600 text-[9px] opacity-60 max-w-[70%] truncate rounded-lg">
+                                        <div className="mb-1 p-2 bg-foreground/8/50 border-l-2 border-slate-300 dark:border-slate-600 text-[9px] opacity-60 max-w-[70%] truncate rounded-lg">
                                             {c.reply_to.text || c.reply_to.body}
                                         </div>
                                     )}
@@ -289,13 +289,13 @@ export const BuyerMessages = ({ userId, initialSellerId }: { userId: string, ini
                                         onViewOrder={setViewingOrder} 
                                     />
 
-                                    <div className={`p-4 rounded-[1.2rem] text-[11px] font-medium shadow-sm max-w-[85%] relative ${c.sender_id === userId ? 'bg-slate-900 text-white rounded-tr-none' : 'bg-white dark:bg-slate-800 dark:text-slate-100 rounded-tl-none'}`}>
+                                    <div className={`p-4 rounded-[1.2rem] text-[11px] font-medium shadow-sm max-w-[85%] relative ${c.sender_id === userId ? 'bg-background text-white rounded-tr-none' : 'bg-card dark:text-slate-100 rounded-tl-none'}`}>
                                         {c.attachment_url && (
                                             <div className="mb-2">
                                                 {c.attachment_type === 'image' ? (
-                                                    <img src={c.attachment_url} alt="Attachment" className="max-w-full h-auto rounded-lg border border-slate-100 dark:border-slate-700" />
+                                                    <img src={c.attachment_url} alt="Attachment" className="max-w-full h-auto rounded-lg border border-foreground/8 dark:border-slate-700" />
                                                 ) : (
-                                                    <a href={c.attachment_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-100 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors">
+                                                    <a href={c.attachment_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 bg-foreground/[0.02] dark:bg-background/50 rounded-lg border border-foreground/8 dark:border-slate-700 hover:bg-foreground/[0.05] dark:hover:bg-background transition-colors">
                                                         <Paperclip className="w-3 h-3" />
                                                         <span className="text-[9px] uppercase tracking-wider">View Attachment</span>
                                                     </a>
@@ -318,7 +318,7 @@ export const BuyerMessages = ({ userId, initialSellerId }: { userId: string, ini
                                                         return acc;
                                                     }, {})
                                                 ).map(([emoji, count]: [string, any]) => (
-                                                    <span key={emoji} className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 rounded-full text-[9px] flex items-center gap-1">
+                                                    <span key={emoji} className="px-1.5 py-0.5 bg-foreground/[0.05] dark:bg-slate-700 rounded-full text-[9px] flex items-center gap-1">
                                                         {emoji} {count}
                                                     </span>
                                                 ))}
@@ -326,19 +326,19 @@ export const BuyerMessages = ({ userId, initialSellerId }: { userId: string, ini
                                         )}
 
                                         <div className={`absolute ${c.sender_id === userId ? '-left-20' : '-right-20'} top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-opacity`}>
-                                            <button onClick={() => setReplyingTo(c)} className="p-1.5 hover:text-emerald-500 text-slate-400 transition-colors" title="Reply">
+                                            <button onClick={() => setReplyingTo(c)} className="p-1.5 hover:text-emerald-500 text-foreground/40 transition-colors" title="Reply">
                                                 <Reply className="w-3.5 h-3.5" />
                                             </button>
-                                            <button onClick={() => setShowEmojiPicker(showEmojiPicker === c.id ? null : c.id)} className="p-1.5 hover:text-emerald-500 text-slate-400 transition-colors" title="React">
+                                            <button onClick={() => setShowEmojiPicker(showEmojiPicker === c.id ? null : c.id)} className="p-1.5 hover:text-emerald-500 text-foreground/40 transition-colors" title="React">
                                                 <Smile className="w-3.5 h-3.5" />
                                             </button>
                                             {c.sender_id === userId && (
-                                                <button onClick={async () => { await softDeleteMessage(c.id); const msgs = await fetchMessages(); setChats(msgs); }} className="p-1.5 hover:text-red-500 text-slate-400 transition-colors" title="Delete">
+                                                <button onClick={async () => { await softDeleteMessage(c.id); const msgs = await fetchMessages(); setChats(msgs); }} className="p-1.5 hover:text-red-500 text-foreground/40 transition-colors" title="Delete">
                                                     <Trash2 className="w-3.5 h-3.5" />
                                                 </button>
                                             )}
                                             {c.sender_id !== userId && (
-                                                <button onClick={() => setReportingUser(c.sender_id)} className="p-1.5 hover:text-red-500 text-slate-400 transition-colors" title="Report">
+                                                <button onClick={() => setReportingUser(c.sender_id)} className="p-1.5 hover:text-red-500 text-foreground/40 transition-colors" title="Report">
                                                     <ShieldAlert className="w-3.5 h-3.5" />
                                                 </button>
                                             )}
@@ -346,7 +346,7 @@ export const BuyerMessages = ({ userId, initialSellerId }: { userId: string, ini
 
                                         {/* Emoji Picker Popover */}
                                         {showEmojiPicker === c.id && (
-                                            <div className="absolute bottom-full mb-2 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-2 rounded-xl flex gap-2 z-50 shadow-xl">
+                                            <div className="absolute bottom-full mb-2 bg-card border border-foreground/8 dark:border-slate-700 p-2 rounded-xl flex gap-2 z-50 shadow-xl">
                                                 {['👍', '❤️', '😂', '😮', '😢', '🔥'].map(emoji => (
                                                     <button 
                                                         key={emoji} 
@@ -367,9 +367,9 @@ export const BuyerMessages = ({ userId, initialSellerId }: { userId: string, ini
                             ))}
                             <div ref={scrollRef} />
                         </div>
-                        <div className="p-4 bg-white dark:bg-slate-900 border-t flex flex-col gap-2">
+                        <div className="p-4 bg-card border-t flex flex-col gap-2">
                             {replyingTo && (
-                                <div className="mb-2 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                                <div className="mb-2 p-3 bg-foreground/[0.02] dark:bg-slate-800 rounded-xl border border-foreground/8 dark:border-slate-700 flex items-center justify-between">
                                     <div className="flex flex-col gap-1">
                                         <span className="text-[9px] font-black uppercase tracking-widest opacity-60">Replying to</span>
                                         <p className="text-[11px] italic truncate max-w-md">"{replyingTo.text || replyingTo.body}"</p>
@@ -379,7 +379,7 @@ export const BuyerMessages = ({ userId, initialSellerId }: { userId: string, ini
                             )}
 
                             {attachment && (
-                                <div className="mb-2 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                                <div className="mb-2 p-3 bg-foreground/[0.02] dark:bg-slate-800 rounded-xl border border-foreground/8 dark:border-slate-700 flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                         <Paperclip className="w-4 h-4 text-emerald-500" />
                                         <span className="text-[10px] font-black uppercase tracking-widest">{attachment.type === 'image' ? 'Image Attachment' : 'File Attachment'}</span>
@@ -406,7 +406,7 @@ export const BuyerMessages = ({ userId, initialSellerId }: { userId: string, ini
                                             <button 
                                                 key={tone}
                                                 onClick={() => setMagicTone(tone)} 
-                                                className={`px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase transition-all border ${magicTone === tone ? 'bg-emerald-600 text-white border-emerald-600 shadow-md' : 'bg-white dark:bg-black/20 text-emerald-700 dark:text-emerald-300 border-transparent hover:border-emerald-300'}`}
+                                                className={`px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase transition-all border ${magicTone === tone ? 'bg-emerald-600 text-white border-emerald-600 shadow-md' : 'bg-background dark:bg-black/20 text-emerald-700 dark:text-emerald-300 border-transparent hover:border-emerald-300'}`}
                                             >
                                                 {tone}
                                             </button>
@@ -415,7 +415,7 @@ export const BuyerMessages = ({ userId, initialSellerId }: { userId: string, ini
                                 </div>
                             )}
                             <form onSubmit={handleSend} className="flex gap-2">
-                                <Input placeholder="Type message..." value={msgText} onChange={(e:any) => setMsgText(e.target.value)} className="h-12 bg-slate-50 dark:bg-slate-800 border-none rounded-xl" />
+                                <Input placeholder="Type message..." value={msgText} onChange={(e:any) => setMsgText(e.target.value)} className="h-12 bg-foreground/[0.02] dark:bg-slate-800 border-none rounded-xl" />
                                 <div className="flex gap-1 items-center">
                                     <input 
                                         type="file" 
@@ -427,12 +427,12 @@ export const BuyerMessages = ({ userId, initialSellerId }: { userId: string, ini
                                     <button 
                                         type="button" 
                                         onClick={() => fileInputRef.current?.click()} 
-                                        className={`p-3 rounded-xl transition-all ${attachment ? 'text-emerald-500 bg-emerald-50' : 'text-slate-400 hover:bg-slate-50 hover:text-emerald-500'}`}
+                                        className={`p-3 rounded-xl transition-all ${attachment ? 'text-emerald-500 bg-emerald-50' : 'text-foreground/40 hover:bg-foreground/[0.02] hover:text-emerald-500'}`}
                                         disabled={isUploading}
                                     >
                                         {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
                                     </button>
-                                    <button type="button" onClick={() => magicMode ? handleMagicPolish() : setMagicMode(true)} className={`p-3 rounded-xl transition-all ${magicMode ? 'bg-emerald-500 text-white shadow-lg' : 'text-slate-400 hover:bg-emerald-50 hover:text-emerald-500'}`} title="Magic Compose">
+                                    <button type="button" onClick={() => magicMode ? handleMagicPolish() : setMagicMode(true)} className={`p-3 rounded-xl transition-all ${magicMode ? 'bg-emerald-500 text-white shadow-lg' : 'text-foreground/40 hover:bg-emerald-50 hover:text-emerald-500'}`} title="Magic Compose">
                                         {isPolishing ? <Loader2 className="w-4 h-4 animate-spin"/> : <Wand2 className="w-4 h-4"/>}
                                     </button>
                                 </div>
@@ -501,14 +501,14 @@ export const BuyerMessages = ({ userId, initialSellerId }: { userId: string, ini
             </ChatAreaContainer>
             <DetailsAreaContainer isVisible={!!selectedSeller}>
                 <div className="p-6">
-                    <h4 className="font-black text-xs uppercase tracking-widest text-slate-400 mb-4">Seller Info</h4>
+                    <h4 className="font-black text-xs uppercase tracking-widest text-foreground/40 mb-4">Seller Info</h4>
                     {currentVendor && (
                         <div className="space-y-4">
                             <div className="w-20 h-20 rounded-full bg-slate-200 overflow-hidden">
                                 <img src={currentVendor.logo_url || `https://ui-avatars.com/api/?name=${currentVendor.store_name}`} className="w-full h-full object-cover" />
                             </div>
                             <p className="font-black text-sm">{currentVendor.store_name}</p>
-                            <p className="text-xs text-slate-500">{currentVendor.region}</p>
+                            <p className="text-xs text-foreground/55">{currentVendor.region}</p>
                         </div>
                     )}
                 </div>

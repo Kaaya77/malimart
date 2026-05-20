@@ -380,7 +380,7 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
                     </div>
                 )}
                 {selectedChatUser && (
-                    <div className="p-6 border-b border-foreground/10 dark:border-background/10 flex items-center justify-between bg-white/50 dark:bg-black/50 backdrop-blur-md sticky top-0 z-10">
+                    <div className="p-6 border-b border-foreground/10 dark:border-background/10 flex items-center justify-between bg-background/50 dark:bg-black/50 backdrop-blur-md sticky top-0 z-10">
                         <div className="flex items-center gap-4 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => fetchUserProfile(selectedChatUser)}>
                             <button onClick={(e) => { e.stopPropagation(); setSelectedChatUser(null); }} className="md:hidden p-2 hover:bg-primary/5 dark:hover:bg-background/5 transition-colors">
                                 <ChevronLeft className="w-5 h-5 stroke-[1]" />
@@ -468,7 +468,7 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
                             />
 
                             <div className="relative group/msg max-w-[85%]">
-                                <div className={`p-4 text-[13px] shadow-sm relative leading-relaxed ${isMe ? 'bg-primary text-background dark:bg-background dark:text-foreground rounded-2xl rounded-tr-sm' : 'bg-white dark:bg-primary text-foreground dark:text-background border border-foreground/10 dark:border-background/10 rounded-2xl rounded-tl-sm'}`}>
+                                <div className={`p-4 text-[13px] shadow-sm relative leading-relaxed ${isMe ? 'bg-primary text-background dark:bg-background dark:text-foreground rounded-2xl rounded-tr-sm' : 'bg-background dark:bg-primary text-foreground dark:text-background border border-foreground/10 dark:border-background/10 rounded-2xl rounded-tl-sm'}`}>
                                     {c.attachment_url && (
                                         <div className="mb-3">
                                             {c.attachment_type === 'image' ? (
@@ -500,7 +500,7 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
 
                                 {/* Emoji Picker */}
                                 {showEmojiPicker === c.id && (
-                                    <div className={`absolute bottom-full mb-2 ${c.sender_id === userId ? 'right-0' : 'left-0'} bg-white dark:bg-black border border-foreground/10 dark:border-background/10 p-2 flex gap-2 z-20 shadow-xl`}>
+                                    <div className={`absolute bottom-full mb-2 ${c.sender_id === userId ? 'right-0' : 'left-0'} bg-background dark:bg-black border border-foreground/10 dark:border-background/10 p-2 flex gap-2 z-20 shadow-xl`}>
                                         {['👍', '❤️', '😂', '😮', '😢', '🔥'].map(emoji => (
                                             <button 
                                                 key={emoji} 
@@ -529,7 +529,7 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
                     )})}
                     {remoteIsTyping && (
                         <div className="flex items-start animate-in fade-in slide-in-from-bottom-2 mt-4">
-                            <div className="bg-white dark:bg-primary border border-foreground/10 dark:border-background/10 rounded-2xl rounded-tl-sm p-4 flex gap-1.5 items-center h-12 shadow-sm">
+                            <div className="bg-background dark:bg-primary border border-foreground/10 dark:border-background/10 rounded-2xl rounded-tl-sm p-4 flex gap-1.5 items-center h-12 shadow-sm">
                                 <div className="w-1.5 h-1.5 bg-primary/40 dark:bg-background/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                                 <div className="w-1.5 h-1.5 bg-primary/40 dark:bg-background/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                                 <div className="w-1.5 h-1.5 bg-primary/40 dark:bg-background/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
@@ -580,7 +580,7 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
                             </div>
                         </div>
                     )}
-                    <form onSubmit={handleSend} className="flex gap-3 items-end bg-white dark:bg-primary p-2 rounded-2xl border border-foreground/10 dark:border-background/10 shadow-sm focus-within:border-foreground/30 dark:focus-within:border-background/30 transition-all">
+                    <form onSubmit={handleSend} className="flex gap-3 items-end bg-background dark:bg-primary p-2 rounded-2xl border border-foreground/10 dark:border-background/10 shadow-sm focus-within:border-foreground/30 dark:focus-within:border-background/30 transition-all">
                         <div className="flex-1 relative">
                             <textarea 
                                 placeholder={blockedUsers.has(selectedChatUser || '') ? "You have blocked this user" : "Type your response..."}

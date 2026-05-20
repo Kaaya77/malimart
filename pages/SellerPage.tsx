@@ -80,7 +80,7 @@ export const SellerPage = () => {
                             transition: { duration: 0.6, delay: 0.1, ease: [0.22, 1, 0.36, 1], staggerChildren: 0.05 }
                         }
                     }}
-                    className="flex overflow-x-auto p-2 bg-foreground/[0.05] backdrop-blur-xl rounded-none mb-12 no-scrollbar border border-foreground/10 shadow-xl shadow-foreground/5"
+                    className="flex overflow-x-auto p-1.5 bg-foreground/[0.04] backdrop-blur-xl rounded-2xl mb-8 no-scrollbar border border-foreground/8 sticky top-[64px] z-20"
                 >
                     {[
                         { id: 'dashboard', label: 'Overview', icon: LayoutGrid },

@@ -318,7 +318,7 @@ export const BuyerPage = () => {
                             transition: { duration: 0.6, delay: 0.1, ease: [0.22, 1, 0.36, 1], staggerChildren: 0.05 }
                         }
                     }}
-                    className="flex overflow-x-auto p-2 bg-foreground/[0.04] backdrop-blur-md rounded-none mb-12 no-scrollbar border border-foreground/10"
+                    className="flex overflow-x-auto p-1.5 bg-foreground/[0.04] backdrop-blur-md rounded-2xl mb-8 no-scrollbar border border-foreground/8 sticky top-[64px] z-20"
                 >
                     {[
                         { id: 'dashboard', label: 'Overview', icon: LayoutGrid },
@@ -337,10 +337,10 @@ export const BuyerPage = () => {
                                 visible: { opacity: 1, x: 0, transition: { duration: 0.3 } }
                             }}
                             onClick={() => changeTab(tab.id)} 
-                            className={`flex-1 flex items-center justify-center gap-3 py-3.5 px-8 rounded-none text-[10px] uppercase tracking-[0.2em] transition-all duration-300 ${
+                            className={`flex-shrink-0 flex items-center justify-center gap-2 py-3 px-4 md:px-6 rounded-xl text-[10px] uppercase tracking-[0.15em] transition-all duration-200 ${
                                 activeTab === tab.id 
-                                ? 'bg-foreground text-background shadow-xl shadow-foreground/10' 
-                                : 'text-foreground/40 hover:text-foreground'
+                                ? 'bg-background text-foreground shadow-sm font-bold' 
+                                : 'text-foreground/45 hover:text-foreground/70 font-semibold'
                             }`}
                         >
                             <tab.icon className={`w-4 h-4 stroke-[1.5] ${activeTab === tab.id ? 'scale-110' : ''}`} /> 

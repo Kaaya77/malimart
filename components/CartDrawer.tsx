@@ -124,7 +124,7 @@ export const CartDrawer = () => {
 
               {/* Free Shipping Progress */}
               {cart.length > 0 && (
-                <div className="bg-foreground/[0.04] p-4 border border-foreground/10">
+                <div className="bg-foreground/[0.04] p-3.5 rounded-2xl border border-foreground/8">
                   <p className="text-[9px] uppercase tracking-[0.2em] font-semibold opacity-80 mb-3">
                     {progress < 100 ? (
                       <>Add <span className="font-bold">{remainingForFree.toLocaleString()} {CURRENCY}</span> for Free Delivery</>
@@ -134,9 +134,9 @@ export const CartDrawer = () => {
                       </span>
                     )}
                   </p>
-                  <div className="h-1 w-full bg-primary/10 overflow-hidden">
+                  <div className="h-1 w-full bg-foreground/10 rounded-full overflow-hidden">
                     <div
-                      className="h-full transition-all duration-1000 ease-out relative bg-primary"
+                      className="h-full transition-all duration-1000 ease-out relative bg-emerald-500 rounded-full"
                       style={{ width: `${progress}%` }}
                     />
                   </div>
@@ -271,13 +271,15 @@ export const CartDrawer = () => {
                 </div>
 
                 <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.97 }}
                   onClick={() => { closeCart(); navigate('/cart'); }}
-                  className="w-full h-12 bg-foreground text-background text-[10px] uppercase tracking-[0.2em] font-semibold flex items-center justify-center gap-2 shadow-sm group"
+                  className="w-full h-14 bg-foreground text-background rounded-2xl text-[11px] uppercase tracking-widest font-bold flex items-center justify-center gap-2 shadow-lg group active:scale-[0.98] transition-all"
                 >
-                  Review & Checkout
-                  <ArrowRight className="w-4 h-4 stroke-[1] group-hover:translate-x-1 transition-transform"/>
+                  <span>Checkout</span>
+                  <span className="opacity-60">·</span>
+                  <span>{subtotal.toLocaleString()} {CURRENCY}</span>
+                  <ArrowRight className="w-4 h-4 stroke-[2] ml-1 group-hover:translate-x-0.5 transition-transform"/>
                 </motion.button>
 
                 <div className="mt-4 flex justify-center items-center gap-2 text-[9px] uppercase tracking-[0.2em] font-semibold opacity-40">

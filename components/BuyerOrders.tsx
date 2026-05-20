@@ -43,20 +43,20 @@ export const BuyerOrders = ({
         <div className="flex flex-col h-[700px] animate-in fade-in">
             <div className="flex gap-4 mb-6 shrink-0">
                 <div className="relative flex-1">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40" />
                     <Input 
                         placeholder="Search Order ID or Product..." 
                         value={searchTerm}
                         onChange={(e: any) => setSearchTerm(e.target.value)}
-                        className="h-14 pl-12 rounded-2xl bg-white dark:bg-white/5 border-slate-200 dark:border-white/10"
+                        className="h-14 pl-12 rounded-2xl bg-background dark:bg-background/5 border-foreground/10"
                     />
                 </div>
-                <div className="flex bg-slate-100 dark:bg-white/5 p-1.5 rounded-2xl">
+                <div className="flex bg-foreground/[0.05] dark:bg-background/5 p-1.5 rounded-2xl">
                     {['all', 'pending', 'shipped', 'delivered', 'disputed'].map(s => (
                         <button 
                             key={s}
                             onClick={() => setStatusFilter(s)}
-                            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${statusFilter === s ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${statusFilter === s ? 'bg-card text-foreground shadow-sm' : 'text-foreground/40 hover:text-foreground/70'}`}
                         >
                             {s}
                         </button>
@@ -64,26 +64,26 @@ export const BuyerOrders = ({
                 </div>
             </div>
 
-            <div className="flex-1 flex gap-6 overflow-hidden rounded-[2.5rem] border border-slate-100 dark:border-white/5 bg-white dark:bg-slate-900 shadow-sm relative">
-                <div className={`${selectedOrder ? 'hidden lg:flex w-1/3 border-r' : 'w-full flex'} border-slate-100 dark:border-white/5 flex-col`}>
+            <div className="flex-1 flex gap-6 overflow-hidden rounded-3xl border border-foreground/8 bg-card shadow-sm relative">
+                <div className={`${selectedOrder ? 'hidden lg:flex w-1/3 border-r' : 'w-full flex'} border-foreground/8 flex-col`}>
                     <div className="flex-1 overflow-y-auto no-scrollbar p-3 space-y-2">
-                        {filteredOrders.length === 0 ? <div className="p-10 text-center text-slate-400 text-xs font-bold uppercase">No orders found</div> :
+                        {filteredOrders.length === 0 ? <div className="p-10 text-center text-foreground/40 text-xs font-bold uppercase">No orders found</div> :
                          filteredOrders.map(order => (
                             <div 
                                 key={order.id} 
                                 onClick={() => setSelectedOrder(order)}
-                                className={`p-4 rounded-2xl border-2 transition-all cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 flex gap-3 ${selectedOrder?.id === order.id ? 'border-brand-500 bg-brand-50/10' : 'border-transparent'}`}
+                                className={`p-4 rounded-2xl border-2 transition-all cursor-pointer hover:bg-foreground/[0.03] dark:hover:bg-background/5 flex gap-3 ${selectedOrder?.id === order.id ? 'border-brand-500 bg-brand-50/10' : 'border-transparent'}`}
                             >
                                 <div className="flex-1">
                                     <div className="flex justify-between items-start mb-2">
-                                        <span className="font-mono text-[10px] font-bold text-slate-400">#{order.id.slice(0,8)}</span>
+                                        <span className="font-mono text-[10px] font-bold text-foreground/40">#{order.id.slice(0,8)}</span>
                                         <Badge variant={['delivered'].includes(order.status) ? 'success' : ['cancelled'].includes(order.status) ? 'danger' : 'secondary'} className="text-[8px]">
                                             {order.status}
                                         </Badge>
                                     </div>
-                                    <p className="font-black text-xs text-slate-900 dark:text-white mb-1">{order.items?.[0]?.product?.name || order.items?.[0]?.products?.name || 'Multiple Items'}</p>
-                                    <div className="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-white/5">
-                                        <span className="text-[10px] font-bold text-slate-400 uppercase">{new Date(order.created_at).toLocaleDateString()}</span>
+                                    <p className="font-black text-xs text-foreground mb-1">{order.items?.[0]?.product?.name || order.items?.[0]?.products?.name || 'Multiple Items'}</p>
+                                    <div className="flex justify-between items-center pt-2 border-t border-foreground/8">
+                                        <span className="text-[10px] font-bold text-foreground/40 uppercase">{new Date(order.created_at).toLocaleDateString()}</span>
                                         <span className="font-black text-sm">{formatTZS(order.total)}</span>
                                     </div>
                                 </div>
@@ -93,13 +93,13 @@ export const BuyerOrders = ({
                 </div>
 
                 {selectedOrder ? (
-                    <div className="flex-1 flex flex-col h-full bg-slate-50/30 dark:bg-black/20">
-                        <div className="p-6 border-b border-slate-100 dark:border-white/5 flex justify-between items-center bg-white dark:bg-slate-900">
+                    <div className="flex-1 flex flex-col h-full bg-foreground/[0.02]">
+                        <div className="p-6 border-b border-foreground/8 flex justify-between items-center bg-card">
                             <div className="flex items-center gap-4">
-                                <button onClick={() => setSelectedOrder(null)} className="lg:hidden p-2 bg-slate-100 dark:bg-white/10 rounded-full"><ChevronLeft className="w-4 h-4"/></button>
+                                <button onClick={() => setSelectedOrder(null)} className="lg:hidden p-2 bg-foreground/[0.05] dark:bg-background/10 rounded-full"><ChevronLeft className="w-4 h-4"/></button>
                                 <div>
                                     <h2 className="font-black text-xl font-display uppercase tracking-tight">Order Details</h2>
-                                    <p className="text-[10px] font-bold text-slate-400 font-mono">ID: {selectedOrder.id}</p>
+                                    <p className="text-[10px] font-bold text-foreground/40 font-mono">ID: {selectedOrder.id}</p>
                                 </div>
                             </div>
                             <div className="flex gap-2">
@@ -134,15 +134,15 @@ export const BuyerOrders = ({
                             )}
 
                             <div className="space-y-3">
-                                <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2"><ShoppingBag className="w-3 h-3"/> Items ({selectedOrder.items?.length || 0})</h4>
+                                <h4 className="text-[10px] font-black uppercase tracking-widest text-foreground/40 mb-4 flex items-center gap-2"><ShoppingBag className="w-3 h-3"/> Items ({selectedOrder.items?.length || 0})</h4>
                                 {selectedOrder.items?.map((item: any) => (
-                                    <div key={item.id} className="flex gap-4 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-white/5 items-center">
-                                        <div className="w-12 h-12 bg-slate-100 rounded-xl overflow-hidden shrink-0">
+                                    <div key={item.id} className="flex gap-4 p-4 bg-card rounded-2xl border border-foreground/8 items-center">
+                                        <div className="w-12 h-12 bg-foreground/[0.05] rounded-xl overflow-hidden shrink-0">
                                             <img src={item.product?.images?.[0] || item.products?.images?.[0]} className="w-full h-full object-cover" />
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <p className="font-bold text-sm truncate">{item.product?.name || item.products?.name}</p>
-                                            <p className="text-[10px] text-slate-500 font-mono">Qty: {item.quantity}</p>
+                                            <p className="text-[10px] text-foreground/55 font-mono">Qty: {item.quantity}</p>
                                         </div>
                                         <div className="text-right">
                                             <p className="font-black text-sm">{formatTZS(item.price_at_purchase * item.quantity)}</p>

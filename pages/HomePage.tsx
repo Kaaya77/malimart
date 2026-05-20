@@ -31,7 +31,7 @@ const SEARCH_PLACEHOLDERS = [
 ];
 
 const HomePage: React.FC = () => {
-  const { products = [], isLoading } = useAppState();
+  const { products = [], isLoading, recentlyViewed = [] } = useAppState();
   const navigate = useNavigate();
   const homeData = useHomePageData();
 
@@ -133,6 +133,17 @@ const HomePage: React.FC = () => {
           title="New arrivals"
           description="Fresh drops from Tanzania's best sellers."
           products={newArrivals}
+          navigate={navigate}
+          setActiveProduct={setActiveProduct}
+        />
+      )}
+
+      {/* Recently Viewed */}
+      {recentlyViewed.length >= 3 && (
+        <ProductGridSection
+          title="Recently viewed"
+          description="Pick up where you left off."
+          products={recentlyViewed.slice(0, 8)}
           navigate={navigate}
           setActiveProduct={setActiveProduct}
         />

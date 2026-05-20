@@ -308,7 +308,7 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: { sellerId: string, o
                     </div>
                     
                     <div className="flex flex-wrap gap-4 items-center bg-primary/5 dark:bg-background/5 p-2 rounded-none border border-foreground/10 dark:border-background/10">
-                        <div className="flex bg-white dark:bg-primary rounded-none p-1 border border-foreground/10 dark:border-background/10">
+                        <div className="flex bg-background dark:bg-primary rounded-none p-1 border border-foreground/10 dark:border-background/10">
                             {['all', 'pending', 'shipped', 'delivered'].map(s => (
                                 <button 
                                     key={s}
@@ -487,7 +487,7 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: { sellerId: string, o
                                         <h4 className="font-serif text-red-800 dark:text-red-400 uppercase tracking-[0.2em] text-sm mb-2">Active Dispute</h4>
                                         <p className="text-red-700 dark:text-red-300 text-xs mb-4 leading-relaxed font-serif">The buyer has raised an issue with this order. Please review the details and respond to resolve the dispute.</p>
                                         {disputeDetails && (
-                                            <div className="mb-6 p-4 bg-white dark:bg-black/20 rounded-none border border-red-100 dark:border-red-900/20">
+                                            <div className="mb-6 p-4 bg-background dark:bg-black/20 rounded-none border border-red-100 dark:border-red-900/20">
                                                 <p className="text-xs font-serif text-foreground dark:text-background mb-2"><span className="uppercase tracking-[0.1em] text-[9px] opacity-60 mr-2">Reason:</span> {disputeDetails.reason}</p>
                                                 <p className="text-xs font-serif text-foreground dark:text-background"><span className="uppercase tracking-[0.1em] text-[9px] opacity-60 mr-2">Description:</span> {disputeDetails.description}</p>
                                             </div>

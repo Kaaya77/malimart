@@ -564,7 +564,7 @@ export const SellerInventory = ({ products: initialProducts, userId, refresh, on
             </div>
 
             {/* 2. Control Bar */}
-            <div className="flex flex-col xl:flex-row justify-between gap-6 sticky top-24 z-20 bg-white/80 dark:bg-black/80 backdrop-blur-xl py-4 border-b border-foreground/10 dark:border-background/10">
+            <div className="flex flex-col xl:flex-row justify-between gap-6 sticky top-24 z-20 bg-background/90 backdrop-blur-xl py-4 border-b border-foreground/10">
                 <div className="flex flex-col sm:flex-row gap-4 w-full xl:w-auto relative">
                     <div className="relative group w-full sm:w-[320px]">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-40 group-focus-within:opacity-100 transition-opacity text-foreground dark:text-background stroke-[1]" />

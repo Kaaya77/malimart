@@ -220,7 +220,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                                     placeholder="e.g. Dar es Salaam"
                                     value={location}
                                     onChange={(e) => setLocation(e.target.value)}
-                                    className="w-full h-12 bg-white/50 dark:bg-white/5 border border-foreground/10 dark:border-background/10 rounded-xl px-4 text-sm focus:outline-none focus:ring-1 focus:ring-foreground dark:focus:ring-background"
+                                    className="w-full h-12 bg-foreground/[0.04] border border-foreground/10 rounded-xl px-4 text-sm focus:outline-none focus:ring-1 focus:ring-foreground/40"
                                 />
                             </section>
 
