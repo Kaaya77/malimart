@@ -22,7 +22,7 @@ export const ShopPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || searchParams.get('search') || '');
   const [sortBy, setSortBy] = useState('relevance');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState<any>({
@@ -40,7 +40,7 @@ export const ShopPage: React.FC = () => {
 
   // Sync URL search query
   useEffect(() => {
-    const q = searchParams.get('q');
+    const q = searchParams.get('q') || searchParams.get('search');
     if (q) setSearchQuery(q);
     const cat = searchParams.get('category');
     if (cat) setActiveFilters((prev: any) => ({ ...prev, categories: [cat] }));

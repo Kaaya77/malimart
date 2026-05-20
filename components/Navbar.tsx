@@ -83,7 +83,7 @@ export const Navbar = () => {
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    navigate(`/shop?search=${encodeURIComponent(searchQuery)}`);
+    navigate(`/shop?q=${encodeURIComponent(searchQuery)}`);
     setIsSearchOpen(false);
   };
 

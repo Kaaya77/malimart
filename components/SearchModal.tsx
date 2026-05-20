@@ -102,7 +102,7 @@ export const SearchModal = ({
 
   const goToShop = (q: string) => {
     pushRecent(q);
-    navigate(`/shop?search=${encodeURIComponent(q)}`);
+    navigate(`/shop?q=${encodeURIComponent(q)}`);
     setIsSearchOpen(false);
   };
 

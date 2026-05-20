@@ -73,6 +73,15 @@ export const SellerPage = () => {
                             </div>
                          </div>
                     </div>
+                    <a
+                        href={`/store/${user.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 h-10 px-4 rounded-xl bg-foreground/[0.05] border border-foreground/10 text-foreground/70 text-xs font-semibold hover:bg-foreground/[0.08] hover:text-foreground transition-colors whitespace-nowrap shrink-0"
+                    >
+                        <ExternalLink className="w-3.5 h-3.5 stroke-[2]" />
+                        <span className="hidden sm:inline">View Store</span>
+                    </a>
                 </motion.div>
 
                 <motion.div 

@@ -79,10 +79,12 @@ export const QuickProductForm = ({ onClose, onSuccess }: QuickProductFormProps) 
     };
 
     return (
-        <div className="fixed inset-0 z-[200] bg-primary/80 backdrop-blur-xl flex items-center justify-center p-4">
-            <div className="w-full max-w-md bg-background dark:bg-background p-8 relative shadow-2xl">
-                <button onClick={onClose} className="absolute top-4 right-4"><X className="w-6 h-6" /></button>
-                <h2 className="text-2xl font-serif mb-6">Quick Add Product</h2>
+        <div className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm flex items-end md:items-center justify-center">
+            <div className="w-full max-w-md bg-background rounded-t-3xl md:rounded-3xl p-6 relative shadow-2xl border-t border-foreground/8 md:border max-h-[90dvh] overflow-y-auto" style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))' }}>
+                <div className="flex items-center justify-between mb-5">
+                    <h2 className="text-xl font-bold text-foreground">Quick Add Product</h2>
+                    <button onClick={onClose} className="w-9 h-9 rounded-full bg-foreground/[0.06] flex items-center justify-center hover:bg-foreground/[0.1] transition-colors"><X className="w-4 h-4" /></button>
+                </div>
                 <div className="space-y-4">
                     <div className="aspect-[4/5] mb-4">
                         {formData.images?.[0] ? (
@@ -93,7 +95,7 @@ export const QuickProductForm = ({ onClose, onSuccess }: QuickProductFormProps) 
                     </div>
                     <Input value={formData.name || ''} onChange={(e: any) => setFormData({...formData, name: e.target.value})} placeholder="Product Name" />
                     <Input type="number" value={formData.price || ''} onChange={(e: any) => setFormData({...formData, price: Number(e.target.value)})} placeholder={`Price (${CURRENCY})`} />
-                    <select value={formData.category || ''} onChange={(e) => setFormData({...formData, category: e.target.value})} className="w-full h-10 bg-transparent border border-foreground/10 px-4">
+                    <select value={formData.category || ''} onChange={(e) => setFormData({...formData, category: e.target.value})} className="w-full h-12 bg-foreground/[0.04] border border-foreground/15 rounded-2xl px-4 text-foreground text-sm focus:outline-none focus:border-foreground/30 transition-colors">
                         {Object.keys(CATEGORY_HIERARCHY).map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                     <Button onClick={handleSubmit} disabled={isLoading} className="w-full h-12">Publish</Button>
