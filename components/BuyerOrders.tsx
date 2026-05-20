@@ -1,3 +1,4 @@
+import { OrderTracking } from './CheckoutComponents';
 
 import React, { useState, useMemo } from 'react';
 import { Search, Package, Clock, ChevronLeft, Receipt, RotateCcw, AlertCircle, ShoppingBag, CheckSquare } from 'lucide-react';
@@ -96,32 +97,54 @@ export const BuyerOrders = ({
                     <div className="flex-1 flex flex-col h-full bg-foreground/[0.02]">
                         <div className="p-6 border-b border-foreground/8 flex justify-between items-center bg-card">
                             <div className="flex items-center gap-4">
-                                <button onClick={() => setSelectedOrder(null)} className="lg:hidden p-2 bg-foreground/[0.05] dark:bg-background/10 rounded-full"><ChevronLeft className="w-4 h-4"/></button>
+                                <button onClick={() => setSelectedOrder(null)} className="lg:hidden p-2 bg-foreground/[0.06] rounded-full hover:bg-foreground/10 transition-colors active:scale-90"><ChevronLeft className="w-4 h-4"/></button>
                                 <div>
                                     <h2 className="font-black text-xl font-display uppercase tracking-tight">Order Details</h2>
                                     <p className="text-[10px] font-bold text-foreground/40 font-mono">ID: {selectedOrder.id}</p>
                                 </div>
                             </div>
-                            <div className="flex gap-2">
-                                <Button size="sm" variant="secondary" onClick={() => onReorder(selectedOrder)}>Reorder</Button>
-                                <Button size="sm" variant="secondary" onClick={() => onContactSeller(selectedOrder.items?.[0]?.products?.seller_id, { type: 'order', id: selectedOrder.id, label: `Order #${selectedOrder.id.slice(0,8)}` })}>Contact Seller</Button>
-                                <Button size="sm" variant="outline" onClick={async () => {
-                                    const sellerId = selectedOrder.items?.[0]?.products?.seller_id;
+                            <div className="flex gap-1.5 flex-wrap">
+                                <button onClick={() => onReorder(selectedOrder)}
+                                    className="flex items-center gap-1.5 h-8 px-3 rounded-xl bg-foreground/[0.06] text-foreground text-xs font-semibold hover:bg-foreground/10 transition-colors active:scale-95">
+                                    Reorder
+                                </button>
+                                <button onClick={() => onContactSeller(selectedOrder.items?.[0]?.products?.seller_id || selectedOrder.items?.[0]?.seller_id, { type: 'order', id: selectedOrder.id, label: `Order #${selectedOrder.id.slice(0,8)}` })}
+                                    className="flex items-center gap-1.5 h-8 px-3 rounded-xl bg-foreground/[0.06] text-foreground text-xs font-semibold hover:bg-foreground/10 transition-colors active:scale-95">
+                                    Message Seller
+                                </button>
+                                <button onClick={async () => {
+                                    const sellerId = selectedOrder.items?.[0]?.products?.seller_id || selectedOrder.items?.[0]?.seller_id;
                                     const seller = sellerId ? await fetchVendorProfile(sellerId) : undefined;
                                     setReceiptOrder({ order: selectedOrder, seller: seller || {} as VendorProfile });
-                                }}>Receipt</Button>
+                                    if (onPrintReceipt) onPrintReceipt(selectedOrder, seller as any);
+                                }} className="flex items-center gap-1.5 h-8 px-3 rounded-xl bg-foreground/[0.06] text-foreground text-xs font-semibold hover:bg-foreground/10 transition-colors active:scale-95">
+                                    Receipt
+                                </button>
                                 {selectedOrder.status === 'pending' && (
-                                    <Button size="sm" variant="danger" onClick={() => setIsCancelModalOpen(true)}>Cancel</Button>
+                                    <button onClick={() => setIsCancelModalOpen(true)}
+                                        className="flex items-center gap-1.5 h-8 px-3 rounded-xl bg-rose-500/10 text-rose-600 text-xs font-semibold hover:bg-rose-500/15 transition-colors active:scale-95">
+                                        Cancel Order
+                                    </button>
                                 )}
-                                <Button size="sm" variant="danger" onClick={() => onDelete(selectedOrder.id)}>Delete</Button>
                             </div>
                         </div>
 
                         <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8">
-                            {/* NEW: Satisfying Order Graphic */}
-                            <div className="mb-8">
+                            {/* Order Progress */}
+                            <div className="mb-6">
                                 <SatisfyingOrderGraphic status={selectedOrder.status as any} />
                             </div>
+
+                            {/* Live Order Tracking */}
+                            {!['cancelled','refunded','failed'].includes(selectedOrder.status) && (
+                                <div className="bg-foreground/[0.02] border border-foreground/8 rounded-3xl p-5">
+                                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-foreground/35 mb-4 flex items-center gap-2">
+                                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"/>
+                                        Live Tracking
+                                    </h4>
+                                    <OrderTracking order={selectedOrder as any} />
+                                </div>
+                            )}
 
                             {selectedOrder.status === 'cancelled' && selectedOrder.cancel_reason && (
                                 <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 rounded-2xl flex items-start gap-3">

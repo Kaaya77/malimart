@@ -429,8 +429,8 @@ export const AdminPage = () => {
                                             <TrendingUp className="w-3 h-3 mr-1" /> +14.5%
                                         </Badge>
                                     </div>
-                                    <div className="h-96 w-full min-w-0 relative">
-                                        <ResponsiveContainer width="100%" aspect={2.5}>
+                                    <div className="h-64 w-full min-w-0">
+                                        <ResponsiveContainer width="100%" height="100%">
                                             <BarChart data={revenueData.length > 0 ? revenueData : [
                                                 { name: 'Mon', revenue: 0 },
                                                 { name: 'Tue', revenue: 0 },
@@ -444,10 +444,10 @@ export const AdminPage = () => {
                                                 <XAxis dataKey="name" stroke="currentColor" opacity={0.5} fontSize={10} tickLine={false} axisLine={false} />
                                                 <YAxis stroke="currentColor" opacity={0.5} fontSize={10} tickLine={false} axisLine={false} tickFormatter={(value) => `TSh ${value/1000}k`} />
                                                 <Tooltip 
-                                                    contentStyle={{ backgroundColor: 'var(--bg-color)', border: '1px solid currentColor', borderRadius: '0', color: 'currentColor' }}
+                                                    contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '12px', color: 'hsl(var(--foreground))' }}
                                                     itemStyle={{ color: 'currentColor', fontWeight: 'normal', fontFamily: 'serif' }}
                                                 />
-                                                <Bar dataKey="revenue" fill="currentColor" radius={[2, 2, 0, 0]} />
+                                                <Bar dataKey="revenue" fill="currentColor" radius={[6,6,0,0]} className="text-foreground"/>
                                             </BarChart>
                                         </ResponsiveContainer>
                                     </div>

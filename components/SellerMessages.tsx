@@ -329,7 +329,7 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
                             placeholder="Search..." 
                             value={searchTerm}
                             onChange={(e: any) => setSearchTerm(e.target.value)}
-                            className="h-10 pl-9 text-[11px] rounded-none bg-transparent border-foreground/20 text-foreground focus:border-foreground dark:focus:border-background transition-colors"
+                            className="h-10 pl-9 text-[11px] rounded-2xl bg-transparent border-foreground/20 text-foreground focus:border-foreground dark:focus:border-background transition-colors"
                         />
                     </div>
                     <button 
@@ -500,7 +500,7 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
 
                                 {/* Emoji Picker */}
                                 {showEmojiPicker === c.id && (
-                                    <div className={`absolute bottom-full mb-2 ${c.sender_id === userId ? 'right-0' : 'left-0'} bg-background dark:bg-black border border-foreground/10 p-2 flex gap-2 z-20 shadow-xl`}>
+                                    <div className={`absolute bottom-full mb-2 ${c.sender_id === userId ? 'right-0' : 'left-0'} bg-background border border-foreground/8 p-2 rounded-2xl flex gap-1 z-20 shadow-xl`}>
                                         {['👍', '❤️', '😂', '😮', '😢', '🔥'].map(emoji => (
                                             <button 
                                                 key={emoji} 
@@ -562,7 +562,7 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
                         </div>
                     )}
                     {magicMode && (
-                        <div className="mb-4 animate-in slide-in-from-bottom-2 fade-in bg-foreground/[0.05] dark:bg-background/5 p-4 rounded-none border border-foreground/10">
+                        <div className="mb-4 animate-in slide-in-from-bottom-2 fade-in bg-foreground/[0.05] dark:bg-background/5 p-4 rounded-2xl border border-foreground/10">
                             <div className="flex items-center justify-between mb-4">
                                 <span className="text-[10px] uppercase tracking-[0.2em] text-foreground flex items-center gap-2"><Sparkles className="w-3.5 h-3.5 stroke-[1]"/> Magic Compose</span>
                                 <button onClick={() => setMagicMode(false)} className="p-2 hover:bg-foreground/[0.04] transition-colors"><X className="w-3.5 h-3.5 stroke-[1] text-foreground"/></button>

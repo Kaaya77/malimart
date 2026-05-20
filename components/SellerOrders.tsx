@@ -355,7 +355,7 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: { sellerId: string, o
  {selectedOrderIds.size > 0 && (
  <div className="flex gap-2">
  <Button size="sm" variant="outline" className="h-8 text-[9px] rounded-2xl border-foreground/20 text-foreground uppercase tracking-[0.1em]" onClick={() => handleBulkUpdateStatus('processing')} isLoading={isBulkUpdating}>Accept</Button>
- <Button size="sm" className="h-8 text-[9px] rounded-2xl bg-primary text-background dark:bg-background dark:text-foreground uppercase tracking-[0.1em]" onClick={() => handleBulkUpdateStatus('shipped')} isLoading={isBulkUpdating}>Ship</Button>
+ <Button size="sm" className="h-8 text-[9px] rounded-2xl bg-foreground text-background uppercase tracking-[0.1em]" onClick={() => handleBulkUpdateStatus('shipped')} isLoading={isBulkUpdating}>Ship</Button>
  </div>
  )}
  </div>
@@ -433,16 +433,16 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: { sellerId: string, o
  {selectedOrder.status === 'pending' && (
  <>
  <Button size="sm" variant="danger" className="rounded-2xl uppercase tracking-[0.1em] text-[9px]" onClick={() => setIsCancelModalOpen(true)}>Cancel</Button>
- <Button size="sm" className="rounded-2xl bg-primary text-background dark:bg-background dark:text-foreground uppercase tracking-[0.1em] text-[9px]" onClick={() => handleUpdateStatus(selectedOrder.id, 'processing')}>
+ <Button size="sm" className="rounded-2xl bg-foreground text-background uppercase tracking-[0.1em] text-[9px]" onClick={() => handleUpdateStatus(selectedOrder.id, 'processing')}>
  {selectedOrder.payment_method !== 'Cash on Delivery' ? 'Verify Payment & Accept' : 'Accept Order'}
  </Button>
  </>
  )}
  {selectedOrder.status === 'processing' && (
- <Button size="sm" className="rounded-2xl bg-primary text-background dark:bg-background dark:text-foreground uppercase tracking-[0.1em] text-[9px]" onClick={() => handleUpdateStatus(selectedOrder.id, 'in_transit')}>Mark Shipped</Button>
+ <Button size="sm" className="rounded-2xl bg-foreground text-background uppercase tracking-[0.1em] text-[9px]" onClick={() => handleUpdateStatus(selectedOrder.id, 'in_transit')}>Mark Shipped</Button>
  )}
  {selectedOrder.status === 'in_transit' && (
- <Button size="sm" className="rounded-2xl bg-primary text-background dark:bg-background dark:text-foreground uppercase tracking-[0.1em] text-[9px]" onClick={() => handleUpdateStatus(selectedOrder.id, 'delivered')}>Mark Delivered</Button>
+ <Button size="sm" className="rounded-2xl bg-foreground text-background uppercase tracking-[0.1em] text-[9px]" onClick={() => handleUpdateStatus(selectedOrder.id, 'delivered')}>Mark Delivered</Button>
  )}
  {selectedOrder.status === 'delivered' && (
  <>
