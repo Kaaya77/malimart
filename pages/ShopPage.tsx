@@ -272,18 +272,18 @@ export const ShopPage = () => {
   ].filter(Boolean).length;
 
     return (
-    <div className="min-h-screen bg-[#fcfcfc] dark:bg-[#0a0a0a] pt-16 md:pt-20 font-sans pb-24">
+    <div className="min-h-screen bg-background pt-16 md:pt-20 font-sans pb-[calc(5rem+env(safe-area-inset-bottom))]">
       {/* Compact Shop Header */}
-      <div className="bg-white dark:bg-[#050505] border-b border-slate-100 dark:border-white/5 sticky top-16 md:top-20 z-40">
+      <div className="bg-background border-b border-foreground/8 sticky top-16 md:top-20 z-40">
         <div className="container mx-auto max-w-7xl px-4 md:px-8 py-4">
           <div className="flex flex-col md:flex-row items-center gap-4">
             {/* Category Dropdown */}
             <div className="relative w-full md:w-64">
-              <Layers className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+              <Layers className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/30 pointer-events-none" />
               <select 
                 value={selectedCategories[0] || 'All'} 
                 onChange={e => handleCategoryChange(e.target.value)}
-                className="w-full h-12 pl-11 pr-10 bg-slate-50 dark:bg-white/5 border-none rounded-xl text-xs font-bold uppercase tracking-widest appearance-none focus:ring-2 focus:ring-slate-900/5 dark:focus:ring-white/5 transition-all cursor-pointer"
+                className="w-full h-12 pl-11 pr-10 bg-foreground/[0.04] border-none rounded-xl text-xs font-bold uppercase tracking-widest appearance-none focus:ring-2 focus:ring-foreground/10 transition-all cursor-pointer"
               >
                 <option value="All">All Categories</option>
                 {Object.keys(CATEGORY_HIERARCHY).map(catName => (
@@ -292,15 +292,15 @@ export const ShopPage = () => {
                   </option>
                 ))}
               </select>
-              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/30 pointer-events-none" />
             </div>
 
             {/* Search Bar */}
             <div className="relative flex-1 w-full group">
-              <Search className={`absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors z-10 ${isSearchFocused ? 'text-slate-900 dark:text-white' : 'text-slate-400'}`} />
+              <Search className={`absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors z-10 ${isSearchFocused ? 'text-foreground' : 'text-foreground/40'}`} />
               <Input 
                 placeholder="Search products, brands, or tags..." 
-                className="pl-12 pr-12 h-12 bg-slate-50 dark:bg-white/5 border-none rounded-xl text-sm font-medium focus:ring-2 focus:ring-slate-900/5 dark:focus:ring-white/5 transition-all" 
+                className="pl-12 pr-12 h-12 bg-foreground/[0.04] border-none rounded-xl text-sm font-medium focus:ring-2 focus:ring-foreground/10 transition-all" 
                 value={searchQuery} 
                 onChange={e => setSearchQuery(e.target.value)}
                 onFocus={() => setIsSearchFocused(true)}
@@ -308,11 +308,11 @@ export const ShopPage = () => {
               />
               <button 
                 onClick={startVoiceSearch}
-                className={`absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full transition-all ${isListening ? 'bg-red-500 text-white animate-pulse' : 'text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
+                className={`absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full transition-all ${isListening ? 'bg-red-500 text-white animate-pulse' : 'text-foreground/40 hover:text-foreground'}`}
               >
                 {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
               </button>
-              {isSearching && !isListening && <Loader2 className="absolute right-12 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-slate-400" />}
+              {isSearching && !isListening && <Loader2 className="absolute right-12 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-foreground/30" />}
               
               {/* Search Suggestions (Simplified) */}
               <AnimatePresence>
@@ -321,7 +321,7 @@ export const ShopPage = () => {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 10 }}
-                    className="absolute top-full left-0 right-0 mt-2 p-4 bg-white dark:bg-background border border-slate-100 dark:border-white/5 rounded-2xl shadow-2xl z-50 backdrop-blur-xl max-h-[50vh] overflow-y-auto"
+                    className="absolute top-full left-0 right-0 mt-2 p-4 bg-background border border-foreground/10 rounded-2xl shadow-2xl z-50 backdrop-blur-xl max-h-[50vh] overflow-y-auto"
                   >
                     {results.slice(0, 5).length > 0 ? (
                       <div className="space-y-2">
@@ -329,7 +329,7 @@ export const ShopPage = () => {
                           <button 
                             key={p.id}
                             onClick={() => navigate(`/product/${p.id}`)}
-                            className="w-full flex items-center gap-3 p-2 hover:bg-slate-50 dark:hover:bg-white/5 rounded-lg transition-colors text-left group"
+                            className="w-full flex items-center gap-3 p-2 hover:bg-foreground/[0.04] rounded-lg transition-colors text-left group"
                           >
                             <div className="w-10 h-10 rounded-md overflow-hidden shrink-0">
                               <img src={p.images[0]} className="w-full h-full object-cover" />
@@ -343,7 +343,7 @@ export const ShopPage = () => {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-[10px] text-center py-2 text-slate-400 italic">No matches found</p>
+                      <p className="text-[10px] text-center py-2 text-foreground/40 italic">No matches found</p>
                     )}
                   </motion.div>
                 )}
@@ -352,16 +352,16 @@ export const ShopPage = () => {
 
             {/* View Controls & Mobile Filter Toggle */}
             <div className="flex items-center gap-2 w-full md:w-auto justify-between md:justify-start">
-              <div className="flex gap-1 p-1 bg-slate-50 dark:bg-white/5 rounded-xl">
+              <div className="flex gap-1 p-1 bg-foreground/[0.04] rounded-xl">
                 <button 
                   onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white dark:bg-slate-800 shadow-sm text-slate-900 dark:text-white' : 'text-slate-400 hover:text-slate-600'}`}
+                  className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-background shadow-sm text-foreground' : 'text-foreground/40 hover:text-foreground/70'}`}
                 >
                   <LayoutGrid className="w-4 h-4" />
                 </button>
                 <button 
                   onClick={() => setViewMode('list')}
-                  className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white dark:bg-slate-800 shadow-sm text-slate-900 dark:text-white' : 'text-slate-400 hover:text-slate-600'}`}
+                  className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-background shadow-sm text-foreground' : 'text-foreground/40 hover:text-foreground/70'}`}
                 >
                   <SlidersHorizontal className="w-4 h-4" />
                 </button>
@@ -380,7 +380,7 @@ export const ShopPage = () => {
 
           {/* Active Filters Bar (Compact) */}
           {activeFiltersCount > 0 && (
-            <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-slate-100 dark:border-white/5">
+            <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-foreground/8">
               {selectedCategories.map(cat => (
                 <Badge key={cat} variant="secondary" className="gap-1.5 pl-2.5 pr-1.5 py-1 rounded-full text-[9px] uppercase tracking-wider">
                   {cat}
@@ -413,12 +413,12 @@ export const ShopPage = () => {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, margin: "-50px" }}
             transition={{ duration: 0.8, ease: "easeOut" }}
-            className="hidden lg:block w-72 shrink-0 space-y-12 sticky top-32 h-fit border-r border-dashed border-slate-200 dark:border-white/10 pr-8"
+            className="hidden lg:block w-72 shrink-0 space-y-12 sticky top-32 h-fit border-r border-dashed border-foreground/10 pr-8"
         >
             <div className="space-y-10">
                 <div>
                     <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-900 dark:text-white opacity-40">Categories</h3>
+                        <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-foreground opacity-40">Categories</h3>
                         <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
                     </div>
                     <div className="relative">
@@ -426,7 +426,7 @@ export const ShopPage = () => {
                         <select 
                             value={selectedCategories[0] || 'All'} 
                             onChange={e => handleCategoryChange(e.target.value)}
-                            className="w-full h-10 pl-9 pr-4 text-[10px] font-bold bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl appearance-none focus:outline-none focus:ring-1 focus:ring-slate-900/10 dark:focus:ring-white/10"
+                            className="w-full h-10 pl-9 pr-4 text-[10px] font-bold bg-foreground/[0.04] border border-foreground/10 rounded-xl appearance-none focus:outline-none focus:ring-1 focus:ring-foreground/10"
                         >
                             <option value="All">All Products</option>
                             {Object.keys(CATEGORY_HIERARCHY).map(catName => (
@@ -439,9 +439,9 @@ export const ShopPage = () => {
                     </div>
                 </div>
 
-                <div className="pt-8 border-t border-slate-100 dark:border-white/5">
+                <div className="pt-8 border-t border-foreground/8">
                     <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-900 dark:text-white opacity-40">Filters</h3>
+                        <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-foreground opacity-40">Filters</h3>
                         <Layers className="w-3 h-3 opacity-20" />
                     </div>
                     
@@ -453,7 +453,7 @@ export const ShopPage = () => {
                                 <select 
                                     value={selectedLocation} 
                                     onChange={e => setSelectedLocation(e.target.value)}
-                                    className="w-full h-10 pl-9 pr-4 text-[10px] font-bold bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl appearance-none focus:outline-none focus:ring-1 focus:ring-slate-900/10 dark:focus:ring-white/10"
+                                    className="w-full h-10 pl-9 pr-4 text-[10px] font-bold bg-foreground/[0.04] border border-foreground/10 rounded-xl appearance-none focus:outline-none focus:ring-1 focus:ring-foreground/10"
                                 >
                                     <option value="">All Regions</option>
                                     {availableLocations.map(loc => (
@@ -473,7 +473,7 @@ export const ShopPage = () => {
                                         placeholder="Min"
                                         value={priceRange.min} 
                                         onChange={e => setPriceRange({...priceRange, min: e.target.value})}
-                                        className="h-10 text-[10px] bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-xl"
+                                        className="h-10 text-[10px] bg-foreground/[0.04] border-foreground/10 rounded-xl"
                                     />
                                 </div>
                                 <div className="relative">
@@ -482,7 +482,7 @@ export const ShopPage = () => {
                                         placeholder="Max"
                                         value={priceRange.max} 
                                         onChange={e => setPriceRange({...priceRange, max: e.target.value})}
-                                        className="h-10 text-[10px] bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 rounded-xl"
+                                        className="h-10 text-[10px] bg-foreground/[0.04] border-foreground/10 rounded-xl"
                                     />
                                 </div>
                             </div>
@@ -491,12 +491,12 @@ export const ShopPage = () => {
                         <div className="space-y-4">
                             <Label className="text-[9px] uppercase tracking-widest opacity-40">Options</Label>
                             <div className="space-y-4">
-                                <div className="flex items-center justify-between p-3 border border-slate-100 dark:border-white/5 rounded-xl">
-                                    <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400">Verified Sellers</span>
+                                <div className="flex items-center justify-between p-3 border border-foreground/8 rounded-xl">
+                                    <span className="text-[10px] font-bold text-foreground/60">Verified Sellers</span>
                                     <Switch checked={showOnlyVerified} onCheckedChange={setShowOnlyVerified} />
                                 </div>
-                                <div className="flex items-center justify-between p-3 border border-slate-100 dark:border-white/5 rounded-xl">
-                                    <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400">In Stock</span>
+                                <div className="flex items-center justify-between p-3 border border-foreground/8 rounded-xl">
+                                    <span className="text-[10px] font-bold text-foreground/60">In Stock</span>
                                     <Switch checked={showOnlyInStock} onCheckedChange={setShowOnlyInStock} />
                                 </div>
                             </div>
@@ -509,7 +509,7 @@ export const ShopPage = () => {
                                     <button 
                                         key={r} 
                                         onClick={() => setMinRating(r === minRating ? null : r)}
-                                        className={`aspect-square flex items-center justify-center border transition-all rounded-lg ${minRating === r ? 'bg-slate-900 border-slate-900 text-white dark:bg-white dark:border-white dark:text-black' : 'border-slate-100 dark:border-white/10 text-slate-300 hover:border-slate-400'}`}
+                                        className={`aspect-square flex items-center justify-center border transition-all rounded-lg ${minRating === r ? 'bg-foreground border-foreground text-background' : 'border-foreground/10 text-foreground/30 hover:border-foreground/40'}`}
                                     >
                                         <span className="text-[10px] font-bold">{r}</span>
                                     </button>
@@ -519,11 +519,11 @@ export const ShopPage = () => {
                     </div>
                 </div>
 
-                <div className="pt-8 border-t border-slate-100 dark:border-white/5">
+                <div className="pt-8 border-t border-foreground/8">
                     <Button 
                         variant="outline" 
                         onClick={clearFilters} 
-                        className="w-full h-12 rounded-xl border-slate-200 dark:border-white/10 text-[10px] font-bold uppercase tracking-widest hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-600 transition-all"
+                        className="w-full h-12 rounded-xl border-foreground/10 text-[10px] font-bold uppercase tracking-widest hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-600 transition-all"
                     >
                         Reset Filters
                     </Button>
@@ -547,16 +547,16 @@ export const ShopPage = () => {
                         animate={{ x: 0 }}
                         exit={{ x: '100%' }}
                         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                        className="absolute inset-y-0 right-0 w-[85vw] max-w-sm bg-white dark:bg-[#0a0a0a] shadow-2xl flex flex-col"
+                        className="absolute inset-y-0 right-0 w-[85vw] max-w-sm bg-background shadow-2xl flex flex-col"
                     >
-                        <div className="p-6 border-b border-slate-100 dark:border-white/5 flex justify-between items-center">
+                        <div className="p-6 border-b border-foreground/8 flex justify-between items-center">
                             <h3 className="font-black text-lg uppercase tracking-tight">Filters</h3>
-                            <button onClick={() => setIsMobileFiltersOpen(false)} className="p-2 bg-slate-100 dark:bg-white/10 rounded-full"><X className="w-5 h-5"/></button>
+                            <button onClick={() => setIsMobileFiltersOpen(false)} className="p-2 bg-foreground/[0.06] rounded-full"><X className="w-5 h-5"/></button>
                         </div>
                         
                         <div className="flex-1 overflow-y-auto p-8 space-y-10">
                             <div>
-                                <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Sort Order</h4>
+                                <h4 className="text-[10px] font-black uppercase tracking-widest text-foreground/40 mb-6">Sort Order</h4>
                                 <div className="grid grid-cols-2 gap-2">
                                     {['newest', 'price_low', 'price_high', 'distance'].map(s => (
                                         <button key={s} onClick={() => {
@@ -572,19 +572,19 @@ export const ShopPage = () => {
                                             } else {
                                                 setSortBy(s as any);
                                             }
-                                        }} className={`h-11 px-4 rounded-xl text-[10px] font-bold uppercase tracking-widest border transition-all ${sortBy === s ? 'bg-slate-900 text-white dark:bg-white dark:text-black border-transparent shadow-lg' : 'bg-white dark:bg-white/5 text-slate-500 border-slate-100 dark:border-white/10'}`}>{s.replace('_', ' ')}</button>
+                                        }} className={`h-11 px-4 rounded-xl text-[10px] font-bold uppercase tracking-widest border transition-all ${sortBy === s ? 'bg-foreground text-background border-transparent shadow-lg' : 'bg-background/50 text-foreground/50 border-foreground/8'}`}>{s.replace('_', ' ')}</button>
                                     ))}
                                 </div>
                             </div>
 
                             <div>
-                                <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Location</h4>
+                                <h4 className="text-[10px] font-black uppercase tracking-widest text-foreground/40 mb-6">Location</h4>
                                 <div className="relative">
                                     <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-30" />
                                     <select 
                                         value={selectedLocation} 
                                         onChange={e => setSelectedLocation(e.target.value)}
-                                        className="w-full h-12 pl-11 pr-4 text-xs font-bold bg-slate-50 dark:bg-white/5 border-none rounded-xl appearance-none focus:outline-none focus:ring-1 focus:ring-slate-900/10 dark:focus:ring-white/10"
+                                        className="w-full h-12 pl-11 pr-4 text-xs font-bold bg-foreground/[0.04] border-none rounded-xl appearance-none focus:outline-none focus:ring-1 focus:ring-foreground/10"
                                     >
                                         <option value="">All Regions</option>
                                         {availableLocations.map(loc => (
@@ -596,34 +596,34 @@ export const ShopPage = () => {
                             </div>
 
                             <div>
-                                <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Price Range</h4>
+                                <h4 className="text-[10px] font-black uppercase tracking-widest text-foreground/40 mb-6">Price Range</h4>
                                 <div className="flex items-center gap-3">
                                     <Input 
                                         type="number" 
                                         placeholder="Min" 
                                         value={priceRange.min} 
                                         onChange={e => setPriceRange({...priceRange, min: e.target.value})}
-                                        className="h-12 text-xs bg-slate-50 dark:bg-white/5 border-none rounded-xl"
+                                        className="h-12 text-xs bg-foreground/[0.04] border-none rounded-xl"
                                     />
-                                    <span className="text-slate-300">-</span>
+                                    <span className="text-foreground/30">-</span>
                                     <Input 
                                         type="number" 
                                         placeholder="Max" 
                                         value={priceRange.max} 
                                         onChange={e => setPriceRange({...priceRange, max: e.target.value})}
-                                        className="h-12 text-xs bg-slate-50 dark:bg-white/5 border-none rounded-xl"
+                                        className="h-12 text-xs bg-foreground/[0.04] border-none rounded-xl"
                                     />
                                 </div>
                             </div>
 
                             <div>
-                                <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-6">Collections</h4>
+                                <h4 className="text-[10px] font-black uppercase tracking-widest text-foreground/40 mb-6">Collections</h4>
                                 <div className="relative">
                                     <Layers className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-30" />
                                     <select 
                                         value={selectedCategories[0] || 'All'} 
                                         onChange={e => handleCategoryChange(e.target.value)}
-                                        className="w-full h-12 pl-11 pr-4 text-xs font-bold bg-slate-50 dark:bg-white/5 border-none rounded-xl appearance-none focus:outline-none focus:ring-1 focus:ring-slate-900/10 dark:focus:ring-white/10"
+                                        className="w-full h-12 pl-11 pr-4 text-xs font-bold bg-foreground/[0.04] border-none rounded-xl appearance-none focus:outline-none focus:ring-1 focus:ring-foreground/10"
                                     >
                                         <option value="All">All Products</option>
                                         {Object.keys(CATEGORY_HIERARCHY).map(catName => (
@@ -637,7 +637,7 @@ export const ShopPage = () => {
                             </div>
                         </div>
 
-                        <div className="p-8 border-t border-slate-100 dark:border-white/5">
+                        <div className="p-6 border-t border-foreground/8 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
                             <Button variant="primary" className="w-full h-14 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl" onClick={() => setIsMobileFiltersOpen(false)}>Show {results.length} Products</Button>
                         </div>
                     </motion.div>
@@ -649,19 +649,19 @@ export const ShopPage = () => {
           {/* Desktop Toolbar */}
           <div className="hidden lg:flex items-center justify-between mb-12">
               <div className="flex items-center gap-4">
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                  <span className="text-xs font-bold text-foreground/40 uppercase tracking-widest">
                     {results.length} Products Found
                   </span>
-                  <span className="w-1 h-1 bg-slate-200 dark:bg-white/10 rounded-full"></span>
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                  <span className="w-1 h-1 bg-foreground/20 rounded-full"></span>
+                  <span className="text-xs font-bold text-foreground/40 uppercase tracking-widest">
                     Showing {Math.min(visibleCount, results.length)}
                   </span>
               </div>
               
               <div className="flex items-center gap-6">
                 <div className="flex items-center gap-3">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Sort:</span>
-                    <div className="flex gap-1 p-1 bg-slate-100 dark:bg-white/5 rounded-xl">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-foreground/40">Sort:</span>
+                    <div className="flex gap-1 p-1 bg-foreground/[0.05] rounded-xl">
                         {['newest', 'price_low', 'price_high', 'rating', 'distance'].map(s => (
                             <button 
                                 key={s}
@@ -679,7 +679,7 @@ export const ShopPage = () => {
                                         setSortBy(s as any);
                                     }
                                 }} 
-                                className={`h-8 px-4 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${sortBy === s ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                className={`h-8 px-4 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${sortBy === s ? 'bg-background text-foreground shadow-sm' : 'text-foreground/40 hover:text-foreground/70'}`}
                             >
                                 {s.replace('_', ' ')}
                             </button>
@@ -690,7 +690,7 @@ export const ShopPage = () => {
           </div>
 
           {isSearching ? (
-             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-12">
+             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-3 md:gap-x-6 gap-y-8 md:gap-y-12">
                 {[1,2,3,4,5,6,7,8].map(i => (
                     <div key={i} className="space-y-4">
                         <Skeleton className="aspect-[3/4] rounded-none" />
@@ -704,12 +704,12 @@ export const ShopPage = () => {
              </div>
           ) : results.length === 0 ? (
             <div className="space-y-20">
-                <div className="text-center py-40 border border-dashed border-slate-200 dark:border-white/10 rounded-[3rem] flex flex-col items-center justify-center bg-slate-50/30 dark:bg-white/[0.01]">
-                    <div className="w-20 h-20 bg-slate-100 dark:bg-white/5 rounded-full flex items-center justify-center mb-8">
-                        <Search className="w-8 h-8 text-slate-300" />
+                <div className="text-center py-40 border border-dashed border-foreground/10 rounded-[3rem] flex flex-col items-center justify-center bg-foreground/[0.01]">
+                    <div className="w-20 h-20 bg-foreground/[0.05] rounded-full flex items-center justify-center mb-8">
+                        <Search className="w-8 h-8 text-foreground/20" />
                     </div>
                     <h3 className="text-2xl font-serif font-light mb-4">No products found</h3>
-                    <p className="text-slate-400 text-sm mb-10 max-w-xs mx-auto leading-relaxed">We couldn't find any products matching your current selection. Try broadening your search.</p>
+                    <p className="text-foreground/50 text-sm mb-10 max-w-xs mx-auto leading-relaxed">We couldn't find any products matching your current selection. Try broadening your search.</p>
                     <Button variant="outline" onClick={clearFilters} className="rounded-full">Reset All Filters</Button>
                 </div>
 
@@ -741,7 +741,7 @@ export const ShopPage = () => {
           ) : (
             <>
                 <div 
-                    className={`grid ${viewMode === 'grid' ? 'grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-12' : 'grid-cols-1 gap-8'} animate-in fade-in duration-1000`}
+                    className={`grid ${viewMode === 'grid' ? 'grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-3 md:gap-x-6 gap-y-8 md:gap-y-12' : 'grid-cols-1 gap-8'} animate-in fade-in duration-1000`}
                 >
                    {results.slice(0, visibleCount).map((product, index) => {
                        const isElite = product.is_boosted || (product.rating || 0) >= 4.8;
@@ -767,8 +767,8 @@ export const ShopPage = () => {
                 
                 {visibleCount < totalCount && !isSearching && (
                     <div ref={ref} className="mt-32 text-center pb-20 flex flex-col items-center gap-4">
-                        <Loader2 className="w-6 h-6 animate-spin text-slate-200 dark:text-slate-800" />
-                        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-300">Loading more products</span>
+                        <Loader2 className="w-6 h-6 animate-spin text-foreground/20" />
+                        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground/30">Loading more products</span>
                     </div>
                 )}
             </>
@@ -780,12 +780,12 @@ export const ShopPage = () => {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="mt-32 pt-16 border-t border-slate-100 dark:border-white/5"
+              className="mt-32 pt-16 border-t border-foreground/8"
             >
               <div className="flex items-end justify-between mb-12">
                 <div>
                   <h2 className="font-serif text-3xl md:text-4xl font-light mb-4">Recently Viewed</h2>
-                  <p className="text-slate-400 text-sm max-w-md">Pick up where you left off with these items you've explored recently.</p>
+                  <p className="text-foreground/50 text-sm max-w-md">Pick up where you left off with these items you've explored recently.</p>
                 </div>
               </div>
               
@@ -821,13 +821,13 @@ export const ShopPage = () => {
                 initial={{ y: 100 }}
                 animate={{ y: 0 }}
                 exit={{ y: 100 }}
-                className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] w-full max-w-2xl px-4"
+                className="fixed bottom-24 md:bottom-8 left-1/2 -translate-x-1/2 z-[100] w-full max-w-2xl px-4"
             >
-                <div className="bg-white/80 dark:bg-background/80 backdrop-blur-2xl border border-slate-200 dark:border-white/10 rounded-[2.5rem] p-4 shadow-2xl flex items-center justify-between gap-6">
+                <div className="bg-background/90 backdrop-blur-2xl border border-foreground/10 rounded-[2.5rem] p-4 shadow-2xl flex items-center justify-between gap-6">
                     <div className="flex items-center gap-4 flex-1 overflow-x-auto no-scrollbar">
                         {comparisonList.map(p => (
                             <div key={p.id} className="relative group shrink-0">
-                                <div className="w-16 h-20 rounded-2xl overflow-hidden border border-slate-100 dark:border-white/5">
+                                <div className="w-16 h-20 rounded-2xl overflow-hidden border border-foreground/8">
                                     <img src={p.images[0]} className="w-full h-full object-cover" />
                                 </div>
                                 <button 
@@ -839,7 +839,7 @@ export const ShopPage = () => {
                             </div>
                         ))}
                         {comparisonList.length < 3 && (
-                            <div className="w-16 h-20 rounded-2xl border border-dashed border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-300">
+                            <div className="w-16 h-20 rounded-2xl border border-dashed border-foreground/10 flex items-center justify-center text-foreground/20">
                                 <Plus className="w-4 h-4" />
                             </div>
                         )}
@@ -856,9 +856,9 @@ export const ShopPage = () => {
                         </Button>
                         <button 
                             onClick={() => setComparisonList([])}
-                            className="p-3 hover:bg-slate-100 dark:hover:bg-white/5 rounded-full transition-colors"
+                            className="p-3 hover:bg-foreground/[0.06] rounded-full transition-colors"
                         >
-                            <X className="w-5 h-5 text-slate-400" />
+                            <X className="w-5 h-5 text-foreground/30" />
                         </button>
                     </div>
                 </div>
