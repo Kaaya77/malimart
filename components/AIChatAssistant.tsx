@@ -446,7 +446,7 @@ export const AIChatAssistant = () => {
  if (!product) return null;
  return (
  <div key={i} className="mb-4 ml-2 animate-in fade-in slide-in-from-bottom-2 w-[85%]">
- <div className="bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-white/10 shadow-lg flex gap-3 items-center">
+ <div className="bg-background p-3 rounded-2xl border border-foreground/8 shadow-sm flex gap-3 items-center">
  <div className="w-16 h-16 rounded-xl overflow-hidden bg-foreground/8 shrink-0 relative">
  <img src={product.images?.[0]} className="w-full h-full object-cover" alt={product.name} />
  </div>
@@ -462,7 +462,7 @@ export const AIChatAssistant = () => {
  return (
  <div key={i} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'} mb-3 animate-in fade-in slide-in-from-bottom-2`}>
  {m.image && (
- <div className="mb-1.5 max-w-[150px] rounded-2xl overflow-hidden border-2 border-white dark:border-slate-800 shadow-md">
+ <div className="mb-1.5 max-w-[150px] rounded-2xl overflow-hidden border border-foreground/8 shadow-sm">
  <img src={m.image} alt="User upload" className="w-full h-full object-cover" />
  </div>
  )}
@@ -488,11 +488,11 @@ export const AIChatAssistant = () => {
  }
 
  return (
- <div className={`fixed bottom-[84px] right-4 md:bottom-4 md:right-4 z-[90] w-[calc(100vw-2rem)] md:w-[320px] transition-all duration-500 ${isMinimized ? 'h-16' : 'h-[450px] md:h-[500px]'} animate-in slide-in-from-bottom-4 shadow-2xl rounded-[2rem]`}>
- <Card className="flex flex-col h-full rounded-[2rem] overflow-hidden bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl border border-slate-200 dark:border-slate-800 shadow-2xl">
- <div className="p-3 md:p-4 bg-background/90 border-b border-foreground/10 flex justify-between items-center shrink-0 backdrop-blur-md z-20">
+ <div className={`fixed bottom-[84px] right-4 md:bottom-4 md:right-4 z-[90] w-[calc(100vw-2rem)] md:w-[360px] transition-all duration-500 ${isMinimized ? 'h-16' : 'h-[480px] md:h-[520px]'} animate-in slide-in-from-bottom-4 shadow-2xl rounded-3xl`}>
+ <Card className="flex flex-col h-full rounded-3xl overflow-hidden bg-background/98 backdrop-blur-xl border border-foreground/10 shadow-2xl">
+ <div className="px-4 py-3.5 bg-background border-b border-foreground/8 flex justify-between items-center shrink-0 z-20">
  <div className="flex items-center gap-3">
- <div className="w-8 h-8 bg-gradient-to-tr from-brand-500 to-emerald-400 rounded-xl flex items-center justify-center shadow-lg relative overflow-hidden">
+ <div className="w-8 h-8 bg-gradient-to-tr from-emerald-500 to-emerald-400 rounded-xl flex items-center justify-center shadow-lg relative overflow-hidden">
  <Bot className="w-5 h-5 text-white relative z-10" />
  <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
  </div>
@@ -511,7 +511,7 @@ export const AIChatAssistant = () => {
  <button onClick={() => setIsMinimized(!isMinimized)} className="p-1.5 hover:bg-foreground/10 rounded-lg">
  {isMinimized ? <Maximize2 className="w-3.5 h-3.5 text-foreground/55" /> : <Minimize2 className="w-3.5 h-3.5 text-foreground/55" />}
  </button>
- <button onClick={() => { stopLiveSession(); setIsOpen(false); }} className="p-1.5 hover:bg-red-100 text-foreground/55 hover:text-red-500 rounded-lg">
+ <button onClick={() => { stopLiveSession(); setIsOpen(false); }} className="p-1.5 hover:bg-rose-500/10 text-foreground/50 hover:text-rose-500 rounded-lg">
  <X className="w-3.5 h-3.5" />
  </button>
  </div>
@@ -519,12 +519,12 @@ export const AIChatAssistant = () => {
 
  {!isMinimized && (
  <>
- <div className="flex-1 overflow-y-auto relative bg-slate-50/50 dark:bg-black/20">
+ <div className="flex-1 overflow-y-auto relative bg-foreground/[0.02] no-scrollbar">
  {isLive && (
  <div className="absolute inset-0 z-20 bg-background/95 backdrop-blur-md flex flex-col items-center justify-center p-6 animate-in fade-in">
  <div className="mb-8 relative">
- <div className="w-20 h-20 rounded-full bg-brand-500/20 flex items-center justify-center animate-pulse">
- <div className="w-16 h-16 rounded-full bg-brand-500/40 flex items-center justify-center">
+ <div className="w-20 h-20 rounded-full bg-emerald-500/20 flex items-center justify-center animate-pulse">
+ <div className="w-16 h-16 rounded-full bg-emerald-500/40 flex items-center justify-center">
  <Mic className="w-8 h-8 text-white" />
  </div>
  </div>
@@ -545,7 +545,7 @@ export const AIChatAssistant = () => {
  onClick={() => handleSend(undefined, action.query)}
  className="flex flex-col items-center justify-center p-3 bg-card border border-foreground/8 rounded-2xl hover:border-emerald-500/50 transition-all group"
  >
- <action.icon className="w-5 h-5 mb-2 text-brand-500 group-hover:scale-110 transition-transform" />
+ <action.icon className="w-5 h-5 mb-2 text-emerald-600 group-hover:scale-110 transition-transform" />
  <span className="text-[9px] font-black uppercase tracking-widest text-foreground/60">{action.label}</span>
  </button>
  ))}
@@ -561,13 +561,13 @@ export const AIChatAssistant = () => {
  )}
  </div>
  </div>
- <div className="p-3 bg-background border-t border-foreground/10 relative z-10 space-y-3">
+ <div className="p-3 bg-background border-t border-foreground/8 relative z-10 space-y-3">
  <form onSubmit={(e) => handleSend(e)} className="flex gap-2 items-center">
- <button type="button" onClick={() => fileInputRef.current?.click()} className="p-2.5 bg-foreground/8 rounded-xl text-foreground/55 hover:text-brand-500 transition-all flex-shrink-0">
+ <button type="button" onClick={() => fileInputRef.current?.click()} className="p-2.5 bg-foreground/8 rounded-xl text-foreground/55 hover:text-emerald-600 transition-all flex-shrink-0">
  <Paperclip className="w-4 h-4" />
  </button>
  <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileSelect} />
- <div className="flex-1 bg-foreground/8 rounded-2xl flex items-center px-4 min-h-[44px] border-2 border-transparent focus-within:border-brand-500/20 transition-all gap-2">
+ <div className="flex-1 bg-foreground/8 rounded-2xl flex items-center px-4 min-h-[44px] border-2 border-transparent focus-within:border-emerald-500/20 transition-all gap-2">
  <Input placeholder="Ask anything..." value={input} onChange={e => setInput(e.target.value)} disabled={isLive} className="bg-transparent border-none p-0 h-auto text-[11px] font-bold focus:ring-0 w-full" />
  {input.trim() && !isLive && (
  <button 

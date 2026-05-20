@@ -1,187 +1,239 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Bell, MessageSquare, Check, X, Loader2, RefreshCw } from 'lucide-react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { Bell, MessageSquare, Check, X, Loader2, RefreshCw, BellOff, ArrowRight, Circle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAppState } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 
 const timeAgo = (dateStr: string) => {
- const date = new Date(dateStr);
- const now = new Date();
- const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
- 
- if (seconds < 60) return 'Just now';
- const minutes = Math.floor(seconds / 60);
- if (minutes < 60) return `${minutes}m ago`;
- const hours = Math.floor(minutes / 60);
- if (hours < 24) return `${hours}h ago`;
- const days = Math.floor(hours / 24);
- if (days < 7) return `${days}d ago`;
- return date.toLocaleDateString();
+  const s = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+  if (s < 60) return 'Just now';
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  if (d < 7) return `${d}d ago`;
+  return new Date(dateStr).toLocaleDateString();
+};
+
+const NOTIF_ICON: Record<string, string> = {
+  order: '📦', payment: '💳', return: '↩️', shipment: '🚚',
+  message: '💬', system: '⚙️', verification: '✅', promo: '🎉',
 };
 
 export const ActivityCenter = () => {
- const { notifications, markNotificationRead, markAllNotificationsRead, user, unreadMessages, fetchMessages, refreshNotifications } = useAppState();
- const navigate = useNavigate();
- const [isOpen, setIsOpen] = useState(false);
- const [activeTab, setActiveTab] = useState<'notifications' | 'messages'>('notifications');
- const [messages, setMessages] = useState<any[]>([]);
- const [isLoadingMessages, setIsLoadingMessages] = useState(false);
- const containerRef = useRef<HTMLDivElement>(null);
+  const {
+    notifications, markNotificationRead, markAllNotificationsRead,
+    user, unreadMessages, fetchMessages, refreshNotifications
+  } = useAppState();
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState<'notifications' | 'messages'>('notifications');
+  const [messages, setMessages] = useState<any[]>([]);
+  const [loadingMsgs, setLoadingMsgs] = useState(false);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [panelPos, setPanelPos] = useState({ top: 0, right: 0 });
 
- const unreadNotifCount = notifications.filter(n => !n.read).length;
+  const unreadNotifs = notifications.filter(n => !n.read).length;
+  const totalUnread = unreadNotifs + unreadMessages;
 
- const loadMessages = async () => {
- setIsLoadingMessages(true);
- const msgs = await fetchMessages();
- setMessages(msgs);
- setIsLoadingMessages(false);
- };
+  const loadMessages = useCallback(async () => {
+    setLoadingMsgs(true);
+    const msgs = await fetchMessages();
+    setMessages(msgs || []);
+    setLoadingMsgs(false);
+  }, [fetchMessages]);
 
- useEffect(() => {
- if (isOpen && activeTab === 'messages') {
- loadMessages();
- }
- }, [isOpen, activeTab]);
+  useEffect(() => {
+    if (open && tab === 'messages') loadMessages();
+  }, [open, tab]);
 
- useEffect(() => {
- const handleClickOutside = (event: MouseEvent) => {
- if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
- setIsOpen(false);
- }
- };
- if (isOpen) document.addEventListener('mousedown', handleClickOutside);
- return () => document.removeEventListener('mousedown', handleClickOutside);
- }, [isOpen]);
+  useEffect(() => {
+    if (!open) return;
+    if (btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect();
+      setPanelPos({ top: r.bottom + 8, right: window.innerWidth - r.right });
+    }
+    const close = (e: MouseEvent) => {
+      if (panelRef.current && !panelRef.current.contains(e.target as Node) &&
+          btnRef.current && !btnRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    const esc = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+    document.addEventListener('mousedown', close);
+    document.addEventListener('keydown', esc);
+    return () => { document.removeEventListener('mousedown', close); document.removeEventListener('keydown', esc); };
+  }, [open]);
 
- if (!user) return null;
+  const handleNotifClick = (n: any) => {
+    markNotificationRead(n.id);
+    if (n.link) navigate(n.link);
+    setOpen(false);
+  };
 
- return (
- <div className="relative" ref={containerRef}>
- <button 
- onClick={() => setIsOpen(!isOpen)} 
- className="relative p-3 rounded-2xl hover:bg-background text-foreground transition-all duration-300 group active:scale-95"
- >
- <div className="flex gap-2">
- <Bell className={`w-4 h-4 transition-transform duration-500 group-hover:rotate-12 ${isOpen && activeTab === 'notifications' ? 'fill-current' : ''}`} />
- <MessageSquare className={`w-4 h-4 transition-transform duration-500 group-hover:-rotate-12 ${isOpen && activeTab === 'messages' ? 'fill-current' : ''}`} />
- </div>
- {(unreadNotifCount > 0 || unreadMessages > 0) && (
- <span className="absolute top-2 right-2 h-2 w-2 bg-red-500 rounded-full ring-2 ring-white dark:ring-black animate-pulse shadow-lg shadow-red-500/50"></span>
- )}
- </button>
+  if (!user) return null;
 
- {isOpen && (
- <div className="absolute top-full right-0 mt-4 w-[380px] md:w-[420px] bg-white/95 dark:bg-primary/95 backdrop-blur-3xl rounded-[2.5rem] shadow-2xl border border-foreground/5 overflow-hidden z-50 animate-in fade-in zoom-in-95 slide-in-from-top-4 duration-500">
- 
- {/* Header */}
- <div className="p-8 pb-6 border-b border-foreground/5">
- <div className="flex justify-between items-center mb-8">
- <div className="space-y-1">
- <h3 className="text-xl font-sans font-extrabold text-foreground">Activity</h3>
- <p className="text-[9px] uppercase tracking-[0.2em] font-black text-foreground/40">Real-time updates</p>
- </div>
- <div className="flex gap-3">
- <button onClick={activeTab === 'messages' ? loadMessages : refreshNotifications} className="p-2 rounded-xl bg-background dark:bg-white/5 hover:bg-primary/5 dark:hover:bg-white/10 transition-all active:rotate-180 duration-500">
- <RefreshCw className="w-3.5 h-3.5 text-foreground"/>
- </button>
- <button onClick={() => setIsOpen(false)} className="p-2 rounded-xl bg-background dark:bg-white/5 hover:bg-primary/5 dark:hover:bg-white/10 transition-all">
- <X className="w-3.5 h-3.5 text-foreground"/>
- </button>
- </div>
- </div>
- <div className="flex gap-2 p-1 bg-background dark:bg-white/5 rounded-2xl">
- <button 
- onClick={() => setActiveTab('notifications')}
- className={`flex-1 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === 'notifications' ? 'bg-primary text-white dark:bg-white dark:text-black shadow-lg shadow-foreground/10 dark:shadow-white/10' : 'text-foreground/40 hover:text-foreground '}`}
- >
- Notifications ({unreadNotifCount})
- </button>
- <button 
- onClick={() => setActiveTab('messages')}
- className={`flex-1 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === 'messages' ? 'bg-primary text-white dark:bg-white dark:text-black shadow-lg shadow-foreground/10 dark:shadow-white/10' : 'text-foreground/40 hover:text-foreground '}`}
- >
- Messages ({unreadMessages})
- </button>
- </div>
- </div>
+  const panel = (
+    <AnimatePresence>
+      {open && (
+        <motion.div ref={panelRef}
+          initial={{ opacity: 0, scale: 0.96, y: -8 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.96, y: -8 }}
+          transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+          className="fixed z-[250] w-[360px] md:w-[400px] bg-background border border-foreground/10 rounded-3xl shadow-2xl overflow-hidden"
+          style={{ top: panelPos.top, right: panelPos.right }}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between px-5 py-4 border-b border-foreground/8">
+            <div>
+              <h3 className="font-bold text-foreground text-sm">Activity</h3>
+              {totalUnread > 0 && (
+                <p className="text-[10px] text-foreground/40 mt-0.5">{totalUnread} unread update{totalUnread !== 1 ? 's' : ''}</p>
+              )}
+            </div>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => tab === 'messages' ? loadMessages() : refreshNotifications()}
+                className="w-8 h-8 rounded-xl bg-foreground/[0.05] flex items-center justify-center text-foreground/50 hover:bg-foreground/10 hover:text-foreground transition-colors"
+              >
+                <RefreshCw className="w-3.5 h-3.5"/>
+              </button>
+              {tab === 'notifications' && unreadNotifs > 0 && (
+                <button
+                  onClick={() => markAllNotificationsRead()}
+                  className="w-8 h-8 rounded-xl bg-foreground/[0.05] flex items-center justify-center text-foreground/50 hover:bg-emerald-500/10 hover:text-emerald-500 transition-colors"
+                  title="Mark all read"
+                >
+                  <Check className="w-3.5 h-3.5"/>
+                </button>
+              )}
+              <button onClick={() => setOpen(false)} className="w-8 h-8 rounded-xl bg-foreground/[0.05] flex items-center justify-center text-foreground/50 hover:bg-foreground/10 transition-colors">
+                <X className="w-3.5 h-3.5"/>
+              </button>
+            </div>
+          </div>
 
- {/* Content */}
- <div className="max-h-[450px] overflow-y-auto no-scrollbar py-4">
- {activeTab === 'notifications' ? (
- <>
- {unreadNotifCount > 0 && (
- <button onClick={markAllNotificationsRead} className="w-full text-center py-4 text-[9px] font-black uppercase tracking-[0.3em] text-foreground/40 hover:text-foreground transition-colors border-b border-foreground/5">
- Mark all as read
- </button>
- )}
- {notifications.length === 0 ? (
- <div className="py-20 text-center flex flex-col items-center justify-center space-y-4">
- <div className="w-16 h-16 rounded-full bg-background dark:bg-white/5 flex items-center justify-center">
- <Bell className="w-6 h-6 text-foreground/20/20" />
- </div>
- <p className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground">All Caught Up</p>
- </div>
- ) : (
- <div className="px-4 space-y-2">
- {notifications.map((notif) => (
- <div key={notif.id} className={`p-6 rounded-[1.5rem] transition-all duration-300 cursor-pointer ${!notif.read ? 'bg-background dark:bg-white/5' : 'hover:bg-background/50 dark:hover:bg-white/[0.02]'}`} onClick={() => { markNotificationRead(notif.id); setIsOpen(false); navigate(notif.link || '/notifications'); }}>
- <div className="flex justify-between items-start mb-2">
- <h4 className={`text-xs font-sans font-bold ${!notif.read ? 'text-foreground' : 'text-foreground/60/60'}`}>{notif.title}</h4>
- <span className="text-[8px] font-black uppercase tracking-widest text-foreground/30/30">{timeAgo(notif.created_at)}</span>
- </div>
- <p className="text-[11px] text-foreground/60/60 line-clamp-2 font-sans font-medium leading-relaxed">{notif.message}</p>
- </div>
- ))}
- </div>
- )}
- </>
- ) : (
- isLoadingMessages ? (
- <div className="px-4 space-y-2">
- {[1, 2, 3].map(i => (
- <div key={i} className="p-6 rounded-[1.5rem] bg-background/50 dark:bg-white/[0.02] animate-pulse">
- <div className="flex justify-between items-start mb-2">
- <div className="h-3 bg-primary/10 dark:bg-white/10 w-1/3 rounded"></div>
- <div className="h-2 bg-primary/10 dark:bg-white/10 w-1/6 rounded"></div>
- </div>
- <div className="h-2 bg-primary/10 dark:bg-white/10 w-3/4 rounded mt-2"></div>
- <div className="h-2 bg-primary/10 dark:bg-white/10 w-1/2 rounded mt-2"></div>
- </div>
- ))}
- </div>
- ) : messages.length === 0 ? (
- <div className="py-20 text-center flex flex-col items-center justify-center space-y-4">
- <div className="w-16 h-16 rounded-full bg-background dark:bg-white/5 flex items-center justify-center">
- <MessageSquare className="w-6 h-6 text-foreground/20/20" />
- </div>
- <p className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground">No Messages</p>
- </div>
- ) : (
- <div className="px-4 space-y-2">
- {messages.map((msg) => (
- <div key={msg.id} className="p-6 rounded-[1.5rem] bg-background/50 dark:bg-white/[0.02] hover:bg-background transition-all duration-300 cursor-pointer" onClick={() => { setIsOpen(false); navigate('/messages'); }}>
- <div className="flex justify-between items-start mb-2">
- <h4 className="text-xs font-sans font-bold text-foreground truncate">Message from {msg.sender_name || 'User'}</h4>
- <span className="text-[8px] font-black uppercase tracking-widest text-foreground/30/30">{timeAgo(msg.created_at)}</span>
- </div>
- <p className="text-[11px] text-foreground/60/60 line-clamp-2 font-sans font-medium leading-relaxed">{msg.text || msg.body}</p>
- </div>
- ))}
- </div>
- )
- )}
- </div>
- 
- {/* Footer */}
- <div className="p-6 bg-background/50 dark:bg-white/[0.02] border-t border-foreground/5 text-center">
- <button 
- className="text-[9px] font-black uppercase tracking-[0.3em] text-foreground/40 hover:text-foreground transition-colors" 
- onClick={() => { setIsOpen(false); navigate(activeTab === 'notifications' ? '/notifications' : '/messages'); }}
- >
- View All Activity
- </button>
- </div>
- </div>
- )}
- </div>
- );
+          {/* Tab strip */}
+          <div className="flex p-1.5 gap-1 bg-foreground/[0.03] border-b border-foreground/8">
+            {(['notifications', 'messages'] as const).map(t => (
+              <button key={t} onClick={() => setTab(t)}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all ${tab === t ? 'bg-background text-foreground shadow-sm' : 'text-foreground/40 hover:text-foreground/65'}`}>
+                {t === 'notifications' ? <Bell className="w-3.5 h-3.5"/> : <MessageSquare className="w-3.5 h-3.5"/>}
+                {t === 'notifications' ? `Alerts ${unreadNotifs > 0 ? `(${unreadNotifs})` : ''}` : `Messages ${unreadMessages > 0 ? `(${unreadMessages})` : ''}`}
+              </button>
+            ))}
+          </div>
+
+          {/* Content */}
+          <div className="overflow-y-auto max-h-[400px] no-scrollbar">
+            {tab === 'notifications' ? (
+              notifications.length === 0 ? (
+                <div className="flex flex-col items-center py-14 text-foreground/25">
+                  <BellOff className="w-10 h-10 mb-3 opacity-30"/>
+                  <p className="text-xs font-semibold">All caught up</p>
+                  <p className="text-[10px] mt-1">No new notifications</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-foreground/5">
+                  {notifications.slice(0, 20).map(n => (
+                    <button key={n.id} onClick={() => handleNotifClick(n)}
+                      className={`w-full text-left px-5 py-3.5 flex gap-3 items-start hover:bg-foreground/[0.03] transition-colors ${!n.read ? 'bg-foreground/[0.02]' : ''}`}>
+                      <div className="relative shrink-0 mt-0.5">
+                        <div className="w-9 h-9 rounded-xl bg-foreground/[0.06] flex items-center justify-center text-base">
+                          {NOTIF_ICON[n.type] || '🔔'}
+                        </div>
+                        {!n.read && (
+                          <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-rose-500 border-2 border-background"/>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-[13px] leading-snug ${!n.read ? 'font-semibold text-foreground' : 'font-medium text-foreground/70'}`}>
+                          {n.title}
+                        </p>
+                        {n.message && (
+                          <p className="text-[11px] text-foreground/45 mt-0.5 line-clamp-2 leading-relaxed">{n.message}</p>
+                        )}
+                        <p className="text-[10px] text-foreground/30 mt-1 font-medium">{timeAgo(n.created_at)}</p>
+                      </div>
+                      {n.link && <ArrowRight className="w-3.5 h-3.5 text-foreground/25 shrink-0 mt-1"/>}
+                    </button>
+                  ))}
+                </div>
+              )
+            ) : (
+              loadingMsgs ? (
+                <div className="flex items-center justify-center py-14">
+                  <Loader2 className="w-6 h-6 animate-spin text-foreground/30"/>
+                </div>
+              ) : messages.length === 0 ? (
+                <div className="flex flex-col items-center py-14 text-foreground/25">
+                  <MessageSquare className="w-10 h-10 mb-3 opacity-30"/>
+                  <p className="text-xs font-semibold">No messages yet</p>
+                  <p className="text-[10px] mt-1">Messages from sellers will appear here</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-foreground/5">
+                  {messages.slice(0, 15).map((m, i) => (
+                    <button key={m.id || i}
+                      onClick={() => { navigate('/buyer?tab=inbox'); setOpen(false); }}
+                      className="w-full text-left px-5 py-3.5 flex gap-3 items-center hover:bg-foreground/[0.03] transition-colors">
+                      <div className="w-9 h-9 rounded-xl overflow-hidden bg-foreground/[0.06] shrink-0">
+                        {m.sender_avatar ? (
+                          <img src={m.sender_avatar} className="w-full h-full object-cover" alt=""/>
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-sm font-bold text-foreground/40">
+                            {(m.sender_name || '?')[0].toUpperCase()}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[13px] font-semibold text-foreground truncate">{m.sender_name || 'Seller'}</p>
+                        <p className="text-[11px] text-foreground/45 truncate mt-0.5">{m.content || m.message || 'New message'}</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-[10px] text-foreground/30">{timeAgo(m.created_at)}</p>
+                        {m.is_unread && <div className="w-2 h-2 rounded-full bg-rose-500 ml-auto mt-1"/>}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="p-3 border-t border-foreground/8">
+            <button
+              onClick={() => { navigate(tab === 'notifications' ? '/notifications' : '/messages'); setOpen(false); }}
+              className="w-full h-9 rounded-xl bg-foreground/[0.05] text-foreground/60 text-[11px] font-semibold hover:bg-foreground/[0.08] hover:text-foreground transition-colors flex items-center justify-center gap-1.5">
+              View all {tab} <ArrowRight className="w-3.5 h-3.5"/>
+            </button>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+
+  return (
+    <>
+      <button
+        ref={btnRef}
+        onClick={() => setOpen(v => !v)}
+        className="relative p-2.5 rounded-2xl bg-foreground/[0.05] hover:bg-foreground/[0.09] text-foreground/70 hover:text-foreground transition-all active:scale-90"
+      >
+        <div className="flex gap-1.5">
+          <Bell className={`w-4 h-4 stroke-[2] ${open && tab === 'notifications' ? 'fill-current' : ''}`}/>
+          <MessageSquare className={`w-4 h-4 stroke-[2] ${open && tab === 'messages' ? 'fill-current' : ''}`}/>
+        </div>
+        {totalUnread > 0 && (
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-background animate-pulse"/>
+        )}
+      </button>
+      {createPortal(panel, document.body)}
+    </>
+  );
 };

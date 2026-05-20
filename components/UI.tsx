@@ -75,7 +75,7 @@ export const ToastProvider = ({ children }: { children?: ReactNode }) => {
  >
  <div className="absolute inset-0 bg-noise opacity-[0.03] pointer-events-none" />
  <div className={`w-2 h-2 rounded-full shrink-0 shadow-[0_0_10px_rgba(0,0,0,0.1)] ${t.type === 'success' ? 'bg-emerald-500 shadow-emerald-500/50' : t.type === 'error' ? 'bg-red-500 shadow-red-500/50' : 'bg-blue-500 shadow-blue-500/50'}`}></div>
- <p className="text-sm font-bold text-slate-900 dark:text-white leading-tight tracking-tight">{t.msg}</p>
+ <p className="text-sm font-bold text-foreground/60 leading-tight tracking-tight">{t.msg}</p>
  </motion.div>
  ))}
  </AnimatePresence>
@@ -97,7 +97,7 @@ export const Button = ({ variant = 'primary', size = 'default', className = '', 
  danger: "bg-red-500 text-white hover:bg-red-600 shadow-sm",
  outline: "border-2 border-foreground/20 text-foreground hover:border-foreground/40",
  ghost: "hover:bg-foreground/[0.06] text-foreground",
- link: "text-emerald-600 dark:text-emerald-400 hover:underline p-0 h-auto"
+ link: "text-emerald-600 hover:underline p-0 h-auto"
  };
  
  const sizes: any = { 
@@ -169,7 +169,7 @@ export const CardContent = ({ className = '', ...props }: any) => (
 );
 
 export const CardTitle = ({ className = '', ...props }: any) => (
- <h3 className={`text-xl font-black tracking-tight text-slate-900 dark:text-white ${className}`} {...props} />
+ <h3 className={`text-xl font-black tracking-tight text-foreground/60 ${className}`} {...props} />
 );
 
 export const CardDescription = ({ className = '', ...props }: any) => (
@@ -181,7 +181,7 @@ export const Badge = ({ variant = 'default', className = '', ...props }: any) =>
  default: "bg-foreground/[0.08] text-foreground",
  secondary: "bg-foreground/[0.04] text-foreground/65 border border-foreground/10",
  outline: "border-2 border-foreground/20 text-foreground/70",
- success: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400",
+ success: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 ",
  danger: "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400"
  };
  return <div className={`inline-flex items-center rounded-xl px-3 py-1 text-xs font-bold transition-all ${variants[variant]} ${className}`} {...props} />;
@@ -217,7 +217,7 @@ export const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, confi
  return (
  <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
  <div className="bg-background w-full max-w-md p-8 rounded-3xl shadow-2xl border border-foreground/8 animate-in zoom-in-95 duration-200">
- <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">{title}</h3>
+ <h3 className="text-2xl font-black text-foreground/60 mb-4 tracking-tight">{title}</h3>
  <p className="text-sm font-medium text-foreground/55 mb-8">{message}</p>
  <div className="flex justify-end gap-3">
  <Button 
@@ -291,8 +291,8 @@ export const ImageDropzone = ({ currentImage, onImageSelected }: any) => (
  <img src={currentImage} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Upload" />
  ) : (
  <div className="text-center p-6">
- <div className="w-12 h-12 bg-foreground/[0.06] rounded-2xl flex items-center justify-center mx-auto mb-4"><X className="w-5 h-5 text-slate-400 rotate-45 stroke-[2]" /></div>
- <p className="text-xs font-bold text-slate-500">Upload Photo</p>
+ <div className="w-12 h-12 bg-foreground/[0.06] rounded-2xl flex items-center justify-center mx-auto mb-4"><X className="w-5 h-5 text-foreground/60 rotate-45 stroke-[2]" /></div>
+ <p className="text-xs font-bold text-foreground/60">Upload Photo</p>
  </div>
  )}
  <input id="img-upload" type="file" className="hidden" accept="image/*" onChange={(e) => {
@@ -323,9 +323,9 @@ export const Modal = ({ isOpen, title, onClose, children }: any) => {
  <div className="p-6 md:p-8 space-y-6 bg-background rounded-3xl shadow-2xl max-h-[90dvh] overflow-y-auto">
  <div className="flex justify-between items-center border-b border-foreground/8 pb-6">
  <h3 className="text-2xl font-black tracking-tight text-foreground">{title}</h3>
- <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"><X className="w-6 h-6 stroke-[2] text-slate-500" /></button>
+ <button onClick={onClose} className="p-2 hover:bg-foreground/[0.05] dark:hover:bg-foreground/[0.05] rounded-full transition-colors"><X className="w-6 h-6 stroke-[2] text-foreground/60" /></button>
  </div>
- <div className="text-slate-900 dark:text-white">
+ <div className="text-foreground/60 ">
  {children}
  </div>
  </div>
@@ -339,7 +339,7 @@ export const Modal = ({ isOpen, title, onClose, children }: any) => {
 export const ConfirmDialog = ({ isOpen, title, message, onConfirm, onCancel, isDangerous, confirmText = "Confirm", isLoading }: any) => {
  if (!isOpen) return null;
  return (
- <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in">
+ <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-foreground/[0.05]/50 backdrop-blur-sm animate-in fade-in">
  <div className="max-w-sm w-full p-6 space-y-6 bg-background rounded-3xl shadow-2xl border border-foreground/8 animate-in zoom-in-95">
  <div className="text-center">
  <h3 className="text-2xl font-black tracking-tight mb-4 text-foreground">{title}</h3>
@@ -384,42 +384,42 @@ export const ReceiptModal = ({ isOpen, order, seller, onClose }: { isOpen: boole
  };
 
  return (
- <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-300 print:bg-white print:p-0">
- <div className="max-w-2xl w-full bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl animate-in zoom-in-95 duration-300 max-h-[95vh] overflow-y-auto print:shadow-none print:border-none print:m-0 print:p-0 print:max-h-none">
+ <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200 print:bg-white print:p-0">
+ <div className="max-w-2xl w-full bg-background rounded-3xl shadow-2xl border border-foreground/8 animate-in zoom-in-95 duration-200 max-h-[92dvh] overflow-y-auto print:shadow-none print:border-none print:m-0 print:p-0 print:max-h-none">
  
  {/* Receipt Header - Print Friendly */}
  <div className="p-8 md:p-10 space-y-8" id="receipt-content">
  <div className="flex justify-between items-start">
  <div className="space-y-2">
  <div className="flex items-center gap-3">
- <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center rounded-2xl">
- <CheckCircle2 className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+ <div className="w-12 h-12 bg-emerald-500/10 flex items-center justify-center rounded-2xl">
+ <CheckCircle2 className="w-6 h-6 text-emerald-600 " />
  </div>
  <div>
- <h3 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">Receipt</h3>
- <p className="font-mono text-xs font-bold text-slate-400">#{order.id.slice(0, 8)}</p>
+ <h3 className="text-2xl font-black tracking-tight text-foreground">Receipt</h3>
+ <p className="font-mono text-xs font-bold text-foreground/40">#{order.id.slice(0, 8)}</p>
  </div>
  </div>
  </div>
  <div className="flex items-center gap-2 print:hidden">
- <button onClick={handleShare} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors rounded-full text-slate-500" title="Share Receipt">
+ <button onClick={handleShare} className="p-2 hover:bg-foreground/[0.05] dark:hover:bg-foreground/[0.05] transition-colors rounded-full text-foreground/60" title="Share Receipt">
  <Share2 className="w-5 h-5 stroke-[2]" />
  </button>
- <button onClick={handlePrint} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors rounded-full text-slate-500" title="Print Receipt">
+ <button onClick={handlePrint} className="p-2 hover:bg-foreground/[0.05] dark:hover:bg-foreground/[0.05] transition-colors rounded-full text-foreground/60" title="Print Receipt">
  <Printer className="w-5 h-5 stroke-[2]" />
  </button>
- <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors rounded-full text-slate-500 ml-2"><X className="w-6 h-6 stroke-[2]" /></button>
+ <button onClick={onClose} className="p-2 hover:bg-foreground/[0.05] dark:hover:bg-foreground/[0.05] transition-colors rounded-full text-foreground/60 ml-2"><X className="w-6 h-6 stroke-[2]" /></button>
  </div>
  </div>
 
- <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-slate-50 dark:bg-slate-800/50 p-6 rounded-2xl">
+ <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-foreground/[0.05] dark:bg-foreground/[0.05]/50 p-6 rounded-2xl">
  <div className="space-y-2">
- <p className="text-[10px] uppercase tracking-widest font-black text-slate-400 flex items-center gap-2">
+ <p className="text-[10px] uppercase tracking-widest font-black text-foreground/60 flex items-center gap-2">
  <Store className="w-3 h-3" /> From
  </p>
  <div>
- <p className="font-bold text-base text-slate-900 dark:text-white">{seller?.store_name || 'Mali Mart Vendor'}</p>
- <p className="text-sm font-medium text-slate-500">
+ <p className="font-bold text-base text-foreground/60 ">{seller?.store_name || 'Mali Mart Vendor'}</p>
+ <p className="text-sm font-medium text-foreground/60">
  {seller?.region || 'Tanzania'}<br />
  {seller?.contact_phone || 'Verified Artisan'}
  </p>
@@ -427,12 +427,12 @@ export const ReceiptModal = ({ isOpen, order, seller, onClose }: { isOpen: boole
  </div>
 
  <div className="space-y-2">
- <p className="text-[10px] uppercase tracking-widest font-black text-slate-400 flex items-center gap-2">
+ <p className="text-[10px] uppercase tracking-widest font-black text-foreground/60 flex items-center gap-2">
  <Package className="w-3 h-3" /> To
  </p>
  <div>
- <p className="font-bold text-base text-slate-900 dark:text-white">{order.buyer?.full_name || 'Valued Client'}</p>
- <p className="text-sm font-medium text-slate-500">
+ <p className="font-bold text-base text-foreground/60 ">{order.buyer?.full_name || 'Valued Client'}</p>
+ <p className="text-sm font-medium text-foreground/60">
  {order.shipping_address?.street || 'Pick-up Order'}<br />
  {order.shipping_address?.city || 'Tanzania'}<br />
  {order.buyer?.phone}
@@ -442,30 +442,30 @@ export const ReceiptModal = ({ isOpen, order, seller, onClose }: { isOpen: boole
  </div>
 
  <div className="space-y-6">
- <h4 className="text-sm font-black uppercase tracking-widest text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-2">Order Details</h4>
+ <h4 className="text-sm font-black uppercase tracking-widest text-foreground/60 border-b border-foreground/8 dark:border-foreground/8 pb-2">Order Details</h4>
  
  <div className="space-y-4">
  {order.items?.map((item: any, idx: number) => (
  <div key={idx} className="flex justify-between items-start group">
  <div className="space-y-1">
- <p className="font-bold text-sm text-slate-900 dark:text-white">{item.products?.name}</p>
- <p className="text-xs font-medium text-slate-500">Qty: {item.quantity} × {formatTZS(item.price_at_purchase)}</p>
+ <p className="font-bold text-sm text-foreground/60 ">{item.products?.name}</p>
+ <p className="text-xs font-medium text-foreground/60">Qty: {item.quantity} × {formatTZS(item.price_at_purchase)}</p>
  </div>
- <p className="font-black text-sm text-slate-900 dark:text-white">{formatTZS(item.price_at_purchase * item.quantity)}</p>
+ <p className="font-black text-sm text-foreground/60 ">{formatTZS(item.price_at_purchase * item.quantity)}</p>
  </div>
  ))}
  </div>
  </div>
 
- <div className="pt-6 border-t-2 border-dashed border-slate-200 dark:border-slate-700 space-y-3">
- <div className="flex justify-between text-sm font-medium text-slate-500">
+ <div className="pt-6 border-t-2 border-dashed border-foreground/8 dark:border-foreground/8 space-y-3">
+ <div className="flex justify-between text-sm font-medium text-foreground/60">
  <span>Subtotal</span>
- <span className="font-bold text-slate-900 dark:text-white">{formatTZS(subtotal)}</span>
+ <span className="font-bold text-foreground/60 ">{formatTZS(subtotal)}</span>
  </div>
  {deliveryFee > 0 && (
- <div className="flex justify-between text-sm font-medium text-slate-500">
+ <div className="flex justify-between text-sm font-medium text-foreground/60">
  <span className="flex items-center gap-2"><Truck className="w-4 h-4" /> Delivery</span>
- <span className="font-bold text-slate-900 dark:text-white">{formatTZS(deliveryFee)}</span>
+ <span className="font-bold text-foreground/60 ">{formatTZS(deliveryFee)}</span>
  </div>
  )}
  {discount > 0 && (
@@ -474,22 +474,22 @@ export const ReceiptModal = ({ isOpen, order, seller, onClose }: { isOpen: boole
  <span>-{formatTZS(discount)}</span>
  </div>
  )}
- <div className="flex justify-between items-end pt-4 border-t border-slate-100 dark:border-slate-800">
+ <div className="flex justify-between items-end pt-4 border-t border-foreground/8 dark:border-foreground/8">
  <div>
- <p className="text-lg font-black text-slate-900 dark:text-white">Total</p>
- <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Paid via {order.payment_method || 'M-Pesa'}</p>
+ <p className="text-lg font-black text-foreground/60 ">Total</p>
+ <p className="text-[10px] font-bold text-foreground/60 uppercase tracking-widest">Paid via {order.payment_method || 'M-Pesa'}</p>
  </div>
- <p className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">{formatTZS(total)}</p>
+ <p className="text-3xl font-black text-foreground/60 tracking-tight">{formatTZS(total)}</p>
  </div>
  </div>
 
  <div className="pt-8 text-center">
- <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Thank you for shopping with Mali Mart</p>
+ <p className="text-xs font-bold text-foreground/60 uppercase tracking-widest">Thank you for shopping with Mali Mart</p>
  </div>
  </div>
 
  {/* Actions */}
- <div className="p-6 bg-slate-50 dark:bg-slate-800/50 flex flex-wrap gap-3 print:hidden rounded-b-[2rem]">
+ <div className="p-6 bg-foreground/[0.05] dark:bg-foreground/[0.05]/50 flex flex-wrap gap-3 print:hidden rounded-b-[2rem]">
  <Button variant="secondary" onClick={onClose} className="flex-1 rounded-xl font-bold">Close</Button>
  <Button variant="primary" onClick={() => window.print()} className="flex-1 gap-2 rounded-xl font-bold">
  <Printer className="w-4 h-4" /> Print
@@ -554,7 +554,7 @@ export const GraphicalTag = ({ type, label, id, onClick }: { type: 'order' | 're
  return: { icon: RotateCcw, color: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-100' },
  offer: { icon: Percent, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100' },
  support: { icon: MessageSquare, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100' },
- system: { icon: ShieldCheck, color: 'text-slate-600', bg: 'bg-slate-50', border: 'border-slate-100' },
+ system: { icon: ShieldCheck, color: 'text-foreground/60', bg: 'bg-foreground/[0.05]', border: 'border-foreground/8' },
  shipment: { icon: Truck, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-100' },
  security: { icon: ShieldAlert, color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-100' },
  wallet: { icon: CreditCard, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100' },
@@ -597,7 +597,7 @@ export const GraphicalIcon = ({ type, className = "" }: { type: string, classNam
  promotion: { icon: Sparkles, color: 'text-purple-600', bg: 'bg-purple-50', border: 'border-purple-100' },
  return: { icon: RotateCcw, color: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-100' }
  };
- const config = configs[type as keyof typeof configs] || { icon: Sparkles, color: 'text-slate-600', bg: 'bg-slate-50', border: 'border-slate-100' };
+ const config = configs[type as keyof typeof configs] || { icon: Sparkles, color: 'text-foreground/60', bg: 'bg-foreground/[0.05]', border: 'border-foreground/8' };
  const Icon = config.icon;
  return (
  <div className={`w-12 h-12 flex items-center justify-center rounded-2xl border ${config.border} ${config.bg} ${config.color} relative group overflow-hidden ${className}`}>
@@ -611,34 +611,34 @@ export const UserProfileModal = ({ isOpen, onClose, user }: { isOpen: boolean, o
  if (!isOpen || !user) return null;
 
  return (
- <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in">
- <div className="bg-white dark:bg-slate-900 w-full max-w-md p-8 rounded-[2rem] relative shadow-2xl">
- <button onClick={onClose} className="absolute top-6 right-6 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
- <X className="w-6 h-6 stroke-[2] text-slate-500" />
+ <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-foreground/[0.05]/50 backdrop-blur-sm animate-in fade-in">
+ <div className="bg-white dark:bg-foreground/[0.05] w-full max-w-md p-8 rounded-[2rem] relative shadow-2xl">
+ <button onClick={onClose} className="absolute top-6 right-6 p-2 hover:bg-foreground/[0.05] dark:hover:bg-foreground/[0.05] rounded-full transition-colors">
+ <X className="w-6 h-6 stroke-[2] text-foreground/60" />
  </button>
 
  <div className="flex flex-col items-center text-center space-y-6">
- <div className="w-24 h-24 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center font-black text-3xl overflow-hidden shadow-sm">
+ <div className="w-24 h-24 bg-foreground/[0.05] dark:bg-foreground/[0.05] rounded-full flex items-center justify-center font-black text-3xl overflow-hidden shadow-sm">
  {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" /> : user.name?.slice(0, 1).toUpperCase()}
  </div>
 
  <div className="space-y-2">
- <h3 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">{user.name}</h3>
+ <h3 className="text-2xl font-black tracking-tight text-foreground/60 ">{user.name}</h3>
  <div className="flex items-center justify-center gap-2">
- <Badge variant="secondary" className="text-xs font-bold py-1 px-3 border-none bg-slate-100 dark:bg-slate-800">{user.role}</Badge>
+ <Badge variant="secondary" className="text-xs font-bold py-1 px-3 border-none bg-foreground/[0.05] dark:bg-foreground/[0.05]">{user.role}</Badge>
  {user.is_verified && <Badge variant="success" className="text-xs font-bold py-1 px-3 border-none">Verified</Badge>}
  </div>
  </div>
 
- <div className="w-full pt-6 border-t border-slate-100 dark:border-slate-800 space-y-4">
+ <div className="w-full pt-6 border-t border-foreground/8 dark:border-foreground/8 space-y-4">
  <div className="flex justify-between text-sm font-bold text-foreground/55">
  <span>Member Since</span>
- <span className="text-slate-900 dark:text-white">{new Date(user.created_at).toLocaleDateString()}</span>
+ <span className="text-foreground/60 ">{new Date(user.created_at).toLocaleDateString()}</span>
  </div>
  {user.region && (
  <div className="flex justify-between text-sm font-bold text-foreground/55">
  <span>Region</span>
- <span className="text-slate-900 dark:text-white">{user.region}</span>
+ <span className="text-foreground/60 ">{user.region}</span>
  </div>
  )}
  <div className="flex justify-between text-sm font-bold text-foreground/55">
@@ -664,7 +664,7 @@ export const UserProfileModal = ({ isOpen, onClose, user }: { isOpen: boolean, o
 
 // --- Progress ---
 export const Progress = ({ value = 0, className = '' }: { value: number, className?: string }) => (
- <div className={`relative h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800 ${className}`}>
+ <div className={`relative h-2.5 w-full overflow-hidden rounded-full bg-foreground/[0.05] dark:bg-foreground/[0.05] ${className}`}>
  <motion.div 
  initial={{ width: 0 }}
  animate={{ width: `${value}%` }}
@@ -736,8 +736,8 @@ export const SatisfyingOrderGraphic = ({ status }: { status: string }) => {
 
 // --- ModernFollowCard ---
 export const ModernFollowCard = ({ vendor, onUnfollow, onViewStore }: { vendor: VendorProfile, onUnfollow: () => void, onViewStore: () => void }) => (
- <div className="group relative bg-white dark:bg-slate-900 rounded-[2rem] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 border border-slate-100 dark:border-white/5 flex flex-col h-full">
- <div className="h-32 bg-slate-100 dark:bg-slate-800 relative overflow-hidden">
+ <div className="group relative bg-white dark:bg-foreground/[0.05] rounded-[2rem] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 border border-foreground/8 dark:border-white/5 flex flex-col h-full">
+ <div className="h-32 bg-foreground/[0.05] dark:bg-foreground/[0.05] relative overflow-hidden">
  {vendor.banner_url ? (
  <img src={vendor.banner_url} alt={vendor.store_name} className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700" />
  ) : (
@@ -758,7 +758,7 @@ export const ModernFollowCard = ({ vendor, onUnfollow, onViewStore }: { vendor: 
  </div>
  </div>
  <div className="p-6 flex-1 flex flex-col">
- <p className="text-sm font-medium text-slate-500 dark:text-slate-400 line-clamp-2 mb-6 flex-1">
+ <p className="text-sm font-medium text-foreground/60 dark:text-foreground/60 line-clamp-2 mb-6 flex-1">
  {vendor.description || "No description provided."}
  </p>
  <div className="flex gap-3 mt-auto">
