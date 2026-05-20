@@ -255,16 +255,16 @@ export const Reveal = ({ children, className = '', delay = 0 }: any) => (
 export const Accordion = ({ title, children, defaultOpen = false }: { title: string, children?: React.ReactNode, defaultOpen?: boolean }) => {
     const [isOpen, setIsOpen] = useState(defaultOpen);
     return (
-        <div className="border-b border-slate-100 dark:border-slate-800 py-4">
+        <div className="border-b border-foreground/8 py-4">
             <button 
                 onClick={() => setIsOpen(!isOpen)} 
                 className="flex w-full items-center justify-between py-2 text-left hover:opacity-70 transition-opacity"
             >
-                <span className="text-sm font-bold text-slate-900 dark:text-white">{title}</span>
-                <ChevronDown className={`w-5 h-5 stroke-[2] text-slate-500 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+                <span className="text-sm font-bold text-foreground">{title}</span>
+                <ChevronDown className={`w-5 h-5 stroke-[2] text-foreground/50 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
             </button>
             <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-[500px] opacity-100 mt-4' : 'max-h-0 opacity-0'}`}>
-                <div className="text-sm font-medium leading-relaxed text-slate-500 dark:text-slate-400">
+                <div className="text-sm font-medium leading-relaxed text-foreground/55">
                     {children}
                 </div>
             </div>
@@ -278,7 +278,7 @@ export const ThemeToggle = () => {
     return (
         <button 
             onClick={toggleTheme}
-            className="w-12 h-12 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-2xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-slate-900 dark:text-white"
+            className="w-12 h-12 flex items-center justify-center bg-foreground/8 rounded-2xl hover:bg-foreground/12 transition-colors text-foreground"
         >
             {isDark ? <Sun className="w-5 h-5 stroke-[2]" /> : <Moon className="w-5 h-5 stroke-[2]" />}
         </button>
@@ -322,7 +322,7 @@ export const Modal = ({ isOpen, title, onClose, children }: any) => {
                     >
                         <div className="p-8 space-y-8 bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl max-h-[90vh] overflow-y-auto">
                             <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-6">
-                                <h3 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">{title}</h3>
+                                <h3 className="text-2xl font-black tracking-tight text-foreground">{title}</h3>
                                 <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"><X className="w-6 h-6 stroke-[2] text-slate-500" /></button>
                             </div>
                             <div className="text-slate-900 dark:text-white">
@@ -342,7 +342,7 @@ export const ConfirmDialog = ({ isOpen, title, message, onConfirm, onCancel, isD
         <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in">
             <div className="max-w-sm w-full p-8 space-y-8 bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl animate-in zoom-in-95">
                 <div className="text-center">
-                    <h3 className="text-2xl font-black tracking-tight mb-4 text-slate-900 dark:text-white">{title}</h3>
+                    <h3 className="text-2xl font-black tracking-tight mb-4 text-foreground">{title}</h3>
                     <p className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-relaxed">{message}</p>
                 </div>
                 <div className="flex gap-3">
@@ -632,21 +632,21 @@ export const UserProfileModal = ({ isOpen, onClose, user }: { isOpen: boolean, o
                     </div>
 
                     <div className="w-full pt-6 border-t border-slate-100 dark:border-slate-800 space-y-4">
-                        <div className="flex justify-between text-sm font-bold text-slate-500 dark:text-slate-400">
+                        <div className="flex justify-between text-sm font-bold text-foreground/55">
                             <span>Member Since</span>
                             <span className="text-slate-900 dark:text-white">{new Date(user.created_at).toLocaleDateString()}</span>
                         </div>
                         {user.region && (
-                            <div className="flex justify-between text-sm font-bold text-slate-500 dark:text-slate-400">
+                            <div className="flex justify-between text-sm font-bold text-foreground/55">
                                 <span>Region</span>
                                 <span className="text-slate-900 dark:text-white">{user.region}</span>
                             </div>
                         )}
-                        <div className="flex justify-between text-sm font-bold text-slate-500 dark:text-slate-400">
+                        <div className="flex justify-between text-sm font-bold text-foreground/55">
                             <span>Trust Score</span>
                             <span className="text-emerald-600">{user.trust_score || 95}%</span>
                         </div>
-                        <div className="flex justify-between text-sm font-bold text-slate-500 dark:text-slate-400">
+                        <div className="flex justify-between text-sm font-bold text-foreground/55">
                             <span>Total Orders</span>
                             <span>{user.total_orders || 12}</span>
                         </div>

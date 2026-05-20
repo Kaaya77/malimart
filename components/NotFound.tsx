@@ -8,23 +8,23 @@ export const NotFound = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-slate-50 dark:bg-slate-950 p-6">
+    <div className="min-h-screen w-full flex items-center justify-center bg-background p-6">
       <div className="text-center max-w-md w-full animate-in fade-in zoom-in duration-500">
         
         {/* Visual Icon */}
         <div className="relative w-32 h-32 mx-auto mb-8">
             <div className="absolute inset-0 bg-brand-500/20 rounded-full blur-3xl animate-pulse"></div>
-            <div className="relative bg-white dark:bg-slate-900 rounded-[2.5rem] w-full h-full flex items-center justify-center border-2 border-dashed border-slate-200 dark:border-slate-800 shadow-xl">
-                <MapPinOff className="w-12 h-12 text-slate-400" />
+            <div className="relative bg-card rounded-[2.5rem] w-full h-full flex items-center justify-center border-2 border-dashed border-foreground/15 shadow-xl">
+                <MapPinOff className="w-12 h-12 text-foreground/40" />
             </div>
             <div className="absolute -bottom-2 -right-2 bg-red-500 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-lg">404 ERROR</div>
         </div>
 
         {/* Text Content */}
-        <h1 className="text-4xl font-black font-display text-slate-900 dark:text-white mb-3 tracking-tight uppercase">
+        <h1 className="text-4xl font-black font-display text-foreground mb-3 tracking-tight uppercase">
             Off the Map
         </h1>
-        <p className="text-slate-500 dark:text-slate-400 text-sm font-medium leading-relaxed mb-10">
+        <p className="text-slate-500 dark:text-foreground/40 text-sm font-medium leading-relaxed mb-10">
             We couldn't find the page you're looking for. It might have been moved, sold out, or never existed in our index.
         </p>
 
