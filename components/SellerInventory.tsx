@@ -39,22 +39,22 @@ const timeAgo = (dateStr?: string) => {
 // --- Sub-Components ---
 
 const StatCard = ({ title, value, subtext, icon: Icon, color, secondaryValue, secondaryLabel }: any) => (
-    <div className="relative overflow-hidden p-8 bg-background dark:bg-background border border-foreground/10 dark:border-background/10 group hover:border-foreground/30 dark:hover:border-background/30 transition-all duration-500">
+    <div className="relative overflow-hidden p-8 bg-background dark:bg-background border border-foreground/10 group hover:border-foreground/30 dark:hover:border-background/30 transition-all duration-500">
         <div className="flex justify-between items-start mb-8 relative z-10">
             <div>
-                <p className="text-[10px] uppercase tracking-[0.2em] opacity-60 mb-2 text-foreground dark:text-background">{title}</p>
-                <h3 className="text-4xl font-serif font-light text-foreground dark:text-background tracking-wide">{value}</h3>
+                <p className="text-[10px] uppercase tracking-[0.2em] opacity-60 mb-2 text-foreground">{title}</p>
+                <h3 className="text-4xl font-serif font-light text-foreground tracking-wide">{value}</h3>
             </div>
-            <div className="w-10 h-10 flex items-center justify-center border border-foreground/10 dark:border-background/10 rounded-none">
-                <Icon className="w-4 h-4 text-foreground dark:text-background stroke-[1]" />
+            <div className="w-10 h-10 flex items-center justify-center border border-foreground/10 rounded-none">
+                <Icon className="w-4 h-4 text-foreground stroke-[1]" />
             </div>
         </div>
         <div className="flex items-center justify-between relative z-10">
-            <p className="text-[11px] uppercase tracking-[0.1em] opacity-60 text-foreground dark:text-background">{subtext}</p>
+            <p className="text-[11px] uppercase tracking-[0.1em] opacity-60 text-foreground">{subtext}</p>
             {secondaryValue && (
                 <div className="text-right">
-                    <span className="block text-lg font-serif text-foreground dark:text-background">{secondaryValue}</span>
-                    <span className="text-[9px] uppercase tracking-[0.2em] opacity-40 text-foreground dark:text-background">{secondaryLabel}</span>
+                    <span className="block text-lg font-serif text-foreground">{secondaryValue}</span>
+                    <span className="text-[9px] uppercase tracking-[0.2em] opacity-40 text-foreground">{secondaryLabel}</span>
                 </div>
             )}
         </div>
@@ -64,31 +64,31 @@ const StatCard = ({ title, value, subtext, icon: Icon, color, secondaryValue, se
 const AdvancedFilterDrawer = ({ isOpen, onClose, filters, setFilters, onApply }: any) => {
     if (!isOpen) return null;
     return (
-        <div className="absolute top-full left-0 mt-4 w-[320px] bg-background dark:bg-background border border-foreground/10 dark:border-background/10 z-50 p-8 animate-in slide-in-from-top-4 shadow-2xl">
+        <div className="absolute top-full left-0 mt-4 w-[320px] bg-background dark:bg-background border border-foreground/10 z-50 p-8 animate-in slide-in-from-top-4 shadow-2xl">
             <div className="flex justify-between items-center mb-8">
-                <h3 className="text-[10px] uppercase tracking-[0.2em] text-foreground dark:text-background">Advanced Filters</h3>
-                <button onClick={onClose} className="hover:opacity-50 transition-opacity"><X className="w-4 h-4 stroke-[1] text-foreground dark:text-background"/></button>
+                <h3 className="text-[10px] uppercase tracking-[0.2em] text-foreground">Advanced Filters</h3>
+                <button onClick={onClose} className="hover:opacity-50 transition-opacity"><X className="w-4 h-4 stroke-[1] text-foreground"/></button>
             </div>
             <div className="space-y-8">
                 <div>
                     <Label className="text-[10px] uppercase tracking-[0.1em] opacity-60 mb-4 block">Price Range ({formatTZS(filters.priceMin || 0)} - {formatTZS(filters.priceMax || 1000000)})</Label>
                     <div className="flex gap-4">
-                        <Input type="number" placeholder="Min" value={filters.priceMin} onChange={(e:any) => setFilters({...filters, priceMin: Number(e.target.value)})} className="h-12 bg-transparent border-foreground/20 dark:border-background/20 rounded-none text-xs focus:border-foreground dark:focus:border-background" />
-                        <Input type="number" placeholder="Max" value={filters.priceMax} onChange={(e:any) => setFilters({...filters, priceMax: Number(e.target.value)})} className="h-12 bg-transparent border-foreground/20 dark:border-background/20 rounded-none text-xs focus:border-foreground dark:focus:border-background" />
+                        <Input type="number" placeholder="Min" value={filters.priceMin} onChange={(e:any) => setFilters({...filters, priceMin: Number(e.target.value)})} className="h-12 bg-transparent border-foreground/20 rounded-none text-xs focus:border-foreground dark:focus:border-background" />
+                        <Input type="number" placeholder="Max" value={filters.priceMax} onChange={(e:any) => setFilters({...filters, priceMax: Number(e.target.value)})} className="h-12 bg-transparent border-foreground/20 rounded-none text-xs focus:border-foreground dark:focus:border-background" />
                     </div>
                 </div>
                 <div>
                     <Label className="text-[10px] uppercase tracking-[0.1em] opacity-60 mb-4 block">Stock Level</Label>
                     <div className="flex gap-4">
-                        <Input type="number" placeholder="Min Stock" value={filters.stockMin} onChange={(e:any) => setFilters({...filters, stockMin: Number(e.target.value)})} className="h-12 bg-transparent border-foreground/20 dark:border-background/20 rounded-none text-xs focus:border-foreground dark:focus:border-background" />
-                        <Input type="number" placeholder="Max Stock" value={filters.stockMax} onChange={(e:any) => setFilters({...filters, stockMax: Number(e.target.value)})} className="h-12 bg-transparent border-foreground/20 dark:border-background/20 rounded-none text-xs focus:border-foreground dark:focus:border-background" />
+                        <Input type="number" placeholder="Min Stock" value={filters.stockMin} onChange={(e:any) => setFilters({...filters, stockMin: Number(e.target.value)})} className="h-12 bg-transparent border-foreground/20 rounded-none text-xs focus:border-foreground dark:focus:border-background" />
+                        <Input type="number" placeholder="Max Stock" value={filters.stockMax} onChange={(e:any) => setFilters({...filters, stockMax: Number(e.target.value)})} className="h-12 bg-transparent border-foreground/20 rounded-none text-xs focus:border-foreground dark:focus:border-background" />
                     </div>
                 </div>
                 <div>
                     <div className="flex justify-between items-center mb-4"><Label className="text-[10px] uppercase tracking-[0.1em] opacity-60 mb-0">Flags</Label></div>
                     <div className="flex flex-col gap-4">
-                        <div className="flex items-center gap-3"><Switch checked={filters.isBoosted} onCheckedChange={(v:boolean) => setFilters({...filters, isBoosted: v})} /><span className="text-[11px] uppercase tracking-[0.1em] text-foreground dark:text-background">Boosted Only</span></div>
-                        <div className="flex items-center gap-3"><Switch checked={filters.hasVariants} onCheckedChange={(v:boolean) => setFilters({...filters, hasVariants: v})} /><span className="text-[11px] uppercase tracking-[0.1em] text-foreground dark:text-background">Has Variants</span></div>
+                        <div className="flex items-center gap-3"><Switch checked={filters.isBoosted} onCheckedChange={(v:boolean) => setFilters({...filters, isBoosted: v})} /><span className="text-[11px] uppercase tracking-[0.1em] text-foreground">Boosted Only</span></div>
+                        <div className="flex items-center gap-3"><Switch checked={filters.hasVariants} onCheckedChange={(v:boolean) => setFilters({...filters, hasVariants: v})} /><span className="text-[11px] uppercase tracking-[0.1em] text-foreground">Has Variants</span></div>
                     </div>
                 </div>
                 <div className="pt-4">
@@ -116,16 +116,16 @@ const HistoryLog = ({ productId }: { productId: string }) => {
         fetchLogs();
     }, [productId]);
 
-    if (loading) return <div className="p-4 text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground dark:text-background">Loading history...</div>;
-    if (logs.length === 0) return <div className="p-4 text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground dark:text-background italic">No recent activity recorded.</div>;
+    if (loading) return <div className="p-4 text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground">Loading history...</div>;
+    if (logs.length === 0) return <div className="p-4 text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground italic">No recent activity recorded.</div>;
 
     return (
-        <div className="p-6 space-y-4 bg-primary/5 dark:bg-background/5 border-t border-foreground/10 dark:border-background/10">
-            <h4 className="text-[9px] uppercase tracking-[0.2em] opacity-60 flex items-center gap-2 text-foreground dark:text-background"><History className="w-3 h-3 stroke-[1]"/> Recent Activity</h4>
+        <div className="p-6 space-y-4 bg-primary/5 dark:bg-background/5 border-t border-foreground/10">
+            <h4 className="text-[9px] uppercase tracking-[0.2em] opacity-60 flex items-center gap-2 text-foreground"><History className="w-3 h-3 stroke-[1]"/> Recent Activity</h4>
             {logs.map(log => (
-                <div key={log.id} className="flex justify-between items-center border-b border-foreground/10 dark:border-background/10 pb-2 last:border-0 last:pb-0">
-                    <span className="text-[11px] uppercase tracking-[0.1em] text-foreground dark:text-background">{log.action_type.replace(/_/g, ' ')}</span>
-                    <span className="text-[10px] font-mono opacity-60 text-foreground dark:text-background">{new Date(log.created_at).toLocaleString()}</span>
+                <div key={log.id} className="flex justify-between items-center border-b border-foreground/10 pb-2 last:border-0 last:pb-0">
+                    <span className="text-[11px] uppercase tracking-[0.1em] text-foreground">{log.action_type.replace(/_/g, ' ')}</span>
+                    <span className="text-[10px] font-mono opacity-60 text-foreground">{new Date(log.created_at).toLocaleString()}</span>
                 </div>
             ))}
         </div>
@@ -181,50 +181,50 @@ const InventoryRow: React.FC<InventoryRowProps> = ({
             onDragStart={(e) => onDragStart(e, product.id)}
             onDragOver={onDragOver}
             onDrop={(e) => onDrop(e, product.id)}
-            className={`group relative transition-all duration-300 border-b border-foreground/10 dark:border-background/10 hover:bg-primary/5 dark:hover:bg-background/5 ${isSelected ? 'bg-primary/5 dark:bg-background/5' : ''}`}
+            className={`group relative transition-all duration-300 border-b border-foreground/10 hover:bg-primary/5 dark:hover:bg-background/5 ${isSelected ? 'bg-primary/5 dark:bg-background/5' : ''}`}
         >
             <div className="grid grid-cols-12 gap-6 items-center p-6">
                 {/* Drag Handle & Checkbox */}
                 <div className="col-span-1 flex items-center justify-center gap-4">
-                    <div className="cursor-grab opacity-30 hover:opacity-100 transition-opacity active:cursor-grabbing text-foreground dark:text-background"><GripVertical className="w-4 h-4 stroke-[1]"/></div>
-                    <button onClick={(e) => { e.stopPropagation(); onSelect(); }} className="opacity-50 hover:opacity-100 transition-opacity text-foreground dark:text-background">
+                    <div className="cursor-grab opacity-30 hover:opacity-100 transition-opacity active:cursor-grabbing text-foreground"><GripVertical className="w-4 h-4 stroke-[1]"/></div>
+                    <button onClick={(e) => { e.stopPropagation(); onSelect(); }} className="opacity-50 hover:opacity-100 transition-opacity text-foreground">
                         {isSelected ? <CheckSquare className="w-4 h-4 stroke-[1]" /> : <Square className="w-4 h-4 stroke-[1]" />}
                     </button>
                 </div>
 
                 {/* Product Info */}
                 <div className="col-span-4 flex items-center gap-6">
-                    <div className="relative w-16 h-20 bg-background dark:bg-background overflow-hidden shrink-0 border border-foreground/10 dark:border-background/10 group/img cursor-pointer" onClick={() => onEdit(product)}>
+                    <div className="relative w-16 h-20 bg-background dark:bg-background overflow-hidden shrink-0 border border-foreground/10 group/img cursor-pointer" onClick={() => onEdit(product)}>
                         {product.images?.[0] ? <img src={product.images[0]} className="w-full h-full object-cover transition-transform duration-700 group-hover/img:scale-110" /> : <div className="w-full h-full flex items-center justify-center opacity-20"><Package className="w-5 h-5 stroke-[1]"/></div>}
                         {product.is_boosted && <div className="absolute top-0 right-0 p-1 bg-primary text-background dark:bg-background dark:text-foreground"><Zap className="w-3 h-3 fill-current"/></div>}
                     </div>
                     <div className="min-w-0">
                         <div className="flex items-center gap-3">
-                            <p className="font-serif text-lg truncate cursor-pointer hover:opacity-70 transition-opacity text-foreground dark:text-background" onClick={() => onEdit(product)}>{product.name}</p>
+                            <p className="font-serif text-lg truncate cursor-pointer hover:opacity-70 transition-opacity text-foreground" onClick={() => onEdit(product)}>{product.name}</p>
                             {/* Feature 1: Status Badges */}
-                            {product.status === 'draft' && <span className="text-[9px] uppercase tracking-[0.2em] border border-foreground/20 dark:border-background/20 px-2 py-1 text-foreground dark:text-background">Draft</span>}
+                            {product.status === 'draft' && <span className="text-[9px] uppercase tracking-[0.2em] border border-foreground/20 px-2 py-1 text-foreground">Draft</span>}
                         </div>
                         {/* Feature 2: Smart SKU Chip */}
                         <div className="flex items-center gap-4 mt-2">
-                            <button onClick={handleCopySku} className="text-[10px] font-mono opacity-60 hover:opacity-100 transition-opacity flex items-center gap-2 group/sku text-foreground dark:text-background" title="Copy SKU">
+                            <button onClick={handleCopySku} className="text-[10px] font-mono opacity-60 hover:opacity-100 transition-opacity flex items-center gap-2 group/sku text-foreground" title="Copy SKU">
                                 {product.sku || 'NO-SKU'} <Copy className="w-3 h-3 opacity-0 group-hover/sku:opacity-100 transition-opacity stroke-[1]"/>
                             </button>
                             {/* Feature 3: Variant Indicator */}
-                            {hasVariants && <span className="text-[9px] uppercase tracking-[0.2em] opacity-60 flex items-center gap-1 text-foreground dark:text-background"><Layers className="w-3 h-3 stroke-[1]"/> {product.variants?.length} Vars</span>}
+                            {hasVariants && <span className="text-[9px] uppercase tracking-[0.2em] opacity-60 flex items-center gap-1 text-foreground"><Layers className="w-3 h-3 stroke-[1]"/> {product.variants?.length} Vars</span>}
                         </div>
                     </div>
                 </div>
 
                 {/* Financials (Price & Margin) */}
                 <div className="col-span-2 text-right">
-                    <p className="font-serif text-lg text-foreground dark:text-background">
+                    <p className="font-serif text-lg text-foreground">
                         {formatTZS(minPrice)}
                         {isRange && <span className="opacity-60 text-sm"> - {formatTZS(maxPrice)}</span>}
                     </p>
                     {/* Feature 4: Profit Margin Badge */}
                     {margin > 0 && (
                         <div className="flex justify-end mt-2">
-                            <span className="text-[9px] uppercase tracking-[0.2em] border border-foreground/20 dark:border-background/20 px-2 py-1 text-foreground dark:text-background">
+                            <span className="text-[9px] uppercase tracking-[0.2em] border border-foreground/20 px-2 py-1 text-foreground">
                                 {margin.toFixed(0)}% Margin
                             </span>
                         </div>
@@ -234,10 +234,10 @@ const InventoryRow: React.FC<InventoryRowProps> = ({
                 {/* Stock Level (Animated) */}
                 <div className="col-span-3 flex flex-col justify-center px-6">
                     <div className="flex justify-between items-end mb-2">
-                        <span className={`text-[10px] uppercase tracking-[0.2em] ${isLowStock ? 'text-red-500 animate-pulse' : 'opacity-60 text-foreground dark:text-background'}`}>
+                        <span className={`text-[10px] uppercase tracking-[0.2em] ${isLowStock ? 'text-red-500 animate-pulse' : 'opacity-60 text-foreground'}`}>
                             {isLowStock ? 'Low Stock' : 'In Stock'}
                         </span>
-                        <span className="text-sm font-serif text-foreground dark:text-background">{product.stock}</span>
+                        <span className="text-sm font-serif text-foreground">{product.stock}</span>
                     </div>
                     {/* Feature 5: Stock Level Animation */}
                     <div className="h-px w-full bg-primary/10 dark:bg-background/10 relative">
@@ -247,12 +247,12 @@ const InventoryRow: React.FC<InventoryRowProps> = ({
                         ></div>
                     </div>
                     {/* Feature 6: Relative Time */}
-                    <p className="text-[9px] uppercase tracking-[0.1em] opacity-40 text-right mt-3 flex items-center justify-end gap-2 text-foreground dark:text-background"><Clock className="w-3 h-3 stroke-[1]"/> {timeAgo(product.updated_at)}</p>
+                    <p className="text-[9px] uppercase tracking-[0.1em] opacity-40 text-right mt-3 flex items-center justify-end gap-2 text-foreground"><Clock className="w-3 h-3 stroke-[1]"/> {timeAgo(product.updated_at)}</p>
                 </div>
 
                 {/* Actions */}
                 <div className="col-span-2 flex justify-end gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => onToggleBoost(product)} title={product.is_boosted ? "Remove Boost" : "Boost Listing"} className={`p-2 transition-opacity hover:opacity-50 ${product.is_boosted ? 'text-foreground dark:text-background' : 'opacity-40 text-foreground dark:text-background'}`}>
+                    <button onClick={() => onToggleBoost(product)} title={product.is_boosted ? "Remove Boost" : "Boost Listing"} className={`p-2 transition-opacity hover:opacity-50 ${product.is_boosted ? 'text-foreground' : 'opacity-40 text-foreground'}`}>
                         <Zap className={`w-4 h-4 stroke-[1] ${product.is_boosted ? 'fill-current' : ''}`}/>
                     </button>
                     <button onClick={() => {
@@ -264,7 +264,7 @@ const InventoryRow: React.FC<InventoryRowProps> = ({
                             navigator.clipboard.writeText(`${text} ${url}`);
                             addToast("Product link copied to clipboard", "success");
                         }
-                    }} title="Share Product" className="p-2 transition-opacity hover:opacity-50 opacity-40 text-foreground dark:text-background">
+                    }} title="Share Product" className="p-2 transition-opacity hover:opacity-50 opacity-40 text-foreground">
                         <Share2 className="w-4 h-4 stroke-[1]"/>
                     </button>
                     <button onClick={async () => {
@@ -277,18 +277,18 @@ const InventoryRow: React.FC<InventoryRowProps> = ({
                         } catch (e) {
                             addToast("Failed to generate post", "error");
                         }
-                    }} title="Generate Social Post" className="p-2 transition-opacity hover:opacity-50 opacity-40 text-foreground dark:text-background">
+                    }} title="Generate Social Post" className="p-2 transition-opacity hover:opacity-50 opacity-40 text-foreground">
                         <Wand2 className="w-4 h-4 stroke-[1]"/>
                     </button>
-                    <button onClick={() => setIsExpanded(!isExpanded)} className={`p-2 transition-opacity hover:opacity-50 ${isExpanded ? 'opacity-100 text-foreground dark:text-background' : 'opacity-40 text-foreground dark:text-background'}`}><History className="w-4 h-4 stroke-[1]"/></button>
+                    <button onClick={() => setIsExpanded(!isExpanded)} className={`p-2 transition-opacity hover:opacity-50 ${isExpanded ? 'opacity-100 text-foreground' : 'opacity-40 text-foreground'}`}><History className="w-4 h-4 stroke-[1]"/></button>
                     <div className="relative group/menu">
-                        <button className="p-2 transition-opacity hover:opacity-50 opacity-40 text-foreground dark:text-background"><MoreHorizontal className="w-4 h-4 stroke-[1]"/></button>
-                        <div className="absolute right-0 top-full mt-2 w-56 bg-background dark:bg-background border border-foreground/10 dark:border-background/10 shadow-2xl hidden group-hover/menu:block z-50 animate-in fade-in zoom-in-95">
-                            <button onClick={() => onEdit(product)} className="w-full text-left px-6 py-4 text-[10px] uppercase tracking-[0.2em] hover:bg-primary/5 dark:hover:bg-background/5 flex items-center gap-4 text-foreground dark:text-background transition-colors"><Edit3 className="w-3 h-3 stroke-[1]"/> Edit</button>
-                            <button onClick={() => onCreatePromo(product)} className="w-full text-left px-6 py-4 text-[10px] uppercase tracking-[0.2em] hover:bg-primary/5 dark:hover:bg-background/5 flex items-center gap-4 text-foreground dark:text-background transition-colors"><Percent className="w-3 h-3 stroke-[1]"/> Create Promo</button>
-                            <button onClick={() => onAutoDiscount(product)} className="w-full text-left px-6 py-4 text-[10px] uppercase tracking-[0.2em] hover:bg-primary/5 dark:hover:bg-background/5 flex items-center gap-4 text-foreground dark:text-background transition-colors"><Clock className="w-3 h-3 stroke-[1]"/> Auto-Discount Rule</button>
-                            <button onClick={() => onDuplicate(product)} className="w-full text-left px-6 py-4 text-[10px] uppercase tracking-[0.2em] hover:bg-primary/5 dark:hover:bg-background/5 flex items-center gap-4 text-foreground dark:text-background transition-colors"><Copy className="w-3 h-3 stroke-[1]"/> Duplicate</button>
-                            <button onClick={() => onDuplicateVariant(product)} className="w-full text-left px-6 py-4 text-[10px] uppercase tracking-[0.2em] hover:bg-primary/5 dark:hover:bg-background/5 flex items-center gap-4 text-foreground dark:text-background transition-colors"><Layers className="w-3 h-3 stroke-[1]"/> Copy to Variant</button>
+                        <button className="p-2 transition-opacity hover:opacity-50 opacity-40 text-foreground"><MoreHorizontal className="w-4 h-4 stroke-[1]"/></button>
+                        <div className="absolute right-0 top-full mt-2 w-56 bg-background dark:bg-background border border-foreground/10 shadow-2xl hidden group-hover/menu:block z-50 animate-in fade-in zoom-in-95">
+                            <button onClick={() => onEdit(product)} className="w-full text-left px-6 py-4 text-[10px] uppercase tracking-[0.2em] hover:bg-primary/5 dark:hover:bg-background/5 flex items-center gap-4 text-foreground transition-colors"><Edit3 className="w-3 h-3 stroke-[1]"/> Edit</button>
+                            <button onClick={() => onCreatePromo(product)} className="w-full text-left px-6 py-4 text-[10px] uppercase tracking-[0.2em] hover:bg-primary/5 dark:hover:bg-background/5 flex items-center gap-4 text-foreground transition-colors"><Percent className="w-3 h-3 stroke-[1]"/> Create Promo</button>
+                            <button onClick={() => onAutoDiscount(product)} className="w-full text-left px-6 py-4 text-[10px] uppercase tracking-[0.2em] hover:bg-primary/5 dark:hover:bg-background/5 flex items-center gap-4 text-foreground transition-colors"><Clock className="w-3 h-3 stroke-[1]"/> Auto-Discount Rule</button>
+                            <button onClick={() => onDuplicate(product)} className="w-full text-left px-6 py-4 text-[10px] uppercase tracking-[0.2em] hover:bg-primary/5 dark:hover:bg-background/5 flex items-center gap-4 text-foreground transition-colors"><Copy className="w-3 h-3 stroke-[1]"/> Duplicate</button>
+                            <button onClick={() => onDuplicateVariant(product)} className="w-full text-left px-6 py-4 text-[10px] uppercase tracking-[0.2em] hover:bg-primary/5 dark:hover:bg-background/5 flex items-center gap-4 text-foreground transition-colors"><Layers className="w-3 h-3 stroke-[1]"/> Copy to Variant</button>
                             <div className="h-px bg-primary/10 dark:bg-background/10"></div>
                             <button onClick={() => onDelete(product.id)} className="w-full text-left px-6 py-4 text-[10px] uppercase tracking-[0.2em] hover:bg-red-50 dark:hover:bg-red-900/10 text-red-600 flex items-center gap-4 transition-colors"><Trash2 className="w-3 h-3 stroke-[1]"/> Delete</button>
                         </div>
@@ -524,8 +524,8 @@ export const SellerInventory = ({ products: initialProducts, userId, refresh, on
         <div className="space-y-12 pb-20">
             {/* 1. Analytics Dashboard (With Chart) */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-top-4">
-                <div className="lg:col-span-2 p-8 bg-background dark:bg-background border border-foreground/10 dark:border-background/10">
-                    <h4 className="text-[10px] uppercase tracking-[0.2em] opacity-60 mb-8 text-foreground dark:text-background">Inventory Value Trend</h4>
+                <div className="lg:col-span-2 p-8 bg-background dark:bg-background border border-foreground/10">
+                    <h4 className="text-[10px] uppercase tracking-[0.2em] opacity-60 mb-8 text-foreground">Inventory Value Trend</h4>
                     <div className="h-[200px] min-w-0 relative">
                         <ResponsiveContainer width="100%" aspect={3}>
                             <AreaChart data={products.slice(0, 10)}>
@@ -542,7 +542,7 @@ export const SellerInventory = ({ products: initialProducts, userId, refresh, on
                                     contentStyle={{ backgroundColor: '#1a1a1a', border: 'none', borderRadius: '0', color: '#f5f2ed', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em' }}
                                     itemStyle={{ color: '#f5f2ed' }}
                                 />
-                                <Area type="monotone" dataKey="price" stroke="currentColor" className="text-foreground dark:text-background" fillOpacity={1} fill="url(#colorValue)" />
+                                <Area type="monotone" dataKey="price" stroke="currentColor" className="text-foreground" fillOpacity={1} fill="url(#colorValue)" />
                             </AreaChart>
                         </ResponsiveContainer>
                     </div>
@@ -567,19 +567,19 @@ export const SellerInventory = ({ products: initialProducts, userId, refresh, on
             <div className="flex flex-col xl:flex-row justify-between gap-6 sticky top-24 z-20 bg-background/90 backdrop-blur-xl py-4 border-b border-foreground/10">
                 <div className="flex flex-col sm:flex-row gap-4 w-full xl:w-auto relative">
                     <div className="relative group w-full sm:w-[320px]">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-40 group-focus-within:opacity-100 transition-opacity text-foreground dark:text-background stroke-[1]" />
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-40 group-focus-within:opacity-100 transition-opacity text-foreground stroke-[1]" />
                         <Input 
                             placeholder="Search inventory..." 
                             value={search} 
                             onChange={(e:any) => setSearch(e.target.value)} 
-                            className="h-12 pl-12 bg-transparent border-foreground/20 dark:border-background/20 rounded-none text-xs focus:border-foreground dark:focus:border-background"
+                            className="h-12 pl-12 bg-transparent border-foreground/20 rounded-none text-xs focus:border-foreground dark:focus:border-background"
                         />
                     </div>
                     <div className="flex gap-4 overflow-x-auto no-scrollbar">
                         <select 
                             value={status} 
                             onChange={(e) => setStatus(e.target.value)}
-                            className="h-12 pl-4 pr-10 bg-transparent border border-foreground/20 dark:border-background/20 rounded-none text-[10px] uppercase tracking-[0.2em] outline-none focus:border-foreground dark:focus:border-background cursor-pointer appearance-none min-w-[120px] text-foreground dark:text-background"
+                            className="h-12 pl-4 pr-10 bg-transparent border border-foreground/20 rounded-none text-[10px] uppercase tracking-[0.2em] outline-none focus:border-foreground dark:focus:border-background cursor-pointer appearance-none min-w-[120px] text-foreground"
                         >
                             <option value="All">Status</option>
                             <option value="active">Active</option>
@@ -588,14 +588,14 @@ export const SellerInventory = ({ products: initialProducts, userId, refresh, on
                         <select 
                             value={category} 
                             onChange={(e) => setCategory(e.target.value)}
-                            className="h-12 pl-4 pr-10 bg-transparent border border-foreground/20 dark:border-background/20 rounded-none text-[10px] uppercase tracking-[0.2em] outline-none focus:border-foreground dark:focus:border-background cursor-pointer appearance-none min-w-[140px] text-foreground dark:text-background"
+                            className="h-12 pl-4 pr-10 bg-transparent border border-foreground/20 rounded-none text-[10px] uppercase tracking-[0.2em] outline-none focus:border-foreground dark:focus:border-background cursor-pointer appearance-none min-w-[140px] text-foreground"
                         >
                             <option value="All">Category</option>
                             {Object.keys(CATEGORY_HIERARCHY).map(c => <option key={c} value={c}>{c}</option>)}
                         </select>
                         <button 
                             onClick={() => setIsFilterOpen(!isFilterOpen)} 
-                            className={`h-12 px-6 border flex items-center gap-3 transition-all text-[10px] uppercase tracking-[0.2em] ${isFilterOpen ? 'bg-primary text-background dark:bg-background dark:text-foreground border-foreground dark:border-background' : 'bg-transparent border-foreground/20 dark:border-background/20 hover:border-foreground dark:hover:border-background text-foreground dark:text-background'}`}
+                            className={`h-12 px-6 border flex items-center gap-3 transition-all text-[10px] uppercase tracking-[0.2em] ${isFilterOpen ? 'bg-primary text-background dark:bg-background dark:text-foreground border-foreground dark:border-background' : 'bg-transparent border-foreground/20 hover:border-foreground dark:hover:border-background text-foreground'}`}
                         >
                             <Filter className="w-4 h-4 stroke-[1]" /> Filters
                         </button>
@@ -635,9 +635,9 @@ export const SellerInventory = ({ products: initialProducts, userId, refresh, on
             </div>
 
             {/* 3. Inventory Table */}
-            <div className="bg-background dark:bg-background border border-foreground/10 dark:border-background/10 overflow-hidden flex flex-col min-h-[500px]">
+            <div className="bg-background dark:bg-background border border-foreground/10 overflow-hidden flex flex-col min-h-[500px]">
                 {/* Table Header */}
-                <div className="grid grid-cols-12 gap-6 px-6 py-6 border-b border-foreground/10 dark:border-background/10 text-[9px] uppercase tracking-[0.2em] opacity-60 text-foreground dark:text-background sticky top-0 z-10 bg-background/95 dark:bg-background/95 backdrop-blur-xl">
+                <div className="grid grid-cols-12 gap-6 px-6 py-6 border-b border-foreground/10 text-[9px] uppercase tracking-[0.2em] opacity-60 text-foreground sticky top-0 z-10 bg-background/95 dark:bg-background/95 backdrop-blur-xl">
                     <div className="col-span-1 text-center">Order</div>
                     <div className="col-span-4 pl-6">Product Details</div>
                     <div className="col-span-2 text-right cursor-pointer hover:opacity-100 transition-opacity flex justify-end gap-2" onClick={() => setSort({ key: 'price', asc: !sort.asc })}>
@@ -666,7 +666,7 @@ export const SellerInventory = ({ products: initialProducts, userId, refresh, on
                             ))}
                         </div>
                     ) : products.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-20 text-foreground/40 dark:text-background/40">
+                        <div className="flex flex-col items-center justify-center py-20 text-foreground/40">
                             <Package className="w-16 h-16 mb-4 opacity-50" />
                             <p className="text-[10px] uppercase tracking-[0.2em]">No Inventory Found</p>
                         </div>
@@ -695,11 +695,11 @@ export const SellerInventory = ({ products: initialProducts, userId, refresh, on
                 </div>
 
                 {/* Pagination */}
-                <div className="p-6 border-t border-foreground/10 dark:border-background/10 flex justify-between items-center bg-background/50 dark:bg-background/50">
-                    <span className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground dark:text-background">Showing {products.length} of {totalCount} items</span>
+                <div className="p-6 border-t border-foreground/10 flex justify-between items-center bg-background/50 dark:bg-background/50">
+                    <span className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground">Showing {products.length} of {totalCount} items</span>
                     <div className="flex gap-4">
-                        <button disabled={page === 0} onClick={() => setPage(p => Math.max(0, p - 1))} className="h-10 px-6 border border-foreground/20 dark:border-background/20 text-[10px] uppercase tracking-[0.2em] text-foreground dark:text-background hover:bg-primary hover:text-background dark:hover:bg-background dark:hover:text-foreground transition-all disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit">Prev</button>
-                        <button disabled={(page + 1) * PAGE_SIZE >= totalCount} onClick={() => setPage(p => p + 1)} className="h-10 px-6 border border-foreground/20 dark:border-background/20 text-[10px] uppercase tracking-[0.2em] text-foreground dark:text-background hover:bg-primary hover:text-background dark:hover:bg-background dark:hover:text-foreground transition-all disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit">Next</button>
+                        <button disabled={page === 0} onClick={() => setPage(p => Math.max(0, p - 1))} className="h-10 px-6 border border-foreground/20 text-[10px] uppercase tracking-[0.2em] text-foreground hover:bg-primary hover:text-background dark:hover:bg-background dark:hover:text-foreground transition-all disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit">Prev</button>
+                        <button disabled={(page + 1) * PAGE_SIZE >= totalCount} onClick={() => setPage(p => p + 1)} className="h-10 px-6 border border-foreground/20 text-[10px] uppercase tracking-[0.2em] text-foreground hover:bg-primary hover:text-background dark:hover:bg-background dark:hover:text-foreground transition-all disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit">Next</button>
                     </div>
                 </div>
             </div>

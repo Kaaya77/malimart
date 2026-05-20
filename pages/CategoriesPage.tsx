@@ -33,10 +33,10 @@ export const CategoriesPage = () => {
                             viewport={{ once: true, margin: "-50px" }}
                             transition={{ duration: 0.8 }}
                         >
-                            <span className="text-[10px] uppercase tracking-[0.4em] text-foreground/40 dark:text-background/40 font-semibold mb-4 block">
+                            <span className="text-[10px] uppercase tracking-[0.4em] text-foreground/40 font-semibold mb-4 block">
                                 Curated Collections
                             </span>
-                            <h1 className="text-4xl md:text-7xl font-serif font-light tracking-tight text-foreground dark:text-background leading-[0.9]">
+                            <h1 className="text-4xl md:text-7xl font-serif font-light tracking-tight text-foreground leading-[0.9]">
                                 Explore <br />
                                 <span className="italic opacity-80">Our Universe</span>
                             </h1>
@@ -47,7 +47,7 @@ export const CategoriesPage = () => {
                         whileInView={{ opacity: 1 }}
                         viewport={{ once: true, margin: "-50px" }}
                         transition={{ delay: 0.4, duration: 0.8 }}
-                        className="text-lg text-foreground/60 dark:text-background/60 font-light max-w-sm leading-relaxed"
+                        className="text-lg text-foreground/60 font-light max-w-sm leading-relaxed"
                     >
                         From heritage craftsmanship to modern essentials, discover the finest selection of authentic Tanzanian products.
                     </motion.p>
@@ -88,7 +88,7 @@ export const CategoriesPage = () => {
                                 
                                 {/* Floating Badge */}
                                 <div className="absolute top-6 left-6">
-                                    <div className="w-10 h-10 rounded-full bg-background/90 dark:bg-background/90 backdrop-blur-md flex items-center justify-center text-foreground dark:text-background shadow-xl">
+                                    <div className="w-10 h-10 rounded-full bg-background/90 dark:bg-background/90 backdrop-blur-md flex items-center justify-center text-foreground shadow-xl">
                                         {index % 3 === 0 ? <Sparkles className="w-4 h-4" /> : index % 3 === 1 ? <Zap className="w-4 h-4" /> : <Star className="w-4 h-4" />}
                                     </div>
                                 </div>
@@ -107,7 +107,7 @@ export const CategoriesPage = () => {
                             {/* Category Info */}
                             <div className="space-y-6">
                                 <div className="flex items-end justify-between">
-                                    <h3 className="text-3xl font-serif font-light text-foreground dark:text-background">
+                                    <h3 className="text-3xl font-serif font-light text-foreground">
                                         {category.name}
                                     </h3>
                                     <span className="text-[10px] uppercase tracking-widest opacity-40 font-bold">
@@ -139,7 +139,7 @@ export const CategoriesPage = () => {
                                             >
                                                 <Link 
                                                     to={`/shop?category=${encodeURIComponent(sub.name)}`}
-                                                    className="px-4 py-2 border border-foreground/10 dark:border-background/10 text-[10px] uppercase tracking-widest text-foreground/60 dark:text-background/60 hover:border-foreground hover:text-foreground dark:hover:border-background dark:hover:text-background transition-all"
+                                                    className="px-4 py-2 border border-foreground/10 text-[10px] uppercase tracking-widest text-foreground/60 hover:border-foreground hover:text-foreground dark:hover:border-background dark:hover:text-background transition-all"
                                                 >
                                                     {sub.name}
                                                 </Link>
@@ -168,9 +168,9 @@ export const CategoriesPage = () => {
                     initial={{ opacity: 0 }}
                     whileInView={{ opacity: 1 }}
                     viewport={{ once: true }}
-                    className="mt-32 pt-24 border-t border-foreground/10 dark:border-background/10 text-center"
+                    className="mt-32 pt-24 border-t border-foreground/10 text-center"
                 >
-                    <h2 className="text-4xl md:text-6xl font-serif font-light text-foreground dark:text-background mb-12">
+                    <h2 className="text-4xl md:text-6xl font-serif font-light text-foreground mb-12">
                         Can't find what you're <br />
                         <span className="italic opacity-80">looking for?</span>
                     </h2>
@@ -183,7 +183,7 @@ export const CategoriesPage = () => {
                         </Link>
                         <Link 
                             to="/about"
-                            className="px-12 py-5 border border-foreground dark:border-background text-foreground dark:text-background text-[11px] uppercase tracking-[0.3em] font-bold hover:bg-primary hover:text-background dark:hover:bg-background dark:hover:text-foreground transition-all"
+                            className="px-12 py-5 border border-foreground dark:border-background text-foreground text-[11px] uppercase tracking-[0.3em] font-bold hover:bg-primary hover:text-background dark:hover:bg-background dark:hover:text-foreground transition-all"
                         >
                             Learn Our Process
                         </Link>

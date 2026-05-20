@@ -69,7 +69,7 @@ export const SellerReturns = ({ userId, onContactBuyer }: { userId: string, onCo
  <div className="flex flex-col h-full animate-in fade-in duration-700">
  <div className="flex flex-col md:flex-row justify-between items-end mb-10 gap-6">
  <div className="flex items-center gap-3">
- <div className="w-12 h-12 rounded-none bg-primary dark:bg-background flex items-center justify-center shadow-none relative group overflow-hidden border border-foreground/10 dark:border-background/10">
+ <div className="w-12 h-12 rounded-none bg-primary dark:bg-background flex items-center justify-center shadow-none relative group overflow-hidden border border-foreground/10">
  <div className="absolute inset-0 bg-noise opacity-[0.05] pointer-events-none" />
  <RefreshCcw className="w-6 h-6 text-white relative z-10 group-hover:rotate-12 transition-transform duration-500" />
  <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-white/10 dark:bg-black/10 rounded-full blur-xl group-hover:scale-150 transition-transform duration-700" />
@@ -136,14 +136,14 @@ export const SellerReturns = ({ userId, onContactBuyer }: { userId: string, onCo
  <div className="w-10 h-10 border-2 border-foreground/10 border-t-foreground dark:border-t-white rounded-full animate-spin"></div>
  </div>
  ) : filteredDisputes.length === 0 ? (
- <div className="flex-1 flex flex-col items-center justify-center text-foreground/20 dark:text-background/20 py-24 text-center bg-background dark:bg-background rounded-none border border-foreground/10 dark:border-background/10">
+ <div className="flex-1 flex flex-col items-center justify-center text-foreground/20 py-24 text-center bg-background dark:bg-background rounded-none border border-foreground/10">
  <PackageX className="w-20 h-20 mb-6 stroke-[0.5]" />
  <p className="text-xs font-black uppercase tracking-[0.3em]">No returns found</p>
  </div>
  ) : (
  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
  {filteredDisputes.map(dispute => (
- <Card key={dispute.id} className="p-10 rounded-none bg-background dark:bg-background border border-foreground/10 dark:border-background/10 shadow-none group hover:border-foreground/30 dark:hover:border-background/30 transition-all duration-700 relative overflow-hidden">
+ <Card key={dispute.id} className="p-10 rounded-none bg-background dark:bg-background border border-foreground/10 shadow-none group hover:border-foreground/30 dark:hover:border-background/30 transition-all duration-700 relative overflow-hidden">
  <div className="absolute top-0 right-0 w-40 h-40 bg-primary/5 rounded-full -mr-20 -mt-20 transition-transform group-hover:scale-110 duration-1000" />
  
  <div className="relative z-10 flex justify-between items-start mb-8">

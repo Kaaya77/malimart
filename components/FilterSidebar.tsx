@@ -102,7 +102,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
                         className="fixed top-0 right-0 h-full w-full max-w-md bg-background dark:bg-background shadow-2xl z-[101] flex flex-col"
                     >
-                        <div className="p-6 border-b border-foreground/10 dark:border-background/10 flex items-center justify-between">
+                        <div className="p-6 border-b border-foreground/10 flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <Filter className="w-5 h-5" />
                                 <h2 className="font-serif text-2xl">Advanced Filters</h2>
@@ -141,7 +141,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                                         <button
                                             key={cat.id}
                                             onClick={() => toggleItem(selectedCategories, setSelectedCategories, cat.id)}
-                                            className={`px-4 py-2 text-xs text-left border transition-all ${selectedCategories.includes(cat.id) ? 'bg-primary text-background border-foreground dark:bg-background dark:text-foreground dark:border-background' : 'border-foreground/10 dark:border-background/10 hover:border-foreground/30 dark:hover:border-background/30'}`}
+                                            className={`px-4 py-2 text-xs text-left border transition-all ${selectedCategories.includes(cat.id) ? 'bg-primary text-background border-foreground dark:bg-background dark:text-foreground dark:border-background' : 'border-foreground/10 hover:border-foreground/30 dark:hover:border-background/30'}`}
                                         >
                                             {cat.name}
                                         </button>
@@ -157,7 +157,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                                         <button
                                             key={material}
                                             onClick={() => toggleItem(selectedMaterials, setSelectedMaterials, material)}
-                                            className={`px-3 py-1.5 text-[10px] uppercase tracking-[0.1em] border rounded-full transition-all ${selectedMaterials.includes(material) ? 'bg-primary text-background border-foreground dark:bg-background dark:text-foreground dark:border-background' : 'border-foreground/10 dark:border-background/10'}`}
+                                            className={`px-3 py-1.5 text-[10px] uppercase tracking-[0.1em] border rounded-full transition-all ${selectedMaterials.includes(material) ? 'bg-primary text-background border-foreground dark:bg-background dark:text-foreground dark:border-background' : 'border-foreground/10'}`}
                                         >
                                             {material}
                                         </button>
@@ -178,7 +178,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                                             aria-pressed={selectedColors.includes(color)}
                                         >
                                             <div
-                                                className={`w-8 h-8 rounded-full border border-foreground/10 dark:border-background/10 flex items-center justify-center transition-all ${selectedColors.includes(color) ? 'ring-2 ring-foreground dark:ring-background ring-offset-2 dark:ring-offset-background' : ''}`}
+                                                className={`w-8 h-8 rounded-full border border-foreground/10 flex items-center justify-center transition-all ${selectedColors.includes(color) ? 'ring-2 ring-foreground dark:ring-background ring-offset-2 dark:ring-offset-background' : ''}`}
                                                 style={{ backgroundColor: color.toLowerCase() }}
                                             >
                                                 {selectedColors.includes(color) && (
@@ -202,7 +202,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                                         <label key={size} className="flex items-center gap-3 cursor-pointer group">
                                             <div
                                                 onClick={() => toggleItem(selectedSizes, setSelectedSizes, size)}
-                                                className={`w-5 h-5 border flex items-center justify-center transition-all ${selectedSizes.includes(size) ? 'bg-primary border-foreground dark:bg-background dark:border-background' : 'border-foreground/20 dark:border-background/20 group-hover:border-foreground/50 dark:group-hover:border-background/50'}`}
+                                                className={`w-5 h-5 border flex items-center justify-center transition-all ${selectedSizes.includes(size) ? 'bg-primary border-foreground dark:bg-background dark:border-background' : 'border-foreground/20 group-hover:border-foreground/50 dark:group-hover:border-background/50'}`}
                                             >
                                                 {selectedSizes.includes(size) && <Check className="w-3 h-3 text-background dark:text-foreground" />}
                                             </div>
@@ -232,7 +232,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                                         <button
                                             key={star}
                                             onClick={() => setRating(star === rating ? null : star)}
-                                            className={`w-10 h-10 rounded-full border flex items-center justify-center transition-all ${rating && star <= rating ? 'bg-primary text-background border-foreground dark:bg-background dark:text-foreground dark:border-background' : 'border-foreground/10 dark:border-background/10'}`}
+                                            className={`w-10 h-10 rounded-full border flex items-center justify-center transition-all ${rating && star <= rating ? 'bg-primary text-background border-foreground dark:bg-background dark:text-foreground dark:border-background' : 'border-foreground/10'}`}
                                         >
                                             <Star className={`w-4 h-4 ${rating && star <= rating ? 'fill-current' : ''}`} />
                                         </button>
@@ -265,12 +265,12 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
 
                         {/* FIX #1: Footer with safe-area-inset-bottom padding */}
                         <div
-                            className="px-6 pt-6 border-t border-foreground/10 dark:border-background/10 grid grid-cols-2 gap-4"
+                            className="px-6 pt-6 border-t border-foreground/10 grid grid-cols-2 gap-4"
                             style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))' }}
                         >
                             <button
                                 onClick={handleReset}
-                                className="flex items-center justify-center gap-2 px-6 py-4 border border-foreground/20 dark:border-background/20 text-[10px] uppercase tracking-[0.2em] hover:bg-primary/5 dark:hover:bg-background/5 transition-colors"
+                                className="flex items-center justify-center gap-2 px-6 py-4 border border-foreground/20 text-[10px] uppercase tracking-[0.2em] hover:bg-primary/5 dark:hover:bg-background/5 transition-colors"
                             >
                                 <RotateCcw className="w-3 h-3" /> Reset
                             </button>

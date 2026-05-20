@@ -912,7 +912,7 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
                                                 </div>
                                             </div>
                                         </div>
-                                        {attributes.length === 0 ? <div className="text-center py-10 border border-dashed border-foreground/20 dark:border-background/20"><Button size="sm" variant="outline" onClick={() => setAttributes([{ name: 'Color', values: [] }])}><Plus className="w-3 h-3 mr-2"/> Add Attribute</Button></div> : attributes.map((attr, idx) => (
+                                        {attributes.length === 0 ? <div className="text-center py-10 border border-dashed border-foreground/20"><Button size="sm" variant="outline" onClick={() => setAttributes([{ name: 'Color', values: [] }])}><Plus className="w-3 h-3 mr-2"/> Add Attribute</Button></div> : attributes.map((attr, idx) => (
                                             <div key={idx} className="p-6 bg-transparent border border-foreground/10 relative group mb-4">
                                                 <button onClick={() => setAttributes(attributes.filter((_, i) => i !== idx))} className="absolute top-4 right-4 p-2 opacity-40 hover:opacity-100 transition-opacity"><Trash2 className="w-4 h-4"/></button>
                                                 <div className="grid md:grid-cols-12 gap-8">

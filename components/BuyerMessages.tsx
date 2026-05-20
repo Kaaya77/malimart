@@ -462,7 +462,7 @@ export const BuyerMessages = ({ userId, initialSellerId }: { userId: string, ini
  {/* Reporting Modal */}
  {reportingUser && (
  <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
- <div className="bg-background dark:bg-background border border-foreground/10 dark:border-background/10 w-full max-w-md p-8 shadow-2xl">
+ <div className="bg-background dark:bg-background border border-foreground/10 w-full max-w-md p-8 shadow-2xl">
  <h3 className="text-2xl font-serif font-light mb-6">Report User</h3>
  <div className="space-y-6">
  <div className="space-y-2">
@@ -470,7 +470,7 @@ export const BuyerMessages = ({ userId, initialSellerId }: { userId: string, ini
  <select 
  value={reportReason} 
  onChange={(e) => setReportReason(e.target.value)}
- className="w-full h-12 bg-transparent border border-foreground/10 dark:border-background/10 px-4 text-sm focus:outline-none focus:border-foreground dark:focus:border-background transition-colors"
+ className="w-full h-12 bg-transparent border border-foreground/10 px-4 text-sm focus:outline-none focus:border-foreground dark:focus:border-background transition-colors"
  >
  <option value="Spam">Spam</option>
  <option value="Harassment">Harassment</option>
@@ -485,7 +485,7 @@ export const BuyerMessages = ({ userId, initialSellerId }: { userId: string, ini
  value={reportDetails}
  onChange={(e) => setReportDetails(e.target.value)}
  placeholder="Please provide more information..."
- className="w-full h-32 bg-transparent border border-foreground/10 dark:border-background/10 p-4 text-sm focus:outline-none focus:border-foreground dark:focus:border-background transition-colors resize-none"
+ className="w-full h-32 bg-transparent border border-foreground/10 p-4 text-sm focus:outline-none focus:border-foreground dark:focus:border-background transition-colors resize-none"
  />
  </div>
  <div className="flex gap-4 pt-4">

@@ -63,20 +63,20 @@ export const ShareButton: React.FC<ShareButtonProps> = ({ title, text, url, clas
                     e.stopPropagation();
                     setIsOpen(!isOpen);
                 }} 
-                className="p-2 hover:bg-primary/5 dark:hover:bg-background/5 rounded-full transition-colors text-foreground dark:text-background"
+                className="p-2 hover:bg-primary/5 dark:hover:bg-background/5 rounded-full transition-colors text-foreground"
             >
                 <Share2 className="w-4 h-4" />
             </button>
             
             {isOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-background dark:bg-background border border-foreground/10 dark:border-background/10 shadow-2xl z-50 p-2 rounded-xl animate-in fade-in zoom-in-95 duration-200">
-                    <button onClick={handleNativeShare} className="w-full flex items-center gap-3 p-3 hover:bg-primary/5 dark:hover:bg-background/5 rounded-lg text-xs uppercase tracking-widest text-foreground dark:text-background">
+                <div className="absolute right-0 mt-2 w-48 bg-background dark:bg-background border border-foreground/10 shadow-2xl z-50 p-2 rounded-xl animate-in fade-in zoom-in-95 duration-200">
+                    <button onClick={handleNativeShare} className="w-full flex items-center gap-3 p-3 hover:bg-primary/5 dark:hover:bg-background/5 rounded-lg text-xs uppercase tracking-widest text-foreground">
                         <Share2 className="w-4 h-4" /> Native Share
                     </button>
-                    <button onClick={shareWhatsApp} className="w-full flex items-center gap-3 p-3 hover:bg-primary/5 dark:hover:bg-background/5 rounded-lg text-xs uppercase tracking-widest text-foreground dark:text-background">
+                    <button onClick={shareWhatsApp} className="w-full flex items-center gap-3 p-3 hover:bg-primary/5 dark:hover:bg-background/5 rounded-lg text-xs uppercase tracking-widest text-foreground">
                         <MessageCircle className="w-4 h-4" /> WhatsApp
                     </button>
-                    <button onClick={shareEmail} className="w-full flex items-center gap-3 p-3 hover:bg-primary/5 dark:hover:bg-background/5 rounded-lg text-xs uppercase tracking-widest text-foreground dark:text-background">
+                    <button onClick={shareEmail} className="w-full flex items-center gap-3 p-3 hover:bg-primary/5 dark:hover:bg-background/5 rounded-lg text-xs uppercase tracking-widest text-foreground">
                         <Mail className="w-4 h-4" /> Email
                     </button>
                     <button onClick={() => {
@@ -85,7 +85,7 @@ export const ShareButton: React.FC<ShareButtonProps> = ({ title, text, url, clas
                         addToast('Link copied to clipboard', 'success');
                         setTimeout(() => setCopied(false), 2000);
                         setIsOpen(false);
-                    }} className="w-full flex items-center gap-3 p-3 hover:bg-primary/5 dark:hover:bg-background/5 rounded-lg text-xs uppercase tracking-widest text-foreground dark:text-background">
+                    }} className="w-full flex items-center gap-3 p-3 hover:bg-primary/5 dark:hover:bg-background/5 rounded-lg text-xs uppercase tracking-widest text-foreground">
                         {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />} Copy Link
                     </button>
                 </div>

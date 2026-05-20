@@ -61,21 +61,21 @@ export const BulkEditModal = ({ isOpen, onClose, products, onSave }: { isOpen: b
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
-            <div className="relative w-full max-w-6xl bg-background dark:bg-background border border-foreground/10 dark:border-background/10 shadow-2xl flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-300">
+            <div className="relative w-full max-w-6xl bg-background dark:bg-background border border-foreground/10 shadow-2xl flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-300">
                 
-                <div className="flex justify-between items-center p-6 border-b border-foreground/10 dark:border-background/10">
+                <div className="flex justify-between items-center p-6 border-b border-foreground/10">
                     <div>
-                        <h2 className="font-serif text-2xl text-foreground dark:text-background">Bulk Inventory Edit</h2>
-                        <p className="text-xs opacity-60 text-foreground dark:text-background mt-1">Quickly adjust prices, stock, and status for all your products.</p>
+                        <h2 className="font-serif text-2xl text-foreground">Bulk Inventory Edit</h2>
+                        <p className="text-xs opacity-60 text-foreground mt-1">Quickly adjust prices, stock, and status for all your products.</p>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-primary/5 dark:hover:bg-background/5 rounded-full transition-colors">
-                        <X className="w-5 h-5 text-foreground dark:text-background" />
+                        <X className="w-5 h-5 text-foreground" />
                     </button>
                 </div>
 
                 <div className="flex-1 overflow-auto p-6">
                     <div className="min-w-[800px]">
-                        <div className="grid grid-cols-12 gap-4 pb-4 border-b border-foreground/10 dark:border-background/10 text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground dark:text-background mb-4">
+                        <div className="grid grid-cols-12 gap-4 pb-4 border-b border-foreground/10 text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground mb-4">
                             <div className="col-span-4">Product Name</div>
                             <div className="col-span-2">Price (TZS)</div>
                             <div className="col-span-2">Stock</div>
@@ -85,7 +85,7 @@ export const BulkEditModal = ({ isOpen, onClose, products, onSave }: { isOpen: b
 
                         <div className="space-y-2">
                             {editedProducts.map(product => (
-                                <div key={product.id} className="grid grid-cols-12 gap-4 items-center bg-background dark:bg-primary p-2 border border-foreground/5 dark:border-background/5">
+                                <div key={product.id} className="grid grid-cols-12 gap-4 items-center bg-background dark:bg-primary p-2 border border-foreground/5">
                                     <div className="col-span-4">
                                         <Input 
                                             value={product.name} 
@@ -113,7 +113,7 @@ export const BulkEditModal = ({ isOpen, onClose, products, onSave }: { isOpen: b
                                         <select 
                                             value={product.status}
                                             onChange={(e: any) => handleUpdate(product.id, 'status', e.target.value)}
-                                            className="w-full h-10 text-xs uppercase tracking-[0.1em] bg-transparent border-transparent hover:border-foreground/20 dark:hover:border-background/20 focus:border-foreground dark:focus:border-background rounded-none px-2 text-foreground dark:text-background outline-none"
+                                            className="w-full h-10 text-xs uppercase tracking-[0.1em] bg-transparent border-transparent hover:border-foreground/20 dark:hover:border-background/20 focus:border-foreground dark:focus:border-background rounded-none px-2 text-foreground outline-none"
                                         >
                                             <option value="active" className="bg-background dark:bg-background">Active</option>
                                             <option value="draft" className="bg-background dark:bg-background">Draft</option>
@@ -128,10 +128,10 @@ export const BulkEditModal = ({ isOpen, onClose, products, onSave }: { isOpen: b
                     </div>
                 </div>
 
-                <div className="p-6 border-t border-foreground/10 dark:border-background/10 flex justify-end gap-4 bg-background dark:bg-background">
+                <div className="p-6 border-t border-foreground/10 flex justify-end gap-4 bg-background dark:bg-background">
                     <button 
                         onClick={onClose}
-                        className="px-8 py-3 text-[10px] uppercase tracking-[0.2em] font-bold text-foreground dark:text-background hover:opacity-70 transition-opacity"
+                        className="px-8 py-3 text-[10px] uppercase tracking-[0.2em] font-bold text-foreground hover:opacity-70 transition-opacity"
                     >
                         Cancel
                     </button>

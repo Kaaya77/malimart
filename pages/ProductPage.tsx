@@ -338,7 +338,7 @@ export const ProductPage = () => {
                                     whileTap={{ scale: 0.98 }}
                                     onClick={handleAdd}
                                     disabled={metrics.isOut}
-                                    className={`flex-1 border text-xs uppercase tracking-[0.2em] font-semibold transition-colors ${metrics.isOut ? 'border-foreground/20 text-foreground/40 dark:text-background/40 cursor-not-allowed' : 'border-foreground dark:border-background hover:bg-primary hover:text-background dark:hover:bg-background dark:hover:text-foreground'}`}
+                                    className={`flex-1 border text-xs uppercase tracking-[0.2em] font-semibold transition-colors ${metrics.isOut ? 'border-foreground/20 text-foreground/40 cursor-not-allowed' : 'border-foreground dark:border-background hover:bg-primary hover:text-background dark:hover:bg-background dark:hover:text-foreground'}`}
                                 >
                                     {metrics.isOut ? 'Out of Stock' : 'Add to Bag'}
                                 </motion.button>
@@ -348,7 +348,7 @@ export const ProductPage = () => {
                                 whileTap={{ scale: 0.98 }}
                                 onClick={() => { handleAdd(); navigate('/cart'); }}
                                 disabled={metrics.isOut}
-                                className={`w-full h-14 text-xs uppercase tracking-[0.2em] font-semibold transition-opacity ${metrics.isOut ? 'bg-primary/10 text-foreground/40 dark:bg-background/10 dark:text-background/40 cursor-not-allowed' : 'bg-primary text-background dark:bg-background dark:text-foreground hover:opacity-90'}`}
+                                className={`w-full h-14 text-xs uppercase tracking-[0.2em] font-semibold transition-opacity ${metrics.isOut ? 'bg-primary/10 text-foreground/40 dark:bg-background/10 cursor-not-allowed' : 'bg-primary text-background dark:bg-background dark:text-foreground hover:opacity-90'}`}
                             >
                                 Purchase Now
                             </motion.button>

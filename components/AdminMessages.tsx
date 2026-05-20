@@ -307,7 +307,7 @@ export const AdminMessages = ({ initialSelectedUser }: { initialSelectedUser?: {
                 </div>
                 
                 <div className="flex-1 overflow-y-auto p-4 space-y-2 no-scrollbar">
-                    {users.length === 0 && <div className="text-center p-8 text-foreground/40 dark:text-background/40 text-[10px] uppercase tracking-[0.2em]">No conversations</div>}
+                    {users.length === 0 && <div className="text-center p-8 text-foreground/40 text-[10px] uppercase tracking-[0.2em]">No conversations</div>}
                     {users.map(u => (
                         <div 
                             key={u.id} 
@@ -330,7 +330,7 @@ export const AdminMessages = ({ initialSelectedUser }: { initialSelectedUser?: {
                                             onClick={(e) => { e.stopPropagation(); fetchUserProfile(u.id); }}
                                         >
                                             {u.name}
-                                            {pinnedUsers.has(u.id) && <Pin className="w-3 h-3 text-foreground dark:text-background fill-current" />}
+                                            {pinnedUsers.has(u.id) && <Pin className="w-3 h-3 text-foreground fill-current" />}
                                         </span>
                                         <span className="text-[10px] font-bold text-foreground/40">{new Date(u.time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
                                     </div>
@@ -350,7 +350,7 @@ export const AdminMessages = ({ initialSelectedUser }: { initialSelectedUser?: {
             {/* Chat Area */}
             <ChatAreaContainer isVisible={!selectedChatUser}>
                 {!selectedChatUser ? (
-                    <div className="flex-1 flex flex-col items-center justify-center text-foreground/40 dark:text-background/40 bg-transparent">
+                    <div className="flex-1 flex flex-col items-center justify-center text-foreground/40 bg-transparent">
                         <MessageSquare className="w-12 h-12 mb-6 stroke-[1]" />
                         <p className="text-[10px] uppercase tracking-[0.2em]">Select a Conversation</p>
                     </div>
@@ -478,7 +478,7 @@ export const AdminMessages = ({ initialSelectedUser }: { initialSelectedUser?: {
 
                                         {/* Emoji Picker Popover */}
                                         {showEmojiPicker === c.id && (
-                                            <div className="absolute bottom-full mb-2 bg-background dark:bg-primary border border-foreground/20 dark:border-background/20 p-2 flex gap-2 z-50 shadow-xl">
+                                            <div className="absolute bottom-full mb-2 bg-background dark:bg-primary border border-foreground/20 p-2 flex gap-2 z-50 shadow-xl">
                                                 {['👍', '❤️', '😂', '😮', '😢', '🔥'].map(emoji => (
                                                     <button 
                                                         key={emoji} 

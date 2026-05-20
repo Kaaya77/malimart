@@ -74,7 +74,7 @@ export const CancelOrderModal = ({ isOpen, onClose, onConfirm, role }: CancelOrd
                                     value={reason} 
                                     checked={selectedReason === reason}
                                     onChange={(e) => setSelectedReason(e.target.value)}
-                                    className="w-4 h-4 text-foreground dark:text-background focus:ring-foreground dark:focus:ring-background"
+                                    className="w-4 h-4 text-foreground focus:ring-foreground dark:focus:ring-background"
                                 />
                                 <span className="text-sm font-bold text-foreground/80">{reason}</span>
                             </label>

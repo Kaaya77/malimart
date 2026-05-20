@@ -520,7 +520,7 @@ export const ReceiptModal = ({ isOpen, order, seller, onClose }: { isOpen: boole
 };
 
 // --- PremiumStatCard ---
-export const PremiumStatCard = ({ title, value, icon: Icon, color = "text-foreground dark:text-background", loading, trend }: { title: string, value: string | number, icon: any, color?: string, loading?: boolean, trend?: string | { value: string, positive?: boolean, isPositive?: boolean } }) => {
+export const PremiumStatCard = ({ title, value, icon: Icon, color = "text-foreground", loading, trend }: { title: string, value: string | number, icon: any, color?: string, loading?: boolean, trend?: string | { value: string, positive?: boolean, isPositive?: boolean } }) => {
     const trendValue = typeof trend === 'string' ? trend : trend?.value;
     const isPositive = typeof trend === 'object' ? (trend.positive ?? trend.isPositive ?? true) : true;
 

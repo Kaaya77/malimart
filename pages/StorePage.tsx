@@ -95,7 +95,7 @@ export const StorePage = () => {
                                 <h1 className="font-serif text-4xl md:text-6xl font-light tracking-tight leading-[1] uppercase">{vendor.store_name}</h1>
                             </div>
                             
-                            <p className="text-sm leading-relaxed opacity-80 font-light max-w-2xl italic border-l border-foreground/20 dark:border-background/20 pl-6 py-2">"{vendor.description}"</p>
+                            <p className="text-sm leading-relaxed opacity-80 font-light max-w-2xl italic border-l border-foreground/20 pl-6 py-2">"{vendor.description}"</p>
                             
                             <div className="flex flex-wrap gap-6 pt-4">
                                 <div className="flex items-center gap-2 opacity-60"><MapPin className="w-4 h-4 stroke-[1]" /> <span className="text-[10px] uppercase tracking-[0.2em] font-semibold">{vendor.region}</span></div>
@@ -106,12 +106,12 @@ export const StorePage = () => {
 
                         <div className="flex flex-row lg:flex-col gap-4 w-full lg:w-auto">
                             <button 
-                                className={`h-12 px-8 text-[10px] uppercase tracking-[0.2em] font-semibold transition-colors flex-1 lg:flex-none border ${isFollowing(vendor.seller_id) ? 'border-foreground/20 dark:border-background/20 hover:border-foreground dark:hover:border-background' : 'border-foreground bg-primary text-background dark:border-background dark:bg-background dark:text-foreground hover:opacity-90'}`}
+                                className={`h-12 px-8 text-[10px] uppercase tracking-[0.2em] font-semibold transition-colors flex-1 lg:flex-none border ${isFollowing(vendor.seller_id) ? 'border-foreground/20 hover:border-foreground dark:hover:border-background' : 'border-foreground bg-primary text-background dark:border-background dark:bg-background dark:text-foreground hover:opacity-90'}`}
                                 onClick={() => isFollowing(vendor.seller_id) ? unfollowSeller(vendor.seller_id) : followSeller(vendor.seller_id)}
                             >
                                 {isFollowing(vendor.seller_id) ? "Following" : "Follow Brand"}
                             </button>
-                            <button className="h-12 px-8 border border-foreground/20 dark:border-background/20 text-[10px] uppercase tracking-[0.2em] font-semibold hover:border-foreground dark:hover:border-background transition-colors flex-1 lg:flex-none flex items-center justify-center gap-2" onClick={() => setIsMessageModalOpen(true)}>
+                            <button className="h-12 px-8 border border-foreground/20 text-[10px] uppercase tracking-[0.2em] font-semibold hover:border-foreground dark:hover:border-background transition-colors flex-1 lg:flex-none flex items-center justify-center gap-2" onClick={() => setIsMessageModalOpen(true)}>
                                 <MessageSquare className="w-4 h-4 stroke-[1]" /> Message
                             </button>
                         </div>
@@ -160,7 +160,7 @@ export const StorePage = () => {
                                     placeholder="Search collection..." 
                                     value={searchQuery} 
                                     onChange={(e: any) => setSearchQuery(e.target.value)} 
-                                    className="w-full h-12 bg-transparent border-b border-foreground/20 dark:border-background/20 focus:border-foreground dark:focus:border-background outline-none text-sm font-light pl-12 placeholder:opacity-40 transition-colors" 
+                                    className="w-full h-12 bg-transparent border-b border-foreground/20 focus:border-foreground dark:focus:border-background outline-none text-sm font-light pl-12 placeholder:opacity-40 transition-colors" 
                                 />
                             </div>
                         </div>

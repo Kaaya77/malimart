@@ -8,11 +8,11 @@ export const OrderDetailsModal = ({ isOpen, onClose, order }: { isOpen: boolean,
     return (
         <Modal isOpen={isOpen} title={`Order #${order.id.slice(0, 8)}`} onClose={onClose}>
             <div className="space-y-6">
-                <div className="flex justify-between items-center border-b border-foreground/10 dark:border-background/10 pb-4">
+                <div className="flex justify-between items-center border-b border-foreground/10 pb-4">
                     <span className="text-sm font-serif opacity-60">Status</span>
                     <span className="text-sm uppercase tracking-widest font-bold">{order.status}</span>
                 </div>
-                <div className="flex justify-between items-center border-b border-foreground/10 dark:border-background/10 pb-4">
+                <div className="flex justify-between items-center border-b border-foreground/10 pb-4">
                     <span className="text-sm font-serif opacity-60">Total</span>
                     <span className="text-sm font-mono font-bold">{formatTZS(order.total)}</span>
                 </div>

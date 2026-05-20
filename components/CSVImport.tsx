@@ -66,7 +66,7 @@ export const CSVImport = ({ onClose, onSuccess }: { onClose: () => void, onSucce
 
     return (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className="bg-background dark:bg-background p-8 w-full max-w-md border border-foreground/10 dark:border-background/10">
+            <div className="bg-background dark:bg-background p-8 w-full max-w-md border border-foreground/10">
                 <h2 className="text-xl font-serif mb-6">Import Products (CSV)</h2>
                 <input type="file" accept=".csv" onChange={handleFileChange} className="mb-4 w-full" />
                 

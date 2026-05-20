@@ -37,15 +37,15 @@ export const ProductOrderTag = ({ product, order, onViewProduct, onViewOrder }: 
             )}
             {product && (
                 <div 
-                    className={`cursor-pointer p-4 bg-primary/5 dark:bg-background/5 border border-foreground/10 dark:border-background/10 flex items-center gap-4 group hover:border-foreground/30 dark:hover:border-background/30 transition-all ${order ? 'mt-3' : ''}`}
+                    className={`cursor-pointer p-4 bg-primary/5 dark:bg-background/5 border border-foreground/10 flex items-center gap-4 group hover:border-foreground/30 dark:hover:border-background/30 transition-all ${order ? 'mt-3' : ''}`}
                     onClick={() => onViewProduct(product as Product)}
                 >
                     {product.images?.[0] && (
                         <img src={product.images[0]} alt={product.name} className="w-12 h-12 object-cover grayscale group-hover:grayscale-0 transition-all" />
                     )}
                     <div className="flex-1 min-w-0">
-                        <p className="font-serif text-sm text-foreground dark:text-background truncate">{product.name}</p>
-                        <p className="text-[9px] text-foreground/40 dark:text-background/40 uppercase tracking-[0.2em] mt-1">Contextual Product</p>
+                        <p className="font-serif text-sm text-foreground truncate">{product.name}</p>
+                        <p className="text-[9px] text-foreground/40 uppercase tracking-[0.2em] mt-1">Contextual Product</p>
                     </div>
                 </div>
             )}
@@ -319,22 +319,22 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
     return (
         <MessageContainer>
             <SidebarContainer isVisible={!!selectedChatUser}>
-                <div className="p-6 border-b border-foreground/10 dark:border-background/10 flex flex-col gap-4">
-                    <h3 className="font-serif text-xl text-foreground dark:text-background flex items-center gap-3">
-                        Inbox <span className="text-[10px] uppercase tracking-[0.2em] font-sans bg-primary/5 dark:bg-background/5 px-2 py-1 border border-foreground/10 dark:border-background/10 text-foreground/60 dark:text-background/60">{users.length}</span>
+                <div className="p-6 border-b border-foreground/10 flex flex-col gap-4">
+                    <h3 className="font-serif text-xl text-foreground flex items-center gap-3">
+                        Inbox <span className="text-[10px] uppercase tracking-[0.2em] font-sans bg-primary/5 dark:bg-background/5 px-2 py-1 border border-foreground/10 text-foreground/60">{users.length}</span>
                     </h3>
                     <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40 dark:text-background/40 stroke-[1]" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40 stroke-[1]" />
                         <Input 
                             placeholder="Search..." 
                             value={searchTerm}
                             onChange={(e: any) => setSearchTerm(e.target.value)}
-                            className="h-10 pl-9 text-[11px] rounded-none bg-transparent border-foreground/20 dark:border-background/20 text-foreground dark:text-background focus:border-foreground dark:focus:border-background transition-colors"
+                            className="h-10 pl-9 text-[11px] rounded-none bg-transparent border-foreground/20 text-foreground focus:border-foreground dark:focus:border-background transition-colors"
                         />
                     </div>
                     <button 
                         onClick={() => setFilterUnread(!filterUnread)}
-                        className={`py-2 text-[10px] uppercase tracking-[0.2em] transition-all border ${filterUnread ? 'bg-primary text-background dark:bg-background dark:text-foreground border-foreground dark:border-background' : 'bg-transparent text-foreground/60 dark:text-background/60 border-foreground/20 dark:border-background/20 hover:border-foreground dark:hover:border-background hover:text-foreground dark:hover:text-background'}`}
+                        className={`py-2 text-[10px] uppercase tracking-[0.2em] transition-all border ${filterUnread ? 'bg-primary text-background dark:bg-background dark:text-foreground border-foreground dark:border-background' : 'bg-transparent text-foreground/60 border-foreground/20 hover:border-foreground dark:hover:border-background hover:text-foreground dark:hover:text-background'}`}
                     >
                         Unread
                     </button>
@@ -348,22 +348,22 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
                             className={`w-full text-left p-4 transition-all duration-300 group relative border-l-2 ${selectedChatUser === u.id ? 'bg-primary/5 dark:bg-background/5 border-l-foreground dark:border-l-background border-y-transparent border-r-transparent' : 'bg-transparent border-transparent hover:bg-primary/5 dark:hover:bg-background/5'}`}
                         >
                             <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-full bg-primary/5 dark:bg-background/5 flex items-center justify-center font-serif text-lg shrink-0 overflow-hidden border border-foreground/10 dark:border-background/10">
+                                <div className="w-12 h-12 rounded-full bg-primary/5 dark:bg-background/5 flex items-center justify-center font-serif text-lg shrink-0 overflow-hidden border border-foreground/10">
                                     {u.avatar ? <img src={u.avatar} className="w-full h-full object-cover"/> : u.name.slice(0,1).toUpperCase()}
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex justify-between items-baseline mb-1">
-                                        <span className={`text-[11px] uppercase tracking-[0.15em] truncate flex items-center gap-2 ${selectedChatUser === u.id ? 'text-foreground dark:text-background' : 'text-foreground/80 dark:text-background/80'}`}>
+                                        <span className={`text-[11px] uppercase tracking-[0.15em] truncate flex items-center gap-2 ${selectedChatUser === u.id ? 'text-foreground' : 'text-foreground/80'}`}>
                                             {u.name}
-                                            {pinnedUsers.has(u.id) && <Pin className="w-3 h-3 text-foreground dark:text-background fill-current" />}
+                                            {pinnedUsers.has(u.id) && <Pin className="w-3 h-3 text-foreground fill-current" />}
                                         </span>
                                         <span className="text-[9px] font-mono opacity-40">{new Date(u.time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
                                     </div>
-                                    <p className={`text-[11px] truncate font-serif italic ${u.unread && selectedChatUser !== u.id ? 'text-foreground dark:text-background font-medium' : 'text-foreground/60 dark:text-background/60'}`}>{u.lastMsg}</p>
+                                    <p className={`text-[11px] truncate font-serif italic ${u.unread && selectedChatUser !== u.id ? 'text-foreground font-medium' : 'text-foreground/60'}`}>{u.lastMsg}</p>
                                 </div>
                             </div>
                             <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <div onClick={(e) => togglePin(e, u.id)} className="p-2 bg-background dark:bg-background border border-foreground/10 dark:border-background/10 hover:border-foreground/30 dark:hover:border-background/30 text-foreground/60 dark:text-background/60 hover:text-foreground dark:hover:text-background cursor-pointer transition-colors">
+                                <div onClick={(e) => togglePin(e, u.id)} className="p-2 bg-background dark:bg-background border border-foreground/10 hover:border-foreground/30 dark:hover:border-background/30 text-foreground/60 hover:text-foreground dark:hover:text-background cursor-pointer transition-colors">
                                     <Pin className="w-3 h-3 stroke-[1]" />
                                 </div>
                             </div>
@@ -380,13 +380,13 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
                     </div>
                 )}
                 {selectedChatUser && (
-                    <div className="p-6 border-b border-foreground/10 dark:border-background/10 flex items-center justify-between bg-background/50 dark:bg-black/50 backdrop-blur-md sticky top-0 z-10">
+                    <div className="p-6 border-b border-foreground/10 flex items-center justify-between bg-background/50 dark:bg-black/50 backdrop-blur-md sticky top-0 z-10">
                         <div className="flex items-center gap-4 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => fetchUserProfile(selectedChatUser)}>
                             <button onClick={(e) => { e.stopPropagation(); setSelectedChatUser(null); }} className="md:hidden p-2 hover:bg-primary/5 dark:hover:bg-background/5 transition-colors">
                                 <ChevronLeft className="w-5 h-5 stroke-[1]" />
                             </button>
                             <div>
-                                <h3 className="text-[11px] uppercase tracking-[0.2em] font-medium text-foreground dark:text-background">
+                                <h3 className="text-[11px] uppercase tracking-[0.2em] font-medium text-foreground">
                                     {users.find(u => u.id === selectedChatUser)?.name || 'User'}
                                 </h3>
                             </div>
@@ -430,7 +430,7 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
                         <React.Fragment key={c.id}>
                             {showDate && (
                                 <div className="flex justify-center my-8">
-                                    <span className="text-[9px] uppercase tracking-[0.2em] px-4 py-1.5 bg-primary/5 dark:bg-background/5 text-foreground/60 dark:text-background/60 rounded-full">
+                                    <span className="text-[9px] uppercase tracking-[0.2em] px-4 py-1.5 bg-primary/5 dark:bg-background/5 text-foreground/60 rounded-full">
                                         {formatDateLabel(currDate)}
                                     </span>
                                 </div>
@@ -455,7 +455,7 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
                             )}
                             
                             {c.reply_to_id && (
-                                <div className={`mb-1.5 p-2.5 bg-primary/5 dark:bg-background/5 border-l-2 border-foreground/20 dark:border-background/20 text-[11px] italic opacity-70 max-w-[80%] rounded-r-md ${isMe ? 'mr-1' : 'ml-1'}`}>
+                                <div className={`mb-1.5 p-2.5 bg-primary/5 dark:bg-background/5 border-l-2 border-foreground/20 text-[11px] italic opacity-70 max-w-[80%] rounded-r-md ${isMe ? 'mr-1' : 'ml-1'}`}>
                                     Replying to: {chats.find(m => m.id === c.reply_to_id)?.body?.slice(0, 50)}...
                                 </div>
                             )}
@@ -468,11 +468,11 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
                             />
 
                             <div className="relative group/msg max-w-[85%]">
-                                <div className={`p-4 text-[13px] shadow-sm relative leading-relaxed ${isMe ? 'bg-primary text-background dark:bg-background dark:text-foreground rounded-2xl rounded-tr-sm' : 'bg-background dark:bg-primary text-foreground dark:text-background border border-foreground/10 dark:border-background/10 rounded-2xl rounded-tl-sm'}`}>
+                                <div className={`p-4 text-[13px] shadow-sm relative leading-relaxed ${isMe ? 'bg-primary text-background dark:bg-background dark:text-foreground rounded-2xl rounded-tr-sm' : 'bg-background dark:bg-primary text-foreground border border-foreground/10 rounded-2xl rounded-tl-sm'}`}>
                                     {c.attachment_url && (
                                         <div className="mb-3">
                                             {c.attachment_type === 'image' ? (
-                                                <img src={c.attachment_url} className="max-w-full h-auto border border-foreground/10 dark:border-background/10" referrerPolicy="no-referrer" />
+                                                <img src={c.attachment_url} className="max-w-full h-auto border border-foreground/10" referrerPolicy="no-referrer" />
                                             ) : (
                                                 <a href={c.attachment_url} target="_blank" className="flex items-center gap-2 p-2 bg-primary/5 dark:bg-background/5 text-[10px] uppercase tracking-widest">
                                                     <Paperclip className="w-3 h-3" /> View Attachment
@@ -500,7 +500,7 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
 
                                 {/* Emoji Picker */}
                                 {showEmojiPicker === c.id && (
-                                    <div className={`absolute bottom-full mb-2 ${c.sender_id === userId ? 'right-0' : 'left-0'} bg-background dark:bg-black border border-foreground/10 dark:border-background/10 p-2 flex gap-2 z-20 shadow-xl`}>
+                                    <div className={`absolute bottom-full mb-2 ${c.sender_id === userId ? 'right-0' : 'left-0'} bg-background dark:bg-black border border-foreground/10 p-2 flex gap-2 z-20 shadow-xl`}>
                                         {['👍', '❤️', '😂', '😮', '😢', '🔥'].map(emoji => (
                                             <button 
                                                 key={emoji} 
@@ -518,7 +518,7 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
                             {c.reactions && c.reactions.length > 0 && (
                                 <div className={`flex gap-1 mt-1 ${c.sender_id === userId ? 'justify-end' : 'justify-start'}`}>
                                     {Array.from(new Set(c.reactions.map((r: any) => r.emoji))).map((emoji: any) => (
-                                        <div key={emoji} className="bg-primary/5 dark:bg-background/5 px-1.5 py-0.5 rounded-full text-[10px] border border-foreground/10 dark:border-background/10">
+                                        <div key={emoji} className="bg-primary/5 dark:bg-background/5 px-1.5 py-0.5 rounded-full text-[10px] border border-foreground/10">
                                             {emoji} {c.reactions.filter((r: any) => r.emoji === emoji).length}
                                         </div>
                                     ))}
@@ -529,7 +529,7 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
                     )})}
                     {remoteIsTyping && (
                         <div className="flex items-start animate-in fade-in slide-in-from-bottom-2 mt-4">
-                            <div className="bg-background dark:bg-primary border border-foreground/10 dark:border-background/10 rounded-2xl rounded-tl-sm p-4 flex gap-1.5 items-center h-12 shadow-sm">
+                            <div className="bg-background dark:bg-primary border border-foreground/10 rounded-2xl rounded-tl-sm p-4 flex gap-1.5 items-center h-12 shadow-sm">
                                 <div className="w-1.5 h-1.5 bg-primary/40 dark:bg-background/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                                 <div className="w-1.5 h-1.5 bg-primary/40 dark:bg-background/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                                 <div className="w-1.5 h-1.5 bg-primary/40 dark:bg-background/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
@@ -539,7 +539,7 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
                     <div ref={scrollRef} />
                 </div>
                 {selectedChatUser && (
-                <div className="bg-background/50 dark:bg-background/50 border-t border-foreground/10 dark:border-background/10 p-4 md:p-6 transition-all duration-300">
+                <div className="bg-background/50 dark:bg-background/50 border-t border-foreground/10 p-4 md:p-6 transition-all duration-300">
                     {replyingTo && (
                         <div className="mb-4 p-3 bg-primary/5 dark:bg-background/5 border-l-2 border-foreground dark:border-background flex justify-between items-center">
                             <div className="text-[10px] italic opacity-60">
@@ -551,7 +551,7 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
                         </div>
                     )}
                     {attachment && (
-                        <div className="mb-4 p-3 bg-primary/5 dark:bg-background/5 border border-foreground/20 dark:border-background/20 flex justify-between items-center">
+                        <div className="mb-4 p-3 bg-primary/5 dark:bg-background/5 border border-foreground/20 flex justify-between items-center">
                             <div className="flex items-center gap-3">
                                 {attachment.type === 'image' ? <img src={attachment.url} className="w-10 h-10 object-cover" /> : <Paperclip className="w-4 h-4" />}
                                 <span className="text-[10px] uppercase tracking-widest">Attachment Ready</span>
@@ -562,17 +562,17 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
                         </div>
                     )}
                     {magicMode && (
-                        <div className="mb-4 animate-in slide-in-from-bottom-2 fade-in bg-primary/5 dark:bg-background/5 p-4 rounded-none border border-foreground/10 dark:border-background/10">
+                        <div className="mb-4 animate-in slide-in-from-bottom-2 fade-in bg-primary/5 dark:bg-background/5 p-4 rounded-none border border-foreground/10">
                             <div className="flex items-center justify-between mb-4">
-                                <span className="text-[10px] uppercase tracking-[0.2em] text-foreground dark:text-background flex items-center gap-2"><Sparkles className="w-3.5 h-3.5 stroke-[1]"/> Magic Compose</span>
-                                <button onClick={() => setMagicMode(false)} className="p-2 hover:bg-primary/5 dark:hover:bg-background/5 transition-colors"><X className="w-3.5 h-3.5 stroke-[1] text-foreground dark:text-background"/></button>
+                                <span className="text-[10px] uppercase tracking-[0.2em] text-foreground flex items-center gap-2"><Sparkles className="w-3.5 h-3.5 stroke-[1]"/> Magic Compose</span>
+                                <button onClick={() => setMagicMode(false)} className="p-2 hover:bg-primary/5 dark:hover:bg-background/5 transition-colors"><X className="w-3.5 h-3.5 stroke-[1] text-foreground"/></button>
                             </div>
                             <div className="flex gap-3">
                                 {(['professional', 'persuasive', 'friendly'] as const).map(tone => (
                                     <button 
                                         key={tone}
                                         onClick={() => setMagicTone(tone)} 
-                                        className={`px-4 py-2 text-[9px] uppercase tracking-[0.2em] transition-all border ${magicTone === tone ? 'bg-primary text-background dark:bg-background dark:text-foreground border-foreground dark:border-background' : 'bg-transparent text-foreground/60 dark:text-background/60 border-foreground/20 dark:border-background/20 hover:border-foreground dark:hover:border-background hover:text-foreground dark:hover:text-background'}`}
+                                        className={`px-4 py-2 text-[9px] uppercase tracking-[0.2em] transition-all border ${magicTone === tone ? 'bg-primary text-background dark:bg-background dark:text-foreground border-foreground dark:border-background' : 'bg-transparent text-foreground/60 border-foreground/20 hover:border-foreground dark:hover:border-background hover:text-foreground dark:hover:text-background'}`}
                                     >
                                         {tone}
                                     </button>
@@ -580,7 +580,7 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
                             </div>
                         </div>
                     )}
-                    <form onSubmit={handleSend} className="flex gap-3 items-end bg-background dark:bg-primary p-2 rounded-2xl border border-foreground/10 dark:border-background/10 shadow-sm focus-within:border-foreground/30 dark:focus-within:border-background/30 transition-all">
+                    <form onSubmit={handleSend} className="flex gap-3 items-end bg-background dark:bg-primary p-2 rounded-2xl border border-foreground/10 shadow-sm focus-within:border-foreground/30 dark:focus-within:border-background/30 transition-all">
                         <div className="flex-1 relative">
                             <textarea 
                                 placeholder={blockedUsers.has(selectedChatUser || '') ? "You have blocked this user" : "Type your response..."}
@@ -591,7 +591,7 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
                                     handleTyping();
                                 }}
                                 onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-                                className="w-full bg-transparent border-none text-[13px] px-4 py-3 min-h-[44px] max-h-32 resize-none outline-none no-scrollbar placeholder:text-foreground/40 dark:placeholder:text-background/40 text-foreground dark:text-background disabled:opacity-50" 
+                                className="w-full bg-transparent border-none text-[13px] px-4 py-3 min-h-[44px] max-h-32 resize-none outline-none no-scrollbar placeholder:text-foreground/40 dark:placeholder:text-background/40 text-foreground disabled:opacity-50" 
                             />
                             <div className="absolute right-2 bottom-2 flex gap-1">
                                 <input 
@@ -604,13 +604,13 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
                                 <button 
                                     type="button" 
                                     onClick={() => fileInputRef.current?.click()} 
-                                    className="p-2 rounded-lg bg-transparent text-foreground/40 dark:text-background/40 hover:bg-primary/5 dark:hover:bg-background/5 hover:text-foreground dark:hover:text-background transition-all"
+                                    className="p-2 rounded-lg bg-transparent text-foreground/40 hover:bg-primary/5 dark:hover:bg-background/5 hover:text-foreground dark:hover:text-background transition-all"
                                     title="Attach File"
                                     disabled={isUploading}
                                 >
                                     {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4 stroke-[1]" />}
                                 </button>
-                                <button type="button" onClick={() => magicMode ? handleMagicPolish() : setMagicMode(true)} className={`p-2 rounded-lg transition-all ${magicMode ? 'bg-primary text-background dark:bg-background dark:text-foreground' : 'bg-transparent text-foreground/40 dark:text-background/40 hover:bg-primary/5 dark:hover:bg-background/5 hover:text-foreground dark:hover:text-background'}`} title="Magic Compose">
+                                <button type="button" onClick={() => magicMode ? handleMagicPolish() : setMagicMode(true)} className={`p-2 rounded-lg transition-all ${magicMode ? 'bg-primary text-background dark:bg-background dark:text-foreground' : 'bg-transparent text-foreground/40 hover:bg-primary/5 dark:hover:bg-background/5 hover:text-foreground dark:hover:text-background'}`} title="Magic Compose">
                                     {isPolishing ? <Loader2 className="w-4 h-4 animate-spin stroke-[1]"/> : <Wand2 className="w-4 h-4 stroke-[1]"/>}
                                 </button>
                             </div>
@@ -621,8 +621,8 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
                 )}
             </ChatAreaContainer>
             <DetailsAreaContainer isVisible={!!selectedChatUser}>
-                <div className="p-6 border-l border-foreground/10 dark:border-background/10 h-full overflow-y-auto no-scrollbar">
-                    <h3 className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground dark:text-background mb-8">User Details</h3>
+                <div className="p-6 border-l border-foreground/10 h-full overflow-y-auto no-scrollbar">
+                    <h3 className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground mb-8">User Details</h3>
                     
                     {selectedChatUser && (() => {
                         const u = users.find(u => u.id === selectedChatUser);
@@ -630,7 +630,7 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
                         return (
                             <div className="space-y-8">
                                 <div className="flex flex-col items-center text-center space-y-4">
-                                    <div className="w-20 h-20 rounded-full bg-primary/5 dark:bg-background/5 flex items-center justify-center text-2xl font-serif overflow-hidden border border-foreground/10 dark:border-background/10">
+                                    <div className="w-20 h-20 rounded-full bg-primary/5 dark:bg-background/5 flex items-center justify-center text-2xl font-serif overflow-hidden border border-foreground/10">
                                         {u.avatar ? <img src={u.avatar} className="w-full h-full object-cover" /> : u.name.slice(0, 1).toUpperCase()}
                                     </div>
                                     <div>
@@ -639,7 +639,7 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
                                     </div>
                                 </div>
 
-                                <div className="space-y-4 pt-6 border-t border-foreground/10 dark:border-background/10">
+                                <div className="space-y-4 pt-6 border-t border-foreground/10">
                                     <div className="flex justify-between text-[10px] uppercase tracking-widest">
                                         <span className="opacity-40">Status</span>
                                         <span className="text-emerald-500">Online</span>
@@ -657,7 +657,7 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
                                 <div className="space-y-3 pt-6">
                                     <button 
                                         onClick={() => fetchUserProfile(u.id)}
-                                        className="w-full py-3 text-[10px] uppercase tracking-[0.2em] border border-foreground/10 dark:border-background/10 hover:bg-primary/5 dark:hover:bg-background/5 transition-all"
+                                        className="w-full py-3 text-[10px] uppercase tracking-[0.2em] border border-foreground/10 hover:bg-primary/5 dark:hover:bg-background/5 transition-all"
                                     >
                                         View Full Profile
                                     </button>
@@ -700,7 +700,7 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
 
             {reportingUser && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                    <div className="bg-background dark:bg-background border border-foreground/10 dark:border-background/10 w-full max-w-md p-8 shadow-2xl">
+                    <div className="bg-background dark:bg-background border border-foreground/10 w-full max-w-md p-8 shadow-2xl">
                         <h3 className="text-2xl font-serif font-light mb-6">Report User</h3>
                         <div className="space-y-6">
                             <div className="space-y-2">
@@ -708,7 +708,7 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
                                 <select 
                                     value={reportReason} 
                                     onChange={(e) => setReportReason(e.target.value)}
-                                    className="w-full h-12 bg-transparent border border-foreground/10 dark:border-background/10 px-4 text-sm focus:outline-none focus:border-foreground dark:focus:border-background transition-colors appearance-none"
+                                    className="w-full h-12 bg-transparent border border-foreground/10 px-4 text-sm focus:outline-none focus:border-foreground dark:focus:border-background transition-colors appearance-none"
                                 >
                                     <option value="Spam" className="bg-background dark:bg-background">Spam or Harassment</option>
                                     <option value="Fraud" className="bg-background dark:bg-background">Fraud or Scam</option>
@@ -722,13 +722,13 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
                                     value={reportDetails}
                                     onChange={(e) => setReportDetails(e.target.value)}
                                     placeholder="Provide more context..."
-                                    className="w-full h-32 bg-transparent border border-foreground/10 dark:border-background/10 p-4 text-sm focus:outline-none focus:border-foreground dark:focus:border-background transition-colors resize-none"
+                                    className="w-full h-32 bg-transparent border border-foreground/10 p-4 text-sm focus:outline-none focus:border-foreground dark:focus:border-background transition-colors resize-none"
                                 />
                             </div>
                             <div className="flex gap-4">
                                 <button 
                                     onClick={() => setReportingUser(null)}
-                                    className="flex-1 h-12 text-[10px] uppercase tracking-[0.2em] border border-foreground/10 dark:border-background/10 hover:bg-primary/5 dark:hover:bg-background/5 transition-all"
+                                    className="flex-1 h-12 text-[10px] uppercase tracking-[0.2em] border border-foreground/10 hover:bg-primary/5 dark:hover:bg-background/5 transition-all"
                                 >
                                     Cancel
                                 </button>

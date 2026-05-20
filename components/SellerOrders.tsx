@@ -281,48 +281,48 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: { sellerId: string, o
         <div className="flex flex-col min-h-[600px] h-full animate-in fade-in">
             <div className="flex flex-col xl:flex-row gap-6 mb-6 shrink-0">
                 <div className="flex gap-4 overflow-x-auto pb-2 xl:pb-0 no-scrollbar">
-                    <div className="p-6 rounded-none bg-background dark:bg-background border border-foreground/10 dark:border-background/10 min-w-[160px]">
-                        <p className="text-[9px] uppercase tracking-[0.2em] text-foreground/40 dark:text-background/40 mb-2">Pending</p>
-                        <p className="text-2xl font-serif text-foreground dark:text-background">{stats.pending}</p>
+                    <div className="p-6 rounded-none bg-background dark:bg-background border border-foreground/10 min-w-[160px]">
+                        <p className="text-[9px] uppercase tracking-[0.2em] text-foreground/40 mb-2">Pending</p>
+                        <p className="text-2xl font-serif text-foreground">{stats.pending}</p>
                     </div>
-                    <div className="p-6 rounded-none bg-background dark:bg-background border border-foreground/10 dark:border-background/10 min-w-[160px]">
-                        <p className="text-[9px] uppercase tracking-[0.2em] text-foreground/40 dark:text-background/40 mb-2">Est. Revenue</p>
-                        <p className="text-2xl font-serif text-foreground dark:text-background truncate">{formatTZS(stats.revenue)}</p>
+                    <div className="p-6 rounded-none bg-background dark:bg-background border border-foreground/10 min-w-[160px]">
+                        <p className="text-[9px] uppercase tracking-[0.2em] text-foreground/40 mb-2">Est. Revenue</p>
+                        <p className="text-2xl font-serif text-foreground truncate">{formatTZS(stats.revenue)}</p>
                     </div>
                 </div>
                 
                 <div className="flex-1 flex flex-col gap-4">
                     <div className="flex gap-4">
                         <div className="relative flex-1">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40 dark:text-background/40" />
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40" />
                             <Input 
                                 placeholder="Search Order ID or Customer..." 
                                 value={searchTerm}
                                 onChange={(e: any) => setSearchTerm(e.target.value)}
-                                className="h-14 pl-12 rounded-none bg-transparent border-foreground/20 dark:border-background/20 focus:border-foreground dark:focus:border-background text-foreground dark:text-background placeholder:text-foreground/40 dark:placeholder:text-background/40"
+                                className="h-14 pl-12 rounded-none bg-transparent border-foreground/20 focus:border-foreground dark:focus:border-background text-foreground placeholder:text-foreground/40 dark:placeholder:text-background/40"
                             />
                         </div>
-                        <Button variant="outline" className="h-14 rounded-none px-6 border-foreground/20 dark:border-background/20 text-foreground dark:text-background hover:bg-primary/5 dark:hover:bg-background/5 uppercase tracking-[0.1em] text-[10px]" onClick={handleExportCSV} title="Export to CSV">
+                        <Button variant="outline" className="h-14 rounded-none px-6 border-foreground/20 text-foreground hover:bg-primary/5 dark:hover:bg-background/5 uppercase tracking-[0.1em] text-[10px]" onClick={handleExportCSV} title="Export to CSV">
                             <Download className="w-4 h-4 mr-2" /> Export
                         </Button>
                     </div>
                     
-                    <div className="flex flex-wrap gap-4 items-center bg-primary/5 dark:bg-background/5 p-2 rounded-none border border-foreground/10 dark:border-background/10">
-                        <div className="flex bg-background dark:bg-primary rounded-none p-1 border border-foreground/10 dark:border-background/10">
+                    <div className="flex flex-wrap gap-4 items-center bg-primary/5 dark:bg-background/5 p-2 rounded-none border border-foreground/10">
+                        <div className="flex bg-background dark:bg-primary rounded-none p-1 border border-foreground/10">
                             {['all', 'pending', 'shipped', 'delivered'].map(s => (
                                 <button 
                                     key={s}
                                     onClick={() => setStatusFilter(s)}
-                                    className={`px-6 py-2 rounded-none text-[9px] uppercase tracking-[0.2em] transition-all ${statusFilter === s ? 'bg-primary text-background dark:bg-background dark:text-foreground' : 'text-foreground/60 dark:text-background/60 hover:text-foreground dark:hover:text-background'}`}
+                                    className={`px-6 py-2 rounded-none text-[9px] uppercase tracking-[0.2em] transition-all ${statusFilter === s ? 'bg-primary text-background dark:bg-background dark:text-foreground' : 'text-foreground/60 hover:text-foreground dark:hover:text-background'}`}
                                 >
                                     {s}
                                 </button>
                             ))}
                         </div>
                         
-                        <div className="flex items-center gap-3 px-4 border-l border-foreground/10 dark:border-background/10">
-                            <Calendar className="w-4 h-4 text-foreground/40 dark:text-background/40" />
-                            <select value={dateFilter} onChange={(e:any) => setDateFilter(e.target.value)} className="bg-transparent text-[9px] uppercase tracking-[0.2em] text-foreground dark:text-background outline-none cursor-pointer">
+                        <div className="flex items-center gap-3 px-4 border-l border-foreground/10">
+                            <Calendar className="w-4 h-4 text-foreground/40" />
+                            <select value={dateFilter} onChange={(e:any) => setDateFilter(e.target.value)} className="bg-transparent text-[9px] uppercase tracking-[0.2em] text-foreground outline-none cursor-pointer">
                                 <option value="all">All Time</option>
                                 <option value="today">Today</option>
                                 <option value="week">Last 7 Days</option>
@@ -330,9 +330,9 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: { sellerId: string, o
                             </select>
                         </div>
 
-                        <div className="flex items-center gap-3 px-4 border-l border-foreground/10 dark:border-background/10">
-                            <ArrowUpDown className="w-4 h-4 text-foreground/40 dark:text-background/40" />
-                            <select value={sortBy} onChange={(e:any) => setSortBy(e.target.value)} className="bg-transparent text-[9px] uppercase tracking-[0.2em] text-foreground dark:text-background outline-none cursor-pointer">
+                        <div className="flex items-center gap-3 px-4 border-l border-foreground/10">
+                            <ArrowUpDown className="w-4 h-4 text-foreground/40" />
+                            <select value={sortBy} onChange={(e:any) => setSortBy(e.target.value)} className="bg-transparent text-[9px] uppercase tracking-[0.2em] text-foreground outline-none cursor-pointer">
                                 <option value="date_desc">Newest First</option>
                                 <option value="date_asc">Oldest First</option>
                                 <option value="amount_desc">Highest Amount</option>
@@ -343,18 +343,18 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: { sellerId: string, o
                 </div>
             </div>
 
-            <div className="flex-1 flex gap-6 overflow-hidden rounded-none border border-foreground/10 dark:border-background/10 bg-background dark:bg-background shadow-sm relative">
-                <div className={`${selectedOrder ? 'hidden lg:flex w-1/3 border-r' : 'w-full flex'} border-foreground/10 dark:border-background/10 flex-col`}>
-                    <div className="p-6 border-b border-foreground/10 dark:border-background/10 bg-primary/5 dark:bg-background/5 flex justify-between items-center">
+            <div className="flex-1 flex gap-6 overflow-hidden rounded-none border border-foreground/10 bg-background dark:bg-background shadow-sm relative">
+                <div className={`${selectedOrder ? 'hidden lg:flex w-1/3 border-r' : 'w-full flex'} border-foreground/10 flex-col`}>
+                    <div className="p-6 border-b border-foreground/10 bg-primary/5 dark:bg-background/5 flex justify-between items-center">
                         <div className="flex items-center gap-4">
                             <button onClick={toggleAllSelection} className="p-1 hover:bg-primary/10 dark:hover:bg-background/10 rounded-none transition-colors">
-                                <CheckSquare className={`w-4 h-4 ${selectedOrderIds.size > 0 ? 'text-foreground dark:text-background' : 'text-foreground/40 dark:text-background/40'}`} />
+                                <CheckSquare className={`w-4 h-4 ${selectedOrderIds.size > 0 ? 'text-foreground' : 'text-foreground/40'}`} />
                             </button>
-                            <h3 className="font-serif text-[11px] uppercase tracking-[0.2em] text-foreground/60 dark:text-background/60">{filteredOrders.length} Orders Found</h3>
+                            <h3 className="font-serif text-[11px] uppercase tracking-[0.2em] text-foreground/60">{filteredOrders.length} Orders Found</h3>
                         </div>
                         {selectedOrderIds.size > 0 && (
                             <div className="flex gap-2">
-                                <Button size="sm" variant="outline" className="h-8 text-[9px] rounded-none border-foreground/20 dark:border-background/20 text-foreground dark:text-background uppercase tracking-[0.1em]" onClick={() => handleBulkUpdateStatus('processing')} isLoading={isBulkUpdating}>Accept</Button>
+                                <Button size="sm" variant="outline" className="h-8 text-[9px] rounded-none border-foreground/20 text-foreground uppercase tracking-[0.1em]" onClick={() => handleBulkUpdateStatus('processing')} isLoading={isBulkUpdating}>Accept</Button>
                                 <Button size="sm" className="h-8 text-[9px] rounded-none bg-primary text-background dark:bg-background dark:text-foreground uppercase tracking-[0.1em]" onClick={() => handleBulkUpdateStatus('shipped')} isLoading={isBulkUpdating}>Ship</Button>
                             </div>
                         )}
@@ -363,7 +363,7 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: { sellerId: string, o
                         {isLoading ? (
                             <div className="space-y-2">
                                 {[1, 2, 3, 4].map(i => (
-                                    <div key={i} className="p-4 border border-foreground/10 dark:border-background/10 flex items-center gap-4 animate-pulse">
+                                    <div key={i} className="p-4 border border-foreground/10 flex items-center gap-4 animate-pulse">
                                         <div className="w-4 h-4 bg-primary/10 dark:bg-background/10"></div>
                                         <div className="flex-1 space-y-2">
                                             <div className="h-3 bg-primary/10 dark:bg-background/10 w-1/4"></div>
@@ -378,14 +378,14 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: { sellerId: string, o
                                 ))}
                             </div>
                         ) : 
-                         filteredOrders.length === 0 ? <div className="p-10 text-center text-foreground/40 dark:text-background/40 text-[9px] uppercase tracking-[0.2em]">No orders found</div> :
+                         filteredOrders.length === 0 ? <div className="p-10 text-center text-foreground/40 text-[9px] uppercase tracking-[0.2em]">No orders found</div> :
                          filteredOrders.map((order, index) => (
                             <div 
                                 key={order.id || `order-${index}`} 
-                                className={`p-4 rounded-none border transition-all cursor-pointer hover:bg-primary/5 dark:hover:bg-background/5 flex items-center gap-4 ${selectedOrder?.id === order.id ? 'border-foreground bg-primary/5 dark:border-background dark:bg-background/5' : 'border-foreground/10 dark:border-background/10'}`}
+                                className={`p-4 rounded-none border transition-all cursor-pointer hover:bg-primary/5 dark:hover:bg-background/5 flex items-center gap-4 ${selectedOrder?.id === order.id ? 'border-foreground bg-primary/5 dark:border-background dark:bg-background/5' : 'border-foreground/10'}`}
                             >
                                 <div className="shrink-0" onClick={(e) => { e.stopPropagation(); toggleOrderSelection(order.id); }}>
-                                    <div className={`w-4 h-4 rounded-none border ${selectedOrderIds.has(order.id) ? 'bg-primary border-foreground dark:bg-background dark:border-background' : 'border-foreground/20 dark:border-background/20'} flex items-center justify-center`}>
+                                    <div className={`w-4 h-4 rounded-none border ${selectedOrderIds.has(order.id) ? 'bg-primary border-foreground dark:bg-background dark:border-background' : 'border-foreground/20'} flex items-center justify-center`}>
                                         {selectedOrderIds.has(order.id) && <CheckSquare className="w-3 h-3 text-background dark:text-foreground" />}
                                     </div>
                                 </div>
@@ -394,9 +394,9 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: { sellerId: string, o
                                     setSelectedOrder(order);
                                 }}>
                                     <div className="flex flex-col gap-1 min-w-0">
-                                        <span className="font-mono text-[10px] text-foreground/60 dark:text-background/60">#{(order.id || '').slice(0,8)}</span>
-                                        <p className="font-serif text-[13px] text-foreground dark:text-background truncate">{order.buyer?.full_name || order.buyer?.email || 'Guest User'}</p>
-                                        <p className="text-[9px] text-foreground/40 dark:text-background/40 uppercase tracking-[0.1em]">
+                                        <span className="font-mono text-[10px] text-foreground/60">#{(order.id || '').slice(0,8)}</span>
+                                        <p className="font-serif text-[13px] text-foreground truncate">{order.buyer?.full_name || order.buyer?.email || 'Guest User'}</p>
+                                        <p className="text-[9px] text-foreground/40 uppercase tracking-[0.1em]">
                                             {order.created_at && !isNaN(new Date(order.created_at).getTime()) 
                                                 ? new Date(order.created_at).toLocaleDateString() 
                                                 : 'N/A'}
@@ -406,8 +406,8 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: { sellerId: string, o
                                         <Badge variant={['delivered'].includes(order.status) ? 'success' : ['cancelled'].includes(order.status) ? 'danger' : 'secondary'} className="text-[8px] rounded-none uppercase tracking-[0.1em]">
                                             {order.status}
                                         </Badge>
-                                        <span className="font-mono text-sm text-foreground dark:text-background mt-1">{formatTZS(order.seller_total)}</span>
-                                        <span className="text-[9px] uppercase tracking-[0.2em] text-foreground/60 dark:text-background/60 mt-1">{order.items.length} Items</span>
+                                        <span className="font-mono text-sm text-foreground mt-1">{formatTZS(order.seller_total)}</span>
+                                        <span className="text-[9px] uppercase tracking-[0.2em] text-foreground/60 mt-1">{order.items.length} Items</span>
                                     </div>
                                 </div>
                             </div>
@@ -417,19 +417,19 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: { sellerId: string, o
 
                 {selectedOrder ? (
                     <div className="flex-1 flex flex-col h-full bg-background dark:bg-background">
-                        <div className="p-8 border-b border-foreground/10 dark:border-background/10 flex justify-between items-center bg-background dark:bg-background">
+                        <div className="p-8 border-b border-foreground/10 flex justify-between items-center bg-background dark:bg-background">
                             <div className="flex items-center gap-6">
-                                <button onClick={() => setSelectedOrder(null)} className="lg:hidden p-2 bg-primary/5 dark:bg-background/5 rounded-none hover:bg-primary/10 dark:hover:bg-background/10 transition-colors"><ChevronLeft className="w-4 h-4 text-foreground dark:text-background"/></button>
+                                <button onClick={() => setSelectedOrder(null)} className="lg:hidden p-2 bg-primary/5 dark:bg-background/5 rounded-none hover:bg-primary/10 dark:hover:bg-background/10 transition-colors"><ChevronLeft className="w-4 h-4 text-foreground"/></button>
                                 <div>
-                                    <h2 className="font-serif text-2xl text-foreground dark:text-background">Order Details</h2>
-                                    <p className="text-[10px] font-mono text-foreground/60 dark:text-background/60 mt-1">ID: {selectedOrder.id}</p>
+                                    <h2 className="font-serif text-2xl text-foreground">Order Details</h2>
+                                    <p className="text-[10px] font-mono text-foreground/60 mt-1">ID: {selectedOrder.id}</p>
                                 </div>
                             </div>
                             <div className="flex gap-3">
-                                <button className="p-3 rounded-none bg-primary/5 dark:bg-background/5 hover:bg-primary/10 dark:hover:bg-background/10 text-foreground dark:text-background transition-colors border border-foreground/10 dark:border-background/10" title="Print Invoice">
+                                <button className="p-3 rounded-none bg-primary/5 dark:bg-background/5 hover:bg-primary/10 dark:hover:bg-background/10 text-foreground transition-colors border border-foreground/10" title="Print Invoice">
                                     <Printer className="w-4 h-4" />
                                 </button>
-                                <Button size="sm" variant="outline" className="rounded-none border-foreground/20 dark:border-background/20 text-foreground dark:text-background uppercase tracking-[0.1em] text-[9px]" onClick={() => onContactBuyer(selectedOrder.buyer.id, selectedOrder.items[0]?.product_id, selectedOrder.id)}>Contact Buyer</Button>
+                                <Button size="sm" variant="outline" className="rounded-none border-foreground/20 text-foreground uppercase tracking-[0.1em] text-[9px]" onClick={() => onContactBuyer(selectedOrder.buyer.id, selectedOrder.items[0]?.product_id, selectedOrder.id)}>Contact Buyer</Button>
                                 {selectedOrder.status === 'pending' && (
                                     <>
                                         <Button size="sm" variant="danger" className="rounded-none uppercase tracking-[0.1em] text-[9px]" onClick={() => setIsCancelModalOpen(true)}>Cancel</Button>
@@ -488,8 +488,8 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: { sellerId: string, o
                                         <p className="text-red-700 dark:text-red-300 text-xs mb-4 leading-relaxed font-serif">The buyer has raised an issue with this order. Please review the details and respond to resolve the dispute.</p>
                                         {disputeDetails && (
                                             <div className="mb-6 p-4 bg-background dark:bg-black/20 rounded-none border border-red-100 dark:border-red-900/20">
-                                                <p className="text-xs font-serif text-foreground dark:text-background mb-2"><span className="uppercase tracking-[0.1em] text-[9px] opacity-60 mr-2">Reason:</span> {disputeDetails.reason}</p>
-                                                <p className="text-xs font-serif text-foreground dark:text-background"><span className="uppercase tracking-[0.1em] text-[9px] opacity-60 mr-2">Description:</span> {disputeDetails.description}</p>
+                                                <p className="text-xs font-serif text-foreground mb-2"><span className="uppercase tracking-[0.1em] text-[9px] opacity-60 mr-2">Reason:</span> {disputeDetails.reason}</p>
+                                                <p className="text-xs font-serif text-foreground"><span className="uppercase tracking-[0.1em] text-[9px] opacity-60 mr-2">Description:</span> {disputeDetails.description}</p>
                                             </div>
                                         )}
                                         <div className="flex gap-4">
@@ -501,71 +501,71 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: { sellerId: string, o
                             )}
 
                             <div className="grid md:grid-cols-2 gap-6">
-                                <Card className="p-8 rounded-none border-foreground/10 dark:border-background/10 bg-transparent">
-                                    <h4 className="text-[9px] uppercase tracking-[0.2em] text-foreground/40 dark:text-background/40 mb-6 flex items-center gap-3"><User className="w-4 h-4"/> Customer</h4>
+                                <Card className="p-8 rounded-none border-foreground/10 bg-transparent">
+                                    <h4 className="text-[9px] uppercase tracking-[0.2em] text-foreground/40 mb-6 flex items-center gap-3"><User className="w-4 h-4"/> Customer</h4>
                                     <div className="flex items-center gap-6 mb-6">
                                         <div className="w-16 h-16 rounded-none bg-primary/10 dark:bg-background/10 overflow-hidden">
                                             <img src={selectedOrder.buyer?.avatar_url || `https://ui-avatars.com/api/?name=${selectedOrder.buyer?.full_name}`} className="w-full h-full object-cover" />
                                         </div>
                                         <div>
-                                            <p className="font-serif text-lg text-foreground dark:text-background">{selectedOrder.buyer?.full_name || selectedOrder.buyer?.email || 'Guest User'}</p>
-                                            <p className="text-xs text-foreground/60 dark:text-background/60 font-mono mt-1">{selectedOrder.buyer?.email}</p>
-                                            <p className="text-xs text-foreground/60 dark:text-background/60 font-mono mt-1">{selectedOrder.buyer?.phone}</p>
+                                            <p className="font-serif text-lg text-foreground">{selectedOrder.buyer?.full_name || selectedOrder.buyer?.email || 'Guest User'}</p>
+                                            <p className="text-xs text-foreground/60 font-mono mt-1">{selectedOrder.buyer?.email}</p>
+                                            <p className="text-xs text-foreground/60 font-mono mt-1">{selectedOrder.buyer?.phone}</p>
                                         </div>
                                     </div>
                                     {selectedOrder.note && (
-                                        <div className="bg-primary/5 dark:bg-background/5 p-4 rounded-none border border-foreground/10 dark:border-background/10 text-xs text-foreground dark:text-background font-serif">
+                                        <div className="bg-primary/5 dark:bg-background/5 p-4 rounded-none border border-foreground/10 text-xs text-foreground font-serif">
                                             <span className="uppercase tracking-[0.1em] text-[9px] opacity-60 mr-2">Note:</span> {selectedOrder.note}
                                         </div>
                                     )}
                                 </Card>
-                                <Card className="p-8 rounded-none border-foreground/10 dark:border-background/10 bg-transparent">
-                                    <h4 className="text-[9px] uppercase tracking-[0.2em] text-foreground/40 dark:text-background/40 mb-6 flex items-center gap-3"><Truck className="w-4 h-4"/> Logistics & Tracking</h4>
+                                <Card className="p-8 rounded-none border-foreground/10 bg-transparent">
+                                    <h4 className="text-[9px] uppercase tracking-[0.2em] text-foreground/40 mb-6 flex items-center gap-3"><Truck className="w-4 h-4"/> Logistics & Tracking</h4>
                                     <div className="space-y-2 mb-6">
-                                        <p className="font-serif text-sm text-foreground dark:text-background">{selectedOrder.shipping_address?.label}</p>
-                                        <p className="text-xs text-foreground/60 dark:text-background/60">{selectedOrder.shipping_address?.street}</p>
-                                        <p className="text-xs text-foreground/60 dark:text-background/60">{selectedOrder.shipping_address?.city} {selectedOrder.shipping_address?.postal_code}</p>
-                                        <p className="text-xs font-mono mt-3 text-foreground/60 dark:text-background/60">{selectedOrder.shipping_address?.phone}</p>
+                                        <p className="font-serif text-sm text-foreground">{selectedOrder.shipping_address?.label}</p>
+                                        <p className="text-xs text-foreground/60">{selectedOrder.shipping_address?.street}</p>
+                                        <p className="text-xs text-foreground/60">{selectedOrder.shipping_address?.city} {selectedOrder.shipping_address?.postal_code}</p>
+                                        <p className="text-xs font-mono mt-3 text-foreground/60">{selectedOrder.shipping_address?.phone}</p>
                                     </div>
                                     
                                     {selectedOrder.status === 'processing' || selectedOrder.status === 'shipped' || selectedOrder.status === 'in_transit' ? (
-                                        <div className="pt-6 border-t border-foreground/10 dark:border-background/10 space-y-4">
-                                            <Input placeholder="Carrier (e.g., DHL, Local Courier)" className="h-12 text-xs rounded-none bg-transparent border-foreground/20 dark:border-background/20" value={trackingData.carrier} onChange={(e: any) => setTrackingData({...trackingData, carrier: e.target.value})} />
-                                            <Input placeholder="Tracking Number" className="h-12 text-xs font-mono rounded-none bg-transparent border-foreground/20 dark:border-background/20" value={trackingData.tracking_number} onChange={(e: any) => setTrackingData({...trackingData, tracking_number: e.target.value})} />
+                                        <div className="pt-6 border-t border-foreground/10 space-y-4">
+                                            <Input placeholder="Carrier (e.g., DHL, Local Courier)" className="h-12 text-xs rounded-none bg-transparent border-foreground/20" value={trackingData.carrier} onChange={(e: any) => setTrackingData({...trackingData, carrier: e.target.value})} />
+                                            <Input placeholder="Tracking Number" className="h-12 text-xs font-mono rounded-none bg-transparent border-foreground/20" value={trackingData.tracking_number} onChange={(e: any) => setTrackingData({...trackingData, tracking_number: e.target.value})} />
                                             <Button size="sm" variant="secondary" className="w-full text-[9px] uppercase tracking-[0.2em] rounded-none h-12" onClick={handleUpdateTracking}>Update Tracking</Button>
                                         </div>
                                     ) : trackingData.tracking_number ? (
-                                        <div className="mt-6 pt-6 border-t border-foreground/10 dark:border-background/10">
-                                            <p className="text-xs font-serif text-foreground dark:text-background">{trackingData.carrier}</p>
-                                            <p className="text-[10px] font-mono text-foreground/60 dark:text-background/60 mt-1">{trackingData.tracking_number}</p>
+                                        <div className="mt-6 pt-6 border-t border-foreground/10">
+                                            <p className="text-xs font-serif text-foreground">{trackingData.carrier}</p>
+                                            <p className="text-[10px] font-mono text-foreground/60 mt-1">{trackingData.tracking_number}</p>
                                         </div>
                                     ) : (
-                                        <div className="mt-6 pt-6 border-t border-foreground/10 dark:border-background/10 flex justify-between items-center">
+                                        <div className="mt-6 pt-6 border-t border-foreground/10 flex justify-between items-center">
                                             <Badge variant="outline" className="rounded-none uppercase tracking-[0.1em] text-[8px]">{selectedOrder.delivery_slot || 'Standard'}</Badge>
-                                            <span className="text-[9px] uppercase tracking-[0.2em] text-foreground/40 dark:text-background/40">{new Date(selectedOrder.created_at).toLocaleString()}</span>
+                                            <span className="text-[9px] uppercase tracking-[0.2em] text-foreground/40">{new Date(selectedOrder.created_at).toLocaleString()}</span>
                                         </div>
                                     )}
                                 </Card>
                             </div>
 
-                            <Card className="p-8 rounded-none border-foreground/10 dark:border-background/10 bg-transparent">
-                                <h4 className="text-[9px] uppercase tracking-[0.2em] text-foreground/40 dark:text-background/40 mb-6 flex items-center gap-3"><Clock className="w-4 h-4"/> Order Timeline</h4>
+                            <Card className="p-8 rounded-none border-foreground/10 bg-transparent">
+                                <h4 className="text-[9px] uppercase tracking-[0.2em] text-foreground/40 mb-6 flex items-center gap-3"><Clock className="w-4 h-4"/> Order Timeline</h4>
                                 <div className="space-y-6 relative before:absolute before:inset-0 before:ml-2 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-px before:bg-primary/10 dark:before:bg-background/10">
                                     <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
                                         <div className="flex items-center justify-center w-3 h-3 rounded-none border border-foreground dark:border-background bg-primary dark:bg-background shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2"></div>
-                                        <div className="w-[calc(100%-2.5rem)] md:w-[calc(50%-1.5rem)] p-4 rounded-none bg-primary/5 dark:bg-background/5 border border-foreground/10 dark:border-background/10">
+                                        <div className="w-[calc(100%-2.5rem)] md:w-[calc(50%-1.5rem)] p-4 rounded-none bg-primary/5 dark:bg-background/5 border border-foreground/10">
                                             <div className="flex items-center justify-between mb-1">
-                                                <div className="font-serif text-sm text-foreground dark:text-background">Order Placed</div>
-                                                <div className="text-[9px] uppercase tracking-[0.2em] text-foreground/40 dark:text-background/40">{new Date(selectedOrder.created_at).toLocaleString()}</div>
+                                                <div className="font-serif text-sm text-foreground">Order Placed</div>
+                                                <div className="text-[9px] uppercase tracking-[0.2em] text-foreground/40">{new Date(selectedOrder.created_at).toLocaleString()}</div>
                                             </div>
                                         </div>
                                     </div>
                                     {['processing', 'in_transit', 'shipped', 'delivered'].includes(selectedOrder.status) && (
                                         <div className="relative flex items-center justify-between md:justify-normal md:even:flex-row-reverse group is-active">
                                             <div className="flex items-center justify-center w-3 h-3 rounded-none border border-foreground dark:border-background bg-primary dark:bg-background shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2"></div>
-                                            <div className="w-[calc(100%-2.5rem)] md:w-[calc(50%-1.5rem)] p-4 rounded-none bg-primary/5 dark:bg-background/5 border border-foreground/10 dark:border-background/10">
+                                            <div className="w-[calc(100%-2.5rem)] md:w-[calc(50%-1.5rem)] p-4 rounded-none bg-primary/5 dark:bg-background/5 border border-foreground/10">
                                                 <div className="flex items-center justify-between mb-1">
-                                                    <div className="font-serif text-sm text-foreground dark:text-background">Processing</div>
+                                                    <div className="font-serif text-sm text-foreground">Processing</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -573,9 +573,9 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: { sellerId: string, o
                                     {['in_transit', 'shipped', 'delivered'].includes(selectedOrder.status) && (
                                         <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
                                             <div className="flex items-center justify-center w-3 h-3 rounded-none border border-foreground dark:border-background bg-primary dark:bg-background shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2"></div>
-                                            <div className="w-[calc(100%-2.5rem)] md:w-[calc(50%-1.5rem)] p-4 rounded-none bg-primary/5 dark:bg-background/5 border border-foreground/10 dark:border-background/10">
+                                            <div className="w-[calc(100%-2.5rem)] md:w-[calc(50%-1.5rem)] p-4 rounded-none bg-primary/5 dark:bg-background/5 border border-foreground/10">
                                                 <div className="flex items-center justify-between mb-1">
-                                                    <div className="font-serif text-sm text-foreground dark:text-background">Shipped</div>
+                                                    <div className="font-serif text-sm text-foreground">Shipped</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -583,9 +583,9 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: { sellerId: string, o
                                     {['delivered'].includes(selectedOrder.status) && (
                                         <div className="relative flex items-center justify-between md:justify-normal md:even:flex-row-reverse group is-active">
                                             <div className="flex items-center justify-center w-3 h-3 rounded-none border border-foreground dark:border-background bg-primary dark:bg-background shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2"></div>
-                                            <div className="w-[calc(100%-2.5rem)] md:w-[calc(50%-1.5rem)] p-4 rounded-none bg-primary/5 dark:bg-background/5 border border-foreground/10 dark:border-background/10">
+                                            <div className="w-[calc(100%-2.5rem)] md:w-[calc(50%-1.5rem)] p-4 rounded-none bg-primary/5 dark:bg-background/5 border border-foreground/10">
                                                 <div className="flex items-center justify-between mb-1">
-                                                    <div className="font-serif text-sm text-foreground dark:text-background">Delivered</div>
+                                                    <div className="font-serif text-sm text-foreground">Delivered</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -594,29 +594,29 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: { sellerId: string, o
                             </Card>
 
                             <div>
-                                <h4 className="text-[9px] uppercase tracking-[0.2em] text-foreground/40 dark:text-background/40 mb-6 flex items-center gap-3"><ShoppingBag className="w-4 h-4"/> Items ({selectedOrder.items.length})</h4>
+                                <h4 className="text-[9px] uppercase tracking-[0.2em] text-foreground/40 mb-6 flex items-center gap-3"><ShoppingBag className="w-4 h-4"/> Items ({selectedOrder.items.length})</h4>
                                 <div className="space-y-4">
                                     {selectedOrder.items.map((item: any, index: number) => (
-                                        <div key={item.id || `item-${index}`} className="flex gap-6 p-6 bg-transparent rounded-none border border-foreground/10 dark:border-background/10 items-center">
+                                        <div key={item.id || `item-${index}`} className="flex gap-6 p-6 bg-transparent rounded-none border border-foreground/10 items-center">
                                             <div className="w-16 h-16 bg-primary/5 dark:bg-background/5 rounded-none overflow-hidden shrink-0">
                                                 <img src={item.product?.images?.[0]} className="w-full h-full object-cover" />
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="font-serif text-lg truncate text-foreground dark:text-background">{item.product?.name}</p>
-                                                <p className="text-[10px] text-foreground/60 dark:text-background/60 font-mono mt-1">SKU: {item.sku || 'N/A'}</p>
+                                                <p className="font-serif text-lg truncate text-foreground">{item.product?.name}</p>
+                                                <p className="text-[10px] text-foreground/60 font-mono mt-1">SKU: {item.sku || 'N/A'}</p>
                                             </div>
                                             <div className="text-right">
-                                                <p className="font-serif text-sm text-foreground dark:text-background mb-1">x{item.quantity}</p>
-                                                <p className="text-[11px] font-mono text-foreground/60 dark:text-background/60 mb-2">{formatTZS(item.price_at_purchase * item.quantity)}</p>
+                                                <p className="font-serif text-sm text-foreground mb-1">x{item.quantity}</p>
+                                                <p className="text-[11px] font-mono text-foreground/60 mb-2">{formatTZS(item.price_at_purchase * item.quantity)}</p>
                                                 <Button size="sm" variant="ghost" className="h-8 text-[9px] uppercase tracking-[0.1em] rounded-none hover:bg-primary/5 dark:hover:bg-background/5" onClick={() => onContactBuyer(selectedOrder.buyer.id, item.product_id, selectedOrder.id)}>Contact</Button>
                                             </div>
                                         </div>
                                     ))}
                                 </div>
-                                <div className="flex justify-end mt-8 pt-8 border-t border-foreground/10 dark:border-background/10">
+                                <div className="flex justify-end mt-8 pt-8 border-t border-foreground/10">
                                     <div className="text-right">
-                                        <p className="text-[9px] uppercase tracking-[0.2em] text-foreground/40 dark:text-background/40 mb-2">Total Payout</p>
-                                        <p className="text-3xl font-serif text-foreground dark:text-background">{formatTZS(selectedOrder.seller_total)}</p>
+                                        <p className="text-[9px] uppercase tracking-[0.2em] text-foreground/40 mb-2">Total Payout</p>
+                                        <p className="text-3xl font-serif text-foreground">{formatTZS(selectedOrder.seller_total)}</p>
                                     </div>
                                 </div>
                             </div>
@@ -624,7 +624,7 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: { sellerId: string, o
                         {receiptOrder && <ReceiptModal isOpen={!!receiptOrder} order={receiptOrder.order} seller={receiptOrder.seller} onClose={() => setReceiptOrder(null)} />}
                     </div>
                 ) : (
-                    <div className="hidden lg:flex flex-1 flex-col items-center justify-center text-foreground/20 dark:text-background/20">
+                    <div className="hidden lg:flex flex-1 flex-col items-center justify-center text-foreground/20">
                         <Receipt className="w-16 h-16 mb-6 stroke-[1]"/>
                         <p className="uppercase tracking-[0.2em] text-[10px]">Select an order to view details</p>
                     </div>

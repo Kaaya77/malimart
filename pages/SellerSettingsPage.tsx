@@ -188,8 +188,8 @@ export const SellerSettingsPage = () => {
   return (
     <div className="max-w-6xl mx-auto pb-12 animate-in fade-in">
       <div className="mb-8">
-        <h1 className="text-4xl font-serif font-light text-foreground dark:text-background tracking-tight">Seller Settings</h1>
-        <p className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground dark:text-background mt-2">Manage your store profile, payments, and operations efficiently.</p>
+        <h1 className="text-4xl font-serif font-light text-foreground tracking-tight">Seller Settings</h1>
+        <p className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground mt-2">Manage your store profile, payments, and operations efficiently.</p>
       </div>
 
       <div className="flex flex-col md:flex-row gap-8">
@@ -219,7 +219,7 @@ export const SellerSettingsPage = () => {
                 className={`flex items-center gap-3 px-4 py-3 rounded-none text-[10px] uppercase tracking-[0.2em] transition-colors whitespace-nowrap ${
                   activeTab === tab.id 
                     ? 'bg-primary text-background dark:bg-background dark:text-foreground' 
-                    : 'text-foreground/60 hover:bg-primary/5 dark:text-background/60 dark:hover:bg-background/5'
+                    : 'text-foreground/60 hover:bg-primary/5 dark:hover:bg-background/5'
                 }`}
               >
                 <tab.icon className="w-4 h-4 stroke-[1.5]" />
@@ -234,8 +234,8 @@ export const SellerSettingsPage = () => {
               <Card className="bg-primary/5 dark:bg-background/5 border-none shadow-none">
                   <CardContent className="p-6">
                       <div className="flex items-center justify-between mb-3">
-                          <h3 className="text-[10px] uppercase tracking-[0.2em] text-foreground dark:text-background">Setup Progress</h3>
-                          <span className="text-lg font-serif text-foreground dark:text-background">{setupProgress}%</span>
+                          <h3 className="text-[10px] uppercase tracking-[0.2em] text-foreground">Setup Progress</h3>
+                          <span className="text-lg font-serif text-foreground">{setupProgress}%</span>
                       </div>
                       <div className="w-full h-1 bg-primary/10 dark:bg-background/10 rounded-none overflow-hidden">
                           <div className="h-full bg-primary dark:bg-background transition-all duration-1000" style={{ width: `${setupProgress}%` }}></div>
@@ -260,17 +260,17 @@ export const SellerSettingsPage = () => {
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       <div className="space-y-1">
-                          <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground dark:text-background mb-2 block">Store Name</label>
+                          <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground mb-2 block">Store Name</label>
                           <Input placeholder="Store Name" value={profileData.store_name || ''} onChange={(e: any) => setProfileData({...profileData, store_name: e.target.value})} />
                       </div>
                       <div className="space-y-1">
-                          <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground dark:text-background mb-2 block">Contact Phone</label>
+                          <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground mb-2 block">Contact Phone</label>
                           <Input placeholder="Contact Phone" value={profileData.contact_phone} onChange={(e: any) => setProfileData({...profileData, contact_phone: e.target.value})} />
                       </div>
                       <div className="space-y-1">
-                          <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground dark:text-background mb-2 block">Region</label>
+                          <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground mb-2 block">Region</label>
                           <select 
-                              className="flex h-12 w-full rounded-none border border-foreground/20 bg-transparent px-4 text-sm focus:outline-none focus:border-foreground transition-all dark:border-background/20 dark:text-background dark:focus:border-background"
+                              className="flex h-12 w-full rounded-none border border-foreground/20 bg-transparent px-4 text-sm focus:outline-none focus:border-foreground transition-all dark:text-background dark:focus:border-background"
                               value={profileData.region}
                               onChange={(e) => setProfileData({...profileData, region: e.target.value, district: TANZANIA_DISTRICTS[e.target.value]?.[0] || ''})}
                           >
@@ -280,9 +280,9 @@ export const SellerSettingsPage = () => {
                           </select>
                       </div>
                       <div className="space-y-1">
-                          <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground dark:text-background mb-2 block">District</label>
+                          <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground mb-2 block">District</label>
                           <select 
-                              className="flex h-12 w-full rounded-none border border-foreground/20 bg-transparent px-4 text-sm focus:outline-none focus:border-foreground transition-all dark:border-background/20 dark:text-background dark:focus:border-background disabled:opacity-50"
+                              className="flex h-12 w-full rounded-none border border-foreground/20 bg-transparent px-4 text-sm focus:outline-none focus:border-foreground transition-all dark:text-background dark:focus:border-background disabled:opacity-50"
                               value={profileData.district}
                               onChange={(e) => setProfileData({...profileData, district: e.target.value})}
                               disabled={!profileData.region || !TANZANIA_DISTRICTS[profileData.region]}
@@ -294,11 +294,11 @@ export const SellerSettingsPage = () => {
                           </select>
                       </div>
                       <div className="md:col-span-2 space-y-1">
-                          <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground dark:text-background mb-2 block">Specific Address</label>
+                          <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground mb-2 block">Specific Address</label>
                           <Input placeholder="e.g., Kariakoo, Msimbazi St" value={profileData.address} onChange={(e: any) => setProfileData({...profileData, address: e.target.value})} />
                       </div>
                       <div className="md:col-span-2 space-y-1">
-                          <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground dark:text-background mb-2 block">Store Description</label>
+                          <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground mb-2 block">Store Description</label>
                           <Textarea placeholder="What do you sell?" value={profileData.description} onChange={(e: any) => setProfileData({...profileData, description: e.target.value})} />
                       </div>
                   </div>
@@ -318,9 +318,9 @@ export const SellerSettingsPage = () => {
                   <CardContent className="space-y-5">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                           <div className="space-y-1">
-                              <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground dark:text-background mb-2 block">Return Policy</label>
+                              <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground mb-2 block">Return Policy</label>
                               <select 
-                                  className="flex h-12 w-full rounded-none border border-foreground/20 bg-transparent px-4 text-sm focus:outline-none focus:border-foreground transition-all dark:border-background/20 dark:text-background dark:focus:border-background"
+                                  className="flex h-12 w-full rounded-none border border-foreground/20 bg-transparent px-4 text-sm focus:outline-none focus:border-foreground transition-all dark:text-background dark:focus:border-background"
                                   value={policiesData.return_policy}
                                   onChange={(e) => setPoliciesData({...policiesData, return_policy: e.target.value})}
                               >
@@ -331,9 +331,9 @@ export const SellerSettingsPage = () => {
                               </select>
                           </div>
                           <div className="space-y-1">
-                              <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground dark:text-background mb-2 block">Processing Time</label>
+                              <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground mb-2 block">Processing Time</label>
                               <select 
-                                  className="flex h-12 w-full rounded-none border border-foreground/20 bg-transparent px-4 text-sm focus:outline-none focus:border-foreground transition-all dark:border-background/20 dark:text-background dark:focus:border-background"
+                                  className="flex h-12 w-full rounded-none border border-foreground/20 bg-transparent px-4 text-sm focus:outline-none focus:border-foreground transition-all dark:text-background dark:focus:border-background"
                                   value={policiesData.processing_time}
                                   onChange={(e) => setPoliciesData({...policiesData, processing_time: e.target.value})}
                               >
@@ -344,7 +344,7 @@ export const SellerSettingsPage = () => {
                               </select>
                           </div>
                           <div className="md:col-span-2 space-y-1">
-                              <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground dark:text-background mb-2 block">Warranty Information (Optional)</label>
+                              <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground mb-2 block">Warranty Information (Optional)</label>
                               <Input placeholder="e.g., 6 Months Manufacturer Warranty" value={policiesData.warranty} onChange={(e: any) => setPoliciesData({...policiesData, warranty: e.target.value})} />
                           </div>
                       </div>
@@ -366,11 +366,11 @@ export const SellerSettingsPage = () => {
                       {socialLinks.length > 0 && (
                           <div className="space-y-2 mb-4">
                               {socialLinks.map((link, idx) => (
-                                  <div key={idx} className="flex items-center justify-between p-4 border border-foreground/10 dark:border-background/10 rounded-none bg-background dark:bg-background">
+                                  <div key={idx} className="flex items-center justify-between p-4 border border-foreground/10 rounded-none bg-background dark:bg-background">
                                       <div className="flex items-center gap-3">
-                                          <Globe className="w-4 h-4 text-foreground/40 dark:text-background/40" />
-                                          <span className="font-serif text-sm text-foreground dark:text-background">{link.platform}</span>
-                                          <span className="text-[10px] uppercase tracking-[0.1em] text-foreground/60 dark:text-background/60 truncate max-w-[200px]">{link.url}</span>
+                                          <Globe className="w-4 h-4 text-foreground/40" />
+                                          <span className="font-serif text-sm text-foreground">{link.platform}</span>
+                                          <span className="text-[10px] uppercase tracking-[0.1em] text-foreground/60 truncate max-w-[200px]">{link.url}</span>
                                       </div>
                                       <Button variant="ghost" size="icon" className="text-red-500 h-8 w-8" onClick={() => handleRemoveSocial(idx)}>
                                           <Trash2 className="w-4 h-4 stroke-[1.5]" />
@@ -380,9 +380,9 @@ export const SellerSettingsPage = () => {
                           </div>
                       )}
 
-                      <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-foreground/10 dark:border-background/10">
+                      <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-foreground/10">
                           <select 
-                              className="flex h-12 w-full sm:w-auto rounded-none border border-foreground/20 bg-transparent px-4 text-sm focus:outline-none focus:border-foreground transition-all dark:border-background/20 dark:text-background dark:focus:border-background"
+                              className="flex h-12 w-full sm:w-auto rounded-none border border-foreground/20 bg-transparent px-4 text-sm focus:outline-none focus:border-foreground transition-all dark:text-background dark:focus:border-background"
                               value={newSocial.platform}
                               onChange={(e) => setNewSocial({...newSocial, platform: e.target.value})}
                           >
@@ -420,14 +420,14 @@ export const SellerSettingsPage = () => {
                   {paymentMethods.length > 0 ? (
                       <div className="grid grid-cols-1 gap-3">
                           {paymentMethods.map(method => (
-                              <div key={method.id} className="flex items-center justify-between p-4 border border-foreground/10 dark:border-background/10 rounded-none bg-background dark:bg-background">
+                              <div key={method.id} className="flex items-center justify-between p-4 border border-foreground/10 rounded-none bg-background dark:bg-background">
                                   <div className="flex items-center gap-4">
-                                      <div className={`w-10 h-10 rounded-none flex items-center justify-center border border-foreground/10 dark:border-background/10 ${method.type === 'mobile' ? 'bg-primary/5 dark:bg-background/5' : 'bg-primary/5 dark:bg-background/5'}`}>
-                                          <DollarSign className="w-5 h-5 text-foreground dark:text-background stroke-[1.5]" />
+                                      <div className={`w-10 h-10 rounded-none flex items-center justify-center border border-foreground/10 ${method.type === 'mobile' ? 'bg-primary/5 dark:bg-background/5' : 'bg-primary/5 dark:bg-background/5'}`}>
+                                          <DollarSign className="w-5 h-5 text-foreground stroke-[1.5]" />
                                       </div>
                                       <div>
-                                          <p className="font-serif text-sm text-foreground dark:text-background">{method.provider}</p>
-                                          <p className="text-[10px] uppercase tracking-[0.1em] text-foreground/60 dark:text-background/60">{method.accountName} • {method.accountNumber}</p>
+                                          <p className="font-serif text-sm text-foreground">{method.provider}</p>
+                                          <p className="text-[10px] uppercase tracking-[0.1em] text-foreground/60">{method.accountName} • {method.accountNumber}</p>
                                       </div>
                                   </div>
                                   <Button variant="ghost" size="icon" className="text-red-500" onClick={() => handleRemovePayment(method.id)}>
@@ -437,14 +437,14 @@ export const SellerSettingsPage = () => {
                           ))}
                       </div>
                   ) : (
-                      <p className="text-[10px] uppercase tracking-[0.2em] text-foreground/60 dark:text-background/60">No payment methods added yet.</p>
+                      <p className="text-[10px] uppercase tracking-[0.2em] text-foreground/60">No payment methods added yet.</p>
                   )}
 
-                  <div className="pt-6 border-t border-foreground/10 dark:border-background/10 space-y-4">
-                      <h4 className="text-[10px] uppercase tracking-[0.2em] text-foreground dark:text-background mb-2">Add New Payment Method</h4>
+                  <div className="pt-6 border-t border-foreground/10 space-y-4">
+                      <h4 className="text-[10px] uppercase tracking-[0.2em] text-foreground mb-2">Add New Payment Method</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <select 
-                              className="flex h-12 w-full rounded-none border border-foreground/20 bg-transparent px-4 text-sm focus:outline-none focus:border-foreground transition-all dark:border-background/20 dark:text-background dark:focus:border-background"
+                              className="flex h-12 w-full rounded-none border border-foreground/20 bg-transparent px-4 text-sm focus:outline-none focus:border-foreground transition-all dark:text-background dark:focus:border-background"
                               value={newPayment.type}
                               onChange={(e) => setNewPayment({
                                   ...newPayment, 
@@ -457,7 +457,7 @@ export const SellerSettingsPage = () => {
                           </select>
                           
                           <select 
-                              className="flex h-12 w-full rounded-none border border-foreground/20 bg-transparent px-4 text-sm focus:outline-none focus:border-foreground transition-all dark:border-background/20 dark:text-background dark:focus:border-background"
+                              className="flex h-12 w-full rounded-none border border-foreground/20 bg-transparent px-4 text-sm focus:outline-none focus:border-foreground transition-all dark:text-background dark:focus:border-background"
                               value={newPayment.provider}
                               onChange={(e) => setNewPayment({...newPayment, provider: e.target.value})}
                           >
@@ -482,21 +482,21 @@ export const SellerSettingsPage = () => {
                 <CardContent className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div className="space-y-1">
-                            <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground dark:text-background mb-2 block">TIN Number</label>
+                            <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground mb-2 block">TIN Number</label>
                             <Input placeholder="TIN Number" value={businessData.tin_number} onChange={(e: any) => setBusinessData({...businessData, tin_number: e.target.value})} />
                         </div>
                         <div className="space-y-1">
-                            <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground dark:text-background mb-2 block">Business Registration No.</label>
+                            <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground mb-2 block">Business Registration No.</label>
                             <Input placeholder="Registration No." value={businessData.business_reg_no} onChange={(e: any) => setBusinessData({...businessData, business_reg_no: e.target.value})} />
                         </div>
                         <div className="space-y-1">
-                            <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground dark:text-background mb-2 block">VAT Registration Number (VRN)</label>
+                            <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground mb-2 block">VAT Registration Number (VRN)</label>
                             <Input placeholder="Optional VRN" value={businessData.vrn} onChange={(e: any) => setBusinessData({...businessData, vrn: e.target.value})} />
                         </div>
                         <div className="space-y-1">
-                            <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground dark:text-background mb-2 block">Payout Schedule</label>
+                            <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground mb-2 block">Payout Schedule</label>
                             <select 
-                                className="flex h-12 w-full rounded-none border border-foreground/20 bg-transparent px-4 text-sm focus:outline-none focus:border-foreground transition-all dark:border-background/20 dark:text-background dark:focus:border-background"
+                                className="flex h-12 w-full rounded-none border border-foreground/20 bg-transparent px-4 text-sm focus:outline-none focus:border-foreground transition-all dark:text-background dark:focus:border-background"
                                 value={businessData.payout_schedule}
                                 onChange={(e) => setBusinessData({...businessData, payout_schedule: e.target.value})}
                             >

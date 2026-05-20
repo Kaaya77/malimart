@@ -696,7 +696,7 @@ export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, on
                   </div>
                   {isAddingAddr ? <AddressForm onSave={async (d) => { await addAddress(d); setIsAddingAddr(false); }} onCancel={() => setIsAddingAddr(false)} /> : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {addresses.length === 0 && <div className="col-span-2 text-center py-10 text-foreground/40 text-xs font-bold uppercase border-2 border-dashed border-foreground/10 rounded-[2rem] bg-foreground/[0.02]">No saved locations found</div>}
+                      {addresses.length === 0 && <div className="col-span-2 text-center py-10 text-foreground/40 text-xs font-bold uppercase border-2 border-dashed border-foreground/10 rounded-3xl bg-foreground/[0.02]">No saved locations found</div>}
                       {addresses.map(addr => (
                         <div key={addr.id} onClick={() => setSelectedAddress(addr)} className={`relative p-6 rounded-3xl border-2 cursor-pointer transition-all group overflow-hidden ${selectedAddress?.id === addr.id ? 'border-foreground bg-background shadow-xl' : 'border-transparent bg-foreground/[0.03] hover:border-foreground/20'}`}>
                           {selectedAddress?.id === addr.id && <div className="absolute top-0 right-0 p-3 bg-foreground text-background rounded-bl-2xl shadow-lg"><Check className="w-4 h-4" /></div>}

@@ -200,24 +200,24 @@ export const AdminAIHero = () => {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h2 className="text-2xl font-sans font-black">Hero Section Management</h2>
-                    <p className="text-sm text-foreground/60 dark:text-background/60 mt-1">Control what appears on the homepage hero section.</p>
+                    <p className="text-sm text-foreground/60 mt-1">Control what appears on the homepage hero section.</p>
                 </div>
                 <div className="flex gap-2 bg-primary/5 dark:bg-background/5 p-1 rounded-lg">
                     <button 
                         onClick={() => setActiveTab('ai')}
-                        className={`px-4 py-2 text-xs font-semibold uppercase tracking-wider rounded-md transition-colors ${activeTab === 'ai' ? 'bg-primary text-background dark:bg-background dark:text-foreground' : 'text-foreground/60 dark:text-background/60 hover:text-foreground dark:hover:text-background'}`}
+                        className={`px-4 py-2 text-xs font-semibold uppercase tracking-wider rounded-md transition-colors ${activeTab === 'ai' ? 'bg-primary text-background dark:bg-background dark:text-foreground' : 'text-foreground/60 hover:text-foreground dark:hover:text-background'}`}
                     >
                         <Sparkles className="w-3 h-3 inline mr-2" /> AI Recommendations
                     </button>
                     <button 
                         onClick={() => setActiveTab('manual')}
-                        className={`px-4 py-2 text-xs font-semibold uppercase tracking-wider rounded-md transition-colors ${activeTab === 'manual' ? 'bg-primary text-background dark:bg-background dark:text-foreground' : 'text-foreground/60 dark:text-background/60 hover:text-foreground dark:hover:text-background'}`}
+                        className={`px-4 py-2 text-xs font-semibold uppercase tracking-wider rounded-md transition-colors ${activeTab === 'manual' ? 'bg-primary text-background dark:bg-background dark:text-foreground' : 'text-foreground/60 hover:text-foreground dark:hover:text-background'}`}
                     >
                         <Settings className="w-3 h-3 inline mr-2" /> Manual Fallback
                     </button>
                     <button 
                         onClick={() => setActiveTab('products')}
-                        className={`px-4 py-2 text-xs font-semibold uppercase tracking-wider rounded-md transition-colors ${activeTab === 'products' ? 'bg-primary text-background dark:bg-background dark:text-foreground' : 'text-foreground/60 dark:text-background/60 hover:text-foreground dark:hover:text-background'}`}
+                        className={`px-4 py-2 text-xs font-semibold uppercase tracking-wider rounded-md transition-colors ${activeTab === 'products' ? 'bg-primary text-background dark:bg-background dark:text-foreground' : 'text-foreground/60 hover:text-foreground dark:hover:text-background'}`}
                     >
                         <TrendingUp className="w-3 h-3 inline mr-2" /> Top Products
                     </button>
@@ -226,15 +226,15 @@ export const AdminAIHero = () => {
 
             {activeTab === 'ai' && (
                 <div className="space-y-6">
-                    <div className="flex justify-between items-center bg-primary/5 dark:bg-background/5 p-4 border border-foreground/10 dark:border-background/10">
+                    <div className="flex justify-between items-center bg-primary/5 dark:bg-background/5 p-4 border border-foreground/10">
                         <div>
                             <h3 className="font-sans font-black text-lg">AI-Powered Curation</h3>
-                            <p className="text-xs text-foreground/60 dark:text-background/60">Let AI analyze top products and generate compelling hero copy.</p>
+                            <p className="text-xs text-foreground/60">Let AI analyze top products and generate compelling hero copy.</p>
                         </div>
                         <div className="flex gap-2">
                             <button 
                                 onClick={handleClearAll} 
-                                className="flex items-center gap-2 px-4 py-3 border border-foreground/10 dark:border-background/10 text-foreground/60 dark:text-background/60 text-xs font-bold uppercase tracking-[0.2em] hover:bg-red-500/10 hover:text-red-500 transition-colors"
+                                className="flex items-center gap-2 px-4 py-3 border border-foreground/10 text-foreground/60 text-xs font-bold uppercase tracking-[0.2em] hover:bg-red-500/10 hover:text-red-500 transition-colors"
                             >
                                 <Trash2 className="w-4 h-4" /> Clear All
                             </button>
@@ -246,7 +246,7 @@ export const AdminAIHero = () => {
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {recommendations.map((rec) => (
-                            <div key={rec.id} className={`flex flex-col bg-card border rounded-2xl ${rec.status === 'approved' ? 'border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.2)]' : 'border-foreground/10 dark:border-background/10'} overflow-hidden`}>
+                            <div key={rec.id} className={`flex flex-col bg-card border rounded-2xl ${rec.status === 'approved' ? 'border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.2)]' : 'border-foreground/10'} overflow-hidden`}>
                                 {rec.products && (
                                     <div className="relative h-48 w-full overflow-hidden bg-gray-100 dark:bg-gray-800">
                                         <img src={rec.products.images?.[0] || "https://picsum.photos/seed/luxurycraft/1920/1080"} alt={rec.products.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
@@ -270,12 +270,12 @@ export const AdminAIHero = () => {
                                                     <textarea 
                                                     value={editDesc} 
                                                     onChange={(e) => setEditDesc(e.target.value)} 
-                                                    className="w-full p-3 bg-transparent border border-foreground/20 dark:border-background/20 focus:outline-none focus:border-primary text-foreground dark:text-background rounded-xl transition-colors min-h-[100px] text-sm"
+                                                    className="w-full p-3 bg-transparent border border-foreground/20 focus:outline-none focus:border-primary text-foreground rounded-xl transition-colors min-h-[100px] text-sm"
                                                 />
                                             </div>
                                             <div>
                                                 <label className="text-[10px] uppercase tracking-widest opacity-50 mb-1 block">Offer Type</label>
-                                                <select value={editOfferType} onChange={(e) => setEditOfferType(e.target.value)} className="w-full p-2 bg-transparent border border-foreground/20 dark:border-background/20">
+                                                <select value={editOfferType} onChange={(e) => setEditOfferType(e.target.value)} className="w-full p-2 bg-transparent border border-foreground/20">
                                                     <option value="percentage">Percentage</option>
                                                     <option value="fixed">Fixed Amount</option>
                                                 </select>
@@ -315,7 +315,7 @@ export const AdminAIHero = () => {
                                                 <span className="font-mono text-sm font-semibold">{rec.products ? formatTZS(rec.products.price) : rec.price_display}</span>
                                             </div>
                                             <h3 className="text-xl font-sans font-black mb-3 leading-tight">{rec.title}</h3>
-                                            <p className="text-sm text-foreground/70 dark:text-background/70 mb-4 leading-relaxed">{rec.description}</p>
+                                            <p className="text-sm text-foreground/70 mb-4 leading-relaxed">{rec.description}</p>
                                             
                                             {rec.products && rec.products.profiles && (
                                                 <div className="flex items-center gap-2 mt-auto mb-4 p-3 bg-primary/5 dark:bg-background/5 rounded-lg">
@@ -330,7 +330,7 @@ export const AdminAIHero = () => {
                                     )}
 
                                     {editingId !== rec.id && (
-                                        <div className="flex items-center justify-between mt-auto pt-4 border-t border-foreground/10 dark:border-background/10">
+                                        <div className="flex items-center justify-between mt-auto pt-4 border-t border-foreground/10">
                                             <div className="flex gap-2">
                                                 {rec.status === 'pending' && (
                                                     <>
@@ -343,8 +343,8 @@ export const AdminAIHero = () => {
                                             </div>
                                             
                                             <div className="flex gap-3">
-                                                <button onClick={() => startEdit(rec)} className="text-foreground/50 hover:text-blue-600 dark:text-background/50 dark:hover:text-blue-400 transition-colors"><Edit2 className="w-4 h-4" /></button>
-                                                <button onClick={() => setDeletingId(rec.id)} className="text-foreground/50 hover:text-red-600 dark:text-background/50 dark:hover:text-red-400 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                                                <button onClick={() => startEdit(rec)} className="text-foreground/50 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"><Edit2 className="w-4 h-4" /></button>
+                                                <button onClick={() => setDeletingId(rec.id)} className="text-foreground/50 hover:text-red-600 dark:hover:text-red-400 transition-colors"><Trash2 className="w-4 h-4" /></button>
                                             </div>
                                         </div>
                                     )}
@@ -352,9 +352,9 @@ export const AdminAIHero = () => {
                             </div>
                         ))}
                         {recommendations.length === 0 && !isLoading && (
-                            <div className="col-span-full py-12 text-center border border-dashed border-foreground/20 dark:border-background/20">
+                            <div className="col-span-full py-12 text-center border border-dashed border-foreground/20">
                                 <Sparkles className="w-8 h-8 mx-auto mb-4 opacity-20" />
-                                <p className="text-foreground/60 dark:text-background/60 font-medium">No AI recommendations yet. Click Generate New to start.</p>
+                                <p className="text-foreground/60 font-medium">No AI recommendations yet. Click Generate New to start.</p>
                             </div>
                         )}
                     </div>
@@ -362,10 +362,10 @@ export const AdminAIHero = () => {
             )}
 
             {activeTab === 'manual' && (
-                <div className="max-w-2xl bg-card p-8 rounded-2xl border border-foreground/10 dark:border-background/10">
+                <div className="max-w-2xl bg-card p-8 rounded-2xl border border-foreground/10">
                     <div className="mb-8">
                         <h3 className="font-sans font-black text-xl mb-2">Manual Fallback Settings</h3>
-                        <p className="text-sm text-foreground/60 dark:text-background/60">These settings are used if no AI recommendation is approved or if the AI service is temporarily unavailable.</p>
+                        <p className="text-sm text-foreground/60">These settings are used if no AI recommendation is approved or if the AI service is temporarily unavailable.</p>
                     </div>
 
                     <div className="space-y-6">
@@ -397,7 +397,7 @@ export const AdminAIHero = () => {
                             />
                         </div>
                         
-                        <div className="pt-4 border-t border-foreground/10 dark:border-background/10">
+                        <div className="pt-4 border-t border-foreground/10">
                             <Button onClick={handleSaveManualSettings} disabled={isSavingManual} className="w-full">
                                 {isSavingManual ? 'Saving...' : 'Save Manual Settings'}
                             </Button>
@@ -411,7 +411,7 @@ export const AdminAIHero = () => {
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                         <div>
                             <h3 className="font-sans font-black text-xl mb-2">Top Products & Nominations</h3>
-                            <p className="text-sm text-foreground/60 dark:text-background/60">Select a high-performing product to manually feature it in the Hero section.</p>
+                            <p className="text-sm text-foreground/60">Select a high-performing product to manually feature it in the Hero section.</p>
                         </div>
                         <Input 
                             placeholder="Search products or stores..." 
@@ -423,7 +423,7 @@ export const AdminAIHero = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredProducts.map(product => (
-                            <div key={product.id} className="bg-card border border-foreground/10 dark:border-background/10 rounded-2xl overflow-hidden flex flex-col">
+                            <div key={product.id} className="bg-card border border-foreground/10 rounded-2xl overflow-hidden flex flex-col">
                                 <div className="h-48 overflow-hidden relative">
                                     <img src={product.images?.[0] || "https://picsum.photos/seed/luxurycraft/1920/1080"} alt={product.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                                     <div className="absolute top-2 right-2 bg-background/90 dark:bg-black/90 px-2 py-1 text-[10px] font-bold uppercase tracking-wider backdrop-blur-sm">
@@ -432,9 +432,9 @@ export const AdminAIHero = () => {
                                 </div>
                                 <div className="p-4 flex-1 flex flex-col">
                                     <h4 className="font-sans font-black text-lg mb-1 truncate">{product.name}</h4>
-                                    <p className="text-xs text-foreground/60 dark:text-background/60 mb-4 truncate">By {product.profiles?.store_name || product.profiles?.full_name}</p>
+                                    <p className="text-xs text-foreground/60 mb-4 truncate">By {product.profiles?.store_name || product.profiles?.full_name}</p>
                                     
-                                    <div className="mt-auto pt-4 border-t border-foreground/10 dark:border-background/10 flex flex-col gap-2">
+                                    <div className="mt-auto pt-4 border-t border-foreground/10 flex flex-col gap-2">
                                         <button 
                                             onClick={() => handlePromoteProduct(product)}
                                             className="w-full py-2 flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest border border-foreground dark:border-background hover:bg-primary hover:text-background dark:hover:bg-background dark:hover:text-foreground transition-colors"
@@ -452,7 +452,7 @@ export const AdminAIHero = () => {
                                                     addToast("Failed to update trending status", "error");
                                                 }
                                             }}
-                                            className={`w-full py-2 flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest border transition-colors ${product.is_boosted ? 'bg-primary text-background dark:bg-background dark:text-foreground border-foreground dark:border-background' : 'border-foreground/20 dark:border-background/20 hover:border-foreground dark:hover:border-background'}`}
+                                            className={`w-full py-2 flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest border transition-colors ${product.is_boosted ? 'bg-primary text-background dark:bg-background dark:text-foreground border-foreground dark:border-background' : 'border-foreground/20 hover:border-foreground dark:hover:border-background'}`}
                                         >
                                             <TrendingUp className="w-3 h-3" /> {product.is_boosted ? 'Trending (Pinned)' : 'Pin to Trending'}
                                         </button>
