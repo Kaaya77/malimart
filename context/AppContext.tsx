@@ -166,7 +166,6 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
                 let { data: profile, error } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
                 
                 if (error && error.code === 'PGRST116') {
-                    console.log('Profile missing, creating one for:', session.user.id);
                     const { data: newProfile, error: insertError } = await supabase.from('profiles').insert({
                         id: session.user.id,
                         full_name: session.user.user_metadata.full_name || 'User',
@@ -192,13 +191,10 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         init();
 
         const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-            console.log('Auth event:', event, 'Session:', session);
             if (event === 'SIGNED_IN' && session?.user) {
-                console.log('Fetching profile for:', session.user.id);
                 let { data: profile, error } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
                 
                 if (error && error.code === 'PGRST116') {
-                    console.log('Profile missing, creating one for:', session.user.id);
                     const { data: newProfile, error: insertError } = await supabase.from('profiles').insert({
                         id: session.user.id,
                         full_name: session.user.user_metadata.full_name || 'User',
@@ -216,11 +212,9 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
                 }
 
                 if (profile) {
-                    console.log('Profile found:', profile);
                     setUser({ ...profile, name: profile.full_name || 'User', email: session.user.email } as User);
                     await fetchUserData(session.user.id, profile.role, profile.is_banned);
                 } else {
-                    console.warn('No profile found for user:', session.user.id);
                 }
             } else if (event === 'SIGNED_OUT') {
                 setUser(null);
@@ -274,15 +268,15 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
                 () => fetchAndSetOrders(user.id)
             ).subscribe();
 
-        // Wishlist
+        // Wishlist — fixed: table name was 'wishlist' (doesn't exist), correct name is 'wishlist_items'
         const wishlistChannel = supabase.channel(`wishlist:${user.id}`)
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'wishlist', filter: `user_id=eq.${user.id}` }, 
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'wishlist_items', filter: `user_id=eq.${user.id}` }, 
                 () => fetchAndSetWishlist(user.id)
             ).subscribe();
         
-        // Cart
+        // Cart — fixed: now filters by the user's own cart_id to avoid receiving all users' cart events
         const cartChannel = supabase.channel(`cart:${user.id}`)
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'cart_items' }, 
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'carts', filter: `user_id=eq.${user.id}` }, 
                 () => fetchAndSetCart(user.id)
             ).subscribe();
 
@@ -303,7 +297,6 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     }, [user]);
 
     const fetchPublicData = useCallback(async () => {
-        console.log('fetchPublicData called');
         // 1. Fetch other public data in parallel
         const otherResults = await Promise.allSettled([
             supabase.from('categories').select('*').eq('is_active', true).limit(50),
@@ -351,11 +344,9 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
             }
 
             if (prodsRes.data) {
-                console.log('Fetched products count:', prodsRes.data.length);
                 const productIds = prodsRes.data.map(p => p.id);
                 const sellerIds = [...new Set(prodsRes.data.map(p => p.seller_id))];
                 
-                console.log('Fetching variants and vendors for:', productIds.length, 'products');                
                 // Fetch variants and vendor info in parallel
                 const [variantsRes, vendorsRes] = await Promise.all([
                     supabase.from('product_variants')
@@ -365,8 +356,6 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
                         .select('seller_id, is_verified, store_name')
                         .in('seller_id', sellerIds)
                 ]);
-                
-                console.log('Variants and vendors fetched. Variants count:', variantsRes.data?.length, 'Vendors count:', vendorsRes.data?.length);
                 
                 const variantMap = new Map<string, any[]>();
                 variantsRes.data?.forEach(v => {
@@ -544,11 +533,9 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     }, [user, logActivity, notify]);
 
     const removeFromCart = useCallback(async (productId: string, variantId?: string) => {
-        console.log('removeFromCart called', { productId, variantId });
         try {
             setCart(prev => {
                 const next = prev.filter(p => !(p.id === productId && p.variant_id === variantId));
-                console.log('setCart called', { prev, next });
                 return next;
             });
             
@@ -758,7 +745,6 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     }, [user]);
 
     const fetchMessages = useCallback(async () => {
-      console.log('AppContext: fetchMessages called, user:', user);
       if (!user) return [];
       
       // Fetch messages without reactions first to avoid join errors
@@ -792,8 +778,6 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
           ...m,
           reactions: reactions?.filter(r => r.message_id === m.id) || []
       }));
-
-      console.log('AppContext: Fetched messages with reactions:', messagesWithReactions);
       return (messagesWithReactions as any[]) || [];
     }, [user]);
 
