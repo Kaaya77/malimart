@@ -35,8 +35,10 @@ export const LoginPage = () => {
  const redirectPath = safeRedirect(searchParams.get('redirect'), '/');
 
  useEffect(() => {
- if (user && !user.is_banned) clearAuthAttempts(formData.email);
-        navigate(redirectPath);
+  if (user && !user.is_banned) {
+    clearAuthAttempts(formData.email);
+    navigate(redirectPath);
+  }
  }, [user, navigate, redirectPath]);
 
  useEffect(() => {
