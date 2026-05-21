@@ -320,6 +320,7 @@ export const LoginPage = () => {
  }}
  >
  <Button 
+ type="submit"
  variant="brand" 
  className="w-full h-16 rounded-2xl text-sm font-black uppercase tracking-[0.2em] shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all"
  isLoading={loading}
