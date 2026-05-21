@@ -105,6 +105,13 @@
         padding-bottom: env(safe-area-inset-bottom);
       }
     </style>
+
+  <!-- Perf: preconnect to critical external origins -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://images.unsplash.com" crossorigin>
+  <!-- DNS prefetch for Supabase (will be replaced by actual URL at build) -->
+  <link rel="dns-prefetch" href="https://supabase.co">
 </head>
   <body class="bg-background text-foreground transition-colors duration-500 overflow-x-hidden antialiased">
     <div class="bg-noise"></div>

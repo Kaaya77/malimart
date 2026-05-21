@@ -614,7 +614,7 @@ export const AdminPage = () => {
  <div className="flex items-center gap-4">
  <div className="w-12 h-16 bg-foreground/[0.06] rounded-xl overflow-hidden border border-foreground/8 shadow-sm flex items-center justify-center">
  {p.images && p.images[0] ? (
- <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover" />
+ <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover" loading="lazy" decoding="async" />
  ) : (
  <Package className="w-5 h-5 text-foreground/50 stroke-2" />
  )}

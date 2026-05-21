@@ -70,7 +70,7 @@ export const SellerPage = () => {
  className="flex items-center justify-between py-6 md:py-8">
  <div className="flex items-center gap-3.5 min-w-0">
  {vendor?.logo_url ? (
- <img src={vendor.logo_url} alt="" className="w-12 h-12 rounded-2xl object-cover ring-2 ring-foreground/10 shadow-md shrink-0"/>
+ <img src={vendor.logo_url} alt="" className="w-12 h-12 rounded-2xl object-cover ring-2 ring-foreground/10 shadow-md shrink-0" loading="lazy" decoding="async"/>
  ) : (
  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-foreground to-foreground/80 flex items-center justify-center shrink-0 shadow-md">
  <Store className="w-5 h-5 text-background"/>

@@ -182,7 +182,7 @@ export const SearchModal = ({
  onClick={() => { setIsSearchOpen(false); navigate(`/product/${p.id}`); pushRecent(p.name); }}
  className="flex items-center gap-3 w-full p-2 rounded-xl hover:bg-foreground/[0.04] text-left transition-colors"
  >
- <img src={p.images?.[0]} alt={p.name} className="w-12 h-12 rounded-lg object-cover bg-foreground/5 flex-shrink-0" />
+ <img src={p.images?.[0]} alt={p.name} className="w-12 h-12 rounded-lg object-cover bg-foreground/5 flex-shrink-0" loading="lazy" decoding="async" />
  <div className="flex-1 min-w-0">
  <p className="text-sm font-semibold text-foreground truncate">{p.name}</p>
  <p className="text-[12px] text-foreground/50 truncate">{p.seller_name} · {p.category}</p>
@@ -259,7 +259,7 @@ export const SearchModal = ({
  className="text-left group"
  >
  <div className="aspect-square rounded-xl overflow-hidden bg-foreground/5 mb-2">
- <img src={p.images?.[0]} alt={p.name} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.04]" />
+ <img src={p.images?.[0]} alt={p.name} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.04]" loading="lazy" decoding="async" />
  </div>
  <p className="text-[13px] font-semibold text-foreground line-clamp-1">{p.name}</p>
  <p className="text-xs font-bold text-foreground/70 tabular-nums">{CURRENCY} {Math.round(p.price).toLocaleString()}</p>

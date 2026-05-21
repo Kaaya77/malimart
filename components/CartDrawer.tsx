@@ -180,7 +180,7 @@ export const CartDrawer = () => {
  <img
  src={image}
  alt={item.name}
- className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+ className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" decoding="async"
  />
  {isLowStock && (
  <div className="absolute bottom-0 left-0 right-0 bg-foreground text-background text-[8px] uppercase tracking-[0.2em] font-semibold text-center py-1">

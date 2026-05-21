@@ -130,7 +130,7 @@ export const LoginPage = () => {
  <img 
  src="https://images.unsplash.com/photo-1606744888344-493238951221?q=80&w=2069&auto=format&fit=crop" 
  className="w-full h-full object-cover opacity-60 mix-blend-overlay"
- alt="Background"
+ alt="Background" loading="lazy" decoding="async"
  />
  <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent"></div>
  </div>

@@ -113,7 +113,7 @@ export const ProductShare: React.FC<ProductShareProps> = ({ product, isOpen, onC
           <div className="flex items-center justify-between px-5 py-4 border-b border-foreground/8">
             <div className="flex items-center gap-3">
               <div className="w-11 h-11 rounded-2xl overflow-hidden bg-foreground/[0.04] shrink-0">
-                {product.images?.[0] && <img src={product.images[0]} className="w-full h-full object-cover" alt=""/>}
+                {product.images?.[0] && <img src={product.images[0]} className="w-full h-full object-cover" alt="" loading="lazy" decoding="async"/>}
               </div>
               <div>
                 <p className="font-bold text-foreground text-sm truncate max-w-[180px]">{product.name}</p>

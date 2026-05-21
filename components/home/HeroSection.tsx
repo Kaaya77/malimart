@@ -226,7 +226,7 @@ export const HeroSection = ({
  <img
  src={p.images?.[0]}
  alt={p.name}
- className="w-full h-full object-cover"
+ className="w-full h-full object-cover" loading="lazy" decoding="async"
  />
  </button>
  ))}
@@ -253,7 +253,7 @@ export const HeroSection = ({
  <img
  src={hero.images?.[0]}
  alt={hero.name}
- className="absolute inset-0 w-full h-full object-cover transition-transform duration-[700ms] ease-out group-hover:scale-[1.03]"
+ className="absolute inset-0 w-full h-full object-cover transition-transform duration-[700ms] ease-out group-hover:scale-[1.03]" loading="lazy" decoding="async"
  />
  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
 
@@ -352,7 +352,7 @@ export const HeroSection = ({
  <img
  src={p.images?.[0]}
  alt={p.name}
- className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+ className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]" loading="lazy" decoding="async"
  />
  <div className="flex flex-col justify-center px-5">
  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-foreground/55 mb-1.5 truncate">
@@ -391,7 +391,7 @@ const MobileHeroCard: React.FC<{
  <img
  src={product.images?.[0]}
  alt={product.name}
- className="absolute inset-0 w-full h-full object-cover"
+ className="absolute inset-0 w-full h-full object-cover" loading="lazy" decoding="async"
  />
  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
 

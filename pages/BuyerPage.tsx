@@ -115,7 +115,7 @@ const BuyerOffers = () => {
  <div className="absolute -right-6 -bottom-6 w-20 h-20 bg-white/10 rounded-full blur-xl"/>
  <div className="flex items-center gap-2">
  <div className="w-9 h-9 rounded-xl bg-background/90 overflow-hidden shrink-0 shadow">
- <img src={(offer as any).vendor?.logo_url||`https://ui-avatars.com/api/?name=${(offer as any).vendor?.store_name||'M'}&background=random`} className="w-full h-full object-cover" alt=""/>
+ <img src={(offer as any).vendor?.logo_url||`https://ui-avatars.com/api/?name=${(offer as any).vendor?.store_name||'M'}&background=random`} className="w-full h-full object-cover" alt="" loading="lazy" decoding="async"/>
  </div>
  <div>
  <p className="text-[10px] text-white/80 font-semibold leading-none">{(offer as any).vendor?.store_name}</p>
@@ -239,7 +239,7 @@ export const BuyerPage = () => {
  className="flex items-center justify-between py-6 md:py-8">
  <div className="flex items-center gap-3.5">
  {user.avatar_url ? (
- <img src={user.avatar_url} alt="" className="w-12 h-12 rounded-2xl object-cover ring-2 ring-foreground/10 shadow-md"/>
+ <img src={user.avatar_url} alt="" className="w-12 h-12 rounded-2xl object-cover ring-2 ring-foreground/10 shadow-md" loading="lazy" decoding="async"/>
  ) : (
  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-foreground to-foreground/80 flex items-center justify-center shadow-md shrink-0">
  <span className="text-background font-black text-lg">{(user.name||user.email||'U')[0].toUpperCase()}</span>

@@ -188,7 +188,7 @@ const InventoryRow: React.FC<InventoryRowProps> = ({
  <div className="flex md:hidden items-center gap-3 p-4">
  <div className="relative w-14 h-18 min-w-[56px] bg-foreground/[0.03] overflow-hidden rounded-xl border border-foreground/10 cursor-pointer" onClick={() => onEdit(product)}>
  {product.images?.[0]
- ? <img src={product.images[0]} className="w-full h-full object-cover" alt="" />
+ ? <img src={product.images[0]} className="w-full h-full object-cover" alt="" loading="lazy" decoding="async" />
  : <div className="w-full h-full flex items-center justify-center"><Package className="w-4 h-4 text-foreground/30 stroke-[1]"/></div>
  }
  </div>
@@ -220,7 +220,7 @@ const InventoryRow: React.FC<InventoryRowProps> = ({
  {/* Product Info */}
  <div className="col-span-4 flex items-center gap-6">
  <div className="relative w-16 h-20 bg-foreground/[0.03] overflow-hidden shrink-0 border border-foreground/10 group/img cursor-pointer" onClick={() => onEdit(product)}>
- {product.images?.[0] ? <img src={product.images[0]} className="w-full h-full object-cover transition-transform duration-700 group-hover/img:scale-110" /> : <div className="w-full h-full flex items-center justify-center opacity-20"><Package className="w-5 h-5 stroke-[1]"/></div>}
+ {product.images?.[0] ? <img src={product.images[0]} className="w-full h-full object-cover transition-transform duration-700 group-hover/img:scale-110" loading="lazy" decoding="async" /> : <div className="w-full h-full flex items-center justify-center opacity-20"><Package className="w-5 h-5 stroke-[1]"/></div>}
  {product.is_boosted && <div className="absolute top-0 right-0 p-1.5 bg-emerald-500 text-white rounded-bl-lg"><Zap className="w-3 h-3 fill-current"/></div>}
  </div>
  <div className="min-w-0">

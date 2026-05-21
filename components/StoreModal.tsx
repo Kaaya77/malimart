@@ -46,7 +46,7 @@ export const StoreModal: React.FC<StoreModalProps> = ({ store, isOpen, onClose }
  src={store.logo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(store.store_name)}&background=random`} 
  alt={store.store_name} 
  className="w-full h-full object-cover"
- referrerPolicy="no-referrer"
+ referrerPolicy="no-referrer" loading="lazy" decoding="async"
  />
  </div>
  

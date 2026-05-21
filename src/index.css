@@ -374,3 +374,58 @@
     -webkit-backdrop-filter: blur(12px);
   }
 }
+
+/* ─── Performance CSS ─────────────────────────────────────────────────────── */
+
+/* CSS containment: tell browser each card is isolated — huge paint perf win */
+.product-card,
+.store-card,
+.order-card {
+  contain: layout style;
+}
+
+/* Promote heavy animated elements to own compositor layer */
+.shimmer,
+[data-framer-motion],
+.animate-spin {
+  will-change: transform;
+}
+
+/* content-visibility: auto skips off-screen rendering (Chrome/Edge only) */
+.shop-grid-item {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 320px; /* estimated height */
+}
+
+/* Prevent layout shift from images */
+img {
+  height: auto;
+}
+
+/* Optimize font rendering */
+body {
+  text-rendering: optimizeSpeed;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Reduce paint on scroll for fixed headers */
+header, nav[role="navigation"] {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Instant touch response - no 300ms delay */
+a, button {
+  touch-action: manipulation;
+}
+
+/* Reduce motion for accessibility + battery */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

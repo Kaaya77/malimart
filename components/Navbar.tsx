@@ -143,7 +143,7 @@ const MobileDrawer = ({ open, onClose, user, logout, isDark, toggleDark, notific
  {user ? (
  <>
  {user.avatar_url ? (
- <img src={user.avatar_url} alt="" className="w-12 h-12 rounded-2xl object-cover ring-2 ring-foreground/10"/>
+ <img src={user.avatar_url} alt="" className="w-12 h-12 rounded-2xl object-cover ring-2 ring-foreground/10" loading="lazy" decoding="async"/>
  ) : (
  <div className="w-12 h-12 rounded-2xl bg-foreground flex items-center justify-center shrink-0">
  <span className="text-background font-black text-base">{(user.name||user.email||'U')[0].toUpperCase()}</span>
@@ -364,7 +364,7 @@ export const Navbar = () => {
  className={`flex items-center gap-2 h-9 pl-1 pr-3 rounded-full transition-colors
  ${isOnDark?'hover:bg-white/15':'hover:bg-foreground/[0.06]'}`}>
  {user.avatar_url ? (
- <img src={user.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover ring-1 ring-foreground/10"/>
+ <img src={user.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover ring-1 ring-foreground/10" loading="lazy" decoding="async"/>
  ) : (
  <span className="w-7 h-7 rounded-full bg-foreground text-background flex items-center justify-center text-xs font-bold">{initial}</span>
  )}

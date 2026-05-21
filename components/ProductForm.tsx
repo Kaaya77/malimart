@@ -50,7 +50,7 @@ const PhonePreview = ({ data, variant, activeImage }: { data: Partial<Product>, 
  <img 
  src={activeImage || 'https://via.placeholder.com/300x400?text=Preview'} 
  className="w-full h-full object-cover" 
- alt="Preview" 
+ alt="Preview" loading="lazy" decoding="async" 
  />
  <div className="absolute top-8 left-4 flex flex-col gap-2 z-10">
  {discount > 0 && !variant && <span className="bg-primary text-background dark:bg-background dark:text-foreground text-[8px] px-2 py-1 uppercase tracking-[0.2em]">{discount}% OFF</span>}
@@ -838,7 +838,7 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
  <div className="aspect-[4/5]"><ImageDropzone onImageSelected={handleImageUpload} /></div>
  {(formData.images || []).map((img, i) => (
  <div key={i} className="aspect-[4/5] relative group overflow-hidden border border-foreground/10 bg-foreground/[0.05]">
- <img src={img} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="" />
+ <img src={img} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="" loading="lazy" decoding="async" />
  <div className="absolute inset-0 bg-primary/60 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center gap-3 flex-wrap p-2">
  <button onClick={() => { const newImgs = [...(formData.images || [])]; newImgs.splice(i, 1); setFormData({...formData, images: newImgs}); }} className="p-3 bg-background text-foreground hover:bg-red-500 hover:text-white transition-all"><Trash2 className="w-5 h-5"/></button>
  {i !== 0 && <button onClick={() => { const newImgs = [...(formData.images || [])]; const temp = newImgs[0]; newImgs[0] = newImgs[i]; newImgs[i] = temp; setFormData({...formData, images: newImgs}); }} className="p-3 bg-background text-foreground hover:bg-primary hover:text-background transition-all"><CheckCircle2 className="w-5 h-5"/></button>}
@@ -956,7 +956,7 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
  <tr key={i} className="group hover:bg-foreground/[0.04] transition-colors" onMouseEnter={() => setHoveredVariant(v)} onMouseLeave={() => setHoveredVariant(null)}>
  <td className="p-4 text-center">
  <div className="relative w-12 h-12 mx-auto bg-foreground/[0.05] overflow-hidden shadow-inner group-hover:ring-1 ring-foreground dark:ring-background transition-all">
- {v.image_url ? <img src={v.image_url} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center opacity-40"><ImageIcon className="w-5 h-5"/></div>}
+ {v.image_url ? <img src={v.image_url} className="w-full h-full object-cover" loading="lazy" decoding="async" /> : <div className="w-full h-full flex items-center justify-center opacity-40"><ImageIcon className="w-5 h-5"/></div>}
  <div className="absolute inset-0 bg-primary/40 opacity-0 group-hover:opacity-100 flex flex-wrap items-center justify-center gap-1 transition-opacity p-1">
  <button onClick={() => document.getElementById(`var-img-${i}`)?.click()} className="p-1 bg-background text-foreground hover:opacity-80 rounded-sm"><Upload className="w-3 h-3"/></button>
  <button onClick={() => handleRefurbishVariant(i)} className="p-1 bg-primary text-background dark:bg-background dark:text-foreground hover:opacity-80 rounded-sm" disabled={refurbishingIdx === i}>{refurbishingIdx === i ? <Loader2 className="w-3 h-3 animate-spin"/> : <Sparkles className="w-3 h-3"/>}</button>

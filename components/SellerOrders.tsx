@@ -501,7 +501,7 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: { sellerId: string, o
  <h4 className="text-[9px] uppercase tracking-[0.2em] text-foreground/40 mb-6 flex items-center gap-3"><User className="w-4 h-4"/> Customer</h4>
  <div className="flex items-center gap-6 mb-6">
  <div className="w-16 h-16 rounded-2xl bg-primary/10 dark:bg-background/10 overflow-hidden">
- <img src={selectedOrder.buyer?.avatar_url || `https://ui-avatars.com/api/?name=${selectedOrder.buyer?.full_name}`} className="w-full h-full object-cover" />
+ <img src={selectedOrder.buyer?.avatar_url || `https://ui-avatars.com/api/?name=${selectedOrder.buyer?.full_name}`} className="w-full h-full object-cover" loading="lazy" decoding="async" />
  </div>
  <div>
  <p className="font-serif text-lg text-foreground">{selectedOrder.buyer?.full_name || selectedOrder.buyer?.email || 'Guest User'}</p>
@@ -595,7 +595,7 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: { sellerId: string, o
  {selectedOrder.items.map((item: any, index: number) => (
  <div key={item.id || `item-${index}`} className="flex gap-6 p-6 bg-transparent rounded-2xl border border-foreground/10 items-center">
  <div className="w-16 h-16 bg-foreground/[0.04] rounded-2xl overflow-hidden shrink-0">
- <img src={item.product?.images?.[0]} className="w-full h-full object-cover" />
+ <img src={item.product?.images?.[0]} className="w-full h-full object-cover" loading="lazy" decoding="async" />
  </div>
  <div className="flex-1 min-w-0">
  <p className="font-serif text-lg truncate text-foreground">{item.product?.name}</p>

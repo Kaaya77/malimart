@@ -1,3 +1,4 @@
+import { useDebounce } from '../src/hooks/useDebounce';
 import React, { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Search, SlidersHorizontal, X, ArrowUpDown, Loader2 } from 'lucide-react';

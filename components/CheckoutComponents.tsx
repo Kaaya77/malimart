@@ -384,7 +384,7 @@ export const CheckoutModal = ({ total, subtotal, vat, discount, onClose, onCompl
  return (
  <div key={i} className="flex items-center gap-3 text-xs">
  <div className="relative w-10 h-10 rounded-xl bg-foreground/[0.06] overflow-hidden shrink-0">
- <img src={item.selectedVariant?.image_url||item.images?.[0]} className="w-full h-full object-cover" alt=""/>
+ <img src={item.selectedVariant?.image_url||item.images?.[0]} className="w-full h-full object-cover" alt="" loading="lazy" decoding="async"/>
  <span className="absolute -top-1 -right-1 bg-foreground text-background text-[8px] px-1 rounded-full font-bold">{item.quantity}</span>
  </div>
  <span className="flex-1 text-foreground/70 truncate">{item.name}</span>
@@ -699,7 +699,7 @@ export const CheckoutModal = ({ total, subtotal, vat, discount, onClose, onCompl
  return (
  <div key={i} className="flex gap-3 items-start">
  <div className="relative w-14 h-14 rounded-2xl bg-background border border-foreground/8 overflow-hidden shrink-0">
- <img src={item.selectedVariant?.image_url||item.images?.[0]} className="w-full h-full object-cover" alt=""/>
+ <img src={item.selectedVariant?.image_url||item.images?.[0]} className="w-full h-full object-cover" alt="" loading="lazy" decoding="async"/>
  <span className="absolute bottom-0 right-0 bg-foreground text-background text-[8px] px-1.5 py-0.5 rounded-tl-lg font-bold">{item.quantity}</span>
  </div>
  <div className="flex-1 min-w-0 pt-0.5">

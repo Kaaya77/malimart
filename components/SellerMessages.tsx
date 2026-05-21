@@ -42,7 +42,7 @@ export const ProductOrderTag = ({ product, order, onViewProduct, onViewOrder }: 
  onClick={() => onViewProduct(product as Product)}
  >
  {product.images?.[0] && (
- <img src={product.images[0]} alt={product.name} className="w-12 h-12 object-cover grayscale group-hover:grayscale-0 transition-all" />
+ <img src={product.images[0]} alt={product.name} className="w-12 h-12 object-cover grayscale group-hover:grayscale-0 transition-all" loading="lazy" decoding="async" />
  )}
  <div className="flex-1 min-w-0">
  <p className="font-serif text-sm text-foreground truncate">{product.name}</p>
@@ -348,7 +348,7 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
  >
  <div className="flex items-center gap-4">
  <div className="w-12 h-12 rounded-full bg-foreground/[0.05] dark:bg-background/5 flex items-center justify-center font-serif text-lg shrink-0 overflow-hidden border border-foreground/10">
- {u.avatar ? <img src={u.avatar} className="w-full h-full object-cover"/> : u.name.slice(0,1).toUpperCase()}
+ {u.avatar ? <img src={u.avatar} className="w-full h-full object-cover" loading="lazy" decoding="async"/> : u.name.slice(0,1).toUpperCase()}
  </div>
  <div className="flex-1 min-w-0">
  <div className="flex justify-between items-baseline mb-1">
@@ -471,7 +471,7 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
  {c.attachment_url && (
  <div className="mb-3">
  {c.attachment_type === 'image' ? (
- <img src={c.attachment_url} className="max-w-full h-auto border border-foreground/10" referrerPolicy="no-referrer" />
+ <img src={c.attachment_url} className="max-w-full h-auto border border-foreground/10" referrerPolicy="no-referrer" loading="lazy" decoding="async" />
  ) : (
  <a href={c.attachment_url} target="_blank" className="flex items-center gap-2 p-2 bg-foreground/[0.05] dark:bg-background/5 text-[10px] uppercase tracking-widest">
  <Paperclip className="w-3 h-3" /> View Attachment
@@ -552,7 +552,7 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
  {attachment && (
  <div className="mb-4 p-3 bg-foreground/[0.05] dark:bg-background/5 border border-foreground/20 flex justify-between items-center">
  <div className="flex items-center gap-3">
- {attachment.type === 'image' ? <img src={attachment.url} className="w-10 h-10 object-cover" /> : <Paperclip className="w-4 h-4" />}
+ {attachment.type === 'image' ? <img src={attachment.url} className="w-10 h-10 object-cover" loading="lazy" decoding="async" /> : <Paperclip className="w-4 h-4" />}
  <span className="text-[10px] uppercase tracking-widest">Attachment Ready</span>
  </div>
  <button onClick={() => setAttachment(null)} className="p-1 hover:bg-primary/10 dark:hover:bg-background/10">
@@ -630,7 +630,7 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
  <div className="space-y-8">
  <div className="flex flex-col items-center text-center space-y-4">
  <div className="w-20 h-20 rounded-full bg-foreground/[0.05] dark:bg-background/5 flex items-center justify-center text-2xl font-serif overflow-hidden border border-foreground/10">
- {u.avatar ? <img src={u.avatar} className="w-full h-full object-cover" /> : u.name.slice(0, 1).toUpperCase()}
+ {u.avatar ? <img src={u.avatar} className="w-full h-full object-cover" loading="lazy" decoding="async" /> : u.name.slice(0, 1).toUpperCase()}
  </div>
  <div>
  <h4 className="font-serif text-xl">{u.name}</h4>

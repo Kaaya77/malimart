@@ -17,7 +17,7 @@ const StoreCard: React.FC<{
   isFavorite: boolean;
   onFavoriteToggle: () => void;
   rank?: number;
-}> = ({ vendor, isFavorite, onFavoriteToggle, rank }) => {
+}> = React.memo(({ vendor, isFavorite, onFavoriteToggle, rank }) => {
   const navigate = useNavigate();
   return (
     <motion.div
@@ -29,7 +29,7 @@ const StoreCard: React.FC<{
       {/* Banner */}
       <div className="aspect-[16/7] relative overflow-hidden bg-foreground/[0.04]">
         {vendor.banner_url ? (
-          <img src={vendor.banner_url} alt="" className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"/>
+          <img src={vendor.banner_url} alt="" className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500" loading="lazy" decoding="async"/>
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-foreground/5 to-foreground/10"/>
         )}
@@ -58,7 +58,7 @@ const StoreCard: React.FC<{
         <div className="flex items-center gap-3 mb-3">
           <div className="w-12 h-12 rounded-2xl overflow-hidden bg-foreground/[0.06] border-2 border-background -mt-8 shrink-0 shadow-md">
             {vendor.logo_url
-              ? <img src={vendor.logo_url} alt="" className="w-full h-full object-cover"/>
+              ? <img src={vendor.logo_url} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async"/>
               : <div className="w-full h-full flex items-center justify-center font-black text-lg text-foreground/40">{(vendor.store_name||'?')[0]}</div>
             }
           </div>
@@ -95,7 +95,7 @@ const StoreCard: React.FC<{
       </div>
     </motion.div>
   );
-};
+});
 
 // ─── Main Explore/Categories page ────────────────────────────────────────────
 const CATEGORY_IMAGES: Record<string, string> = {
@@ -211,7 +211,7 @@ export const CategoriesPage = () => {
                     <img
                       src={cat.image_url || CATEGORY_IMAGES[cat.name] || `https://picsum.photos/seed/${cat.name}/400/500`}
                       alt={cat.name}
-                      className="w-full h-full object-cover group-hover:scale-[1.05] transition-transform duration-500 grayscale-[0.3] group-hover:grayscale-0"
+                      className="w-full h-full object-cover group-hover:scale-[1.05] transition-transform duration-500 grayscale-[0.3] group-hover:grayscale-0" loading="lazy" decoding="async"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"/>
                     <div className="absolute inset-x-0 bottom-0 p-4">
@@ -333,7 +333,7 @@ export const CategoriesPage = () => {
                       className="text-left group"
                     >
                       <div className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-foreground/[0.04] mb-3">
-                        {p.images?.[0] && <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-500"/>}
+                        {p.images?.[0] && <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-500" loading="lazy" decoding="async"/>}
                         <div className="absolute top-2 left-2 flex items-center gap-1 bg-foreground text-background text-[10px] font-black px-2 py-1 rounded-full">
                           <Flame className="w-2.5 h-2.5 fill-current stroke-none text-orange-400"/> #{i+1}
                         </div>

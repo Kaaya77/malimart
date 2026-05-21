@@ -234,7 +234,7 @@ export const BuyerMessages = ({ userId, initialSellerId }: { userId: string, ini
  <button key={v.seller_id} onClick={() => setSelectedSeller(v.seller_id)} className={`w-full text-left p-4 rounded-2xl transition-all group relative ${selectedSeller === v.seller_id ? 'bg-foreground text-background' : 'hover:bg-foreground/[0.02] /5 text-foreground/65'}`}>
  <div className="flex items-center gap-3">
  <div className="w-10 h-10 rounded-full bg-foreground/[0.08] overflow-hidden shrink-0">
- <img src={v.logo_url || `https://ui-avatars.com/api/?name=${v.store_name}`} className="w-full h-full object-cover" />
+ <img src={v.logo_url || `https://ui-avatars.com/api/?name=${v.store_name}`} className="w-full h-full object-cover" loading="lazy" decoding="async" />
  </div>
  <div className="flex-1 min-w-0">
  <div className="flex items-center gap-2">
@@ -266,7 +266,7 @@ export const BuyerMessages = ({ userId, initialSellerId }: { userId: string, ini
  <button onClick={() => setSelectedSeller(null)} className="md:hidden p-2 bg-foreground/[0.02] rounded-xl"><ChevronLeft className="w-4 h-4" /></button>
  <div className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => fetchUserProfile(selectedSeller || '')}>
  <div className="w-10 h-10 rounded-full bg-foreground/[0.08] overflow-hidden">
- <img src={currentVendor?.logo_url || `https://ui-avatars.com/api/?name=${currentVendor?.store_name}`} className="w-full h-full object-cover" />
+ <img src={currentVendor?.logo_url || `https://ui-avatars.com/api/?name=${currentVendor?.store_name}`} className="w-full h-full object-cover" loading="lazy" decoding="async" />
  </div>
  <div className="flex items-center gap-2">
  <p className="font-black text-sm text-foreground uppercase">{currentVendor?.store_name}</p>
@@ -294,7 +294,7 @@ export const BuyerMessages = ({ userId, initialSellerId }: { userId: string, ini
  {c.attachment_url && (
  <div className="mb-2">
  {c.attachment_type === 'image' ? (
- <img src={c.attachment_url} alt="Attachment" className="max-w-full h-auto rounded-lg border border-foreground/8 " />
+ <img src={c.attachment_url} alt="Attachment" className="max-w-full h-auto rounded-lg border border-foreground/8 " loading="lazy" decoding="async" />
  ) : (
  <a href={c.attachment_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 bg-foreground/[0.02] rounded-lg border border-foreground/8 hover:bg-foreground/[0.05] transition-colors">
  <Paperclip className="w-3 h-3" />
@@ -506,7 +506,7 @@ export const BuyerMessages = ({ userId, initialSellerId }: { userId: string, ini
  {currentVendor && (
  <div className="space-y-4">
  <div className="w-20 h-20 rounded-full bg-foreground/[0.08] overflow-hidden">
- <img src={currentVendor.logo_url || `https://ui-avatars.com/api/?name=${currentVendor.store_name}`} className="w-full h-full object-cover" />
+ <img src={currentVendor.logo_url || `https://ui-avatars.com/api/?name=${currentVendor.store_name}`} className="w-full h-full object-cover" loading="lazy" decoding="async" />
  </div>
  <p className="font-black text-sm">{currentVendor.store_name}</p>
  <p className="text-xs text-foreground/55">{currentVendor.region}</p>

@@ -97,7 +97,7 @@ const StoreCard: React.FC<{
  {/* Cover */}
  <div className="relative aspect-[16/9] bg-foreground/5 overflow-hidden">
  {cover ? (
- <img src={cover} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.05]" />
+ <img src={cover} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.05]" loading="lazy" decoding="async" />
  ) : (
  <div className="w-full h-full bg-gradient-to-br from-primary/15 via-foreground/5 to-foreground/[0.03]" />
  )}
@@ -108,7 +108,7 @@ const StoreCard: React.FC<{
  {/* Avatar overlapping cover */}
  <div className="absolute -top-7 left-4 w-12 h-12 rounded-full overflow-hidden ring-3 ring-background bg-foreground/5 flex items-center justify-center">
  {avatar ? (
- <img src={avatar} alt={shop.store_name || 'Store'} className="w-full h-full object-cover" />
+ <img src={avatar} alt={shop.store_name || 'Store'} className="w-full h-full object-cover" loading="lazy" decoding="async" />
  ) : (
  <span className="text-sm font-bold text-foreground/60">
  {(shop.store_name || 'S').slice(0, 2).toUpperCase()}

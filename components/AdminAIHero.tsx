@@ -249,7 +249,7 @@ export const AdminAIHero = () => {
  <div key={rec.id} className={`flex flex-col bg-card border rounded-2xl ${rec.status === 'approved' ? 'border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.2)]' : 'border-foreground/10'} overflow-hidden`}>
  {rec.products && (
  <div className="relative h-48 w-full overflow-hidden bg-gray-100 dark:bg-gray-800">
- <img src={rec.products.images?.[0] || "https://picsum.photos/seed/luxurycraft/1920/1080"} alt={rec.products.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+ <img src={rec.products.images?.[0] || "https://picsum.photos/seed/luxurycraft/1920/1080"} alt={rec.products.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" decoding="async" />
  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
  <div className="absolute bottom-4 left-4 right-4">
  <p className="text-white text-xs font-semibold uppercase tracking-wider opacity-80 mb-1">Featured Product</p>
@@ -425,7 +425,7 @@ export const AdminAIHero = () => {
  {filteredProducts.map(product => (
  <div key={product.id} className="bg-card border border-foreground/10 rounded-2xl overflow-hidden flex flex-col">
  <div className="h-48 overflow-hidden relative">
- <img src={product.images?.[0] || "https://picsum.photos/seed/luxurycraft/1920/1080"} alt={product.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+ <img src={product.images?.[0] || "https://picsum.photos/seed/luxurycraft/1920/1080"} alt={product.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" decoding="async" />
  <div className="absolute top-2 right-2 bg-background/90 dark:bg-black/90 px-2 py-1 text-[10px] font-bold uppercase tracking-wider backdrop-blur-sm">
  {formatTZS(product.price)}
  </div>

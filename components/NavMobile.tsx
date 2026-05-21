@@ -142,7 +142,7 @@ export const NavMobile = ({
  <img
  src={user.avatar_url || `https://api.dicebear.com/6.x/initials/svg?seed=${user.email}`}
  alt=""
- className="w-11 h-11 rounded-full object-cover ring-1 ring-foreground/10"
+ className="w-11 h-11 rounded-full object-cover ring-1 ring-foreground/10" loading="lazy" decoding="async"
  />
  <div className="flex-1 min-w-0">
  <p className="text-sm font-semibold text-foreground truncate">

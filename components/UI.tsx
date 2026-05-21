@@ -4,8 +4,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Slot } from '@radix-ui/react-slot';
 import { useAppState } from '../context/AppContext';
 import { Loader2, X, AlertTriangle, ChevronDown, Sun, Moon, ShieldCheck, Printer, Download, CheckCircle2, Package, Truck, CreditCard, Store, Sparkles, RotateCcw, Percent, MessageSquare, Share2, ShieldAlert, BadgeCheck } from 'lucide-react';
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
 import { ShareButton } from './ShareButton';
 import { Order, VendorProfile, Product } from '../types';
 import { formatTZS } from '../constants';
@@ -288,7 +286,7 @@ export const ThemeToggle = () => {
 export const ImageDropzone = ({ currentImage, onImageSelected }: any) => (
  <div className="relative w-full h-full border-2 border-dashed border-foreground/15 rounded-3xl flex flex-col items-center justify-center bg-foreground/[0.02] hover:bg-foreground/[0.05] transition-all cursor-pointer overflow-hidden group" onClick={() => document.getElementById('img-upload')?.click()}>
  {currentImage ? (
- <img src={currentImage} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Upload" />
+ <img src={currentImage} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Upload" loading="lazy" decoding="async" />
  ) : (
  <div className="text-center p-6">
  <div className="w-12 h-12 bg-foreground/[0.06] rounded-2xl flex items-center justify-center mx-auto mb-4"><X className="w-5 h-5 text-foreground/60 rotate-45 stroke-[2]" /></div>
@@ -354,171 +352,7 @@ export const ConfirmDialog = ({ isOpen, title, message, onConfirm, onCancel, isD
  );
 };
 
-export const ReceiptModal = ({ isOpen, order, seller, onClose }: { isOpen: boolean, order: Order, seller?: VendorProfile, onClose: () => void }) => {
- if (!isOpen) return null;
- 
- const subtotal = order.items?.reduce((acc: number, item: any) => acc + (item.price_at_purchase * item.quantity), 0) || 0;
- const deliveryFee = order.delivery_fee || 0;
- const discount = order.discount_amount || 0;
- const total = order.total;
 
- const handlePrint = () => {
- window.print();
- };
-
- const handleShare = async () => {
- if (navigator.share) {
- try {
- await navigator.share({
- title: `Mali Mart Receipt - ${order.id}`,
- text: `Receipt for order ${order.id} from ${seller?.store_name || 'Mali Mart'}`,
- url: window.location.href
- });
- } catch (err) {
- }
- } else {
- // Fallback: Copy link to clipboard
- navigator.clipboard.writeText(window.location.href);
- alert('Link copied to clipboard');
- }
- };
-
- return (
- <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200 print:bg-white print:p-0">
- <div className="max-w-2xl w-full bg-background rounded-3xl shadow-2xl border border-foreground/8 animate-in zoom-in-95 duration-200 max-h-[92dvh] overflow-y-auto print:shadow-none print:border-none print:m-0 print:p-0 print:max-h-none">
- 
- {/* Receipt Header - Print Friendly */}
- <div className="p-8 md:p-10 space-y-8" id="receipt-content">
- <div className="flex justify-between items-start">
- <div className="space-y-2">
- <div className="flex items-center gap-3">
- <div className="w-12 h-12 bg-emerald-500/10 flex items-center justify-center rounded-2xl">
- <CheckCircle2 className="w-6 h-6 text-emerald-600 " />
- </div>
- <div>
- <h3 className="text-2xl font-black tracking-tight text-foreground">Receipt</h3>
- <p className="font-mono text-xs font-bold text-foreground/40">#{order.id.slice(0, 8)}</p>
- </div>
- </div>
- </div>
- <div className="flex items-center gap-2 print:hidden">
- <button onClick={handleShare} className="p-2 hover:bg-foreground/[0.05] dark:hover:bg-foreground/[0.05] transition-colors rounded-full text-foreground/60" title="Share Receipt">
- <Share2 className="w-5 h-5 stroke-[2]" />
- </button>
- <button onClick={handlePrint} className="p-2 hover:bg-foreground/[0.05] dark:hover:bg-foreground/[0.05] transition-colors rounded-full text-foreground/60" title="Print Receipt">
- <Printer className="w-5 h-5 stroke-[2]" />
- </button>
- <button onClick={onClose} className="p-2 hover:bg-foreground/[0.05] dark:hover:bg-foreground/[0.05] transition-colors rounded-full text-foreground/60 ml-2"><X className="w-6 h-6 stroke-[2]" /></button>
- </div>
- </div>
-
- <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-foreground/[0.05] dark:bg-foreground/[0.05]/50 p-6 rounded-2xl">
- <div className="space-y-2">
- <p className="text-[10px] uppercase tracking-widest font-black text-foreground/60 flex items-center gap-2">
- <Store className="w-3 h-3" /> From
- </p>
- <div>
- <p className="font-bold text-base text-foreground/60 ">{seller?.store_name || 'Mali Mart Vendor'}</p>
- <p className="text-sm font-medium text-foreground/60">
- {seller?.region || 'Tanzania'}<br />
- {seller?.contact_phone || 'Verified Artisan'}
- </p>
- </div>
- </div>
-
- <div className="space-y-2">
- <p className="text-[10px] uppercase tracking-widest font-black text-foreground/60 flex items-center gap-2">
- <Package className="w-3 h-3" /> To
- </p>
- <div>
- <p className="font-bold text-base text-foreground/60 ">{order.buyer?.full_name || 'Valued Client'}</p>
- <p className="text-sm font-medium text-foreground/60">
- {order.shipping_address?.street || 'Pick-up Order'}<br />
- {order.shipping_address?.city || 'Tanzania'}<br />
- {order.buyer?.phone}
- </p>
- </div>
- </div>
- </div>
-
- <div className="space-y-6">
- <h4 className="text-sm font-black uppercase tracking-widest text-foreground/60 border-b border-foreground/8 dark:border-foreground/8 pb-2">Order Details</h4>
- 
- <div className="space-y-4">
- {order.items?.map((item: any, idx: number) => (
- <div key={idx} className="flex justify-between items-start group">
- <div className="space-y-1">
- <p className="font-bold text-sm text-foreground/60 ">{item.products?.name}</p>
- <p className="text-xs font-medium text-foreground/60">Qty: {item.quantity} × {formatTZS(item.price_at_purchase)}</p>
- </div>
- <p className="font-black text-sm text-foreground/60 ">{formatTZS(item.price_at_purchase * item.quantity)}</p>
- </div>
- ))}
- </div>
- </div>
-
- <div className="pt-6 border-t-2 border-dashed border-foreground/8 dark:border-foreground/8 space-y-3">
- <div className="flex justify-between text-sm font-medium text-foreground/60">
- <span>Subtotal</span>
- <span className="font-bold text-foreground/60 ">{formatTZS(subtotal)}</span>
- </div>
- {deliveryFee > 0 && (
- <div className="flex justify-between text-sm font-medium text-foreground/60">
- <span className="flex items-center gap-2"><Truck className="w-4 h-4" /> Delivery</span>
- <span className="font-bold text-foreground/60 ">{formatTZS(deliveryFee)}</span>
- </div>
- )}
- {discount > 0 && (
- <div className="flex justify-between text-sm font-bold text-emerald-600">
- <span>Discount Applied</span>
- <span>-{formatTZS(discount)}</span>
- </div>
- )}
- <div className="flex justify-between items-end pt-4 border-t border-foreground/8 dark:border-foreground/8">
- <div>
- <p className="text-lg font-black text-foreground/60 ">Total</p>
- <p className="text-[10px] font-bold text-foreground/60 uppercase tracking-widest">Paid via {order.payment_method || 'M-Pesa'}</p>
- </div>
- <p className="text-3xl font-black text-foreground/60 tracking-tight">{formatTZS(total)}</p>
- </div>
- </div>
-
- <div className="pt-8 text-center">
- <p className="text-xs font-bold text-foreground/60 uppercase tracking-widest">Thank you for shopping with Mali Mart</p>
- </div>
- </div>
-
- {/* Actions */}
- <div className="p-6 bg-foreground/[0.05] dark:bg-foreground/[0.05]/50 flex flex-wrap gap-3 print:hidden rounded-b-[2rem]">
- <Button variant="secondary" onClick={onClose} className="flex-1 rounded-xl font-bold">Close</Button>
- <Button variant="primary" onClick={() => window.print()} className="flex-1 gap-2 rounded-xl font-bold">
- <Printer className="w-4 h-4" /> Print
- </Button>
- <Button 
- variant="primary" 
- onClick={async () => {
- const element = document.getElementById('receipt-content');
- if (!element) return;
- const canvas = await html2canvas(element, { scale: 2 });
- const imgData = canvas.toDataURL('image/png');
- const pdf = new jsPDF('p', 'mm', 'a4');
- const imgProps = pdf.getImageProperties(imgData);
- const pdfWidth = pdf.internal.pageSize.getWidth();
- const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
- pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
- pdf.save(`receipt-${order.id}.pdf`);
- }} 
- className="flex-1 gap-2 bg-emerald-600 hover:bg-emerald-700 text-white border-none rounded-xl font-bold"
- >
- <Download className="w-4 h-4" /> Save PDF
- </Button>
- </div>
- </div>
- </div>
- );
-};
-
-// --- PremiumStatCard ---
 export const PremiumStatCard = ({ title, value, icon: Icon, color = "text-foreground", loading, trend }: { title: string, value: string | number, icon: any, color?: string, loading?: boolean, trend?: string | { value: string, positive?: boolean, isPositive?: boolean } }) => {
  const trendValue = typeof trend === 'string' ? trend : trend?.value;
  const isPositive = typeof trend === 'object' ? (trend.positive ?? trend.isPositive ?? true) : true;
@@ -619,7 +453,7 @@ export const UserProfileModal = ({ isOpen, onClose, user }: { isOpen: boolean, o
 
  <div className="flex flex-col items-center text-center space-y-6">
  <div className="w-24 h-24 bg-foreground/[0.05] dark:bg-foreground/[0.05] rounded-full flex items-center justify-center font-black text-3xl overflow-hidden shadow-sm">
- {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" /> : user.name?.slice(0, 1).toUpperCase()}
+ {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" loading="lazy" decoding="async" /> : user.name?.slice(0, 1).toUpperCase()}
  </div>
 
  <div className="space-y-2">
@@ -739,14 +573,14 @@ export const ModernFollowCard = ({ vendor, onUnfollow, onViewStore }: { vendor: 
  <div className="group relative bg-white dark:bg-foreground/[0.05] rounded-[2rem] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 border border-foreground/8 dark:border-white/5 flex flex-col h-full">
  <div className="h-32 bg-foreground/[0.05] dark:bg-foreground/[0.05] relative overflow-hidden">
  {vendor.banner_url ? (
- <img src={vendor.banner_url} alt={vendor.store_name} className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700" />
+ <img src={vendor.banner_url} alt={vendor.store_name} className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700" loading="lazy" decoding="async" />
  ) : (
  <div className="absolute inset-0 bg-gradient-to-br from-brand-500/20 to-indigo-500/20" />
  )}
  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
  <div className="absolute bottom-4 left-6 flex items-center gap-4">
  <div className="w-16 h-16 rounded-2xl bg-white p-1 shadow-lg overflow-hidden border-2 border-white">
- <img src={vendor.logo_url || `https://ui-avatars.com/api/?name=${vendor.store_name}`} className="w-full h-full object-cover rounded-xl" />
+ <img src={vendor.logo_url || `https://ui-avatars.com/api/?name=${vendor.store_name}`} className="w-full h-full object-cover rounded-xl" loading="lazy" decoding="async" />
  </div>
  <div className="text-white">
  <h3 className="font-black text-lg leading-tight flex items-center gap-2">

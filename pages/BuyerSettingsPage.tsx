@@ -337,7 +337,7 @@ export const BuyerSettingsPage = () => {
  <div className="flex items-center gap-6 mb-6">
  <div className="w-20 h-20 rounded-full bg-foreground/8 overflow-hidden border-2 border-foreground/15 flex items-center justify-center shrink-0">
  {profileData.avatar_url ? (
- <img src={profileData.avatar_url} alt="Avatar" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+ <img src={profileData.avatar_url} alt="Avatar" className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" decoding="async" />
  ) : (
  <UserIcon className="w-8 h-8 text-foreground/40" />
  )}

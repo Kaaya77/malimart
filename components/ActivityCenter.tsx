@@ -183,7 +183,7 @@ export const ActivityCenter = () => {
                       className="w-full text-left px-5 py-3.5 flex gap-3 items-center hover:bg-foreground/[0.03] transition-colors">
                       <div className="w-9 h-9 rounded-xl overflow-hidden bg-foreground/[0.06] shrink-0">
                         {m.sender_avatar ? (
-                          <img src={m.sender_avatar} className="w-full h-full object-cover" alt=""/>
+                          <img src={m.sender_avatar} className="w-full h-full object-cover" alt="" loading="lazy" decoding="async"/>
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-sm font-bold text-foreground/40">
                             {(m.sender_name || '?')[0].toUpperCase()}

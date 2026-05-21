@@ -63,7 +63,7 @@ export const StorePage = () => {
  <div className="h-[45vh] md:h-[55vh] relative overflow-hidden bg-foreground/[0.03]">
  <img 
  src={vendor.banner_url || 'https://images.unsplash.com/photo-1542831371-29b0f74f9713?q=80&w=2070&auto=format&fit=crop'} 
- className="w-full h-full object-cover opacity-80 transition-transform duration-[20s] ease-linear hover:scale-105" 
+ className="w-full h-full object-cover opacity-80 transition-transform duration-[20s] ease-linear hover:scale-105" loading="lazy" decoding="async" 
  />
  <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent" />
  </div>
@@ -79,7 +79,7 @@ export const StorePage = () => {
  >
  <div className="flex flex-col lg:flex-row gap-12 items-start">
  <div className="w-32 h-32 md:w-48 md:h-48 bg-foreground/[0.04] overflow-hidden shrink-0 relative border border-foreground/10">
- <img src={vendor.logo_url || `https://ui-avatars.com/api/?name=${vendor.store_name}&background=1a1a1a&color=f5f2ed&size=400`} className="w-full h-full object-cover" />
+ <img src={vendor.logo_url || `https://ui-avatars.com/api/?name=${vendor.store_name}&background=1a1a1a&color=f5f2ed&size=400`} className="w-full h-full object-cover" loading="lazy" decoding="async" />
  {vendor.is_verified && <div className="absolute bottom-2 right-2 bg-primary text-background dark:bg-background dark:text-foreground p-1.5 rounded-full"><ShieldCheck className="w-4 h-4 stroke-[1]" /></div>}
  </div>
  

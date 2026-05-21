@@ -435,7 +435,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
  : 'ring-1 ring-foreground/10 opacity-45 hover:opacity-75'}`}
  aria-label={`View image ${idx + 1}`}
  >
- <img src={src} alt="" className="w-full h-full object-cover" />
+ <img src={src} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
  </button>
  ))}
  </div>

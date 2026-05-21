@@ -195,7 +195,7 @@ export const BuyerReturns: React.FC<BuyerReturnsProps> = ({ userId, onContactSel
  <div className="flex gap-2">
  {selected.evidence_images.map((img:string, i:number) => (
  <a key={i} href={img} target="_blank" rel="noopener noreferrer" className="w-20 h-20 rounded-xl overflow-hidden bg-foreground/[0.04] shrink-0 hover:opacity-80 transition-opacity">
- <img src={img} className="w-full h-full object-cover" alt="Evidence"/>
+ <img src={img} className="w-full h-full object-cover" alt="Evidence" loading="lazy" decoding="async"/>
  </a>
  ))}
  </div>
@@ -318,7 +318,7 @@ export const BuyerReturns: React.FC<BuyerReturnsProps> = ({ userId, onContactSel
  <div className="flex gap-3 flex-wrap">
  {form.images.map((img, i) => (
  <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden">
- <img src={img} className="w-full h-full object-cover"/>
+ <img src={img} className="w-full h-full object-cover" loading="lazy" decoding="async"/>
  <button onClick={() => setForm(p=>({...p,images:p.images.filter((_,idx)=>idx!==i)}))}
  className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 flex items-center justify-center">
  <X className="w-3 h-3 text-white stroke-[3]"/>

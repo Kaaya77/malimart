@@ -448,7 +448,7 @@ export const AIChatAssistant = () => {
  <div key={i} className="mb-4 ml-2 animate-in fade-in slide-in-from-bottom-2 w-[85%]">
  <div className="bg-background p-3 rounded-2xl border border-foreground/8 shadow-sm flex gap-3 items-center">
  <div className="w-16 h-16 rounded-xl overflow-hidden bg-foreground/8 shrink-0 relative">
- <img src={product.images?.[0]} className="w-full h-full object-cover" alt={product.name} />
+ <img src={product.images?.[0]} className="w-full h-full object-cover" alt={product.name} loading="lazy" decoding="async" />
  </div>
  <div className="flex-1 min-w-0">
  <h4 className="font-bold text-[10px] text-foreground truncate mb-0.5">{product.name}</h4>
@@ -463,7 +463,7 @@ export const AIChatAssistant = () => {
  <div key={i} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'} mb-3 animate-in fade-in slide-in-from-bottom-2`}>
  {m.image && (
  <div className="mb-1.5 max-w-[150px] rounded-2xl overflow-hidden border border-foreground/8 shadow-sm">
- <img src={m.image} alt="User upload" className="w-full h-full object-cover" />
+ <img src={m.image} alt="User upload" className="w-full h-full object-cover" loading="lazy" decoding="async" />
  </div>
  )}
  <div className={`px-3.5 py-2.5 rounded-2xl text-[11px] font-medium shadow-sm max-w-[85%] leading-relaxed ${m.role === 'user' ? 'bg-foreground text-background rounded-tr-none' : 'bg-card border border-foreground/10 rounded-tl-none'}`}>

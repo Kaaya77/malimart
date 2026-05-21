@@ -169,7 +169,7 @@ export const SellerReturns = ({ userId, onContactBuyer }: { userId: string, onCo
  <div className="relative z-10 flex items-center gap-4 mb-8">
  <div className="w-12 h-12 rounded-full border border-foreground/10 overflow-hidden bg-foreground/[0.05] ">
  {dispute.buyer?.avatar_url ? (
- <img src={dispute.buyer.avatar_url} alt="" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" referrerPolicy="no-referrer" />
+ <img src={dispute.buyer.avatar_url} alt="" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" referrerPolicy="no-referrer" loading="lazy" decoding="async" />
  ) : (
  <div className="w-full h-full flex items-center justify-center text-sm font-serif text-foreground/40 ">{dispute.buyer?.full_name?.charAt(0)}</div>
  )}

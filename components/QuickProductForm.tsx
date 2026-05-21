@@ -89,7 +89,7 @@ export const QuickProductForm = ({ onClose, onSuccess }: QuickProductFormProps) 
  <div className="space-y-4">
  <div className="aspect-[4/5] mb-4">
  {formData.images?.[0] ? (
- <img src={formData.images[0]} className="w-full h-full object-cover" alt="Product" />
+ <img src={formData.images[0]} className="w-full h-full object-cover" alt="Product" loading="lazy" decoding="async" />
  ) : (
  <ImageDropzone onImageSelected={handleImageUpload} />
  )}

@@ -418,7 +418,7 @@ export const CartPage = () => {
  <img 
  src={image} 
  alt={item.name} 
- className="w-full h-full object-cover group-hover/img:scale-110 transition-transform duration-700" 
+ className="w-full h-full object-cover group-hover/img:scale-110 transition-transform duration-700" loading="lazy" decoding="async" 
  />
  {isStockLow && (
  <div className="absolute bottom-0 left-0 right-0 bg-red-500 text-white text-[7px] font-black uppercase text-center py-1">

@@ -162,7 +162,7 @@ export const BuyerOrders = ({
  {selectedOrder.items?.map((item: any) => (
  <div key={item.id} className="flex gap-4 p-4 bg-card rounded-2xl border border-foreground/8 items-center">
  <div className="w-12 h-12 bg-foreground/[0.05] rounded-xl overflow-hidden shrink-0">
- <img src={item.product?.images?.[0] || item.products?.images?.[0]} className="w-full h-full object-cover" />
+ <img src={item.product?.images?.[0] || item.products?.images?.[0]} className="w-full h-full object-cover" loading="lazy" decoding="async" />
  </div>
  <div className="flex-1 min-w-0">
  <p className="font-bold text-sm truncate">{item.product?.name || item.products?.name}</p>

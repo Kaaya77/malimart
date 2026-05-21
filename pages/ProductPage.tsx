@@ -232,7 +232,7 @@ export const ProductPage = () => {
  onClick={() => setActiveImage(i)}
  className={`w-20 h-24 flex-shrink-0 rounded-xl overflow-hidden border-2 transition-all ${i === activeImage ? 'border-foreground opacity-100' : 'border-transparent opacity-40 hover:opacity-70'}`}
  >
- <img src={img} className="w-full h-full object-cover" alt="" />
+ <img src={img} className="w-full h-full object-cover" alt="" loading="lazy" decoding="async" />
  </button>
  ))}
  </div>
@@ -480,7 +480,7 @@ export const ProductPage = () => {
  </div>
  </div>
  <div className="aspect-square bg-foreground/[0.03] rounded-xl overflow-hidden">
- {vendor.logo_url ? <img src={vendor.logo_url} alt={vendor.store_name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-4xl font-serif opacity-20">{vendor.store_name[0]}</div>}
+ {vendor.logo_url ? <img src={vendor.logo_url} alt={vendor.store_name} className="w-full h-full object-cover" loading="lazy" decoding="async" /> : <div className="w-full h-full flex items-center justify-center text-4xl font-serif opacity-20">{vendor.store_name[0]}</div>}
  </div>
  </div>
  </motion.div>

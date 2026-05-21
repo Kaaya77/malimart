@@ -155,7 +155,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ isOpen, order, selle
                   const img = item.products?.images?.[0] || item.image_url;
                   return (
                     <div key={i} className="flex items-center gap-3">
-                      {img && <img src={img} alt="" className="w-10 h-10 rounded-lg object-cover bg-gray-100 shrink-0"/>}
+                      {img && <img src={img} alt="" className="w-10 h-10 rounded-lg object-cover bg-gray-100 shrink-0" loading="lazy" decoding="async"/>}
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-sm text-gray-800 truncate">{item.products?.name || item.name}</p>
                         <p className="text-xs text-gray-400">Qty {item.quantity} × {formatTZS(item.price_at_purchase)}</p>
