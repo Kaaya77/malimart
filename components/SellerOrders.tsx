@@ -1,3 +1,4 @@
+import { rateLimit } from '../src/security';
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { Search, Loader2, Printer, ChevronLeft, Receipt, User, Truck, ShoppingBag, AlertCircle, Download, Calendar, ArrowUpDown, CheckSquare, Clock } from 'lucide-react';

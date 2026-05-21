@@ -1,3 +1,4 @@
+import { safeJsonParse } from '../src/security';
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { generateHeroRecommendation } from '../services/heroRecommendationService';
@@ -105,7 +106,7 @@ export const AdminAIHero = () => {
  setEditDesc(rec.description);
  
  try {
- const offer = JSON.parse(rec.offer_text);
+ const offer = (safeJsonParse(rec.offer_text, {}) as any);
  setEditOfferType(offer.type || 'percentage');
  setEditOfferValue(offer.value || 0);
  setEditOfferText(offer.text || '');
@@ -297,7 +298,7 @@ export const AdminAIHero = () => {
  <div className="flex justify-between items-start mb-4">
  {(() => {
  try {
- const offer = JSON.parse(rec.offer_text);
+ const offer = (safeJsonParse(rec.offer_text, {}) as any);
  return (
  <span className="inline-flex items-center gap-1 px-2 py-1 bg-foreground/[0.05] dark:bg-background/5 text-[10px] font-semibold uppercase tracking-widest">
  <Sparkles className="w-3 h-3" /> {offer.text}

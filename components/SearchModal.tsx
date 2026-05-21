@@ -1,3 +1,4 @@
+import { safeJsonParse } from '../src/security';
 import React, { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, X, Loader2, ArrowRight, TrendingUp, Tag, Clock } from 'lucide-react';
@@ -75,7 +76,7 @@ export const SearchModal = ({
  if (!isSearchOpen) return;
  try {
  const raw = localStorage.getItem(RECENT_KEY);
- setRecent(raw ? JSON.parse(raw) : []);
+ setRecent(raw ? safeJsonParse(raw, null) : []);
  } catch { setRecent([]); }
  }, [isSearchOpen]);
 

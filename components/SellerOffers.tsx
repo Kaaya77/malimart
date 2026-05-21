@@ -1,3 +1,4 @@
+import { rateLimit, isValidPrice } from '../src/security';
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
  Zap, Truck, Repeat, Percent, Tag, Copy, 

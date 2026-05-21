@@ -1,3 +1,4 @@
+import { sanitizeText, rateLimit } from '../src/security';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { MessageSquare, ChevronLeft, Trash2, Search, Send, User, Sparkles, Wand2, Loader2, Filter, Pin, X, Smile, MoreVertical, Reply, Paperclip, ShieldAlert, Ban, AlertTriangle, Package } from 'lucide-react';
 import { useAppState } from '../context/AppContext';
@@ -154,6 +155,7 @@ export const AdminMessages = ({ initialSelectedUser }: { initialSelectedUser?: {
  }, [activeChats, user?.id]);
 
  const handleSend = async (e?: React.FormEvent, textOverride?: string) => {
+    if (!rateLimit("send_message", 15)) { addToast("Slow down", "error"); return; }
  if (e) e.preventDefault();
  const text = textOverride || newMsg;
  if (!selectedChatUser || (!text.trim() && !attachment) || !user) return;

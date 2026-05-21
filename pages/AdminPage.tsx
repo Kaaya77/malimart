@@ -1,3 +1,4 @@
+import { assertRole, rateLimit } from '../src/security';
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';

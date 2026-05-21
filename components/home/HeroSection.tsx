@@ -1,3 +1,4 @@
+import { safeJsonParse } from '../../src/security';
 import React, { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, ShoppingBag, ChevronLeft, ChevronRight, Sparkles, Star } from 'lucide-react';
@@ -107,7 +108,7 @@ export const HeroSection = ({
  const heroMeta = (active as any)?._hero;
  if (heroMeta?.offer_text) {
  try {
- const offer = JSON.parse(heroMeta.offer_text);
+ const offer = (safeJsonParse(heroMeta.offer_text, {}) as any);
  return offer?.text || null;
  } catch {
  return heroMeta.offer_text || null;
@@ -116,7 +117,7 @@ export const HeroSection = ({
  // Legacy path
  if (heroRecommendation?.offer_text) {
  try {
- const offer = JSON.parse(heroRecommendation.offer_text);
+ const offer = (safeJsonParse(heroRecommendation.offer_text, {}) as any);
  return offer?.text || null;
  } catch {
  return heroRecommendation.offer_text || null;

@@ -1,3 +1,4 @@
+import { rateLimit } from '../src/security';
 import React, { useState, useEffect } from 'react';
 import { X, Save, AlertCircle } from 'lucide-react';
 import { Product } from '../types';

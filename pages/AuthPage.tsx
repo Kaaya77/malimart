@@ -1,3 +1,4 @@
+import { recordAuthAttempt, clearAuthAttempts, safeRedirect, isValidEmail, rateLimit } from '../src/security';
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
@@ -31,10 +32,11 @@ export const LoginPage = () => {
  const [showPassword, setShowPassword] = useState(false);
  const [activeQuote, setActiveQuote] = useState(0);
 
- const redirectPath = searchParams.get('redirect') || '/';
+ const redirectPath = safeRedirect(searchParams.get('redirect'), '/');
 
  useEffect(() => {
- if (user && !user.is_banned) navigate(redirectPath);
+ if (user && !user.is_banned) clearAuthAttempts(formData.email);
+        navigate(redirectPath);
  }, [user, navigate, redirectPath]);
 
  useEffect(() => {

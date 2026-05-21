@@ -1,3 +1,4 @@
+import { assertRole, rateLimit, validateUpload } from '../src/security';
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { 

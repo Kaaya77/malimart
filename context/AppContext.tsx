@@ -707,12 +707,20 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     const placeOrder = useCallback(async (details: any) => {
         if (!user) throw new Error("User not logged in");
         
-        const itemsPayload = cart.map(item => ({
-            product_id: item.id,
-            variant_id: item.variant_id || null,
-            quantity: item.quantity,
-            price_at_purchase: item.price_at_purchase || item.price
-        }));
+        // SECURITY: Never trust client-side prices.
+        // Only send product_id, variant_id, and quantity.
+        // The place_order_atomic RPC re-fetches the current price from
+        // the products/product_variants table server-side.
+        if (!user) throw new Error('Not authenticated');
+        const itemsPayload = cart.map(item => {
+            const qty = Math.max(1, Math.min(9999, Math.floor(Number(item.quantity) || 1)));
+            return {
+                product_id: item.id,
+                variant_id: item.variant_id || null,
+                quantity: qty,
+                // Intentionally omitting price_at_purchase — set by RPC
+            };
+        });
 
         const { data, error } = await supabase.rpc('place_order_atomic', {
             p_user_id: user.id,
@@ -1066,16 +1074,30 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     }, [user, logActivity, fetchUserData]);
 
     const updateUserProfile = useCallback(async (data: Partial<User>) => { 
-        const { error } = await supabase.from('profiles').update(data).eq('id', user?.id); 
+        if (!user) return;
+        // SECURITY: Strip fields that must NEVER be set client-side
+        // Role escalation, ban bypass, and credit manipulation prevented here.
+        // Supabase RLS is the authoritative gate — this is defense-in-depth.
+        const {
+            role, is_banned, is_admin, wallet_balance, points,
+            deleted_at, id, created_at, email,
+            ...safe
+        } = data as any;
+        
+        // Additional sanitization of text fields
+        if (safe.name)     safe.name     = safe.name.slice(0, 100).replace(/<[^>]*>/g, '').trim();
+        if (safe.bio)      safe.bio      = safe.bio.slice(0, 500).replace(/<[^>]*>/g, '').trim();
+        if (safe.phone)    safe.phone    = safe.phone.slice(0, 20).replace(/[^0-9+\s-]/g, '').trim();
+        if (safe.location) safe.location = safe.location.slice(0, 100).replace(/<[^>]*>/g, '').trim();
+        
+        const { error } = await supabase.from('profiles').update(safe).eq('id', user.id); 
         if (error) {
             addToast(error.message, 'error');
             throw error;
         }
-        if (user) {
-            await logActivity('update_profile', 'User profile updated');
-            setUser({ ...user, ...data });
-            fetchUserData(user.id);
-        }
+        await logActivity('update_profile', 'User profile updated');
+        setUser({ ...user, ...safe });
+        fetchUserData(user.id);
     }, [user, logActivity, fetchUserData, addToast]);
 
     const deleteAccount = useCallback(async () => { if(user) await supabase.rpc('delete_user'); logout(); }, [user, logout]);
@@ -1135,11 +1157,17 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
 
     const updateVendorProfile = useCallback(async (data: Partial<VendorProfile>) => {
         if (!user) return;
+        // SECURITY: Strip server-managed fields
+        const { seller_id, is_verified, trust_score, total_sales, verification_level, ...safe } = data as any;
+        // Sanitize text inputs
+        if (safe.store_name)  safe.store_name  = (safe.store_name  as string).slice(0, 100).replace(/<[^>]*>/g, '').trim();
+        if (safe.description) safe.description = (safe.description as string).slice(0, 1000).replace(/<[^>]*>/g, '').trim();
+        if (safe.address)     safe.address     = (safe.address     as string).slice(0, 200).replace(/<[^>]*>/g, '').trim();
         let result;
         if (vendorProfile) {
-            result = await supabase.from('vendor_profiles').update(data).eq('seller_id', user.id).select().single();
+            result = await supabase.from('vendor_profiles').update(safe).eq('seller_id', user.id).select().single();
         } else {
-            const payload = { seller_id: user.id, store_name: `${user.name}'s Store`, ...data };
+            const payload = { seller_id: user.id, store_name: `${user.name || 'My'}'s Store`, ...safe };
             result = await supabase.from('vendor_profiles').insert(payload).select().single();
         }
         

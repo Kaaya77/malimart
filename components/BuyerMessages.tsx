@@ -1,3 +1,5 @@
+import { sanitizeText, rateLimit } from '../src/security';
+import { validateUpload } from '../src/security';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { MessageSquare, ChevronLeft, BadgeCheck, Send, Search, Pin, Trash2, Sparkles, Wand2, Loader2, X, Smile, Reply, Paperclip, ShieldAlert, MoreVertical } from 'lucide-react';
@@ -112,6 +114,7 @@ export const BuyerMessages = ({ userId, initialSellerId }: { userId: string, ini
  }, [chats, selectedSeller]);
 
  const handleSend = async (e?: React.FormEvent, textOverride?: string) => {
+    if (!rateLimit("send_message", 15)) { addToast("Slow down", "error"); return; }
  if (e) e.preventDefault();
  const text = textOverride || msgText;
  if (!selectedSeller || (!text.trim() && !attachment)) return;

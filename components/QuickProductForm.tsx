@@ -1,3 +1,4 @@
+import { validateUpload } from '../src/security';
 import React, { useState } from 'react';
 import { X, Sparkles, Loader2, Store } from 'lucide-react';
 import { useAppState } from '../context/AppContext';

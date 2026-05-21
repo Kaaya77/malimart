@@ -1,3 +1,4 @@
+import { validateUpload } from '../src/security';
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
