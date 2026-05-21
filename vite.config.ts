@@ -10,9 +10,9 @@ export default defineConfig(({ mode }) => {
   const pick = (k: string) =>
     env[k] || env['VITE_' + k] || process.env[k] || process.env['VITE_' + k] || '';
 
-  const GEMINI_API_KEY   = pick('AIzaSyCeVnbXNAuL8UiwIGWfYU4P-KUoWieKm64');
-  const SUPABASE_URL     = pick('https://ubpapxdmqlepynonhaeo.supabase.co');
-  const SUPABASE_ANON_KEY = pick('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVicGFweGRtcWxlcHlub25oYWVvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NTQ4NTY1NCwiZXhwIjoyMDgxMDYxNjU0fQ.2UczI3XynBDsSaI_9UycWCKOu6GpWq9kX6w2JmNLsGc');
+  const GEMINI_API_KEY   = pick('GEMINI_API_KEY')   || 'AIzaSyCeVnbXNAuL8UiwIGWfYU4P-KUoWieKm64';
+  const SUPABASE_URL     = pick('SUPABASE_URL')     || 'https://ubpapxdmqlepynonhaeo.supabase.co';
+  const SUPABASE_ANON_KEY = pick('SUPABASE_ANON_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVicGFweGRtcWxlcHlub25oYWVvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NTQ4NTY1NCwiZXhwIjoyMDgxMDYxNjU0fQ.2UczI3XynBDsSaI_9UycWCKOu6GpWq9kX6w2JmNLsGc';
 
   return {
     server: { port: 3000, host: '0.0.0.0' },
