@@ -4,13 +4,17 @@ import App from './App';
 import './src/index.css';
 import { registerSW } from 'virtual:pwa-register';
 
-// Register service worker
+// Register service worker with auto-reload on new deployment
+// skipWaiting + clientsClaim in vite.config means the new SW installs immediately.
+// onNeedRefresh fires when a new version is detected — we reload to activate it.
 const updateSW = registerSW({
   onNeedRefresh() {
-    // Optional: show a prompt to user to reload
+    updateSW(true); // true = force reload, clears stale cache and loads new bundle
   },
-  onOfflineReady() {
-    // Optional: show a prompt to user that app is ready offline
+  onOfflineReady() {},
+  onRegisteredSW(swScriptUrl, registration) {
+    // Poll for updates every 60 seconds while the tab is open
+    registration && setInterval(() => registration.update(), 60_000);
   },
 });
 

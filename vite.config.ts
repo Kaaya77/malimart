@@ -33,12 +33,35 @@ export default defineConfig(({ mode }) => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
-        // Force new SW to take over old tabs the moment it installs.
-        // Without these, users see stale bundles for one refresh cycle after every deploy.
         workbox: {
           skipWaiting: true,
           clientsClaim: true,
           cleanupOutdatedCaches: true,
+          // JS and CSS: NetworkFirst — always try network, fall back to cache
+          // This means new deployments show immediately without hard refresh
+          runtimeCaching: [
+            {
+              urlPattern: /\.(?:js|css)$/i,
+              handler: 'NetworkFirst',
+              options: {
+                cacheName: 'assets-cache',
+                expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 },
+                networkTimeoutSeconds: 10,
+              },
+            },
+            {
+              urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|ico)$/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'image-cache',
+                expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              },
+            },
+            {
+              urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
+              handler: 'NetworkOnly', // Never cache Supabase API calls
+            },
+          ],
         },
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
         manifest: {
