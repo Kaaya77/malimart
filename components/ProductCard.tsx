@@ -10,156 +10,156 @@ import { ProductCardActions } from './product-card/ProductCardActions';
 import { useProductPricing } from '../hooks/useProductPricing';
 
 interface ProductCardProps {
-    product: Product;
-    onClick?: () => void;
-    onQuickView?: (product: Product) => void;
-    onCompare?: (product: Product) => void;
-    isComparing?: boolean;
-    className?: string;
-    layout?: 'grid' | 'list';
-    index?: number;
+ product: Product;
+ onClick?: () => void;
+ onQuickView?: (product: Product) => void;
+ onCompare?: (product: Product) => void;
+ isComparing?: boolean;
+ className?: string;
+ layout?: 'grid' | 'list';
+ index?: number;
 }
 
 /**
  * Product card — used in grids on HomePage, ShopPage, StorePage, Wishlist.
  *
  * FIX: Image cycling interval now has a touch-device guard. On phones/tablets
- *      the interval fired even though hover is a no-op on touch, causing
- *      unnecessary re-renders and scroll jitter during fast flings.
- *      The guard checks `ontouchstart in window` (primary) and
- *      `navigator.maxTouchPoints > 0` (covers pointer-capable touch devices).
+ * the interval fired even though hover is a no-op on touch, causing
+ * unnecessary re-renders and scroll jitter during fast flings.
+ * The guard checks `ontouchstart in window` (primary) and
+ * `navigator.maxTouchPoints > 0` (covers pointer-capable touch devices).
  */
 export const ProductCard: React.FC<ProductCardProps> = ({
-    product,
-    onClick,
-    onQuickView,
-    onCompare,
-    isComparing = false,
-    className = '',
-    layout = 'grid',
-    index = 0,
+ product,
+ onClick,
+ onQuickView,
+ onCompare,
+ isComparing = false,
+ className = '',
+ layout = 'grid',
+ index = 0,
 }) => {
-    const { addToCart } = useAppState();
-    const navigate = useNavigate();
-    const { addToast } = useToast();
+ const { addToCart } = useAppState();
+ const navigate = useNavigate();
+ const { addToast } = useToast();
 
-    const { isInWishlist } = useAppState();
-    const isLiked = isInWishlist(product.id);
+ const { isInWishlist } = useAppState();
+ const isLiked = isInWishlist(product.id);
 
-    const [isHovered, setIsHovered] = useState(false);
-    const [currentImgIdx, setCurrentImgIdx] = useState(0);
-    const [isAdding, setIsAdding] = useState(false);
-    const [activeVariantImage] = useState<string | null>(null);
-    const [activeVariantId] = useState<string | null>(null);
+ const [isHovered, setIsHovered] = useState(false);
+ const [currentImgIdx, setCurrentImgIdx] = useState(0);
+ const [isAdding, setIsAdding] = useState(false);
+ const [activeVariantImage] = useState<string | null>(null);
+ const [activeVariantId] = useState<string | null>(null);
 
-    const activeVariant = useMemo(() => {
-        if (!activeVariantId) return null;
-        return product.variants?.find(v => v.id === activeVariantId) || null;
-    }, [activeVariantId, product.variants]);
+ const activeVariant = useMemo(() => {
+ if (!activeVariantId) return null;
+ return product.variants?.find(v => v.id === activeVariantId) || null;
+ }, [activeVariantId, product.variants]);
 
-    const stats = useProductPricing(product, activeVariant);
+ const stats = useProductPricing(product, activeVariant);
 
-    const isNew = useMemo(() => {
-        if (!product.created_at) return false;
-        const created = new Date(product.created_at).getTime();
-        const days = (Date.now() - created) / (1000 * 60 * 60 * 24);
-        return days <= 7;
-    }, [product.created_at]);
+ const isNew = useMemo(() => {
+ if (!product.created_at) return false;
+ const created = new Date(product.created_at).getTime();
+ const days = (Date.now() - created) / (1000 * 60 * 60 * 24);
+ return days <= 7;
+ }, [product.created_at]);
 
-    const images = useMemo(() => {
-        const list = product.images?.length ? product.images : ['https://via.placeholder.com/600x800?text=No+Image'];
-        return Array.from(new Set(list));
-    }, [product]);
+ const images = useMemo(() => {
+ const list = product.images?.length ? product.images : ['https://via.placeholder.com/600x800?text=No+Image'];
+ return Array.from(new Set(list));
+ }, [product]);
 
-    // FIX: Guard against touch devices — hover cycling causes scroll jitter on mobile.
-    // `ontouchstart in window` covers iOS/Android; maxTouchPoints covers hybrid devices.
-    useEffect(() => {
-        let timer: any;
-        const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-        if (isHovered && images.length > 1 && !activeVariantImage && !isTouch) {
-            timer = setInterval(() => {
-                setCurrentImgIdx(prev => (prev + 1) % images.length);
-            }, 1500);
-        }
-        return () => clearInterval(timer);
-    }, [isHovered, images.length, activeVariantImage]);
+ // FIX: Guard against touch devices — hover cycling causes scroll jitter on mobile.
+ // `ontouchstart in window` covers iOS/Android; maxTouchPoints covers hybrid devices.
+ useEffect(() => {
+ let timer: any;
+ const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+ if (isHovered && images.length > 1 && !activeVariantImage && !isTouch) {
+ timer = setInterval(() => {
+ setCurrentImgIdx(prev => (prev + 1) % images.length);
+ }, 1500);
+ }
+ return () => clearInterval(timer);
+ }, [isHovered, images.length, activeVariantImage]);
 
-    const handleAdd = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        if (stats.isOut) return;
+ const handleAdd = (e: React.MouseEvent) => {
+ e.stopPropagation();
+ if (stats.isOut) return;
 
-        // Variants present → route to product detail so user picks one
-        if (stats.hasVariants) {
-            if (onClick) onClick();
-            else navigate(`/product/${product.id}`);
-            return;
-        }
+ // Variants present → route to product detail so user picks one
+ if (stats.hasVariants) {
+ if (onClick) onClick();
+ else navigate(`/product/${product.id}`);
+ return;
+ }
 
-        setIsAdding(true);
-        addToCart(product);
-        addToast(`${product.name} added to bag`, 'success');
-        window.setTimeout(() => setIsAdding(false), 900);
-    };
+ setIsAdding(true);
+ addToCart(product);
+ addToast(`${product.name} added to bag`, 'success');
+ window.setTimeout(() => setIsAdding(false), 900);
+ };
 
-    const handleCardClick = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        if (onClick) onClick();
-        else navigate(`/product/${product.id}`);
-    };
+ const handleCardClick = (e: React.MouseEvent) => {
+ e.stopPropagation();
+ if (onClick) onClick();
+ else navigate(`/product/${product.id}`);
+ };
 
-    const rootCls = `group relative flex select-none cursor-pointer
-        ${layout === 'grid' ? 'flex-col' : 'flex-row gap-4 items-start py-3 border-b border-foreground/5 last:border-b-0'}
-        ${className}`;
+ const rootCls = `group relative flex select-none cursor-pointer
+ ${layout === 'grid' ? 'flex-col' : 'flex-row gap-4 items-start py-3 border-b border-foreground/5 last:border-b-0'}
+ ${className}`;
 
-    return (
-        <motion.article
-            initial={{ opacity: 0, y: 12 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-40px' }}
-            transition={{ duration: 0.35, delay: Math.min(index * 0.035, 0.4) }}
-            className={rootCls}
-            onClick={handleCardClick}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => {
-                setIsHovered(false);
-                setCurrentImgIdx(0);
-            }}
-        >
-            {/* Image area — relative parent for absolutely-positioned actions */}
-            <div className="relative w-full">
-                <ProductCardImage
-                    product={product}
-                    images={images}
-                    isNew={isNew}
-                    stats={stats}
-                    layout={layout}
-                    isHovered={isHovered}
-                    currentImgIdx={currentImgIdx}
-                    activeVariantImage={activeVariantImage}
-                />
-                <ProductCardActions
-                    product={product}
-                    stats={stats}
-                    isLiked={isLiked}
-                    isComparing={isComparing}
-                    onCompare={onCompare}
-                    onQuickView={onQuickView}
-                    onAdd={handleAdd}
-                    isAdding={isAdding}
-                    layout={layout}
-                    isHovered={isHovered}
-                />
-            </div>
+ return (
+ <motion.article
+ initial={{ opacity: 0, y: 12 }}
+ whileInView={{ opacity: 1, y: 0 }}
+ viewport={{ once: true, margin: '-40px' }}
+ transition={{ duration: 0.35, delay: Math.min(index * 0.035, 0.4) }}
+ className={rootCls}
+ onClick={handleCardClick}
+ onMouseEnter={() => setIsHovered(true)}
+ onMouseLeave={() => {
+ setIsHovered(false);
+ setCurrentImgIdx(0);
+ }}
+ >
+ {/* Image area — relative parent for absolutely-positioned actions */}
+ <div className="relative w-full">
+ <ProductCardImage
+ product={product}
+ images={images}
+ isNew={isNew}
+ stats={stats}
+ layout={layout}
+ isHovered={isHovered}
+ currentImgIdx={currentImgIdx}
+ activeVariantImage={activeVariantImage}
+ />
+ <ProductCardActions
+ product={product}
+ stats={stats}
+ isLiked={isLiked}
+ isComparing={isComparing}
+ onCompare={onCompare}
+ onQuickView={onQuickView}
+ onAdd={handleAdd}
+ isAdding={isAdding}
+ layout={layout}
+ isHovered={isHovered}
+ />
+ </div>
 
-            <ProductCardContent
-                product={product}
-                stats={stats}
-                layout={layout}
-                onStoreClick={(e) => {
-                    e.stopPropagation();
-                    navigate(`/store/${product.seller_id}`);
-                }}
-            />
-        </motion.article>
-    );
+ <ProductCardContent
+ product={product}
+ stats={stats}
+ layout={layout}
+ onStoreClick={(e) => {
+ e.stopPropagation();
+ navigate(`/store/${product.seller_id}`);
+ }}
+ />
+ </motion.article>
+ );
 };

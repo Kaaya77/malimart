@@ -1,3 +1,5 @@
+import { useWebVitals } from './src/hooks/usePerformance';
+import { detectAnomaly, getCsrfToken } from './src/security';
 import React, { ReactNode, useEffect, useState, PropsWithChildren, Suspense, lazy } from 'react';
 import { MemoryRouter as Router, Routes, Route, Navigate, useLocation, Link } from 'react-router-dom';
 import { 
@@ -21,6 +23,7 @@ const BuyerPage = lazy(() => import('./pages/BuyerPage').then(m => ({ default: m
 const CartPage = lazy(() => import('./pages/CartPage').then(m => ({ default: m.CartPage })));
 const LoginPage = lazy(() => import('./pages/AuthPage').then(m => ({ default: m.LoginPage })));
 const StorePage = lazy(() => import('./pages/StorePage').then(m => ({ default: m.StorePage })));
+const ShopPage = lazy(() => import('./pages/ShopPage').then(m => ({ default: m.ShopPage })));
 const ProductPage = lazy(() => import('./pages/ProductPage').then(m => ({ default: m.ProductPage })));
 const NotFound = lazy(() => import('./components/NotFound').then(m => ({ default: m.NotFound })));
 const NotificationsPage = lazy(() => import('./pages/NotificationsPage').then(m => ({ default: m.NotificationsPage })));
@@ -30,6 +33,7 @@ const BuyerSettingsPage = lazy(() => import('./pages/BuyerSettingsPage').then(m 
 const CategoriesPage = lazy(() => import('./pages/CategoriesPage').then(m => ({ default: m.CategoriesPage })));
 const MessagesPage = lazy(() => import('./pages/MessagesPage').then(m => ({ default: m.MessagesPage })));
 const AdminPage = lazy(() => import('./pages/AdminPage').then(m => ({ default: m.AdminPage })));
+const StaticPage = lazy(() => import('./pages/StaticPage').then(m => ({ default: m.StaticPage })));
 
 // --- SCROLL TO TOP COMPONENT ---
 const ScrollToTop = () => {
@@ -117,7 +121,7 @@ const BackToTop = () => {
     return (
         <button 
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="fixed bottom-24 right-6 md:bottom-10 md:right-10 z-[100] w-12 h-12 bg-background dark:bg-background border border-foreground/20 dark:border-background/20 rounded-full flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all text-foreground dark:text-background group"
+            className="fixed bottom-[90px] right-4 md:bottom-10 md:right-10 z-[89] w-11 h-11 bg-background border border-foreground/15 rounded-full flex items-center justify-center shadow-xl hover:scale-110 active:scale-95 transition-all text-foreground group"
         >
             <ChevronUp className="w-5 h-5 stroke-[1] group-hover:-translate-y-1 transition-transform" />
         </button>
@@ -129,34 +133,27 @@ const Preloader = () => {
         <motion.div 
             initial={{ opacity: 1 }}
             animate={{ opacity: 0 }}
-            transition={{ duration: 1, delay: 2, ease: "easeInOut" }}
+            transition={{ duration: 0.4, delay: 0.5, ease: "easeOut" }}
             onAnimationComplete={() => document.body.style.overflow = 'auto'}
-            className="fixed inset-0 z-[1000] bg-background flex flex-col items-center justify-center"
+            className="fixed inset-0 z-[1000] bg-background flex flex-col items-center justify-center pointer-events-none"
         >
             <motion.div 
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
                 className="relative"
             >
-                <h1 className="text-6xl md:text-8xl font-sans font-extrabold text-foreground tracking-tight leading-none">
-                    Mali<span className="text-primary">Mart</span>
+                <h1 className="text-5xl md:text-7xl font-sans font-extrabold text-foreground tracking-tight leading-none">
+                    Mali<span className="text-emerald-500">Mart</span>
                 </h1>
                 <motion.div 
-                    initial={{ width: 0 }}
-                    animate={{ width: '100%' }}
-                    transition={{ duration: 1.5, delay: 0.5, ease: "easeInOut" }}
-                    className="absolute -bottom-4 left-0 h-[1px] bg-background/50"
+                    initial={{ scaleX: 0 }}
+                    animate={{ scaleX: 1 }}
+                    transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
+                    style={{ originX: 0 }}
+                    className="absolute -bottom-3 left-0 right-0 h-[2px] bg-emerald-500/60 rounded-full"
                 />
             </motion.div>
-            <motion.p 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 1, ease: "easeOut" }}
-                className="mt-12 text-[10px] uppercase tracking-[0.5em] text-background/60"
-            >
-                Curated Excellence
-            </motion.p>
         </motion.div>
     );
 };
@@ -179,7 +176,7 @@ const ScrollProgress = () => {
     return (
         <div className="fixed top-0 left-0 w-full h-[2px] z-[100] pointer-events-none">
             <motion.div 
-                className="h-full bg-primary dark:bg-background origin-left"
+                className="h-full bg-emerald-500 origin-left"
                 style={{ scaleX: progress / 100 }}
             />
         </div>
@@ -200,7 +197,7 @@ const AppContent = () => {
   }, [showPreloader]);
 
   useEffect(() => {
-    const timer = setTimeout(() => setShowPreloader(false), 1500);
+    const timer = setTimeout(() => setShowPreloader(false), 500);
     return () => clearTimeout(timer);
   }, []);
 
@@ -226,7 +223,7 @@ const AppContent = () => {
           >
             <Routes location={location}>
               <Route path="/" element={<HomePage />} />
-              <Route path="/shop" element={<StorePage />} />  {/* Shop now uses StorePage */}
+              <Route path="/shop" element={<ShopPage />} />
               <Route path="/product/:id" element={<ProductPage />} />
               <Route path="/store/:id" element={<StorePage />} />
               <Route path="/cart" element={<CartPage />} />
@@ -243,6 +240,9 @@ const AppContent = () => {
               <Route path="/settings" element={<RouteGuard>{user?.role === 'seller' ? <SellerSettingsPage /> : <BuyerSettingsPage />}</RouteGuard>} />
               <Route path="/notifications" element={<RouteGuard><NotificationsPage /></RouteGuard>} />
               <Route path="/order-confirmation" element={<RouteGuard><OrderConfirmationPage /></RouteGuard>} />
+              <Route path="/privacy" element={<StaticPage />} />
+              <Route path="/terms" element={<StaticPage />} />
+              <Route path="/contact" element={<StaticPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </motion.div>

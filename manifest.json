@@ -1,23 +1,47 @@
-
 {
   "name": "MaliMart",
   "short_name": "MaliMart",
-  "description": "A premier Tanzanian e-commerce platform connecting local sellers with buyers.",
+  "description": "Tanzania's premier marketplace. Shop authentic local products, track orders, and connect with verified sellers.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#10B981",
-  "orientation": "portrait",
+  "theme_color": "#1acd86",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "sw",
+  "categories": ["shopping", "lifestyle"],
+  "shortcuts": [
+    {
+      "name": "Shop Now",
+      "short_name": "Shop",
+      "url": "/shop",
+      "description": "Browse all products"
+    },
+    {
+      "name": "My Orders",
+      "short_name": "Orders",
+      "url": "/buyer?tab=orders",
+      "description": "Track your orders"
+    },
+    {
+      "name": "My Bag",
+      "short_name": "Bag",
+      "url": "/cart",
+      "description": "View shopping bag"
+    }
+  ],
   "icons": [
     {
       "src": "https://cdn-icons-png.flaticon.com/512/3081/3081559.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "https://cdn-icons-png.flaticon.com/512/3081/3081559.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }

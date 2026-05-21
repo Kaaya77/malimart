@@ -4,32 +4,25 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
-// Vercel exposes env vars via process.env at build time. We forward selected ones
-// into the client bundle as `process.env.*` (legacy convention used in this codebase)
-// AND read both prefixed (VITE_*) and unprefixed names so a deployer can set either.
-//
-// SECURITY NOTE: anything inlined here ships in the public JS bundle. Only put
-// values here that are safe to expose (Supabase anon key, Gemini API key — see
-// DEPLOY_VERCEL.md for the trade-off on the Gemini key).
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
 
-  // IMPORTANT: loadEnv() only reads .env files, NOT process.env. On Vercel,
-  // env vars set in the dashboard live in process.env at build time, so we
-  // must check both sources here or the values never get inlined into the bundle.
   const pick = (k: string) =>
     env[k] || env['VITE_' + k] || process.env[k] || process.env['VITE_' + k] || '';
-  const GEMINI_API_KEY = pick('GEMINI_API_KEY');
-  const SUPABASE_URL = pick('SUPABASE_URL');
-  const SUPABASE_ANON_KEY = pick('SUPABASE_ANON_KEY');
+
+  const GEMINI_API_KEY   = pick('AIzaSyCeVnbXNAuL8UiwIGWfYU4P-KUoWieKm64');
+  const SUPABASE_URL     = pick('https://ubpapxdmqlepynonhaeo.supabase.co');
+  const SUPABASE_ANON_KEY = pick('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVicGFweGRtcWxlcHlub25oYWVvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NTQ4NTY1NCwiZXhwIjoyMDgxMDYxNjU0fQ.2UczI3XynBDsSaI_9UycWCKOu6GpWq9kX6w2JmNLsGc');
 
   return {
-    server: {
-      port: 3000,
-      host: '0.0.0.0',
-    },
+    server: { port: 3000, host: '0.0.0.0' },
+
     plugins: [
-      react(),
+      react({
+        // Faster JSX transform — no React import needed
+        jsxRuntime: 'automatic',
+
+      }),
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
@@ -37,82 +30,161 @@ export default defineConfig(({ mode }) => {
           skipWaiting: true,
           clientsClaim: true,
           cleanupOutdatedCaches: true,
-          // JS and CSS: NetworkFirst — always try network, fall back to cache
-          // This means new deployments show immediately without hard refresh
+          // Cache strategies per asset type
           runtimeCaching: [
             {
-              urlPattern: /\.(?:js|css)$/i,
-              handler: 'NetworkFirst',
+              // Image CDN — stale-while-revalidate
+              urlPattern: /^https:\/\/(images\.unsplash\.com|cdn-icons-png\.flaticon\.com|ui-avatars\.com|picsum\.photos)\//,
+              handler: 'StaleWhileRevalidate',
               options: {
-                cacheName: 'assets-cache',
-                expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 },
-                networkTimeoutSeconds: 10,
+                cacheName: 'external-images',
+                expiration: { maxEntries: 200, maxAgeSeconds: 7 * 24 * 60 * 60 },
+                cacheableResponse: { statuses: [0, 200] },
               },
             },
             {
-              urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|ico)$/i,
+              // Supabase Storage — cache-first (product images don't change)
+              urlPattern: /^https:\/\/.*\.supabase\.co\/storage\//,
               handler: 'CacheFirst',
               options: {
-                cacheName: 'image-cache',
-                expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 * 30 },
+                cacheName: 'supabase-storage',
+                expiration: { maxEntries: 500, maxAgeSeconds: 30 * 24 * 60 * 60 },
+                cacheableResponse: { statuses: [0, 200] },
               },
             },
             {
-              urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
-              handler: 'NetworkOnly', // Never cache Supabase API calls
+              // Supabase API — network-first (always fresh data)
+              urlPattern: /^https:\/\/.*\.supabase\.co\/(rest|auth|realtime)\//,
+              handler: 'NetworkFirst',
+              options: {
+                cacheName: 'supabase-api',
+                networkTimeoutSeconds: 4,
+                expiration: { maxEntries: 50, maxAgeSeconds: 5 * 60 },
+                cacheableResponse: { statuses: [0, 200] },
+              },
+            },
+            {
+              // Google Fonts
+              urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\//,
+              handler: 'StaleWhileRevalidate',
+              options: {
+                cacheName: 'google-fonts',
+                expiration: { maxEntries: 20, maxAgeSeconds: 365 * 24 * 60 * 60 },
+              },
             },
           ],
         },
-        includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
         manifest: {
           name: 'MaliMart',
           short_name: 'MaliMart',
-          description: 'A premier Tanzanian e-commerce platform connecting local sellers with buyers.',
-          theme_color: '#10B981',
-          background_color: '#ffffff',
+          description: "Tanzania's premier marketplace",
+          theme_color: '#1acd86',
+          background_color: '#faf9f6',
           display: 'standalone',
           icons: [
-            {
-              src: 'https://cdn-icons-png.flaticon.com/512/3081/3081559.png',
-              sizes: '192x192',
-              type: 'image/png',
-            },
-            {
-              src: 'https://cdn-icons-png.flaticon.com/512/3081/3081559.png',
-              sizes: '512x512',
-              type: 'image/png',
-            },
+            { src: 'https://cdn-icons-png.flaticon.com/512/3081/3081559.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+            { src: 'https://cdn-icons-png.flaticon.com/512/3081/3081559.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
           ],
         },
       }),
     ],
+
     define: {
-      'process.env.API_KEY': JSON.stringify(GEMINI_API_KEY),
-      'process.env.GEMINI_API_KEY': JSON.stringify(GEMINI_API_KEY),
-      'process.env.SUPABASE_URL': JSON.stringify(SUPABASE_URL),
+      'process.env.API_KEY':         JSON.stringify(GEMINI_API_KEY),
+      'process.env.GEMINI_API_KEY':  JSON.stringify(GEMINI_API_KEY),
+      'process.env.SUPABASE_URL':    JSON.stringify(SUPABASE_URL),
       'process.env.SUPABASE_ANON_KEY': JSON.stringify(SUPABASE_ANON_KEY),
     },
+
     resolve: {
-      alias: {
-        '@': path.resolve(__dirname, '.'),
-      },
+      alias: { '@': path.resolve(__dirname, '.') },
     },
+
     build: {
       outDir: 'dist',
       sourcemap: false,
-      chunkSizeWarningLimit: 2000,
+      // Target modern browsers — smaller output, no legacy polyfills
+      target: 'es2020',
+      // Minify with esbuild (10x faster than terser, nearly same size)
+      minify: 'esbuild',
+      cssMinify: true,
+      // Raise warning limit — we know about the chunks, they're lazy
+      chunkSizeWarningLimit: 1000,
       rollupOptions: {
         output: {
-          manualChunks: {
-            react: ['react', 'react-dom', 'react-router-dom'],
-            ui: ['framer-motion', 'lucide-react'],
-            charts: ['recharts'],
-            supabase: ['@supabase/supabase-js'],
-            gemini: ['@google/genai'],
-            pdf: ['jspdf', 'html2canvas'],
+          // Granular manual chunks — keep initial load tiny
+          manualChunks(id) {
+            // Core React runtime — always needed
+            if (id.includes('react-dom') || id.includes('react-router')) return 'react-core';
+            if (id.includes('node_modules/react/')) return 'react-core';
+
+            // Heavy chart library — lazy loaded
+            if (id.includes('recharts') || id.includes('d3-')) return 'charts';
+
+            // PDF generation — only loaded when user downloads receipt
+            if (id.includes('jspdf') || id.includes('html2canvas')) return 'pdf-gen';
+
+            // Gemini AI — only loaded when AI chat opens
+            if (id.includes('@google/genai') || id.includes('gemini')) return 'ai-sdk';
+
+            // Supabase — deferred after auth check
+            if (id.includes('@supabase/')) return 'supabase';
+
+            // Animation — needed early but separable
+            if (id.includes('framer-motion')) return 'motion';
+
+            // Icons — tree-shaken by rollup but group them
+            if (id.includes('lucide-react')) return 'icons';
+
+            // DOMPurify — security, small
+            if (id.includes('dompurify') || id.includes('purify')) return 'security-libs';
+
+            // Seller-only features — heavy, only sellers visit
+            if (
+              id.includes('SellerPage') ||
+              id.includes('SellerInventory') ||
+              id.includes('SellerAnalytics') ||
+              id.includes('AdvancedAnalytics') ||
+              id.includes('ProductForm') ||
+              id.includes('BulkEditModal') ||
+              id.includes('CSVImport') ||
+              id.includes('AutoDiscountModal')
+            ) return 'seller-features';
+
+            // Admin-only features
+            if (
+              id.includes('AdminPage') ||
+              id.includes('AdminAIHero') ||
+              id.includes('AdminGrowth') ||
+              id.includes('AdminModeration') ||
+              id.includes('AdminVendorVerification') ||
+              id.includes('SecurityMonitor')
+            ) return 'admin-features';
+
+            // AI chat — large, optional
+            if (id.includes('AIChatAssistant')) return 'ai-chat';
           },
         },
       },
+    },
+
+    // Dependency pre-bundling — optimize what Vite resolves at dev time
+    optimizeDeps: {
+      include: [
+        'react',
+        'react-dom',
+        'react-router-dom',
+        '@supabase/supabase-js',
+        'framer-motion',
+        'lucide-react',
+      ],
+      exclude: [
+        // Never pre-bundle — always lazy loaded
+        'recharts',
+        'jspdf',
+        'html2canvas',
+        '@google/genai',
+      ],
     },
   };
 });

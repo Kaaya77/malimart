@@ -290,3 +290,143 @@
   }
 }
 /* cache-bust: 20260521114205 */
+
+/* === ENHANCED MOBILE & TOUCH IMPROVEMENTS === */
+@layer base {
+  /* Smoother tap highlighting */
+  * {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  /* Prevent text selection on UI elements */
+  button, nav, .no-select {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* Smooth momentum scrolling on iOS */
+  .scroll-smooth-ios {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Better input appearance on iOS */
+  input, textarea, select {
+    -webkit-appearance: none;
+    appearance: none;
+    border-radius: 0;
+  }
+
+  /* Prevent zoom on input focus on iOS */
+  @media (max-width: 768px) {
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="number"],
+    input[type="tel"],
+    input[type="search"],
+    textarea,
+    select {
+      font-size: 16px !important;
+    }
+  }
+
+  /* Bouncy active state for all tappable things */
+  .tap-scale {
+    @apply transition-transform active:scale-[0.97];
+  }
+
+  /* Premium card hover/active states */
+  .interactive-card {
+    @apply transition-all duration-200 active:scale-[0.98];
+  }
+
+  /* Loading shimmer */
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--muted)) 25%,
+      hsl(var(--muted)/0.7) 50%,
+      hsl(var(--muted)) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer-anim 1.5s ease-in-out infinite;
+  }
+
+  @keyframes shimmer-anim {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* Product image zoom on mobile tap */
+  .product-img-container {
+    overflow: hidden;
+    border-radius: inherit;
+  }
+
+  /* Sticky bottom bar safe area */
+  .safe-bottom {
+    padding-bottom: max(env(safe-area-inset-bottom), 12px);
+  }
+
+  /* Better bottom sheet backdrop blur */
+  .bottom-sheet-backdrop {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+}
+
+/* ─── Performance CSS ─────────────────────────────────────────────────────── */
+
+/* CSS containment: tell browser each card is isolated — huge paint perf win */
+.product-card,
+.store-card,
+.order-card {
+  contain: layout style;
+}
+
+/* Promote heavy animated elements to own compositor layer */
+.shimmer,
+[data-framer-motion],
+.animate-spin {
+  will-change: transform;
+}
+
+/* content-visibility: auto skips off-screen rendering (Chrome/Edge only) */
+.shop-grid-item {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 320px; /* estimated height */
+}
+
+/* Prevent layout shift from images */
+img {
+  height: auto;
+}
+
+/* Optimize font rendering */
+body {
+  text-rendering: optimizeSpeed;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Reduce paint on scroll for fixed headers */
+header, nav[role="navigation"] {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Instant touch response - no 300ms delay */
+a, button {
+  touch-action: manipulation;
+}
+
+/* Reduce motion for accessibility + battery */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
