@@ -64,7 +64,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ isOpen, order, selle
 
   const modal = (
     <div
-      className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm print:bg-white print:p-0 print:block"
+      className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/60 backdrop-blur-smrint:bg-white print:p-0 print:block"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="w-full max-w-sm bg-background rounded-3xl shadow-2xl border border-foreground/8 max-h-[94dvh] flex flex-col print:shadow-none print:rounded-none print:border-none print:max-h-none">
