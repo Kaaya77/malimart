@@ -7,6 +7,18 @@ import { registerSW } from 'virtual:pwa-register';
 // Register service worker with auto-reload on new deployment
 // skipWaiting + clientsClaim in vite.config means the new SW installs immediately.
 // onNeedRefresh fires when a new version is detected — we reload to activate it.
+// Unregister any stale SW from previous builds before registering the new one
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(regs => {
+    regs.forEach(reg => {
+      // Only unregister if it's pointing at an old sw.js
+      if (reg.active?.scriptURL && !reg.active.scriptURL.includes('/sw.js')) {
+        reg.unregister();
+      }
+    });
+  });
+}
+
 const updateSW = registerSW({
   onNeedRefresh() {
     updateSW(true); // true = force reload, clears stale cache and loads new bundle
