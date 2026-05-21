@@ -327,7 +327,7 @@ export const AdminPage = () => {
                             transition: { duration: 0.6, delay: 0.1, ease: [0.22, 1, 0.36, 1], staggerChildren: 0.05 }
                         }
                     }}
-                    className="flex overflow-x-auto p-1.5 md:p-2 bg-slate-100 dark:bg-zinc-900 rounded-full mb-12 no-scrollbar border border-foreground/5 shadow-inner"
+                    className="flex overflow-x-auto p-1.5 md:p-2 bg-foreground/[0.06] dark:bg-zinc-900 rounded-full mb-12 no-scrollbar border border-foreground/5 shadow-inner"
                 >
                     {[
                         { id: 'overview', label: 'Nexus', icon: Activity },
