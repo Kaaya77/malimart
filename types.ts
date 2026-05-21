@@ -287,8 +287,10 @@ export interface Review {
     rating: number;
     comment: string;
     images?: string[];
+    helpful_count?: number;
     created_at: string;
-    user?: { full_name: string; avatar_url?: string };
+    updated_at?: string;
+    user?: { id?: string; full_name: string; avatar_url?: string };
     is_verified_purchase?: boolean;
     likes?: number;
     replies?: { user_id: string; text: string; created_at: string }[];

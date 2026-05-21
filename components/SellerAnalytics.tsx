@@ -1,11 +1,12 @@
 import React from 'react';
 import { Card } from './UI';
+// recharts loaded lazily — see RechartsExports.tsx
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, LineChart, Line, Legend } from 'recharts';
 
 const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
         return (
-            <div className="bg-background dark:bg-background p-4 border border-foreground/10 dark:border-background/10 rounded-none shadow-2xl">
+            <div className="bg-background dark:bg-background p-4 border border-foreground/10 dark:border-background/10 rounded-2xl shadow-2xl">
                 <p className="text-[10px] uppercase tracking-[0.2em] text-foreground dark:text-background mb-1">{label || payload[0].name}</p>
                 <p className="font-serif text-lg text-foreground dark:text-background">
                     {payload[0].value.toLocaleString()}
@@ -22,7 +23,7 @@ export const SellerAnalytics = ({ stats }: { stats: any }) => {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in">
             {/* Revenue Trend */}
-            <Card className="group col-span-1 md:col-span-2 p-8 rounded-none shadow-none border border-foreground/10 dark:border-background/10 bg-transparent hover:border-foreground/30 dark:hover:border-background/30 transition-all duration-500">
+            <Card className="group col-span-1 md:col-span-2 p-8 rounded-2xl shadow-none border border-foreground/10 dark:border-background/10 bg-transparent hover:border-foreground/30 dark:hover:border-background/30 transition-all duration-500">
                 <h3 className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground dark:text-background mb-8">Revenue Trend (Last 30 Days)</h3>
                 <div className="h-64 min-w-0 relative">
                     {stats.revenueTrend.length > 0 ? (
@@ -42,7 +43,7 @@ export const SellerAnalytics = ({ stats }: { stats: any }) => {
             </Card>
 
             {/* Top Products */}
-            <Card className="group p-8 rounded-none shadow-none border border-foreground/10 dark:border-background/10 bg-transparent hover:border-foreground/30 dark:hover:border-background/30 transition-all duration-500">
+            <Card className="group p-8 rounded-2xl shadow-none border border-foreground/10 dark:border-background/10 bg-transparent hover:border-foreground/30 dark:hover:border-background/30 transition-all duration-500">
                 <h3 className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground dark:text-background mb-8">Top Products</h3>
                 <div className="h-64 min-w-0 relative">
                     {stats.topProducts.length > 0 ? (
@@ -61,7 +62,7 @@ export const SellerAnalytics = ({ stats }: { stats: any }) => {
             </Card>
 
             {/* Order Status Distribution */}
-            <Card className="group p-8 rounded-none shadow-none border border-foreground/10 dark:border-background/10 bg-transparent hover:border-foreground/30 dark:hover:border-background/30 transition-all duration-500">
+            <Card className="group p-8 rounded-2xl shadow-none border border-foreground/10 dark:border-background/10 bg-transparent hover:border-foreground/30 dark:hover:border-background/30 transition-all duration-500">
                 <h3 className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground dark:text-background mb-8">Order Status Distribution</h3>
                 <div className="h-64 min-w-0 relative">
                     {statusData.length > 0 ? (
@@ -83,14 +84,14 @@ export const SellerAnalytics = ({ stats }: { stats: any }) => {
             </Card>
 
             {/* AOV & Top Customers */}
-            <Card className="group p-8 rounded-none shadow-none border border-foreground/10 dark:border-background/10 bg-transparent hover:border-foreground/30 dark:hover:border-background/30 transition-all duration-500">
+            <Card className="group p-8 rounded-2xl shadow-none border border-foreground/10 dark:border-background/10 bg-transparent hover:border-foreground/30 dark:hover:border-background/30 transition-all duration-500">
                 <h3 className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground dark:text-background mb-8">Avg Order Value</h3>
                 <div className="flex items-center justify-center h-48">
                     <p className="text-5xl font-serif font-light text-foreground dark:text-background">TZS {stats.aov.toLocaleString()}</p>
                 </div>
             </Card>
 
-            <Card className="group p-8 rounded-none shadow-none border border-foreground/10 dark:border-background/10 bg-transparent hover:border-foreground/30 dark:hover:border-background/30 transition-all duration-500">
+            <Card className="group p-8 rounded-2xl shadow-none border border-foreground/10 dark:border-background/10 bg-transparent hover:border-foreground/30 dark:hover:border-background/30 transition-all duration-500">
                 <h3 className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground dark:text-background mb-8">Top Customers</h3>
                 <div className="space-y-4">
                     {stats.topCustomers.length > 0 ? stats.topCustomers.map((customer: any, index: number) => (

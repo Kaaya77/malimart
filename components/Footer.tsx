@@ -1,3 +1,4 @@
+import { supabase } from '../services/supabaseClient';
 import React from 'react';
 import { Link } from 'react-router-dom';
 

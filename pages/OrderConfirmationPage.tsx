@@ -71,7 +71,7 @@ export const OrderConfirmationPage = () => {
     );
   }
 
-  const addr = confirmedOrder.address as Address | null;
+  const addr = confirmedOrder.address as unknown as Address | null;
   const userName = user?.user_metadata?.full_name || user?.full_name || user?.name || 'there';
 
   return (

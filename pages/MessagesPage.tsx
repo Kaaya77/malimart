@@ -48,9 +48,7 @@ export const MessagesPage = () => {
           {user.role === 'buyer' ? (
             <BuyerMessages
               userId={user.id}
-              selectedChatUser={selectedChatUser}
-              setSelectedChatUser={setSelectedChatUser}
-              products={products}
+              initialSellerId={selectedChatUser}
             />
           ) : (
             <SellerMessages
