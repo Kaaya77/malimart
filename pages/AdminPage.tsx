@@ -1,3 +1,4 @@
+import { SecurityMonitor } from '../components/SecurityMonitor';
 import { assertRole, rateLimit } from '../src/security';
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
@@ -34,7 +35,7 @@ const revenueData = [
 export const AdminPage = () => {
  const { user } = useAppState();
  const { addToast } = useToast();
- const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'vendors' | 'products' | 'disputes' | 'payouts' | 'settings' | 'moderation' | 'growth' | 'messages' | 'ai-hero'>('overview');
+ const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'vendors' | 'products' | 'disputes' | 'payouts' | 'settings' | 'moderation' | 'growth' | 'messages' | 'ai-hero' | 'security'>('overview');
  const [selectedMessageUser, setSelectedMessageUser] = useState<{id: string, name: string, context?: { type: 'order' | 'return' | 'support', id: string, label: string }} | null>(null);
  const [isLoading, setIsLoading] = useState(true);
 
