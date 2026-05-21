@@ -24,39 +24,56 @@ export const AdminVendorVerification = ({ vendor, onUpdate, onMessage }: { vendo
                 </Badge>
             </div>
             
-            {/* Progress Bar */}
-            <div className="space-y-2">
-                <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                    <span>Verification Progress</span>
-                    <span>{vendor.is_verified ? '100%' : '65%'}</span>
-                </div>
-                <div className="w-full bg-muted/50 h-2 rounded-full overflow-hidden border border-border">
-                    <div 
-                        className={`h-full transition-all duration-1000 ease-out ${vendor.is_verified ? 'bg-primary w-full' : 'bg-primary/50 w-[65%]'}`}
-                    />
-                </div>
-            </div>
+            {/* Real Verification Progress based on actual data */}
+            {(() => {
+                const checks = [
+                    !!vendor.store_name,
+                    !!vendor.contact_phone || !!vendor.mobile_number,
+                    !!vendor.tin_number,
+                    !!vendor.business_reg_no,
+                    !!vendor.region,
+                    vendor.is_verified,
+                ];
+                const passedCount = checks.filter(Boolean).length;
+                const pct = Math.round((passedCount / checks.length) * 100);
+                return (
+                    <div className="space-y-2">
+                        <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                            <span>Verification Progress</span>
+                            <span>{pct}%</span>
+                        </div>
+                        <div className="w-full bg-muted/50 h-2 rounded-full overflow-hidden border border-border">
+                            <div className={`h-full transition-all duration-1000 ease-out ${pct === 100 ? 'bg-emerald-500' : 'bg-primary/60'}`} style={{ width: pct + '%' }} />
+                        </div>
+                    </div>
+                );
+            })()}
             
-            {/* Checklist */}
-            <div className="grid grid-cols-1 gap-4 py-6 border-y border-border">
-                <div className="flex items-center justify-between group/item">
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                            <CheckCircle className="w-4 h-4 text-primary stroke-2" />
+            {/* Checklist - real data based */}
+            <div className="grid grid-cols-1 gap-3 py-6 border-y border-border">
+                {[
+                    { label: 'Store Name', value: !!vendor.store_name, detail: vendor.store_name },
+                    { label: 'Contact Phone', value: !!vendor.contact_phone || !!vendor.mobile_number, detail: vendor.contact_phone || vendor.mobile_number },
+                    { label: 'Tax ID (TIN)', value: !!vendor.tin_number, detail: vendor.tin_number ? 'Provided' : 'Missing' },
+                    { label: 'Business Reg. No.', value: !!vendor.business_reg_no, detail: vendor.business_reg_no ? 'Provided' : 'Missing' },
+                    { label: 'Region / Location', value: !!vendor.region, detail: vendor.region },
+                    { label: 'Admin Verified', value: !!vendor.is_verified, detail: vendor.is_verified ? 'Approved' : 'Pending' },
+                ].map(item => (
+                    <div key={item.label} className="flex items-center justify-between group/item">
+                        <div className="flex items-center gap-3">
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${item.value ? 'bg-primary/10' : 'bg-muted/50'}`}>
+                                {item.value
+                                    ? <CheckCircle className="w-4 h-4 text-primary stroke-2" />
+                                    : <XCircle className="w-4 h-4 text-muted-foreground stroke-2" />
+                                }
+                            </div>
+                            <span className="text-xs font-bold text-foreground">{item.label}</span>
                         </div>
-                        <span className="text-xs font-bold text-foreground">Business Registration</span>
+                        <span className={`text-[10px] font-bold uppercase tracking-wider ${item.value ? 'text-primary' : 'text-muted-foreground'}`}>
+                            {item.detail || (item.value ? 'Done' : 'Missing')}
+                        </span>
                     </div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Verified</span>
-                </div>
-                <div className="flex items-center justify-between group/item">
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                            <CheckCircle className="w-4 h-4 text-primary stroke-2" />
-                        </div>
-                        <span className="text-xs font-bold text-foreground">Tax Identification (TIN)</span>
-                    </div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Verified</span>
-                </div>
+                ))}
                 <div className="flex items-center justify-between group/item">
                     <div className="flex items-center gap-3">
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center ${vendor.is_verified ? 'bg-primary/10' : 'bg-muted/50'}`}>

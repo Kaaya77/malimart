@@ -19,16 +19,7 @@ import { AdminMessages } from '../components/AdminMessages';
 import { AdminAIHero } from '../components/AdminAIHero';
 import { analyzeDispute } from '../services/geminiService';
 
-// Mock Data for Chart
-const revenueData = [
-  { name: 'Mon', revenue: 400000 },
-  { name: 'Tue', revenue: 300000 },
-  { name: 'Wed', revenue: 550000 },
-  { name: 'Thu', revenue: 278000 },
-  { name: 'Fri', revenue: 689000 },
-  { name: 'Sat', revenue: 839000 },
-  { name: 'Sun', revenue: 949000 },
-];
+// Revenue data loaded from DB via fetchAdminData
 
 export const AdminPage = () => {
     const { user } = useAppState();

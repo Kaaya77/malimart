@@ -191,11 +191,55 @@ export const BuyerSettingsPage = () => {
   };
 
   const handleExportData = async () => {
+      if (!user) return;
       setIsExporting(true);
-      // Simulate export delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      addToast('Order history exported to your email', 'success');
-      setIsExporting(false);
+      try {
+          const { data: orders } = await supabase
+              .from('orders')
+              .select('id, created_at, status, total, subtotal, delivery_fee, payment_method, items:order_items(price_at_purchase, quantity, product:products(name, category))')
+              .eq('user_id', user.id)
+              .order('created_at', { ascending: false });
+          if (!orders || orders.length === 0) {
+              addToast('No orders to export', 'info');
+              setIsExporting(false);
+              return;
+          }
+          const headers = ['Order ID','Date','Status','Product','Category','Qty','Unit Price','Subtotal','Delivery','Total','Payment'];
+          const rows: string[] = [headers.join(',')];
+          (orders as any[]).forEach((order: any) => {
+              const items: any[] = order.items || [];
+              if (!items.length) {
+                  rows.push([order.id.slice(0,8), new Date(order.created_at).toLocaleDateString(), order.status, '-','-','-','-', order.subtotal, order.delivery_fee, order.total, order.payment_method || 'N/A'].join(','));
+              } else {
+                  items.forEach((item: any, idx: number) => {
+                      rows.push([
+                          idx===0 ? order.id.slice(0,8) : '-',
+                          idx===0 ? new Date(order.created_at).toLocaleDateString() : '-',
+                          idx===0 ? order.status : '-',
+                          '"'+(item.product?.name || 'Unknown')+'"',
+                          item.product?.category || '-',
+                          item.quantity,
+                          item.price_at_purchase,
+                          idx===0 ? order.subtotal : '-',
+                          idx===0 ? order.delivery_fee : '-',
+                          idx===0 ? order.total : '-',
+                          idx===0 ? (order.payment_method || 'N/A') : '-'
+                      ].join(','));
+                  });
+              }
+          });
+          const csv = rows.join('\n');
+          const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'malimart-orders-'+new Date().toISOString().split('T')[0]+'.csv';
+          document.body.appendChild(a); a.click();
+          document.body.removeChild(a); URL.revokeObjectURL(url);
+          addToast('Exported '+orders.length+' orders as CSV', 'success');
+      } catch (e) {
+          addToast('Export failed. Please try again.', 'error');
+      } finally { setIsExporting(false); }
   };
 
   const handleAddPaymentMethod = async (e: React.FormEvent) => {
@@ -242,16 +286,26 @@ export const BuyerSettingsPage = () => {
 
   const handleConnectAccount = async (provider: string) => {
       if (!user) return;
+      // OAuth flow: in production redirect to Supabase OAuth provider
+      // For now, record the intent and show instructions
+      const existing = connectedAccounts.find(a => a.provider === provider);
+      if (existing) {
+          addToast(provider + ' is already connected', 'info');
+          return;
+      }
+      addToast('Redirecting to ' + provider + ' authorization...', 'info');
+      // Supabase OAuth integration point
+      // await supabase.auth.signInWithOAuth({ provider: provider.toLowerCase() as any, options: { redirectTo: window.location.href } });
+  };
+
+  const handleDisconnectAccount = async (provider: string) => {
+      if (!user) return;
       try {
-          await supabase.from('connected_accounts').insert({
-              user_id: user.id,
-              provider,
-              provider_user_id: `mock_${provider}_id_${Date.now()}`
-          });
-          addToast(`${provider} connected successfully`, 'success');
+          await supabase.from('connected_accounts').delete().eq('user_id', user.id).eq('provider', provider);
+          addToast(provider + ' disconnected', 'success');
           window.location.reload();
       } catch (error) {
-          addToast(`Failed to connect ${provider}`, 'error');
+          addToast('Failed to disconnect ' + provider, 'error');
       }
   };
 

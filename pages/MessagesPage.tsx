@@ -1,54 +1,67 @@
 import React, { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { MessageSquare } from 'lucide-react';
+import { MessageSquare, Lock } from 'lucide-react';
 import { useAppState } from '../context/AppContext';
 import { SellerMessages } from '../components/SellerMessages';
+import { BuyerMessages } from '../components/BuyerMessages';
+import { Link } from 'react-router-dom';
 
 export const MessagesPage = () => {
-    const { user, products } = useAppState();
-    const [searchParams] = useSearchParams();
-    const [selectedChatUser, setSelectedChatUser] = useState<string | null>(searchParams.get('chat'));
+  const { user, products } = useAppState();
+  const [searchParams] = useSearchParams();
+  const [selectedChatUser, setSelectedChatUser] = useState<string | null>(searchParams.get('chat'));
 
+  if (!user) {
     return (
-        <div className="min-h-screen pt-32 pb-24 px-6">
-            <div className="container mx-auto max-w-6xl">
-                <div className="mb-12">
-                    <h1 className="text-4xl md:text-6xl font-black font-display uppercase tracking-tighter mb-4 text-slate-900 dark:text-white">
-                        Your <span className="text-emerald-500">Messages</span>
-                    </h1>
-                    <p className="text-slate-500 dark:text-slate-400 font-medium max-w-2xl">
-                        Communicate directly with {user?.role === 'seller' ? 'buyers' : 'sellers'} regarding products, orders, and inquiries.
-                    </p>
-                </div>
-
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-white dark:bg-slate-900 rounded-[3rem] p-8 border border-slate-100 dark:border-white/5 shadow-2xl shadow-slate-200/20 dark:shadow-none min-h-[600px]"
-                >
-                    {user ? (
-                        <SellerMessages 
-                            userId={user.id} 
-                            selectedChatUser={selectedChatUser} 
-                            setSelectedChatUser={setSelectedChatUser} 
-                            products={products} 
-                        />
-                    ) : (
-                        <div className="flex flex-col items-center justify-center h-full text-center py-24">
-                            <div className="w-24 h-24 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-6">
-                                <MessageSquare className="w-10 h-10 text-slate-400" />
-                            </div>
-                            <h3 className="text-2xl font-black uppercase tracking-widest text-slate-900 dark:text-white mb-4">
-                                Sign in to view messages
-                            </h3>
-                            <p className="text-slate-500 dark:text-slate-400 max-w-md">
-                                You need to be logged in to communicate with other users on MaliMart.
-                            </p>
-                        </div>
-                    )}
-                </motion.div>
-            </div>
-        </div>
+      <div className="min-h-screen bg-background flex items-center justify-center px-4" style={{ paddingTop: 'max(72px, env(safe-area-inset-top) + 56px)' }}>
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="text-center max-w-xs">
+          <div className="w-16 h-16 rounded-full bg-foreground/[0.05] flex items-center justify-center mx-auto mb-5">
+            <Lock className="w-7 h-7 text-foreground/20" />
+          </div>
+          <h3 className="text-lg font-black uppercase tracking-tight text-foreground mb-2">Sign in Required</h3>
+          <p className="text-sm text-foreground/40 font-medium mb-6">Log in to view your messages and communicate with other users.</p>
+          <Link to="/login?redirect=/messages"
+            className="inline-flex h-11 px-6 items-center justify-center bg-foreground text-background rounded-xl text-[10px] font-black uppercase tracking-[0.2em]">
+            Sign In
+          </Link>
+        </motion.div>
+      </div>
     );
+  }
+
+  return (
+    <div className="min-h-screen bg-background font-sans" style={{ paddingTop: 'max(72px, env(safe-area-inset-top) + 56px)' }}>
+      <div className="max-w-6xl mx-auto px-4 pb-8 pt-6 md:pt-8">
+        <div className="mb-6">
+          <h1 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-foreground">Messages</h1>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-foreground/40 mt-0.5">
+            {user.role === 'seller' ? 'Communicate with your buyers' : 'Chat with sellers about products and orders'}
+          </p>
+        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="bg-background border border-foreground/10 rounded-2xl overflow-hidden"
+          style={{ height: 'calc(100dvh - 200px)', minHeight: '500px' }}
+        >
+          {user.role === 'buyer' ? (
+            <BuyerMessages
+              userId={user.id}
+              selectedChatUser={selectedChatUser}
+              setSelectedChatUser={setSelectedChatUser}
+              products={products}
+            />
+          ) : (
+            <SellerMessages
+              userId={user.id}
+              selectedChatUser={selectedChatUser}
+              setSelectedChatUser={setSelectedChatUser}
+              products={products}
+            />
+          )}
+        </motion.div>
+      </div>
+    </div>
+  );
 };

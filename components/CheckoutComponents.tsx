@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Check, MapPin, Truck, ShieldCheck, X, 
-  Plus, Smartphone, Banknote, Home, Receipt, 
+import {
+  Check, MapPin, Truck, ShieldCheck, X,
+  Plus, Smartphone, Banknote, Home, Receipt,
   ShoppingBag, Store, Info, ChevronLeft, ChevronDown, ChevronUp,
   Package, ArrowRight, CheckCircle2, Clock, Wallet,
-  Zap, Hash, Ban, Loader2, Copy, Calendar, Gift, MessageSquare, AlertCircle,
-  CreditCard, Landmark, PenLine, Locate, Navigation, ShoppingCart, HelpCircle,
-  Phone
+  Zap, Hash, Ban, Loader2, Copy, Calendar, Gift, MessageSquare,
+  CreditCard, Landmark, PenLine, Locate, Navigation, ShoppingCart,
+  HelpCircle, Phone, Lock, Sparkles, AlertCircle
 } from 'lucide-react';
 import { Button, Input, Label, Card, useToast, Badge, Switch, Textarea } from './UI';
 import { formatTZS, CURRENCY } from '../constants';
@@ -15,23 +15,20 @@ import { useAppState } from '../context/AppContext';
 import { Order, OrderStatus, Address, VendorProfile, CartItem } from '../types';
 import { supabase } from '../services/supabaseClient';
 
-// ───────────────────────────────────────────────
-// Shared price helper — must match CartPage & CartDrawer
-// ───────────────────────────────────────────────
 const getEffectiveUnitPrice = (item: CartItem): number => {
-  if (typeof item.price_at_add === 'number' && item.price_at_add > 0) {
-    return item.price_at_add;
-  }
-  if (item.selectedVariant) {
-    return item.selectedVariant.sale_price ?? item.selectedVariant.base_price ?? 0;
-  }
+  if (typeof item.price_at_add === 'number' && item.price_at_add > 0) return item.price_at_add;
+  if (item.selectedVariant) return item.selectedVariant.sale_price ?? item.selectedVariant.base_price ?? 0;
   return item.price ?? 0;
 };
 
-// ───────────────────────────────────────────────
-// Address Form (your original — unchanged)
-// ───────────────────────────────────────────────
-const AddressForm = ({ initialData, onSave, onCancel }: { initialData?: Partial<Address>, onSave: (data: Omit<Address, 'id' | 'user_id' | 'created_at'>) => Promise<void>, onCancel: () => void }) => {
+// ─────────────────────────────────────────────
+// AddressForm
+// ─────────────────────────────────────────────
+const AddressForm = ({ initialData, onSave, onCancel }: {
+  initialData?: Partial<Address>;
+  onSave: (data: Omit<Address, 'id' | 'user_id' | 'created_at'>) => Promise<void>;
+  onCancel: () => void;
+}) => {
   const [formData, setFormData] = useState({
     label: initialData?.label || 'Home',
     street: initialData?.street || '',
@@ -41,7 +38,7 @@ const AddressForm = ({ initialData, onSave, onCancel }: { initialData?: Partial<
     landmark: initialData?.landmark || '',
     is_default: initialData?.is_default || false,
     latitude: initialData?.latitude || 0,
-    longitude: initialData?.longitude || 0
+    longitude: initialData?.longitude || 0,
   });
   const { addToast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
@@ -53,282 +50,171 @@ const AddressForm = ({ initialData, onSave, onCancel }: { initialData?: Partial<
     if (!navigator.geolocation) return addToast("Geolocation not supported", "error");
     setIsLocating(true);
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setFormData(prev => ({
-          ...prev,
-          latitude: pos.coords.latitude,
-          longitude: pos.coords.longitude
-        }));
-        setIsLocating(false);
-        addToast("Location pinned successfully", "success");
-      },
-      (err) => {
-        console.error(err);
-        setIsLocating(false);
-        addToast("Could not fetch location", "error");
-      }
+      pos => { setFormData(p => ({ ...p, latitude: pos.coords.latitude, longitude: pos.coords.longitude })); setIsLocating(false); addToast("Location pinned!", "success"); },
+      () => { setIsLocating(false); addToast("Could not get location", "error"); }
     );
   };
 
   const handleSave = async () => {
-    if (!formData.label.trim()) return addToast('Label is required (e.g. Home)', 'error');
-    if (!formData.street.trim()) return addToast('Street/Building is required', 'error');
-    if (!formData.phone.trim() || !validatePhone(formData.phone)) return addToast('Valid TZ phone required (e.g. 07XXXXXXXX)', 'error');
-    if (!formData.city) return addToast('Region is required', 'error');
-    
+    if (!formData.label.trim()) return addToast('Label required', 'error');
+    if (!formData.street.trim()) return addToast('Street required', 'error');
+    if (!validatePhone(formData.phone)) return addToast('Valid TZ phone required (07XXXXXXXX)', 'error');
+    if (!formData.city) return addToast('Region required', 'error');
     try {
       setIsSaving(true);
-      await onSave({
-        label: formData.label,
-        street: formData.street,
-        city: formData.city,
-        phone: formData.phone,
-        postal_code: formData.postal_code,
-        landmark: formData.landmark,
-        is_default: formData.is_default,
-        latitude: formData.latitude,
-        longitude: formData.longitude,
-        geo: { lat: formData.latitude, lng: formData.longitude }
-      });
-      addToast('Address saved successfully!', 'success');
-    } catch (err: any) { 
-      addToast(err.message || 'Failed to save address.', 'error'); 
-    } finally { 
-      setIsSaving(false); 
-    }
+      await onSave({ ...formData, geo: { lat: formData.latitude, lng: formData.longitude } });
+      addToast('Address saved!', 'success');
+    } catch (err: any) { addToast(err.message || 'Failed to save.', 'error'); }
+    finally { setIsSaving(false); }
   };
 
+  const fieldCls = "w-full h-12 bg-foreground/[0.04] border border-foreground/10 rounded-xl px-4 text-sm font-medium outline-none focus:border-foreground/30 transition-all text-foreground placeholder:text-foreground/30";
+
   return (
-    <div className="space-y-6 p-6 md:p-10 rounded-[2rem] bg-background border border-foreground/8 shadow-xl shadow-foreground/5 animate-in zoom-in-95 duration-500">
-      <div className="flex justify-between items-start">
-        <div className="space-y-2">
-          <h3 className="text-xl font-serif font-light tracking-tight text-foreground">Delivery Point</h3>
-          <p className="text-xs text-foreground/40 uppercase tracking-[0.2em] font-bold">Where should we send your items?</p>
+    <motion.div
+      initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+      className="bg-background border border-foreground/10 rounded-2xl overflow-hidden"
+    >
+      <div className="flex items-center justify-between px-5 py-4 border-b border-foreground/8">
+        <div>
+          <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground">New Address</h3>
+          <p className="text-[9px] text-foreground/40 font-bold uppercase tracking-wider mt-0.5">Where should we deliver?</p>
         </div>
-        <button type="button" onClick={onCancel} className="p-2 hover:bg-foreground/[0.06] rounded-full transition-colors">
-          <X className="w-5 h-5 stroke-[1] text-foreground" />
+        <button onClick={onCancel} className="w-8 h-8 flex items-center justify-center rounded-full bg-foreground/[0.05] hover:bg-foreground/10 transition-colors">
+          <X className="w-3.5 h-3.5 text-foreground/50" />
         </button>
       </div>
-      
-      <div className="space-y-8">
-        <div className="grid grid-cols-1 gap-5 md:gap-8">
-          <div className="space-y-3">
-            <Label className="text-[10px] uppercase tracking-widest font-black text-foreground/40 pl-1">Address Label</Label>
+
+      <div className="p-5 space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-[9px] font-black uppercase tracking-[0.18em] text-foreground/40 pl-1">Label</label>
             <div className="relative">
-              <Input 
-                placeholder="e.g. Home, Office" 
-                value={formData.label || ''} 
-                onChange={(e:any) => setFormData({...formData, label: e.target.value})} 
-                className="h-14 rounded-2xl bg-foreground/[0.04] border-none focus:ring-2 focus:ring-foreground/30 transition-all pl-12" 
-              />
-              <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground/20" />
+              <input placeholder="e.g. Home, Office" value={formData.label} onChange={e => setFormData(p => ({ ...p, label: e.target.value }))} className={fieldCls + " pl-10"} />
+              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/25" />
             </div>
           </div>
-          <div className="space-y-3">
-            <Label className="text-[10px] uppercase tracking-widest font-black text-foreground/40 pl-1">Contact Phone</Label>
+          <div className="space-y-1.5">
+            <label className="text-[9px] font-black uppercase tracking-[0.18em] text-foreground/40 pl-1">Phone</label>
             <div className="relative">
-              <Input 
-                placeholder="07XXXXXXXX" 
-                value={formData.phone || ''} 
-                onChange={(e:any) => setFormData({...formData, phone: e.target.value})} 
-                className="h-14 rounded-2xl bg-foreground/[0.04] border-none focus:ring-2 focus:ring-foreground/30 transition-all pl-12 font-mono" 
-              />
-              <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground/20" />
+              <input placeholder="07XXXXXXXX" value={formData.phone} onChange={e => setFormData(p => ({ ...p, phone: e.target.value }))} className={fieldCls + " pl-10 font-mono"} />
+              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/25" />
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-5 md:gap-8">
-          <div className="space-y-3">
-            <Label className="text-[10px] uppercase tracking-widest font-black text-foreground/40 pl-1">Region</Label>
-            <select 
-              className="w-full h-14 bg-foreground/[0.04] border-none rounded-2xl px-6 text-xs font-bold outline-none focus:ring-2 focus:ring-foreground transition-all appearance-none" 
-              value={formData.city || ''} 
-              onChange={e => setFormData({...formData, city: e.target.value})}
+        <div className="space-y-1.5">
+          <label className="text-[9px] font-black uppercase tracking-[0.18em] text-foreground/40 pl-1">Street / Building</label>
+          <div className="relative">
+            <input placeholder="e.g. 14 Barack Obama Drive, Twiga Towers" value={formData.street} onChange={e => setFormData(p => ({ ...p, street: e.target.value }))} className={fieldCls + " pl-10"} />
+            <Home className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/25" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-[9px] font-black uppercase tracking-[0.18em] text-foreground/40 pl-1">Region</label>
+            <select
+              value={formData.city} onChange={e => setFormData(p => ({ ...p, city: e.target.value }))}
+              className={fieldCls + " appearance-none cursor-pointer"}
             >
-              <option value="" disabled>Select a Region</option>
+              <option value="" disabled>Select region</option>
               {['Dar es Salaam', 'Arusha', 'Zanzibar', 'Mwanza', 'Dodoma', 'Kilimanjaro', 'Tanga', 'Mbeya', 'Morogoro'].map(c => (
                 <option key={c} value={c}>{c}</option>
               ))}
             </select>
           </div>
-          <div className="space-y-3">
-            <Label className="text-[10px] uppercase tracking-widest font-black text-foreground/40 pl-1">Postal Code (Optional)</Label>
-            <Input 
-              value={formData.postal_code || ''} 
-              onChange={(e:any) => setFormData({...formData, postal_code: e.target.value})} 
-              placeholder="e.g. 11101" 
-              className="h-14 rounded-2xl bg-foreground/[0.04] border-none focus:ring-2 focus:ring-foreground/30 transition-all" 
-            />
+          <div className="space-y-1.5">
+            <label className="text-[9px] font-black uppercase tracking-[0.18em] text-foreground/40 pl-1">Postal Code (optional)</label>
+            <input placeholder="e.g. 11101" value={formData.postal_code} onChange={e => setFormData(p => ({ ...p, postal_code: e.target.value }))} className={fieldCls} />
           </div>
         </div>
 
-        <div className="space-y-3">
-          <Label className="text-[10px] uppercase tracking-widest font-black text-foreground/40 pl-1">Street / Building / House No.</Label>
+        <div className="space-y-1.5">
+          <label className="text-[9px] font-black uppercase tracking-[0.18em] text-foreground/40 pl-1">Landmark</label>
           <div className="relative">
-            <Input 
-              value={formData.street || ''} 
-              onChange={(e:any) => setFormData({...formData, street: e.target.value})} 
-              placeholder="e.g. 14 Barack Obama Dr, Twiga Towers" 
-              className="h-14 rounded-2xl bg-foreground/[0.04] border-none focus:ring-2 focus:ring-foreground/30 transition-all pl-12" 
-            />
-            <Home className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground/20" />
+            <input placeholder="e.g. Next to Total Gas Station" value={formData.landmark} onChange={e => setFormData(p => ({ ...p, landmark: e.target.value }))} className={fieldCls + " pl-10"} />
+            <Navigation className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/25" />
           </div>
         </div>
 
-        <div className="space-y-3">
-          <Label className="text-[10px] uppercase tracking-widest font-black text-foreground/40 pl-1">Nearby Landmark</Label>
-          <div className="relative">
-            <Navigation className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground/20" />
-            <Input 
-              value={formData.landmark || ''} 
-              onChange={(e:any) => setFormData({...formData, landmark: e.target.value})} 
-              placeholder="e.g. Next to Total Gas Station" 
-              className="h-14 rounded-2xl bg-foreground/[0.04] border-none focus:ring-2 focus:ring-foreground/30 transition-all pl-12" 
-            />
-          </div>
-        </div>
-        
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 rounded-3xl bg-foreground/[0.03] border border-foreground/8">
-          <div className="flex items-center gap-4">
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${formData.latitude !== 0 ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-foreground/[0.04] text-foreground/40'}`}>
-              <Locate className="w-6 h-6 stroke-[1.5]" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-foreground">Precise Location</p>
-              <p className="text-[10px] text-foreground/40 uppercase tracking-widest font-black">
-                {formData.latitude !== 0 ? 'GPS Coordinates Pinned' : 'Not yet captured'}
-              </p>
-            </div>
-          </div>
-          <Button 
-            type="button" 
-            variant="outline" 
-            onClick={handleLocate} 
-            isLoading={isLocating} 
-            className="h-12 px-6 rounded-full border-foreground/10 hover:bg-foreground hover:text-background transition-all text-[10px] font-black uppercase tracking-widest"
+        {/* GPS + Default row */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <button
+            onClick={handleLocate} disabled={isLocating} type="button"
+            className={`h-11 flex items-center justify-center gap-2 rounded-xl border text-[9px] font-black uppercase tracking-[0.15em] transition-all ${formData.latitude !== 0 ? 'border-emerald-500 text-emerald-500 bg-emerald-50 dark:bg-emerald-900/15' : 'border-foreground/15 text-foreground/50 hover:border-foreground/30 hover:text-foreground'}`}
           >
-            Capture GPS
-          </Button>
-        </div>
-
-        <div className="flex items-center gap-4 p-6 rounded-3xl bg-foreground/[0.03] border border-foreground/8">
-          <Switch checked={formData.is_default} onCheckedChange={(v: boolean) => setFormData({...formData, is_default: v})} />
-          <div className="space-y-0.5">
-            <p className="text-xs font-bold text-foreground">Default Address</p>
-            <p className="text-[10px] text-foreground/40 uppercase tracking-widest font-black">Use this for future orders</p>
-          </div>
+            <Locate className="w-4 h-4" />
+            {isLocating ? 'Locating...' : formData.latitude !== 0 ? 'GPS Pinned ✓' : 'Pin My GPS'}
+          </button>
+          <button
+            onClick={() => setFormData(p => ({ ...p, is_default: !p.is_default }))} type="button"
+            className={`h-11 flex items-center justify-center gap-2 rounded-xl border text-[9px] font-black uppercase tracking-[0.15em] transition-all ${formData.is_default ? 'border-foreground text-foreground bg-foreground/[0.05]' : 'border-foreground/15 text-foreground/50 hover:border-foreground/30'}`}
+          >
+            <Check className="w-4 h-4" />
+            {formData.is_default ? 'Default ✓' : 'Set as Default'}
+          </button>
         </div>
       </div>
 
-      <div className="flex gap-4 pt-4">
-        <Button 
-          variant="ghost" 
-          onClick={onCancel} 
-          className="flex-1 h-16 rounded-3xl text-foreground/40 hover:text-rose-500 hover:bg-rose-500/5 transition-all font-bold"
-        >
+      <div className="px-5 pb-5 flex gap-3">
+        <button onClick={onCancel} className="flex-1 h-11 rounded-xl border border-foreground/12 text-[9px] font-black uppercase tracking-[0.15em] text-foreground/50 hover:text-foreground transition-colors">
           Cancel
-        </Button>
-        <Button 
-          onClick={handleSave} 
-          className="flex-[2] h-16 rounded-3xl bg-foreground text-background shadow-2xl shadow-foreground/20 hover:scale-[1.02] active:scale-95 transition-all text-xs font-black uppercase tracking-[0.2em]" 
-          isLoading={isSaving}
+        </button>
+        <button
+          onClick={handleSave} disabled={isSaving}
+          className="flex-[2] h-11 rounded-xl bg-foreground text-background text-[9px] font-black uppercase tracking-[0.15em] flex items-center justify-center gap-2 disabled:opacity-50 transition-opacity"
         >
-          Save & Use Address
-        </Button>
+          {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Check className="w-4 h-4" />Save Address</>}
+        </button>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
-// ───────────────────────────────────────────────
-// OrderTracking (your original — unchanged)
-// ───────────────────────────────────────────────
+// ─────────────────────────────────────────────
+// Order Progress Visual
+// ─────────────────────────────────────────────
 const OrderProgressVisual = ({ status }: { status: string }) => {
   const steps = [
-    { id: 'placed', icon: ShoppingBag, label: 'Order Placed', color: 'bg-blue-500' },
-    { id: 'confirmed', icon: CheckCircle2, label: 'Confirmed', color: 'bg-indigo-500' },
-    { id: 'processing', icon: Package, label: 'Processing', color: 'bg-amber-500' },
-    { id: 'shipped', icon: Truck, label: 'On the Way', color: 'bg-purple-500' },
-    { id: 'delivered', icon: Home, label: 'Delivered', color: 'bg-emerald-500' }
+    { id: 'placed', icon: ShoppingBag, label: 'Placed', color: '#3b82f6' },
+    { id: 'confirmed', icon: CheckCircle2, label: 'Confirmed', color: '#6366f1' },
+    { id: 'processing', icon: Package, label: 'Processing', color: '#f59e0b' },
+    { id: 'shipped', icon: Truck, label: 'On the Way', color: '#8b5cf6' },
+    { id: 'delivered', icon: Home, label: 'Delivered', color: '#10b981' },
   ];
 
-  const getStatusIndex = (s: string) => {
-    const statusMap: Record<string, number> = {
-      'pending': 0, 'placed': 0,
-      'confirmed': 1, 'paid': 1,
-      'processing': 2,
-      'shipped': 3, 'in_transit': 3, 'ready_for_pickup': 3,
-      'delivered': 4
-    };
-    return statusMap[s] ?? 0;
-  };
-
-  const currentIdx = getStatusIndex(status);
+  const statusMap: Record<string, number> = { pending: 0, placed: 0, confirmed: 1, paid: 1, processing: 2, shipped: 3, in_transit: 3, ready_for_pickup: 3, delivered: 4 };
+  const currentIdx = statusMap[status] ?? 0;
 
   return (
-    <div className="py-12 px-4">
-      <div className="relative flex justify-between items-center max-w-2xl mx-auto">
-        {/* Progress Line */}
-        <div className="absolute top-1/2 left-0 w-full h-1 bg-foreground/[0.06] -translate-y-1/2 rounded-full overflow-hidden">
-          <motion.div 
+    <div className="py-8 px-4">
+      <div className="relative flex justify-between items-center">
+        <div className="absolute top-5 left-0 right-0 h-[2px] bg-foreground/8">
+          <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${(currentIdx / (steps.length - 1)) * 100}%` }}
-            transition={{ duration: 1.5, ease: "circOut" }}
-            className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-emerald-500"
+            transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1], delay: 0.3 }}
+            className="h-full bg-foreground"
           />
         </div>
-
         {steps.map((step, i) => {
           const isCompleted = i < currentIdx;
           const isCurrent = i === currentIdx;
           const Icon = step.icon;
-
           return (
-            <div key={step.id} className="relative z-10 flex flex-col items-center">
+            <div key={step.id} className="relative z-10 flex flex-col items-center gap-2">
               <motion.div
-                initial={false}
-                animate={{
-                  scale: isCurrent ? 1.2 : 1,
-                  backgroundColor: isCompleted || isCurrent ? 'var(--tw-bg-opacity)' : 'rgba(241, 245, 249, 1)',
-                }}
-                className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg border-4 border-background transition-colors duration-500 ${isCompleted || isCurrent ? step.color : 'bg-foreground/[0.06] text-foreground/30'}`}
+                initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: i * 0.1 + 0.2, duration: 0.4, type: 'spring' }}
+                className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${isCompleted || isCurrent ? 'bg-foreground border-foreground' : 'bg-background border-foreground/15'}`}
               >
-                <Icon className={`w-5 h-5 ${isCompleted || isCurrent ? 'text-white' : 'text-foreground/30'}`} />
-                
-                {isCurrent && (
-                  <motion.div 
-                    layoutId="active-glow"
-                    className={`absolute inset-0 rounded-2xl blur-xl opacity-50 -z-10 ${step.color}`}
-                    animate={{ opacity: [0.3, 0.6, 0.3] }}
-                    transition={{ repeat: Infinity, duration: 2 }}
-                  />
-                )}
+                <Icon className={`w-4 h-4 ${isCompleted || isCurrent ? 'text-background' : 'text-foreground/25'}`} />
+                {isCurrent && <motion.div animate={{ scale: [1, 1.6, 1], opacity: [0.4, 0, 0.4] }} transition={{ repeat: Infinity, duration: 2 }} className="absolute inset-0 rounded-full bg-foreground" />}
               </motion.div>
-              
-              <div className="absolute top-14 whitespace-nowrap text-center">
-                <p className={`text-[10px] font-black uppercase tracking-widest ${isCurrent ? 'text-foreground' : 'text-foreground/30'}`}>
-                  {step.label}
-                </p>
-                {isCurrent && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex justify-center mt-1"
-                  >
-                    <div className="flex gap-1">
-                      {[1, 2, 3].map(dot => (
-                        <motion.div 
-                          key={dot}
-                          animate={{ opacity: [0.3, 1, 0.3] }}
-                          transition={{ repeat: Infinity, duration: 1, delay: dot * 0.2 }}
-                          className={`w-1 h-1 rounded-full ${step.color}`}
-                        />
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </div>
+              <p className={`text-[8px] font-black uppercase tracking-wider text-center whitespace-nowrap ${isCurrent ? 'text-foreground' : 'text-foreground/30'}`}>
+                {step.label}
+              </p>
             </div>
           );
         })}
@@ -348,182 +234,126 @@ export const OrderTracking = ({ order }: { order: Order }) => {
       if (shipment) {
         setTrackingNumber(shipment.tracking_number);
         setCarrier(shipment.carrier);
-        const { data: shipmentEvents } = await supabase.from('shipment_events').select('*').eq('shipment_id', shipment.id).order('occurred_at', { ascending: false });
-        if (shipmentEvents) {
-          setEvents(shipmentEvents);
-        }
+        const { data: evts } = await supabase.from('shipment_events').select('*').eq('shipment_id', shipment.id).order('occurred_at', { ascending: false });
+        if (evts) setEvents(evts);
       }
     };
     fetchTracking();
   }, [order.id]);
 
-  const getStepIndex = (status: OrderStatus) => {
-    if (status === 'pending' || status === 'placed') return 0;
-    if (status === 'processing' || status === 'confirmed' || status === 'paid') return 1;
-    if (status === 'ready_for_pickup' || status === 'shipped' || status === 'in_transit') return 2;
-    if (status === 'delivered') return 3;
-    return 0;
-  };
-
-  const currentIdx = getStepIndex(order.status as OrderStatus);
   const isCancelled = ['cancelled', 'refunded', 'failed'].includes(order.status);
-  
-  if (isCancelled) {
-    return (
-      <div className="p-6 bg-red-50 dark:bg-red-950/20 rounded-[2rem] border border-red-100 dark:border-red-900/30 flex items-center gap-4">
-        <div className="p-3 bg-red-100 dark:bg-red-900/50 rounded-full text-red-600"><Ban className="w-6 h-6"/></div>
-        <div>
-          <h4 className="font-black text-sm text-red-600 uppercase tracking-widest">Order {order.status}</h4>
-          <p className="text-[10px] font-bold text-red-400 uppercase mt-1">
-            {order.cancel_reason || order.reject_reason || "This transaction has been terminated."}
-          </p>
-        </div>
+  if (isCancelled) return (
+    <div className="p-5 bg-red-50 dark:bg-red-950/20 rounded-2xl border border-red-100 dark:border-red-900/30 flex items-center gap-4">
+      <div className="w-10 h-10 bg-red-100 dark:bg-red-900/40 rounded-full flex items-center justify-center"><Ban className="w-5 h-5 text-red-500" /></div>
+      <div>
+        <p className="text-[11px] font-black uppercase tracking-wider text-red-500">Order {order.status}</p>
+        <p className="text-[9px] text-red-400 font-bold mt-0.5">{order.cancel_reason || order.reject_reason || "Transaction terminated."}</p>
       </div>
-    );
-  }
-
-  const stepIcons = [
-    { id: 'pending', icon: Clock, label: 'Placed' },
-    { id: 'processing', icon: Package, label: 'Processing' },
-    { id: 'shipped', icon: Truck, label: 'En Route' },
-    { id: 'delivered', icon: Home, label: 'Delivered' }
-  ];
+    </div>
+  );
 
   return (
-    <div className="relative pt-2">
+    <div>
       <OrderProgressVisual status={order.status} />
-      
-      <div className="mt-12 space-y-4">
-        {events.length > 0 && (
-          <div className="bg-foreground/[0.03] rounded-3xl p-6 border border-foreground/8">
-            <h5 className="text-[10px] font-black uppercase tracking-widest text-foreground/40 mb-4">Live Updates</h5>
-            <div className="space-y-4">
-              {events.map((ev, idx) => (
-                <motion.div 
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: idx * 0.1 }}
-                  key={ev.id} 
-                  className="flex gap-4 relative"
-                >
-                  {idx !== events.length - 1 && <div className="absolute left-2 top-5 bottom-0 w-px bg-foreground/10" />}
-                  <div className={`w-4 h-4 rounded-full border-2 border-background shrink-0 z-10 ${idx === 0 ? 'bg-blue-500 animate-pulse' : 'bg-foreground/20'}`} />
-                  <div>
-                    <p className="text-xs font-bold text-foreground">{ev.status.replace(/_/g, ' ').toUpperCase()}</p>
-                    <p className="text-[10px] text-foreground/50 mt-0.5">{ev.notes}</p>
-                    <p className="text-[8px] font-mono opacity-40 mt-1">{new Date(ev.occurred_at).toLocaleString()}</p>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
+      {events.length > 0 && (
+        <div className="mt-6 bg-foreground/[0.03] rounded-2xl p-5 border border-foreground/8">
+          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/40 mb-4">Live Updates</p>
+          <div className="space-y-4">
+            {events.map((ev, idx) => (
+              <motion.div key={ev.id} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.08 }} className="flex gap-3 relative">
+                {idx !== events.length - 1 && <div className="absolute left-1.5 top-4 bottom-0 w-px bg-foreground/10" />}
+                <div className={`w-3 h-3 rounded-full flex-shrink-0 mt-1 z-10 ${idx === 0 ? 'bg-foreground animate-pulse' : 'bg-foreground/20'}`} />
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-wider text-foreground">{ev.status.replace(/_/g, ' ')}</p>
+                  {ev.notes && <p className="text-[9px] text-foreground/50 font-bold mt-0.5">{ev.notes}</p>}
+                  <p className="text-[8px] font-mono text-foreground/30 mt-1">{new Date(ev.occurred_at).toLocaleString()}</p>
+                </div>
+              </motion.div>
+            ))}
           </div>
-        )}
-
-        {(trackingNumber || carrier) && (
-          <div className="bg-foreground rounded-3xl p-6 text-background flex justify-between items-center">
-            <div>
-              <p className="text-[9px] font-black uppercase tracking-[0.2em] text-background/40 mb-1">Carrier Details</p>
-              <p className="font-bold text-sm">{carrier || 'Standard Delivery'}</p>
-            </div>
-            {trackingNumber && (
-              <div className="text-right">
-                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-background/40 mb-1">Tracking ID</p>
-                <p className="font-mono font-bold text-sm tracking-widest">{trackingNumber}</p>
-              </div>
-            )}
+        </div>
+      )}
+      {(trackingNumber || carrier) && (
+        <div className="mt-4 bg-foreground rounded-2xl p-5 flex justify-between items-center text-background">
+          <div>
+            <p className="text-[8px] font-black uppercase tracking-[0.2em] text-background/40 mb-1">Carrier</p>
+            <p className="font-black text-sm">{carrier || 'Standard Delivery'}</p>
           </div>
-        )}
-      </div>
+          {trackingNumber && (
+            <div className="text-right">
+              <p className="text-[8px] font-black uppercase tracking-[0.2em] text-background/40 mb-1">Tracking</p>
+              <p className="font-mono font-black text-sm tracking-widest">{trackingNumber}</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
 
-// ───────────────────────────────────────────────
-// PaymentInstructions (your original — unchanged)
-// ───────────────────────────────────────────────
-const PaymentInstructions = ({ method, seller }: { method: string, seller: VendorProfile }) => {
-  if (method === 'cash') {
-    return (
-      <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl text-xs text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/20">
-        <p className="font-bold">You've selected Cash on Delivery. Please have the exact amount ready for the driver.</p>
-      </div>
-    );
-  }
-
+// ─────────────────────────────────────────────
+// PaymentInstructions
+// ─────────────────────────────────────────────
+const PaymentInstructions = ({ method, seller }: { method: string; seller: VendorProfile }) => {
+  if (method === 'cash') return (
+    <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/15 rounded-xl border border-blue-100 dark:border-blue-900/30 text-[11px] text-blue-700 dark:text-blue-300 font-medium">
+      Have exact cash ready for the delivery driver.
+    </div>
+  );
   const getLipaNumber = () => {
     if (seller.lipa_namba) return { num: seller.lipa_namba, type: 'Lipa Namba' };
     if (seller.mobile_number) return { num: seller.mobile_number, type: seller.mobile_operator || 'Mobile' };
     return null;
   };
-
   const lipa = getLipaNumber();
-
   return (
-    <div className="mt-6 space-y-4 text-xs text-foreground/60">
-      <div className="flex items-center gap-2 font-bold text-foreground">
-        <HelpCircle className="w-4 h-4 text-foreground" />
-        <span>How to Pay</span>
-      </div>
+    <div className="mt-4 text-[11px] text-foreground/60 space-y-2">
+      <p className="font-black uppercase tracking-wider text-foreground/50 text-[9px]">How to Pay</p>
       {method === 'lipa_namba' && lipa && (
-        <ol className="list-decimal list-inside space-y-2 pl-2 font-medium bg-foreground/[0.05] p-4 rounded-2xl">
-          <li>Go to your mobile money menu (M-Pesa, Tigo Pesa, etc.).</li>
-          <li>Select "Pay Bills" or "Pay Merchant".</li>
-          <li>Enter Business/Till Number: <strong className="text-foreground font-mono">{lipa.num}</strong></li>
-          <li>Enter the amount for this seller.</li>
-          <li>Enter the Transaction ID you receive into the field above.</li>
+        <ol className="list-decimal list-inside space-y-1.5 pl-1 font-medium bg-foreground/[0.04] p-4 rounded-xl">
+          <li>Open mobile money (M-Pesa / Tigo / Airtel)</li>
+          <li>Select "Pay Bills" or "Pay Merchant"</li>
+          <li>Enter: <strong className="text-foreground font-mono">{lipa.num}</strong></li>
+          <li>Enter the amount shown above</li>
+          <li>Paste the Transaction ID below</li>
         </ol>
       )}
       {method === 'mobile_transfer' && seller.account_number && (
-        <ol className="list-decimal list-inside space-y-2 pl-2 font-medium bg-foreground/[0.05] p-4 rounded-2xl">
-          <li>Open your bank app or USSD menu.</li>
-          <li>Select "Bank Transfer".</li>
+        <ol className="list-decimal list-inside space-y-1.5 pl-1 font-medium bg-foreground/[0.04] p-4 rounded-xl">
+          <li>Open bank app or USSD</li>
+          <li>Select "Bank Transfer"</li>
           <li>Bank: <strong className="text-foreground">{seller.bank_name}</strong></li>
-          <li>Account Number: <strong className="text-foreground font-mono">{seller.account_number}</strong></li>
-          <li>Account Name: <strong className="text-foreground">{seller.bank_account_name}</strong></li>
-          <li>Enter the Transaction ID you receive into the field above.</li>
+          <li>Account: <strong className="text-foreground font-mono">{seller.account_number}</strong></li>
+          <li>Name: <strong className="text-foreground">{seller.bank_account_name}</strong></li>
+          <li>Paste Transaction ID below</li>
         </ol>
       )}
     </div>
   );
 };
 
-// ───────────────────────────────────────────────
-// Checkout Modal — full replaceable version
-// ───────────────────────────────────────────────
+// ─────────────────────────────────────────────
+// CheckoutModal
+// ─────────────────────────────────────────────
 interface CheckoutModalProps {
-  total: number;
-  subtotal: number;
-  vat: number;
-  discount: number;
+  total: number; subtotal: number; vat: number; discount: number;
   onClose: () => void;
-  onComplete: (details: { 
-    address: Address; 
-    paymentMethod: string; 
-    deliveryFee: number; 
-    note: string; 
-    paymentRef?: string;
-    isGift?: boolean;
-    giftMessage?: string;
-    deliveryDate?: string;
-    deliverySlot?: string;
-  }) => Promise<void>;
+  onComplete: (details: { address: Address; paymentMethod: string; deliveryFee: number; note: string; paymentRef?: string; isGift?: boolean; giftMessage?: string; deliveryDate?: string; deliverySlot?: string }) => Promise<void>;
 }
 
 export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, onClose, onComplete }: CheckoutModalProps) => {
   const { addresses, addAddress, cart } = useAppState();
   const { addToast } = useToast();
-  
+
   const [step, setStep] = useState<1 | 2>(1);
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
   const [isAddingAddr, setIsAddingAddr] = useState(false);
-  
   const [orderNote, setOrderNote] = useState('');
-  const [deliveryDate, setDeliveryDate] = useState<string>('');
-  const [deliverySlot, setDeliverySlot] = useState<string>('Standard');
+  const [deliveryDate, setDeliveryDate] = useState('');
+  const [deliverySlot, setDeliverySlot] = useState('Standard');
   const [isGift, setIsGift] = useState(false);
   const [giftMessage, setGiftMessage] = useState('');
-
-  const [paymentMethod, setPaymentMethod] = useState<'lipa_namba'|'mobile_transfer'|'cash'>('lipa_namba');
+  const [paymentMethod, setPaymentMethod] = useState<'lipa_namba' | 'mobile_transfer' | 'cash'>('lipa_namba');
   const [paymentRef, setPaymentRef] = useState('');
   const [senderPhone, setSenderPhone] = useState('');
   const [sellerDetails, setSellerDetails] = useState<VendorProfile[]>([]);
@@ -531,381 +361,466 @@ export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, on
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showMobileSummary, setShowMobileSummary] = useState(false);
 
-  useEffect(() => { 
-    if (addresses.length > 0 && !selectedAddress) { 
-      const def = addresses.find(a => a.is_default); 
-      setSelectedAddress(def || addresses[0]); 
-    } 
+  useEffect(() => {
+    if (addresses.length > 0 && !selectedAddress) {
+      setSelectedAddress(addresses.find(a => a.is_default) || addresses[0]);
+    }
   }, [addresses]);
 
   useEffect(() => {
-    const fetchSellerData = async () => {
-      const sellerIds = Array.from(new Set(cart.map(i => i.seller_id)));
-      if (sellerIds.length === 0) { setAreVendorsLoaded(true); return; }
-      
+    const fetchSellers = async () => {
+      const ids = Array.from(new Set(cart.map(i => i.seller_id)));
+      if (!ids.length) { setAreVendorsLoaded(true); return; }
       try {
-        const { data } = await supabase.from('vendor_profiles').select('*').in('seller_id', sellerIds);
+        const { data } = await supabase.from('vendor_profiles').select('*').in('seller_id', ids);
         if (data) setSellerDetails(data as VendorProfile[]);
-      } catch (err) { console.error(err); } 
+      } catch (e) { console.error(e); }
       finally { setAreVendorsLoaded(true); }
     };
-    fetchSellerData();
+    fetchSellers();
   }, [cart]);
 
-  const deliveryFeeTotal = useMemo((): number => {
-    const uniqueSellers = Array.from(new Set(cart.map(i => i.seller_id)));
-    return uniqueSellers.reduce<number>((acc, sid) => {
-      const seller = sellerDetails.find(s => s.seller_id === sid);
-      return acc + (Number(seller?.delivery_fee || 0));
-    }, 0);
+  const deliveryFeeTotal = useMemo(() => {
+    const uids = Array.from(new Set(cart.map(i => i.seller_id)));
+    return uids.reduce<number>((acc, sid) => acc + Number(sellerDetails.find(s => s.seller_id === sid)?.delivery_fee || 0), 0);
   }, [cart, sellerDetails]);
 
   const finalTotal = subtotal + vat + deliveryFeeTotal - discount;
 
   const groupedItems = useMemo(() => {
-    const groups: Record<string, CartItem[]> = {};
-    cart.forEach(item => {
-      if (!groups[item.seller_id]) groups[item.seller_id] = [];
-      groups[item.seller_id].push(item);
-    });
-    return groups;
+    const g: Record<string, CartItem[]> = {};
+    cart.forEach(item => { if (!g[item.seller_id]) g[item.seller_id] = []; g[item.seller_id].push(item); });
+    return g;
   }, [cart]);
 
-  const nextDays = useMemo(() => {
-    const days = [];
-    const today = new Date();
-    for(let i=1; i<=7; i++) {
-      const d = new Date(today);
-      d.setDate(today.getDate() + i);
-      days.push(d);
-    }
-    return days;
-  }, []);
+  const nextDays = useMemo(() => Array.from({ length: 7 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() + i + 1); return d; }), []);
 
   const handleComplete = async () => {
-    if (!selectedAddress) return addToast("Please select a delivery address", "error");
-    
+    if (!selectedAddress) return addToast("Select a delivery address", "error");
     if (paymentMethod === 'lipa_namba') {
-      if (!senderPhone || senderPhone.trim().length < 9) {
-        return addToast("Please enter a valid sender phone number", "error");
-      }
-      if (!paymentRef || paymentRef.trim().length < 4) {
-        return addToast("Please enter the transaction reference code", "error");
-      }
-    } else if (paymentMethod === 'mobile_transfer') {
-      if (!paymentRef || paymentRef.trim().length < 4) {
-        return addToast("Please enter the bank transfer reference", "error");
-      }
+      if (!senderPhone?.trim() || senderPhone.trim().length < 9) return addToast("Enter sender phone number", "error");
+      if (!paymentRef?.trim() || paymentRef.trim().length < 4) return addToast("Enter transaction reference", "error");
+    } else if (paymentMethod === 'mobile_transfer' && (!paymentRef?.trim() || paymentRef.trim().length < 4)) {
+      return addToast("Enter bank transfer reference", "error");
     }
-    
     setIsSubmitting(true);
     try {
       const methodLabel = paymentMethod === 'cash' ? 'Cash on Delivery' : paymentMethod === 'lipa_namba' ? 'Mobile Money' : 'Bank Transfer';
-      
       const finalRef = senderPhone ? `${paymentRef} (from: ${senderPhone})` : paymentRef;
-
-      await onComplete({ 
-        address: selectedAddress, 
-        paymentMethod: methodLabel, 
-        deliveryFee: deliveryFeeTotal, 
-        note: orderNote, 
-        paymentRef: finalRef,
-        isGift,
-        giftMessage,
-        deliveryDate: deliveryDate ? new Date(deliveryDate).toISOString() : undefined,
-        deliverySlot
-      });
-    } catch (err) { 
-      console.error(err);
-      addToast("Failed to process order", "error"); 
-    } finally { setIsSubmitting(false); }
+      await onComplete({ address: selectedAddress, paymentMethod: methodLabel, deliveryFee: deliveryFeeTotal, note: orderNote, paymentRef: finalRef, isGift, giftMessage, deliveryDate: deliveryDate ? new Date(deliveryDate).toISOString() : undefined, deliverySlot });
+    } catch { addToast("Failed to process order", "error"); }
+    finally { setIsSubmitting(false); }
   };
 
+  const canProceed = selectedAddress && (
+    step === 1 ||
+    paymentMethod === 'cash' ||
+    (paymentMethod === 'lipa_namba' && paymentRef.trim().length >= 4 && senderPhone.trim().length >= 9) ||
+    (paymentMethod === 'mobile_transfer' && paymentRef.trim().length >= 4)
+  );
+
   return (
-    <div className="fixed inset-0 z-[200] flex items-end md:items-center justify-center p-0 md:p-4 bg-black/75 backdrop-blur-xl animate-in fade-in">
-      <div className="relative w-full max-w-7xl h-[95dvh] md:h-[90vh] bg-background md:rounded-[2.5rem] rounded-t-[2rem] shadow-2xl overflow-hidden flex flex-col md:flex-row border border-foreground/8">
-        
-        {/* Mobile: Collapsible Order Summary */}
-        <div className="md:hidden border-b border-foreground/8 bg-background/90 backdrop-blur-md z-30">
-          <button 
-            onClick={() => setShowMobileSummary(!showMobileSummary)}
-            className="w-full p-4 flex justify-between items-center"
-          >
-            <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-foreground/50">
-              <ShoppingCart className="w-4 h-4" /> 
-              <span>{showMobileSummary ? 'Hide' : 'Show'} Order Summary</span>
-              {showMobileSummary ? <ChevronUp className="w-3 h-3"/> : <ChevronDown className="w-3 h-3"/>}
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[300] flex items-end md:items-center justify-center"
+        style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(10px)' }}
+      >
+        <motion.div
+          initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }}
+          transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+          className="relative w-full max-w-5xl bg-background overflow-hidden flex flex-col md:flex-row border border-foreground/10"
+          style={{
+            height: '95dvh',
+            borderRadius: 'clamp(16px, 3vw, 28px) clamp(16px, 3vw, 28px) 0 0',
+          }}
+        >
+          {/* ── MOBILE: Collapsible summary strip ── */}
+          <div className="md:hidden border-b border-foreground/8 bg-background z-30 flex-shrink-0">
+            <button
+              onClick={() => setShowMobileSummary(s => !s)}
+              className="w-full px-5 py-3.5 flex items-center justify-between"
+            >
+              <div className="flex items-center gap-2">
+                <ShoppingCart className="w-4 h-4 text-foreground/40" />
+                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/50">{cart.length} items</span>
+                {showMobileSummary ? <ChevronUp className="w-3 h-3 text-foreground/30" /> : <ChevronDown className="w-3 h-3 text-foreground/30" />}
+              </div>
+              <span className="text-base font-black text-foreground tracking-tight">{formatTZS(Math.round(finalTotal))}</span>
+            </button>
+
+            <AnimatePresence>
+              {showMobileSummary && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+                  className="overflow-hidden"
+                >
+                  <div className="px-5 pb-4 border-t border-foreground/8">
+                    <div className="py-3 space-y-3 max-h-[28vh] overflow-y-auto">
+                      {cart.map((item, i) => {
+                        const price = getEffectiveUnitPrice(item);
+                        return (
+                          <div key={i} className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="relative w-9 h-9 rounded-lg overflow-hidden bg-foreground/[0.05] flex-shrink-0">
+                                <img src={item.selectedVariant?.image_url || item.images?.[0]} className="w-full h-full object-cover" alt="" />
+                                <span className="absolute -top-0.5 -right-0.5 bg-foreground text-background text-[7px] font-black w-4 h-4 flex items-center justify-center rounded-full">{item.quantity}</span>
+                              </div>
+                              <span className="text-[10px] font-bold text-foreground/70 truncate">{item.name}</span>
+                            </div>
+                            <span className="text-[10px] font-black text-foreground flex-shrink-0">{formatTZS(price * item.quantity)}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="pt-3 border-t border-foreground/8 space-y-1.5">
+                      <div className="flex justify-between text-[9px] font-bold text-foreground/40 uppercase tracking-wider"><span>Subtotal</span><span>{formatTZS(subtotal)}</span></div>
+                      <div className="flex justify-between text-[9px] font-bold text-foreground/40 uppercase tracking-wider"><span>Delivery</span><span>{formatTZS(deliveryFeeTotal)}</span></div>
+                      {discount > 0 && <div className="flex justify-between text-[9px] font-black text-emerald-500 uppercase tracking-wider"><span>Discount</span><span>-{formatTZS(discount)}</span></div>}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* ── MAIN AREA ── */}
+          <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+            {/* Header */}
+            <div className="flex-shrink-0 px-5 md:px-8 py-4 md:py-5 border-b border-foreground/8 flex items-center justify-between bg-background">
+              <div>
+                <div className="flex items-center gap-2">
+                  {step === 2 && (
+                    <button onClick={() => setStep(1)} className="w-7 h-7 flex items-center justify-center rounded-full bg-foreground/[0.05] hover:bg-foreground/10 transition-colors mr-1">
+                      <ChevronLeft className="w-4 h-4 text-foreground" />
+                    </button>
+                  )}
+                  <h2 className="text-[13px] font-black uppercase tracking-[0.18em] text-foreground">
+                    {step === 1 ? 'Delivery' : 'Payment'}
+                  </h2>
+                </div>
+                {/* Progress dots */}
+                <div className="flex items-center gap-1.5 mt-2 ml-0.5">
+                  <div className="h-[3px] w-12 rounded-full bg-foreground" />
+                  <div className={`h-[3px] w-12 rounded-full transition-all duration-300 ${step === 2 ? 'bg-foreground' : 'bg-foreground/15'}`} />
+                  <span className="text-[8px] font-black uppercase tracking-[0.2em] text-foreground/30 ml-1">Step {step}/2</span>
+                </div>
+              </div>
+              <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full bg-foreground/[0.05] hover:bg-foreground/10 transition-colors flex-shrink-0">
+                <X className="w-4 h-4 text-foreground/50" />
+              </button>
             </div>
-            <span className="font-black text-lg font-display tracking-tight text-foreground">{formatTZS(Math.round(finalTotal))}</span>
-          </button>
-          {showMobileSummary && (
-            <div className="px-4 pb-4 animate-in slide-in-from-top-2 border-t border-foreground/8">
-              <div className="py-3 space-y-3 max-h-[25vh] overflow-y-auto no-scrollbar">
+
+            {/* Scrollable form */}
+            <div className="flex-1 overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
+              <div className="p-5 md:p-8 space-y-8">
+
+                {/* ── STEP 1: Delivery ── */}
+                <AnimatePresence mode="wait">
+                  {step === 1 && (
+                    <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
+
+                      {/* Address */}
+                      <section>
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground flex items-center gap-2">
+                            <MapPin className="w-3.5 h-3.5" /> Delivery Address
+                          </h3>
+                          {!isAddingAddr && (
+                            <button onClick={() => setIsAddingAddr(true)} className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.15em] text-foreground/40 hover:text-foreground transition-colors border border-foreground/12 rounded-lg px-3 py-1.5">
+                              <Plus className="w-3 h-3" /> Add New
+                            </button>
+                          )}
+                        </div>
+
+                        {isAddingAddr ? (
+                          <AddressForm onSave={async d => { await addAddress(d); setIsAddingAddr(false); }} onCancel={() => setIsAddingAddr(false)} />
+                        ) : (
+                          <div className="space-y-3">
+                            {addresses.length === 0 && (
+                              <div className="text-center py-10 border-2 border-dashed border-foreground/10 rounded-2xl">
+                                <MapPin className="w-8 h-8 mx-auto mb-3 text-foreground/20" />
+                                <p className="text-[10px] font-black uppercase tracking-wider text-foreground/30">No saved addresses</p>
+                                <button onClick={() => setIsAddingAddr(true)} className="mt-3 text-[9px] font-black uppercase tracking-wider text-foreground border-b border-foreground/30 pb-px">Add one now</button>
+                              </div>
+                            )}
+                            {addresses.map(addr => (
+                              <motion.div
+                                key={addr.id} onClick={() => setSelectedAddress(addr)}
+                                whileTap={{ scale: 0.99 }}
+                                className={`relative p-4 rounded-2xl border-2 cursor-pointer transition-all ${selectedAddress?.id === addr.id ? 'border-foreground bg-background shadow-lg' : 'border-foreground/8 bg-foreground/[0.02] hover:border-foreground/20'}`}
+                              >
+                                {selectedAddress?.id === addr.id && (
+                                  <div className="absolute top-0 right-0 w-8 h-8 bg-foreground flex items-center justify-center rounded-bl-xl rounded-tr-2xl">
+                                    <Check className="w-3.5 h-3.5 text-background" />
+                                  </div>
+                                )}
+                                <div className="flex items-center gap-3 mb-2">
+                                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${addr.label.toLowerCase().includes('home') ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-500' : 'bg-foreground/[0.06] text-foreground/40'}`}>
+                                    {addr.label.toLowerCase().includes('home') ? <Home className="w-4 h-4" /> : <MapPin className="w-4 h-4" />}
+                                  </div>
+                                  <span className="text-[10px] font-black uppercase tracking-[0.16em] text-foreground">{addr.label}</span>
+                                  {addr.is_default && <span className="text-[8px] font-black uppercase tracking-wider bg-foreground/8 text-foreground/40 px-2 py-0.5 rounded-full">Default</span>}
+                                </div>
+                                <p className="text-[12px] font-bold text-foreground ml-11 leading-tight">{addr.street}</p>
+                                <p className="text-[10px] text-foreground/40 font-bold uppercase tracking-wider ml-11 mt-0.5">{addr.city}{addr.postal_code ? ` • ${addr.postal_code}` : ''}</p>
+                                {addr.phone && <p className="text-[10px] text-foreground/40 font-bold ml-11 mt-0.5 font-mono">{addr.phone}</p>}
+                                {addr.landmark && <p className="text-[9px] text-foreground/30 ml-11 mt-1 flex items-center gap-1"><Navigation className="w-2.5 h-2.5" />{addr.landmark}</p>}
+                              </motion.div>
+                            ))}
+                          </div>
+                        )}
+                      </section>
+
+                      {/* Delivery Schedule */}
+                      <section>
+                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground mb-4 flex items-center gap-2">
+                          <Calendar className="w-3.5 h-3.5" /> Delivery Schedule
+                        </h3>
+                        <div className="bg-foreground/[0.03] border border-foreground/8 rounded-2xl p-4 space-y-4">
+                          {/* Date picker */}
+                          <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar -mx-1 px-1">
+                            {nextDays.map((d, i) => {
+                              const iso = d.toISOString().split('T')[0];
+                              const isSelected = deliveryDate === iso;
+                              return (
+                                <motion.button key={i} whileTap={{ scale: 0.95 }} onClick={() => setDeliveryDate(iso)}
+                                  className={`flex flex-col items-center min-w-[64px] h-[68px] rounded-xl border-2 transition-all flex-shrink-0 ${isSelected ? 'border-foreground bg-foreground text-background' : 'border-foreground/10 text-foreground/50 hover:border-foreground/25'}`}
+                                >
+                                  <span className="text-[8px] font-black uppercase tracking-wider mt-2">{d.toLocaleDateString('en-US', { weekday: 'short' })}</span>
+                                  <span className="text-xl font-black leading-tight">{d.getDate()}</span>
+                                  <span className="text-[7px] font-bold opacity-60">{d.toLocaleDateString('en-US', { month: 'short' })}</span>
+                                </motion.button>
+                              );
+                            })}
+                          </div>
+                          {/* Slot picker */}
+                          <div className="grid grid-cols-2 gap-2">
+                            {['Morning (8-12)', 'Afternoon (12-4)', 'Evening (4-8)', 'Standard'].map(slot => (
+                              <button key={slot} onClick={() => setDeliverySlot(slot)}
+                                className={`h-10 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all ${deliverySlot === slot ? 'bg-foreground text-background' : 'bg-foreground/[0.04] text-foreground/40 hover:bg-foreground/[0.08]'}`}
+                              >
+                                {slot}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </section>
+
+                      {/* Gift toggle */}
+                      <section>
+                        <button onClick={() => setIsGift(g => !g)} className="flex items-center gap-3 w-full">
+                          <div className={`w-10 h-6 rounded-full relative transition-colors ${isGift ? 'bg-foreground' : 'bg-foreground/15'}`}>
+                            <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-background shadow-sm transform transition-transform ${isGift ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                          </div>
+                          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground flex items-center gap-2">
+                            <Gift className="w-3.5 h-3.5 text-indigo-400" /> Send as Gift
+                          </span>
+                        </button>
+                        <AnimatePresence>
+                          {isGift && (
+                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden mt-4">
+                              <textarea
+                                placeholder="Write a gift message..."
+                                value={giftMessage}
+                                onChange={e => setGiftMessage(e.target.value)}
+                                className="w-full h-24 bg-foreground/[0.03] border border-foreground/10 rounded-xl p-4 text-sm font-medium text-foreground placeholder:text-foreground/30 outline-none focus:border-foreground/25 transition-all resize-none"
+                              />
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </section>
+                    </motion.div>
+                  )}
+
+                  {/* ── STEP 2: Payment ── */}
+                  {step === 2 && (
+                    <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
+
+                      {/* Payment method selector */}
+                      <section>
+                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground mb-4 flex items-center gap-2">
+                          <Wallet className="w-3.5 h-3.5" /> Payment Method
+                        </h3>
+                        <div className="grid grid-cols-3 gap-3">
+                          {[
+                            { id: 'lipa_namba', label: 'Mobile Money', icon: Smartphone, desc: 'M-Pesa · Tigo · Airtel' },
+                            { id: 'mobile_transfer', label: 'Bank Transfer', icon: Landmark, desc: 'Direct Bank' },
+                            { id: 'cash', label: 'Cash on Delivery', icon: Banknote, desc: 'Pay at Door' },
+                          ].map(m => (
+                            <motion.button key={m.id} whileTap={{ scale: 0.97 }} onClick={() => setPaymentMethod(m.id as any)}
+                              className={`relative flex flex-col items-center text-center p-4 rounded-2xl border-2 transition-all ${paymentMethod === m.id ? 'border-foreground bg-foreground/[0.04]' : 'border-foreground/8 hover:border-foreground/20'}`}
+                            >
+                              {paymentMethod === m.id && <div className="absolute top-2 right-2 w-4 h-4 bg-foreground rounded-full flex items-center justify-center"><Check className="w-2.5 h-2.5 text-background" /></div>}
+                              <m.icon className={`w-5 h-5 mb-2 ${paymentMethod === m.id ? 'text-foreground' : 'text-foreground/30'}`} />
+                              <p className={`text-[8px] font-black uppercase tracking-wider leading-tight ${paymentMethod === m.id ? 'text-foreground' : 'text-foreground/40'}`}>{m.label}</p>
+                            </motion.button>
+                          ))}
+                        </div>
+                      </section>
+
+                      {/* Payment details panel */}
+                      {paymentMethod !== 'cash' && (
+                        <section className="bg-foreground rounded-2xl overflow-hidden">
+                          <div className="p-5 md:p-6">
+                            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-background/40 mb-4">Payment Channels</p>
+                            <div className="space-y-3 mb-6">
+                              {(Object.entries(groupedItems) as [string, CartItem[]][]).map(([sid, items]) => {
+                                const seller = sellerDetails.find(s => s.seller_id === sid);
+                                const itemSum = items.reduce((acc, i) => acc + getEffectiveUnitPrice(i) * i.quantity, 0);
+                                const sellerTotal = itemSum + (seller?.delivery_fee || 0);
+                                let payName = seller?.store_name || 'Merchant';
+                                let payNumber = 'Contact Support';
+                                let payLabel = 'Account';
+                                if (paymentMethod === 'mobile_transfer') {
+                                  payName = seller?.bank_account_name || seller?.store_name || 'Merchant';
+                                  payNumber = seller?.account_number || 'Not Listed';
+                                  payLabel = seller?.bank_name || 'Bank';
+                                } else {
+                                  if (seller?.lipa_namba) { payNumber = seller.lipa_namba; payLabel = 'Lipa Namba'; }
+                                  else if (seller?.mobile_number) { payNumber = seller.mobile_number; payLabel = seller.mobile_operator || 'Mobile'; payName = seller.mobile_name || payName; }
+                                }
+                                return (
+                                  <div key={sid} className="bg-white/8 rounded-xl p-4 flex items-center justify-between gap-3">
+                                    <div className="min-w-0">
+                                      <p className="text-[8px] font-black uppercase tracking-wider text-background/40 mb-1">{payName} • {formatTZS(Math.round(sellerTotal))}</p>
+                                      <div className="flex items-center gap-2 flex-wrap">
+                                        <span className="text-[9px] font-bold bg-white/15 text-background px-2 py-0.5 rounded-md uppercase">{payLabel}</span>
+                                        <span className="font-mono font-black text-background text-sm tracking-wider">{payNumber}</span>
+                                      </div>
+                                    </div>
+                                    <button onClick={() => { navigator.clipboard.writeText(String(payNumber)); addToast("Copied!", "success"); }}
+                                      className="w-9 h-9 bg-white/10 hover:bg-white/20 rounded-xl flex items-center justify-center transition-colors flex-shrink-0"
+                                    >
+                                      <Copy className="w-4 h-4 text-background/70" />
+                                    </button>
+                                  </div>
+                                );
+                              })}
+                            </div>
+
+                            {/* Transaction entry */}
+                            <div className="space-y-3">
+                              <div className="relative">
+                                <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-background/30" />
+                                <input
+                                  placeholder="Sender Phone (optional)"
+                                  value={senderPhone}
+                                  onChange={e => setSenderPhone(e.target.value)}
+                                  className="w-full h-11 bg-black/25 border border-white/10 rounded-xl pl-11 text-[11px] font-mono font-bold text-white placeholder:text-white/25 outline-none focus:border-white/30 transition-all"
+                                />
+                              </div>
+                              <div className="relative">
+                                <Hash className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-background/30" />
+                                <input
+                                  placeholder="TRANSACTION ID"
+                                  value={paymentRef}
+                                  onChange={e => setPaymentRef(e.target.value.toUpperCase())}
+                                  className="w-full h-13 bg-black/25 border border-white/15 rounded-xl pl-11 text-[12px] font-mono font-black tracking-[0.18em] text-white placeholder:text-white/20 uppercase outline-none focus:border-white/40 transition-all"
+                                  style={{ height: '52px' }}
+                                />
+                              </div>
+                            </div>
+                            {sellerDetails.length === 1 && <PaymentInstructions method={paymentMethod} seller={sellerDetails[0]} />}
+                          </div>
+                        </section>
+                      )}
+
+                      {/* Note */}
+                      <section>
+                        <label className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/40 mb-2 block flex items-center gap-1.5">
+                          <MessageSquare className="w-3 h-3" /> Driver Note
+                        </label>
+                        <textarea
+                          placeholder="Gate code, specific directions, call before delivery..."
+                          value={orderNote}
+                          onChange={e => setOrderNote(e.target.value)}
+                          className="w-full h-20 bg-foreground/[0.04] border border-foreground/10 rounded-xl p-4 text-sm font-medium text-foreground placeholder:text-foreground/25 outline-none focus:border-foreground/25 transition-all resize-none"
+                        />
+                      </section>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Bottom spacer for action bar */}
+              <div className="h-24" />
+            </div>
+
+            {/* ── Action bar ── */}
+            <div
+              className="flex-shrink-0 bg-background border-t border-foreground/8 px-5 md:px-8 flex gap-3"
+              style={{ paddingTop: '12px', paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}
+            >
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                onClick={() => step === 1 ? setStep(2) : handleComplete()}
+                disabled={!canProceed || isSubmitting}
+                className="flex-1 h-13 rounded-xl bg-foreground text-background text-[10px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2 group disabled:opacity-50 transition-opacity"
+                style={{ height: '52px' }}
+              >
+                {isSubmitting ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : step === 1 ? (
+                  <>Continue to Payment <ArrowRight className="w-4 h-4 stroke-[2] group-hover:translate-x-0.5 transition-transform" /></>
+                ) : (
+                  <><Lock className="w-4 h-4 stroke-[2]" />Confirm Order • {formatTZS(Math.round(finalTotal))}</>
+                )}
+              </motion.button>
+            </div>
+          </div>
+
+          {/* ── DESKTOP: Receipt sidebar ── */}
+          <div className="hidden md:flex w-[340px] lg:w-[380px] bg-foreground/[0.025] border-l border-foreground/8 flex-col flex-shrink-0">
+            <div className="p-8 flex-1 overflow-y-auto">
+              <p className="text-[9px] font-black uppercase tracking-[0.22em] text-foreground/40 mb-6 flex items-center gap-2">
+                <Receipt className="w-3.5 h-3.5" /> Receipt Preview
+              </p>
+              <div className="space-y-4 mb-6">
                 {cart.map((item, i) => {
                   const price = getEffectiveUnitPrice(item);
                   return (
-                    <div key={i} className="flex justify-between items-start text-xs">
-                      <div className="flex items-center gap-3">
-                        <div className="relative w-10 h-10 bg-foreground/[0.06] rounded-lg overflow-hidden shrink-0">
-                          <img src={item.selectedVariant?.image_url || item.images?.[0]} className="w-full h-full object-cover" />
-                          <span className="absolute -top-1 -right-1 bg-foreground text-background text-[8px] px-1 rounded-bl-md font-bold">{item.quantity}</span>
-                        </div>
-                        <span className="font-bold text-foreground/70 w-32 truncate">{item.name}</span>
+                    <div key={i} className="flex gap-3 items-center group">
+                      <div className="w-12 h-12 rounded-xl overflow-hidden bg-foreground/[0.05] border border-foreground/8 flex-shrink-0 relative">
+                        <img src={item.selectedVariant?.image_url || item.images?.[0]} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="" />
+                        <span className="absolute bottom-0 right-0 bg-foreground text-background text-[7px] px-1 py-0.5 font-black rounded-tl-md">{item.quantity}</span>
                       </div>
-                      <span className="font-bold">{formatTZS(price * item.quantity)}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[10px] font-black uppercase tracking-tight truncate text-foreground">{item.name}</p>
+                        <p className="text-[9px] text-foreground/40 font-bold mt-0.5">{formatTZS(price * item.quantity)}</p>
+                      </div>
                     </div>
                   );
                 })}
               </div>
-              <div className="pt-3 border-t border-foreground/8 space-y-2">
-                <div className="flex justify-between text-[10px] text-foreground/50 uppercase font-bold"><span>Subtotal</span><span>{formatTZS(subtotal)}</span></div>
-                <div className="flex justify-between text-[10px] text-foreground/50 uppercase font-bold"><span>Delivery</span><span>{formatTZS(deliveryFeeTotal)}</span></div>
-                {discount > 0 && <div className="flex justify-between text-[10px] text-emerald-500 uppercase font-bold"><span>Discount</span><span>-{formatTZS(discount)}</span></div>}
-              </div>
             </div>
-          )}
-        </div>
 
-        {/* Main Content Area */}
-        <div className="flex-1 flex flex-col min-w-0 bg-background">
-          {/* Header */}
-          <div className="px-5 md:px-8 py-5 bg-background border-b border-foreground/8 flex justify-between items-center shrink-0">
-            <div>
-              <h2 className="text-lg md:text-2xl font-black uppercase font-display flex items-center gap-3 text-foreground tracking-tight">
-                <ShieldCheck className="w-6 h-6 md:w-7 md:h-7 text-foreground" /> 
-                {step === 1 ? 'Logistics' : 'Payment'}
-              </h2>
-              <div className="flex items-center gap-2 mt-1">
-                <div className={`h-1 w-8 rounded-full ${step >= 1 ? 'bg-foreground' : 'bg-foreground/15'}`}></div>
-                <div className={`h-1 w-8 rounded-full ${step >= 2 ? 'bg-foreground' : 'bg-foreground/15'}`}></div>
-                <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40 ml-2">Step {step}/2</span>
-              </div>
-            </div>
-            <button onClick={onClose} className="p-3 bg-foreground/[0.04] rounded-full hover:bg-foreground/[0.08] transition-colors"><X className="w-5 h-5 text-foreground/50" /></button>
-          </div>
-
-          {/* Scrollable Form */}
-          <div className="flex-1 overflow-y-auto p-5 md:p-10 space-y-8 md:space-y-12 no-scrollbar pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-            {step === 1 ? (
-              <div className="space-y-12 animate-in slide-in-from-right duration-300">
-                {/* Address Selection */}
-                <section>
-                  <div className="flex justify-between items-end mb-6">
-                    <h3 className="text-sm font-black uppercase tracking-widest text-foreground flex items-center gap-2"><MapPin className="w-4 h-4 text-foreground" /> Delivery Location</h3>
-                    {!isAddingAddr && <Button size="sm" variant="ghost" onClick={() => setIsAddingAddr(true)} className="h-9 px-4 text-[10px] font-black rounded-xl uppercase bg-background border border-foreground/10 hover:bg-foreground/[0.06] hover:text-foreground"><Plus className="w-3 h-3 mr-2"/> Add New</Button>}
-                  </div>
-                  {isAddingAddr ? <AddressForm onSave={async (d) => { await addAddress(d); setIsAddingAddr(false); }} onCancel={() => setIsAddingAddr(false)} /> : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {addresses.length === 0 && <div className="col-span-2 text-center py-10 text-foreground/40 text-xs font-bold uppercase border-2 border-dashed border-foreground/10 rounded-[2rem] bg-foreground/[0.02]">No saved locations found</div>}
-                      {addresses.map(addr => (
-                        <div key={addr.id} onClick={() => setSelectedAddress(addr)} className={`relative p-6 rounded-[2rem] border-2 cursor-pointer transition-all group overflow-hidden ${selectedAddress?.id === addr.id ? 'border-foreground bg-background shadow-xl' : 'border-transparent bg-foreground/[0.03] hover:border-foreground/20'}`}>
-                          {selectedAddress?.id === addr.id && <div className="absolute top-0 right-0 p-3 bg-foreground text-background rounded-bl-2xl shadow-lg"><Check className="w-4 h-4" /></div>}
-                          <div className="flex items-center gap-3 mb-3">
-                            <div className={`p-2 rounded-xl ${addr.label.toLowerCase().includes('home') ? 'bg-blue-100 text-blue-600' : 'bg-foreground/[0.08] text-foreground'}`}>
-                              {addr.label.toLowerCase().includes('home') ? <Home className="w-4 h-4"/> : <MapPin className="w-4 h-4"/>}
-                            </div>
-                            <span className="font-black uppercase text-xs tracking-wider">{addr.label}</span>
-                          </div>
-                          <p className="font-bold text-sm text-foreground mb-1 line-clamp-1">{addr.street}</p>
-                          <p className="text-[10px] text-foreground/50 uppercase font-bold tracking-wide">{addr.city} {addr.postal_code ? `• ${addr.postal_code}` : ''}</p>
-                          {addr.landmark && <p className="text-[10px] text-foreground/40 mt-2 flex items-center gap-1"><Navigation className="w-3 h-3"/> Near: {addr.landmark}</p>}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </section>
-
-                {/* Delivery Schedule */}
-                <section>
-                  <h3 className="text-sm font-black uppercase tracking-widest text-foreground mb-6 flex items-center gap-2"><Calendar className="w-4 h-4 text-foreground" /> Scheduling</h3>
-                  <div className="bg-foreground/[0.03] p-5 md:p-6 rounded-[2.5rem] border border-foreground/8">
-                    <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
-                      {nextDays.map((d, i) => {
-                        const isSelected = deliveryDate === d.toISOString().split('T')[0];
-                        return (
-                          <button key={i} onClick={() => setDeliveryDate(d.toISOString().split('T')[0])} className={`flex flex-col items-center justify-center min-w-[80px] h-20 rounded-2xl border-2 transition-all ${isSelected ? 'border-foreground bg-foreground/[0.05] text-foreground' : 'border-foreground/10 text-foreground/40 hover:border-foreground/30'}`}>
-                            <span className="text-[10px] font-black uppercase tracking-widest">{d.toLocaleDateString('en-US', { weekday: 'short' })}</span>
-                            <span className="text-xl font-bold">{d.getDate()}</span>
-                          </button>
-                        )
-                      })}
-                    </div>
-                    <div className="h-px bg-foreground/8 my-4"></div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                      {['Morning (8-12)', 'Afternoon (12-4)', 'Evening (4-8)', 'Standard'].map(slot => (
-                        <button key={slot} onClick={() => setDeliverySlot(slot)} className={`h-12 rounded-xl text-[10px] font-black uppercase transition-all ${deliverySlot === slot ? 'bg-foreground text-background shadow-lg' : 'bg-foreground/[0.04] text-foreground/50 hover:bg-foreground/[0.08]'}`}>{slot}</button>
-                      ))}
-                    </div>
-                  </div>
-                </section>
-
-                {/* Gifting */}
-                <section>
-                  <div className="flex items-center gap-4 mb-4 cursor-pointer" onClick={() => setIsGift(!isGift)}>
-                    <div className={`w-12 h-8 rounded-full p-1 transition-colors ${isGift ? 'bg-indigo-500' : 'bg-foreground/20'}`}>
-                      <div className={`w-6 h-6 bg-background rounded-full shadow-md transform transition-transform ${isGift ? 'translate-x-4' : 'translate-x-0'}`} />
-                    </div>
-                    <h3 className="text-sm font-black uppercase tracking-widest text-foreground flex items-center gap-2"><Gift className="w-4 h-4 text-indigo-500" /> Send as a Gift</h3>
-                  </div>
-                  {isGift && (
-                    <div className="animate-in slide-in-from-top-2 fade-in">
-                      <div className="relative">
-                        <PenLine className="absolute left-4 top-4 w-4 h-4 text-foreground/30" />
-                        <Textarea placeholder="Write a heartfelt message to accompany your package..." value={giftMessage || ''} onChange={(e: any) => setGiftMessage(e.target.value)} className="h-32 rounded-[2rem] bg-indigo-50/50 dark:bg-indigo-900/10 border-indigo-100 dark:border-indigo-500/20 pl-12 pt-4 text-sm font-medium" />
-                      </div>
-                    </div>
-                  )}
-                </section>
-              </div>
-            ) : (
-              <div className="space-y-10 animate-in slide-in-from-right duration-300">
-                <section>
-                  <h3 className="text-sm font-black uppercase tracking-widest text-foreground mb-6 flex items-center gap-2"><Wallet className="w-4 h-4 text-foreground" /> Select Payment Method</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {[
-                      { id: 'lipa_namba', label: 'Mobile Money', icon: Smartphone, desc: 'M-Pesa, Tigo, Airtel' },
-                      { id: 'mobile_transfer', label: 'Bank Transfer', icon: Landmark, desc: 'Direct Deposit' },
-                      { id: 'cash', label: 'Cash on Delivery', icon: Banknote, desc: 'Pay at Doorstep' }
-                    ].map(m => (
-                      <button key={m.id} onClick={() => setPaymentMethod(m.id as any)} className={`relative flex flex-col items-start p-6 rounded-[2.5rem] border-2 transition-all overflow-hidden group ${paymentMethod === m.id ? 'border-foreground bg-background shadow-xl' : 'border-transparent bg-foreground/[0.03] hover:border-foreground/20'}`}>
-                        {paymentMethod === m.id && <div className="absolute top-0 right-0 p-4 bg-foreground rounded-bl-[2rem] text-background"><Check className="w-4 h-4"/></div>}
-                        <div className={`p-4 rounded-2xl mb-4 transition-colors ${paymentMethod === m.id ? 'bg-foreground/[0.05] text-foreground' : 'bg-foreground/[0.06] text-foreground/40'}`}><m.icon className="w-6 h-6" /></div>
-                        <p className="font-black text-sm uppercase tracking-tight text-foreground">{m.label}</p>
-                        <p className="text-[10px] font-bold text-foreground/40 uppercase tracking-wider mt-1">{m.desc}</p>
-                      </button>
-                    ))}
-                  </div>
-                </section>
-
-                {paymentMethod !== 'cash' && (
-                  <div className="bg-foreground rounded-[3rem] p-8 text-background relative overflow-hidden shadow-2xl">
-                    <div className="absolute top-0 right-0 w-96 h-96 bg-background/5 blur-[100px] pointer-events-none rounded-full"></div>
-                    
-                    <div className="relative z-10 grid md:grid-cols-2 gap-10">
-                      <div className="space-y-6">
-                        <div className="flex items-center gap-2 mb-2"><Info className="w-4 h-4 text-background/60" /><p className="text-[10px] font-black uppercase tracking-widest text-background/40">Merchant Payment Channels</p></div>
-                        {(Object.entries(groupedItems) as [string, CartItem[]][]).map(([sid, items]) => {
-                          const seller = sellerDetails.find(s => s.seller_id === sid);
-                          const itemSum = items.reduce((acc, i) => acc + (getEffectiveUnitPrice(i) * i.quantity), 0);
-                          const sellerTotal = itemSum + (seller?.delivery_fee || 0);
-                          
-                          let payName = seller?.store_name || 'Merchant';
-                          let payNumber = 'Contact Support';
-                          let payLabel = 'Account';
-
-                          if (paymentMethod === 'mobile_transfer') {
-                            payName = seller?.bank_account_name || seller?.store_name || 'Merchant';
-                            payNumber = seller?.account_number || 'Not Listed';
-                            payLabel = seller?.bank_name || 'Bank';
-                          } else {
-                            if (seller?.lipa_namba) {
-                              payNumber = seller.lipa_namba;
-                              payLabel = "Lipa Namba";
-                            } else if (seller?.mobile_number) {
-                              payNumber = seller.mobile_number;
-                              payLabel = seller.mobile_operator || 'Mobile';
-                              payName = seller.mobile_name || payName;
-                            }
-                          }
-
-                          return (
-                            <div key={sid} className="bg-white/5 rounded-3xl p-5 border border-white/10 flex justify-between items-center group hover:bg-white/10 transition-colors">
-                              <div>
-                                <p className="text-[8px] font-black uppercase tracking-widest text-background/50 mb-1">{payName} • {formatTZS(Math.round(sellerTotal))}</p>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-md uppercase">{payLabel}</span>
-                                  <span className="font-mono font-bold text-lg tracking-widest">{payNumber}</span>
-                                </div>
-                              </div>
-                              <button onClick={() => { navigator.clipboard.writeText(String(payNumber)); addToast("Number Copied", "success"); }} className="p-3 bg-white/10 rounded-xl hover:bg-white/20 transition-colors"><Copy className="w-4 h-4" /></button>
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      <div className="bg-white/5 rounded-[2.5rem] p-6 border border-white/10 flex flex-col">
-                        <div>
-                          <Label className="text-foreground/40 mb-4 block">Transaction Verification</Label>
-                          <div className="space-y-4">
-                            <div className="relative">
-                              <Input placeholder="Your Phone Number (Optional)" value={senderPhone || ''} onChange={(e:any) => setSenderPhone(e.target.value)} className="h-12 bg-black/20 border-white/10 text-white placeholder:text-background/30 rounded-xl font-mono text-xs pl-12" />
-                              <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/30" />
-                            </div>
-                            <div className="relative">
-                              <Input placeholder="ENTER TRANSACTION ID" value={paymentRef || ''} onChange={(e:any) => setPaymentRef(e.target.value.toUpperCase())} className="h-14 bg-black/20 border-white/20 text-white placeholder:text-background/30 rounded-xl font-mono font-black tracking-[0.2em] text-center uppercase text-lg focus:border-white" />
-                              <Hash className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/30" />
-                            </div>
-                          </div>
-                        </div>
-                        {sellerDetails.length === 1 && <PaymentInstructions method={paymentMethod} seller={sellerDetails[0]} />}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <section>
-                  <Label className="text-xs font-black uppercase text-foreground/40 mb-3 block flex items-center gap-2"><MessageSquare className="w-3.5 h-3.5"/> Driver Instructions</Label>
-                  <Textarea placeholder="Gate code, specific directions, call upon arrival..." value={orderNote || ''} onChange={(e: any) => setOrderNote(e.target.value)} className="h-24 rounded-[2rem] p-6 bg-foreground/[0.04] border-none shadow-inner resize-none text-sm font-medium" />
-                </section>
-              </div>
-            )}
-          </div>
-
-          {/* Action Bar */}
-          <div className="p-5 md:p-8 bg-background border-t border-foreground/8 flex gap-4 shrink-0">
-            {step === 2 && <Button variant="ghost" onClick={() => setStep(1)} className="h-16 w-16 p-0 rounded-[1.5rem] bg-foreground/[0.05] hover:bg-foreground/[0.09]"><ChevronLeft className="w-6 h-6" /></Button>}
-            <Button 
-              variant="primary" 
-              className="flex-1 h-16 rounded-[1.5rem] shadow-2xl text-xs font-black uppercase tracking-[0.15em] flex items-center justify-center gap-3 group"
-              onClick={() => step === 1 ? setStep(2) : handleComplete()}
-              isLoading={isSubmitting}
-              disabled={
-                !selectedAddress || 
-                (step === 2 && paymentMethod === 'lipa_namba' && (!paymentRef.trim() || !senderPhone.trim())) ||
-                (step === 2 && paymentMethod === 'mobile_transfer' && !paymentRef.trim())
-              }
-            >
-              {step === 1 ? (
-                <>Continue to Payment <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" /></>
-              ) : (
-                <>Confirm Order • {formatTZS(Math.round(finalTotal))} <CheckCircle2 className="w-5 h-5" /></>
-              )}
-            </Button>
-          </div>
-        </div>
-
-        {/* Right Panel: Sticky Summary (Desktop) */}
-        <div className="hidden md:flex w-[400px] bg-foreground/[0.03] border-l border-foreground/8 flex-col p-10 shrink-0">
-          <h3 className="font-black text-xs uppercase tracking-widest text-foreground/40 mb-8 flex items-center gap-2"><Receipt className="w-4 h-4" /> Receipt Preview</h3>
-          <div className="flex-1 overflow-y-auto no-scrollbar space-y-6 mb-8 pr-2">
-            {cart.map((item, i) => {
-              const price = getEffectiveUnitPrice(item);
-              return (
-                <div key={i} className="flex gap-4 items-center group">
-                  <div className="w-14 h-14 bg-background rounded-2xl overflow-hidden border border-foreground/8 shrink-0 shadow-sm relative">
-                    <img src={item.selectedVariant?.image_url || item.images?.[0]} className="w-full h-full object-cover group-hover:scale-110 transition-transform" alt="" />
-                    <span className="absolute bottom-0 right-0 bg-foreground text-background text-[8px] px-1.5 py-0.5 rounded-tl-lg font-bold">{item.quantity}</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[11px] font-black uppercase truncate leading-tight text-foreground">{item.name}</p>
-                    <p className="text-[9px] text-foreground/40 font-bold mt-1 uppercase">{formatTZS(price * item.quantity)}</p>
-                  </div>
+            <div className="border-t border-foreground/8 p-8 space-y-3">
+              {[
+                { label: 'Subtotal', value: formatTZS(subtotal) },
+                { label: 'VAT (18%)', value: formatTZS(Math.round(vat)) },
+                { label: 'Delivery', value: areVendorsLoaded ? formatTZS(deliveryFeeTotal) : '...' },
+              ].map(row => (
+                <div key={row.label} className="flex justify-between text-[10px] font-bold text-foreground/40 uppercase tracking-wider">
+                  <span>{row.label}</span><span className="text-foreground/60">{row.value}</span>
                 </div>
-              );
-            })}
-          </div>
-          <div className="space-y-4 pt-8 border-t border-foreground/8">
-            <div className="flex justify-between text-[11px] font-bold text-foreground/50 uppercase"><span>Subtotal</span><span>{formatTZS(subtotal)}</span></div>
-            <div className="flex justify-between text-[11px] font-bold text-foreground/50 uppercase"><span>VAT (18%)</span><span>{formatTZS(Math.round(vat))}</span></div>
-            <div className="flex justify-between text-[11px] font-bold text-foreground/50 uppercase"><span>Delivery</span><span>{areVendorsLoaded ? formatTZS(deliveryFeeTotal) : <Loader2 className="w-3 h-3 animate-spin"/>}</span></div>
-            {discount > 0 && <div className="flex justify-between text-[11px] font-black text-emerald-500 uppercase"><span>Discount</span><span>-{formatTZS(discount)}</span></div>}
-            <div className="pt-6 border-t border-foreground/10 flex justify-between items-end">
-              <span className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground">Total Due</span>
-              <span className="text-3xl font-black font-display tracking-tighter text-foreground leading-none">{formatTZS(Math.round(finalTotal))}</span>
+              ))}
+              {discount > 0 && (
+                <div className="flex justify-between text-[10px] font-black text-emerald-500 uppercase tracking-wider">
+                  <span>Discount</span><span>-{formatTZS(discount)}</span>
+                </div>
+              )}
+              <div className="pt-4 border-t border-foreground/8 flex justify-between items-end">
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/60">Total Due</span>
+                <span className="text-2xl font-black tracking-tight text-foreground leading-none">{formatTZS(Math.round(finalTotal))}</span>
+              </div>
+              <div className="flex items-center gap-2 text-[8px] font-bold text-foreground/25 uppercase tracking-wider pt-2">
+                <Lock className="w-3 h-3" /> Encrypted & Secure
+              </div>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   );
 };

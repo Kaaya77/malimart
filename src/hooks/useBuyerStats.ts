@@ -22,7 +22,7 @@ export const useBuyerStats = () => {
                 // Fetch orders
                 const { data: orders, error: ordersError } = await supabase
                     .from('orders')
-                    .select('total, created_at, status, items:order_items(price_at_purchase, quantity, product:products(category))')
+                    .select('total, discount, created_at, status, items:order_items(price_at_purchase, quantity, product:products(category))')
                     .eq('user_id', user.id);
 
                 if (ordersError) throw ordersError;
@@ -64,12 +64,19 @@ export const useBuyerStats = () => {
                 });
 
                 const spendingHistory = Array.from(historyMap.entries()).map(([month, amount]) => ({ month, amount }));
+                // Calculate real savings from discount field on orders
+                let savings = 0;
+                orders?.forEach((order: any) => {
+                    if (order.status !== 'cancelled' && order.discount) {
+                        savings += Number(order.discount) || 0;
+                    }
+                });
                 const categoryDistribution = Array.from(categories.entries()).map(([name, value]) => ({ name, value }));
 
                 setStats({
                     totalSpent,
                     orderCount,
-                    savings: totalSpent * 0.05, // Mock savings for now or calculate from offers if available
+                    savings,
                     spendingHistory,
                     categoryDistribution,
                     isLoading: false

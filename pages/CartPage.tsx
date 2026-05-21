@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { motion } from 'framer-motion';
-import { 
-  ShoppingCart, Heart, Trash2, Minus, Plus, Store, ArrowRight, 
-  ShieldCheck, Tag, Info, CheckCircle2, Truck, AlertTriangle, 
-  Package, ExternalLink, Zap, Gift
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  ShoppingCart, Heart, Trash2, Minus, Plus, Store, ArrowRight,
+  ShieldCheck, Tag, Info, CheckCircle2, Truck, AlertTriangle,
+  Package, Zap, Gift, ChevronRight, X, Sparkles, Lock
 } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAppState } from '../context/AppContext';
@@ -14,49 +14,34 @@ import { CURRENCY, formatTZS, getEffectiveUnitPrice, calculateVatIncluded, norma
 import { Product, Offer, Address, CartItem } from '../types';
 import { supabase } from '../services/supabaseClient';
 
-
 export const CartPage = () => {
-  const { 
-    cart, removeFromCart, updateQuantity, placeOrder, user, 
+  const {
+    cart, removeFromCart, updateQuantity, placeOrder, user,
     refreshProducts, addToCart, toggleWishlist, wishlist, offers, getActiveOfferForProduct
   } = useAppState();
   const { addToast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [activeProduct, setActiveProduct] = useState<Product | null>(null);
   const [vendorMap, setVendorMap] = useState<Record<string, { name: string, fee: number, verified: boolean }>>({});
   const [loadingVendors, setLoadingVendors] = useState(true);
-  
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<Offer | null>(null);
   const [validatingCoupon, setValidatingCoupon] = useState(false);
+  const [couponFocused, setCouponFocused] = useState(false);
 
   useEffect(() => { refreshProducts(); }, []);
 
   useEffect(() => {
     const fetchVendors = async () => {
       const sellerIds = Array.from(new Set(cart.map(i => i.seller_id)));
-      if (sellerIds.length === 0) {
-        setLoadingVendors(false);
-        return;
-      }
-      
-      const { data } = await supabase
-        .from('vendor_profiles')
-        .select('seller_id, store_name, delivery_fee, is_verified')
-        .in('seller_id', sellerIds);
-        
+      if (!sellerIds.length) { setLoadingVendors(false); return; }
+      const { data } = await supabase.from('vendor_profiles').select('seller_id, store_name, delivery_fee, is_verified').in('seller_id', sellerIds);
       if (data) {
         const map: Record<string, any> = {};
-        data.forEach((v: any) => { 
-          map[v.seller_id] = { 
-            name: v.store_name, 
-            fee: Number(v.delivery_fee || 0),
-            verified: v.is_verified
-          }; 
-        });
+        data.forEach((v: any) => { map[v.seller_id] = { name: v.store_name, fee: Number(v.delivery_fee || 0), verified: v.is_verified }; });
         setVendorMap(map);
       }
       setLoadingVendors(false);
@@ -64,603 +49,453 @@ export const CartPage = () => {
     fetchVendors();
   }, [cart]);
 
-  // ───────────────────────────────────────────────
-  // Item price with auto-apply discount (non-BOGO)
-  // ───────────────────────────────────────────────
   const calculateItemPrice = (item: CartItem) => {
     const basePrice = getEffectiveUnitPrice(item);
     const activeOffer = getActiveOfferForProduct(item.id);
-    
-    if (activeOffer && activeOffer.is_auto_apply && activeOffer.campaign_type !== 'bogo') {
-      let discountedPrice = basePrice;
-      if (activeOffer.type === 'percentage') {
-        discountedPrice = basePrice - (basePrice * activeOffer.value / 100);
-      } else {
-        discountedPrice = Math.max(0, basePrice - activeOffer.value);
-      }
-      return { price: Math.round(discountedPrice), originalPrice: basePrice, offer: activeOffer };
+    if (activeOffer?.is_auto_apply && activeOffer.campaign_type !== 'bogo') {
+      let dp = basePrice;
+      if (activeOffer.type === 'percentage') dp = basePrice - (basePrice * activeOffer.value / 100);
+      else dp = Math.max(0, basePrice - activeOffer.value);
+      return { price: Math.round(dp), originalPrice: basePrice, offer: activeOffer };
     }
     return { price: basePrice, originalPrice: null, offer: null };
   };
 
-  // ───────────────────────────────────────────────
-  // Financial calculations
-  // ───────────────────────────────────────────────
-  const subtotal = cart.reduce((sum, item) => {
-    const { price } = calculateItemPrice(item);
-    return sum + (price * item.quantity);
-  }, 0);
-  
+  const subtotal = cart.reduce((sum, item) => sum + calculateItemPrice(item).price * item.quantity, 0);
   const totalVAT = cart.reduce((sum, item) => {
     const price = getEffectiveUnitPrice(item);
     const vatRate = normalizeVatRate(item.selectedVariant?.vat_rate ?? item.vat_rate ?? 0.18);
     return sum + (calculateVatIncluded(price, vatRate) * item.quantity);
   }, 0);
-
   const deliveryFeeTotal = Object.values(vendorMap).reduce((acc, v: any) => acc + (v.fee || 0), 0);
 
-  // ───────────────────────────────────────────────
-  // Upsell / BOGO prompts (your original logic, just safer)
-  // ───────────────────────────────────────────────
   const upsellOpportunity = useMemo(() => {
-    if (cart.length === 0) return null;
-
+    if (!cart.length) return null;
     for (const item of cart) {
-      const itemOffer = offers.find(o => 
-        o.campaign_type === 'bogo' && 
-        o.status === 'active' &&
-        (
-          (o.target_type === 'product' && o.target_ids?.includes(item.id)) || 
+      const itemOffer = offers.find(o =>
+        o.campaign_type === 'bogo' && o.status === 'active' &&
+        ((o.target_type === 'product' && o.target_ids?.includes(item.id)) ||
           (o.target_type === 'store' && o.seller_id === item.seller_id) ||
-          (o.target_type === 'category' && o.target_ids?.includes(item.category))
-        )
+          (o.target_type === 'category' && o.target_ids?.includes(item.category)))
       );
-
-      if (itemOffer && itemOffer.buy_quantity && itemOffer.get_quantity) {
+      if (itemOffer?.buy_quantity && itemOffer.get_quantity) {
         const cycle = itemOffer.buy_quantity + itemOffer.get_quantity;
-        const remainder = item.quantity % cycle;
-        if (remainder === itemOffer.buy_quantity) {
-          return {
-            type: 'bogo',
-            title: 'Free Item Unlocked!',
-            msg: `You qualify for ${itemOffer.get_quantity} FREE ${item.name}! Add to bag now.`,
-            action: () => updateQuantity(item.id, itemOffer.get_quantity!, item.variant_id),
-            icon: Gift
-          };
+        if (item.quantity % cycle === itemOffer.buy_quantity) {
+          return { type: 'bogo', title: 'Free Item Unlocked!', msg: `Add ${itemOffer.get_quantity} FREE ${item.name}`, action: () => updateQuantity(item.id, itemOffer.get_quantity!, item.variant_id), icon: Gift };
         }
       }
     }
-
-    const potentialCoupons = offers.filter(o => 
-      (o.target_type === 'store' || o.scope === 'platform') && 
-      o.min_order_value && 
-      o.min_order_value > subtotal &&
-      o.status === 'active'
-    );
-
-    if (potentialCoupons.length > 0) {
-      const best = potentialCoupons.sort((a,b) => (a.min_order_value! - subtotal) - (b.min_order_value! - subtotal))[0];
+    const potentialCoupons = offers.filter(o => (o.target_type === 'store' || o.scope === 'platform') && o.min_order_value && o.min_order_value > subtotal && o.status === 'active');
+    if (potentialCoupons.length) {
+      const best = potentialCoupons.sort((a, b) => (a.min_order_value! - subtotal) - (b.min_order_value! - subtotal))[0];
       const diff = best.min_order_value! - subtotal;
-      if (diff < 50000) {
-        return {
-          type: 'spend',
-          title: 'So Close!',
-          msg: `Add ${formatTZS(diff)} to unlock ${best.title} (${best.code})`,
-          action: () => navigate('/shop'),
-          icon: Zap
-        };
-      }
+      if (diff < 50000) return { type: 'spend', title: 'Almost There!', msg: `Add ${formatTZS(diff)} to unlock ${best.title}`, action: () => navigate('/shop'), icon: Zap };
     }
-
     return null;
   }, [cart, subtotal, offers, navigate, updateQuantity]);
 
-  // ───────────────────────────────────────────────
-  // Auto-apply BOGO discount
-  // ───────────────────────────────────────────────
   const autoApplyDiscount = useMemo(() => {
-    let totalDiscount = 0;
-    const processedItems = new Set<string>();
-
+    let total = 0;
+    const processed = new Set<string>();
     cart.forEach(item => {
-      if (processedItems.has(item.id)) return;
-      const activeOffer = getActiveOfferForProduct(item.id);
-      if (activeOffer && activeOffer.is_auto_apply && activeOffer.campaign_type === 'bogo' && activeOffer.buy_quantity && activeOffer.get_quantity) {
+      if (processed.has(item.id)) return;
+      const offer = getActiveOfferForProduct(item.id);
+      if (offer?.is_auto_apply && offer.campaign_type === 'bogo' && offer.buy_quantity && offer.get_quantity) {
         const { price } = calculateItemPrice(item);
-        const totalSets = Math.floor(item.quantity / (activeOffer.buy_quantity + activeOffer.get_quantity));
-        if (totalSets > 0) {
-          totalDiscount += (totalSets * activeOffer.get_quantity * price);
-        }
-        processedItems.add(item.id);
+        const sets = Math.floor(item.quantity / (offer.buy_quantity + offer.get_quantity));
+        if (sets > 0) total += sets * offer.get_quantity * price;
+        processed.add(item.id);
       }
     });
-    return totalDiscount;
+    return total;
   }, [cart, getActiveOfferForProduct]);
 
-  // ───────────────────────────────────────────────
-  // Manual coupon discount
-  // ───────────────────────────────────────────────
   const discountAmount = appliedCoupon ? (() => {
     if (appliedCoupon.min_order_value && subtotal < appliedCoupon.min_order_value) return 0;
-
-    if (appliedCoupon.campaign_type === 'shipping') {
-      return deliveryFeeTotal;
-    }
-
+    if (appliedCoupon.campaign_type === 'shipping') return deliveryFeeTotal;
     if (appliedCoupon.campaign_type === 'bogo' && appliedCoupon.buy_quantity && appliedCoupon.get_quantity) {
-      const targetItems = cart.filter(item => 
-        appliedCoupon.target_type === 'store' || 
-        (appliedCoupon.target_type === 'product' && appliedCoupon.target_ids?.includes(item.id)) ||
-        (appliedCoupon.target_type === 'category' && appliedCoupon.target_ids?.includes(item.category))
-      );
-      
-      let totalDiscount = 0;
-      targetItems.forEach(item => {
+      let d = 0;
+      cart.filter(item => appliedCoupon.target_type === 'store' || (appliedCoupon.target_type === 'product' && appliedCoupon.target_ids?.includes(item.id)) || (appliedCoupon.target_type === 'category' && appliedCoupon.target_ids?.includes(item.category))).forEach(item => {
         const { price } = calculateItemPrice(item);
-        const totalSets = Math.floor(item.quantity / (appliedCoupon.buy_quantity! + appliedCoupon.get_quantity!));
-        if (totalSets > 0) {
-          totalDiscount += (totalSets * appliedCoupon.get_quantity! * price);
-        }
+        const sets = Math.floor(item.quantity / (appliedCoupon.buy_quantity! + appliedCoupon.get_quantity!));
+        if (sets > 0) d += sets * appliedCoupon.get_quantity! * price;
       });
-      return totalDiscount;
+      return d;
     }
-
-    if (appliedCoupon.type === 'percentage') {
-      return Math.floor((subtotal * appliedCoupon.value) / 100);
-    } else if (appliedCoupon.type === 'fixed') { 
-      return appliedCoupon.value; 
-    }
+    if (appliedCoupon.type === 'percentage') return Math.floor((subtotal * appliedCoupon.value) / 100);
+    if (appliedCoupon.type === 'fixed') return appliedCoupon.value;
     return 0;
   })() : 0;
 
   const couponDiscountOnSubtotal = (appliedCoupon && appliedCoupon.campaign_type !== 'shipping') ? discountAmount : 0;
   const shippingFee = (appliedCoupon && appliedCoupon.campaign_type === 'shipping') ? 0 : Number(deliveryFeeTotal);
   const total = Math.max(0, subtotal + shippingFee - autoApplyDiscount - couponDiscountOnSubtotal);
-  const totalDiscountAmount = (() => {
-    const val = autoApplyDiscount + couponDiscountOnSubtotal + (Number(deliveryFeeTotal) - shippingFee);
-    console.log('totalDiscountAmount:', val, 'autoApplyDiscount:', autoApplyDiscount, 'couponDiscountOnSubtotal:', couponDiscountOnSubtotal, 'deliveryFeeTotal:', deliveryFeeTotal, 'shippingFee:', shippingFee);
-    return val;
-  })();
+  const totalDiscountAmount = autoApplyDiscount + couponDiscountOnSubtotal + (Number(deliveryFeeTotal) - shippingFee);
 
-  // ───────────────────────────────────────────────
-  // Group items by seller
-  // ───────────────────────────────────────────────
   const groupedItems = useMemo(() => {
     const groups: Record<string, CartItem[]> = {};
-    cart.forEach(item => {
-      const sid = item.seller_id;
-      if (!groups[sid]) groups[sid] = [];
-      groups[sid].push(item);
-    });
+    cart.forEach(item => { if (!groups[item.seller_id]) groups[item.seller_id] = []; groups[item.seller_id].push(item); });
     return groups;
   }, [cart]);
 
-  // ───────────────────────────────────────────────
-  // Coupon apply handler (your original + minor safety)
-  // ───────────────────────────────────────────────
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) return;
     setValidatingCoupon(true);
     try {
       const now = new Date().toISOString();
-      const { data, error } = await supabase
-        .from('offers')
-        .select('*')
-        .eq('code', couponCode.toUpperCase())
-        .eq('status', 'active')
-        .lte('start_date', now)
-        .or(`end_date.is.null,end_date.gte.${now}`)
-        .single();
-
+      const { data, error } = await supabase.from('offers').select('*').eq('code', couponCode.toUpperCase()).eq('status', 'active').lte('start_date', now).or(`end_date.is.null,end_date.gte.${now}`).single();
       if (error || !data) throw new Error("Invalid or expired coupon code.");
       const offer = data as Offer;
-      
       if (offer.min_order_value && subtotal < offer.min_order_value) throw new Error(`Order must exceed ${formatTZS(offer.min_order_value)}`);
       if (offer.max_usage && (offer.current_usage || 0) >= offer.max_usage) throw new Error("Coupon usage limit reached.");
-
       if (offer.campaign_type === 'bogo') {
-        const hasItems = cart.some(item => 
-          offer.target_type === 'store' || 
-          (offer.target_type === 'product' && offer.target_ids?.includes(item.id)) ||
-          (offer.target_type === 'category' && offer.target_ids?.includes(item.category))
-        );
-        if (!hasItems) throw new Error("Cart does not contain eligible items for this BOGO offer.");
+        const hasItems = cart.some(item => offer.target_type === 'store' || (offer.target_type === 'product' && offer.target_ids?.includes(item.id)) || (offer.target_type === 'category' && offer.target_ids?.includes(item.category)));
+        if (!hasItems) throw new Error("Cart does not contain eligible items.");
       }
-      
       setAppliedCoupon(offer);
       addToast(`Coupon ${offer.code} applied!`, "success");
-    } catch (e: any) {
-      setAppliedCoupon(null);
-      addToast(e.message, "error");
-    } finally {
-      setValidatingCoupon(false);
-    }
+    } catch (e: any) { setAppliedCoupon(null); addToast(e.message, "error"); }
+    finally { setValidatingCoupon(false); }
   };
 
   const handleCheckoutClick = () => {
-    if (!user) {
-      addToast("Please login to secure your order", "info");
-      navigate(`/login?redirect=${encodeURIComponent(location.pathname)}`);
-      return;
-    }
+    if (!user) { addToast("Please login to checkout", "info"); navigate(`/login?redirect=${encodeURIComponent(location.pathname)}`); return; }
     setIsCheckoutOpen(true);
   };
 
   const handleCompleteOrder = async (details: { address: Address, paymentMethod: string, deliveryFee: number, note: string, paymentRef?: string, isGift?: boolean, giftMessage?: string, deliveryDate?: string, deliverySlot?: string }) => {
     try {
-      const newOrder = await placeOrder({ 
-        ...details, 
-        vat: totalVAT, 
-        subtotal: subtotal, 
-        discount: totalDiscountAmount, 
-        coupon: appliedCoupon 
-      });
+      const newOrder = await placeOrder({ ...details, vat: totalVAT, subtotal, discount: totalDiscountAmount, coupon: appliedCoupon });
       setIsCheckoutOpen(false);
       navigate('/order-confirmation', { state: { order: newOrder } });
       addToast("Order placed successfully!", "success");
-    } catch (e: any) {
-      console.error(e);
-      addToast(e.message || "Failed to place order.", "error");
-    }
+    } catch (e: any) { addToast(e.message || "Failed to place order.", "error"); }
   };
 
-  // ───────────────────────────────────────────────
-  // Empty cart UI (your original)
-  // ───────────────────────────────────────────────
+  // ── Empty state ──
   if (cart.length === 0) {
     return (
-      <div className="container mx-auto px-6 py-20 text-center animate-in fade-in zoom-in-95 font-sans min-h-[80vh] flex flex-col items-center justify-center">
-        <div className="w-48 h-48 bg-foreground/[0.04] rounded-full flex items-center justify-center mb-8 relative group">
-          <ShoppingCart className="w-16 h-16 text-foreground/20 group-hover:text-foreground/60 transition-colors duration-500" />
-          <div className="absolute top-8 right-10 w-4 h-4 bg-foreground/15 rounded-full animate-bounce"></div>
-        </div>
-        <h2 className="text-4xl md:text-6xl font-black text-foreground mb-6 font-display tracking-tighter uppercase leading-none">Bag Empty</h2>
-        <p className="text-foreground/50 mb-12 max-w-md mx-auto font-medium text-base leading-relaxed">Your collection awaits. Discover authentic artifacts from Tanzania's finest creators.</p>
-        <Link to="/shop"><Button size="lg" variant="brand" className="px-12 h-16 rounded-full shadow-2xl shadow-brand-500/30 font-black uppercase tracking-widest text-xs hover:scale-105 transition-transform">Start Collecting</Button></Link>
+      <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center pt-20 pb-32">
+        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }}>
+          <div className="w-24 h-24 rounded-full border-2 border-foreground/10 flex items-center justify-center mx-auto mb-8">
+            <ShoppingCart className="w-10 h-10 stroke-[1] text-foreground/30" />
+          </div>
+          <h2 className="text-3xl font-black uppercase tracking-tight text-foreground mb-3">Bag Empty</h2>
+          <p className="text-foreground/40 text-sm font-medium mb-8 max-w-xs mx-auto leading-relaxed">Your bag is waiting. Discover products from Tanzania's finest vendors.</p>
+          <Link to="/shop">
+            <motion.button whileTap={{ scale: 0.97 }} className="h-12 px-8 bg-foreground text-background rounded-xl text-[10px] font-black uppercase tracking-[0.2em]">
+              Start Shopping
+            </motion.button>
+          </Link>
+        </motion.div>
       </div>
     );
   }
 
-  // ───────────────────────────────────────────────
-  // Main render
-  // ───────────────────────────────────────────────
   return (
-    <div className="container mx-auto px-4 md:px-6 py-6 font-sans pt-24 md:pt-36 pb-[calc(6rem+env(safe-area-inset-bottom))]">
-      <div className="flex flex-col lg:flex-row gap-8 lg:gap-16 relative">
-        
-        {/* LEFT COLUMN: Items Grouped by Vendor */}
-        <div className="flex-1 space-y-10">
-          <div className="flex justify-between items-end pb-6 border-b border-foreground/8">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-black text-foreground font-display uppercase tracking-tight">Shopping Bag</h1>
-              <p className="text-foreground/50 text-sm font-bold mt-1 uppercase tracking-wider">{cart.length} Products selected</p>
-            </div>
-          </div>
+    <div className="min-h-screen bg-background font-sans" style={{ paddingTop: 'max(80px, env(safe-area-inset-top) + 64px)' }}>
+      <div className="max-w-7xl mx-auto px-4 md:px-6 pb-32 md:pb-20">
 
-          {upsellOpportunity && (
-            <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl p-6 text-white shadow-xl shadow-indigo-500/20 flex items-center justify-between gap-4 animate-in slide-in-from-top-4">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-white/20 backdrop-blur-md rounded-full">
-                  <upsellOpportunity.icon className="w-6 h-6"/>
-                </div>
-                <div>
-                  <h4 className="font-black uppercase tracking-wide text-sm">{upsellOpportunity.title}</h4>
-                  <p className="text-xs font-medium opacity-90">{upsellOpportunity.msg}</p>
-                </div>
-              </div>
-              <button onClick={upsellOpportunity.action} className="px-5 py-2 bg-white text-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white/90 transition-colors shadow-sm whitespace-nowrap">
-                {upsellOpportunity.type === 'bogo' ? 'Add Now' : 'Shop Now'}
-              </button>
-            </div>
-          )}
+        {/* ── Page header ── */}
+        <div className="py-6 md:py-10 border-b border-foreground/8 mb-6 md:mb-10">
+          <h1 className="text-2xl md:text-4xl font-black uppercase tracking-tight text-foreground">Shopping Bag</h1>
+          <p className="text-foreground/40 text-[11px] uppercase tracking-[0.2em] font-bold mt-1">{cart.length} {cart.length === 1 ? 'item' : 'items'} selected</p>
+        </div>
 
-          <div className="space-y-12">
-            {(Object.entries(groupedItems) as [string, CartItem[]][]).map(([sellerId, items], vendorIndex) => {
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-12">
+
+          {/* ── LEFT: Items ── */}
+          <div className="flex-1 space-y-6">
+
+            {/* Upsell banner */}
+            <AnimatePresence>
+              {upsellOpportunity && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, height: 0 }}
+                  className="flex items-center gap-4 p-4 rounded-2xl border border-foreground/10 bg-foreground/[0.03]"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-foreground flex items-center justify-center flex-shrink-0">
+                    <upsellOpportunity.icon className="w-4 h-4 text-background" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] font-black uppercase tracking-[0.16em] text-foreground">{upsellOpportunity.title}</p>
+                    <p className="text-[9px] text-foreground/50 font-bold mt-0.5 truncate">{upsellOpportunity.msg}</p>
+                  </div>
+                  <button onClick={upsellOpportunity.action} className="flex-shrink-0 text-[9px] font-black uppercase tracking-[0.15em] text-foreground border-b border-foreground/30 hover:border-foreground pb-px transition-colors">
+                    {upsellOpportunity.type === 'bogo' ? 'Add' : 'Shop'}
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Vendor groups */}
+            {(Object.entries(groupedItems) as [string, CartItem[]][]).map(([sellerId, items], vi) => {
               const vendor = vendorMap[sellerId];
               return (
-                <motion.div 
-                  key={sellerId} 
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-50px" }}
-                  transition={{ duration: 0.6, delay: vendorIndex * 0.1, ease: [0.22, 1, 0.36, 1] }}
-                  className="space-y-4"
+                <motion.div
+                  key={sellerId}
+                  initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: vi * 0.06, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                 >
-                  <div className="flex items-center justify-between px-2">
-                    <Link to={`/store/${sellerId}`} className="flex items-center gap-2 text-foreground uppercase tracking-widest text-xs font-black hover:opacity-70 transition-colors">
-                      <Store className="w-4 h-4 text-brand-500" />
-                      <span>{vendor?.name || 'Loading Store...'}</span>
-                      {vendor?.verified && <CheckCircle2 className="w-3.5 h-3.5 text-blue-500" />}
+                  {/* Vendor header */}
+                  <div className="flex items-center justify-between px-1 mb-3">
+                    <Link to={`/store/${sellerId}`} className="flex items-center gap-2 text-foreground hover:opacity-70 transition-opacity">
+                      <Store className="w-3.5 h-3.5 text-foreground/40" />
+                      <span className="text-[10px] font-black uppercase tracking-[0.18em]">
+                        {loadingVendors ? '...' : (vendor?.name || 'Unknown Store')}
+                      </span>
+                      {vendor?.verified && <CheckCircle2 className="w-3 h-3 text-blue-500" />}
                     </Link>
-                    <Badge variant="outline" className="text-[9px] font-bold border-brand-200 text-brand-700 bg-brand-50 dark:bg-brand-900/10 dark:border-brand-900/50">
-                      Delivery: {formatTZS(vendor?.fee || 0)}
-                    </Badge>
+                    <div className="flex items-center gap-1.5 text-[9px] font-bold text-foreground/40">
+                      <Truck className="w-3 h-3" />
+                      {loadingVendors ? '...' : formatTZS(vendor?.fee || 0)} delivery
+                    </div>
                   </div>
-                  
-                  <motion.div 
-                    initial="hidden"
-                    whileInView="visible"
-                    viewport={{ once: true }}
-                    variants={{
-                      hidden: { opacity: 0 },
-                      visible: {
-                        opacity: 1,
-                        transition: { staggerChildren: 0.05 }
-                      }
-                    }}
-                    className="bg-background rounded-[2.5rem] border border-foreground/8 overflow-hidden shadow-sm divide-y divide-foreground/5"
-                  >
-                    {items.map((item, index) => {
+
+                  {/* Items card */}
+                  <div className="rounded-2xl border border-foreground/8 overflow-hidden divide-y divide-foreground/5 bg-background">
+                    {items.map((item, itemIdx) => {
                       const variant = item.selectedVariant;
                       const { price, originalPrice, offer } = calculateItemPrice(item);
                       const stock = variant?.stock ?? item.stock ?? 0;
-                      const isStockLow = stock > 0 && stock < 5;
+                      const isLowStock = stock > 0 && stock < 5;
                       const variantLabel = variant ? Object.values(variant.attributes ?? {}).join(' / ') : null;
                       const image = variant?.image_url || item.images?.[0] || 'https://via.placeholder.com/300';
-
-                      // Safe unique key — fixes duplicate key error
-                      const itemKey = variant?.id 
-                        ? `${item.id}-${variant.id}`
-                        : `${item.id}-no-variant`;
+                      const itemKey = variant?.id ? `${item.id}-${variant.id}` : `${item.id}-${itemIdx}`;
 
                       return (
-                        <motion.div 
-                          key={`${itemKey}-${index}`}
-                          variants={{
-                            hidden: { opacity: 0, x: -10 },
-                            visible: { opacity: 1, x: 0, transition: { duration: 0.4 } }
-                          }}
-                          className="flex flex-col sm:flex-row gap-6 p-6 group hover:bg-foreground/[0.02] transition-colors relative"
-                        >
+                        <div key={itemKey} className="flex gap-4 p-4 md:p-5 group hover:bg-foreground/[0.015] transition-colors">
                           {/* Image */}
-                          <div 
-                            className="w-full sm:w-32 aspect-square rounded-[1.5rem] overflow-hidden bg-foreground/[0.06] shrink-0 border border-foreground/10 relative cursor-pointer group/img" 
+                          <div
+                            className="w-20 h-24 md:w-24 md:h-28 rounded-xl overflow-hidden bg-foreground/[0.04] flex-shrink-0 border border-foreground/8 relative cursor-pointer"
                             onClick={() => setActiveProduct(item)}
                           >
-                            <img 
-                              src={image} 
-                              alt={item.name} 
-                              className="w-full h-full object-cover group-hover/img:scale-110 transition-transform duration-700" 
-                            />
-                            {isStockLow && (
-                              <div className="absolute bottom-0 left-0 right-0 bg-red-500 text-white text-[7px] font-black uppercase text-center py-1">
-                                Low Stock
+                            <img src={image} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                            {isLowStock && (
+                              <div className="absolute bottom-0 left-0 right-0 bg-amber-500 text-white text-[7px] font-black uppercase text-center py-0.5">
+                                {stock} left
+                              </div>
+                            )}
+                            {offer && (
+                              <div className="absolute top-1.5 left-1.5 bg-foreground text-background text-[7px] font-black uppercase px-1.5 py-0.5 rounded-md">
+                                DEAL
                               </div>
                             )}
                           </div>
-                          
+
                           {/* Details */}
-                          <div className="flex-1 flex flex-col justify-between min-w-0 py-1">
-                            <div className="space-y-2">
-                              <div className="flex justify-between items-start">
-                                <h3 
-                                  className="font-bold text-sm sm:text-base text-foreground leading-tight truncate pr-4 cursor-pointer hover:text-brand-600 transition-colors uppercase" 
-                                  onClick={() => setActiveProduct(item)}
-                                >
-                                  {item.name}
-                                </h3>
-                                <div className="text-right">
-                                  <p className="font-black text-sm sm:text-base whitespace-nowrap">{formatTZS(price)}</p>
-                                  {originalPrice && originalPrice > price && (
-                                    <p className="text-[10px] text-foreground/40 line-through">
-                                      {formatTZS(originalPrice)}
-                                    </p>
-                                  )}
+                          <div className="flex-1 flex flex-col justify-between min-w-0">
+                            <div>
+                              <div className="flex items-start justify-between gap-2">
+                                <button onClick={() => setActiveProduct(item)} className="text-left">
+                                  <h3 className="font-black text-[13px] md:text-sm text-foreground uppercase tracking-tight line-clamp-2 leading-tight hover:opacity-70 transition-opacity">
+                                    {item.name}
+                                  </h3>
+                                </button>
+                                <div className="flex-shrink-0 flex items-center gap-1">
+                                  <div className="text-right">
+                                    <p className="font-black text-[13px] md:text-sm text-foreground whitespace-nowrap">{formatTZS(price)}</p>
+                                    {originalPrice && originalPrice > price && (
+                                      <p className="text-[9px] text-foreground/30 line-through">{formatTZS(originalPrice)}</p>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
-                              
-                              <div className="flex flex-wrap gap-2">
-                                <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-wider bg-foreground/[0.06] text-foreground/50">
-                                  {item.category}
-                                </Badge>
-                                {variantLabel && (
-                                  <Badge variant="outline" className="text-[10px] font-bold uppercase tracking-wider border-foreground/10">
-                                    {variantLabel}
-                                  </Badge>
-                                )}
-                                {offer && (
-                                  <Badge className={`${offer.campaign_type === 'bogo' ? 'bg-indigo-600' : 'bg-red-500'} text-white border-none text-[10px] font-black uppercase tracking-widest flex items-center gap-1`}>
-                                    {offer.campaign_type === 'bogo' ? <Gift className="w-3 h-3"/> : <Zap className="w-3 h-3 fill-current"/>}
-                                    {offer.title}
-                                  </Badge>
+                              <div className="flex flex-wrap gap-1.5 mt-2">
+                                {(variantLabel || item.category) && (
+                                  <span className="text-[8px] font-black uppercase tracking-[0.15em] text-foreground/40 bg-foreground/[0.05] px-2 py-0.5 rounded-md">
+                                    {variantLabel || item.category}
+                                  </span>
                                 )}
                               </div>
                             </div>
 
-                            <div className="flex justify-between items-end mt-6">
-                              <div className="flex items-center gap-1 bg-foreground/[0.05] p-1 rounded-xl border border-foreground/8">
-                                <button 
-                                  onClick={() => updateQuantity(item.id, -1, variant?.id)} 
-                                  disabled={item.quantity <= 1} 
-                                  className="w-11 h-11 rounded-lg flex items-center justify-center bg-background shadow-sm hover:scale-95 transition-all disabled:opacity-50 text-foreground/60"
-                                  aria-label="Decrease quantity"
-                                >
-                                  <Minus className="w-4 h-4"/>
+                            {/* Actions row */}
+                            <div className="flex items-end justify-between mt-3 gap-2">
+                              {/* Stepper */}
+                              <div className="flex items-center border border-foreground/12 rounded-lg overflow-hidden">
+                                <button onClick={() => updateQuantity(item.id, -1, variant?.id)} disabled={item.quantity <= 1} className="w-9 h-9 flex items-center justify-center text-foreground/50 hover:bg-foreground/[0.06] disabled:opacity-30 transition-colors" aria-label="Decrease">
+                                  <Minus className="w-3 h-3 stroke-[2]" />
                                 </button>
-                                <span className="text-sm font-black w-10 text-center tabular-nums">{item.quantity}</span>
-                                <button 
-                                  onClick={() => updateQuantity(item.id, 1, variant?.id)} 
-                                  disabled={item.quantity >= stock}
-                                  className="w-11 h-11 rounded-lg flex items-center justify-center bg-background shadow-sm hover:scale-95 transition-all text-foreground"
-                                  aria-label="Increase quantity"
-                                >
-                                  <Plus className="w-4 h-4"/>
+                                <span className="w-8 text-center text-[11px] font-black text-foreground select-none">{item.quantity}</span>
+                                <button onClick={() => updateQuantity(item.id, 1, variant?.id)} disabled={item.quantity >= stock} className="w-9 h-9 flex items-center justify-center text-foreground hover:bg-foreground/[0.06] disabled:opacity-30 transition-colors" aria-label="Increase">
+                                  <Plus className="w-3 h-3 stroke-[2]" />
                                 </button>
                               </div>
-                              
-                              <div className="flex items-center gap-4">
-                                <div className="text-right">
-                                  <p className="text-[10px] font-bold uppercase text-foreground/40">Total</p>
-                                  <p className="text-sm font-black text-foreground">{formatTZS(price * item.quantity)}</p>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <button 
-                                    onClick={() => {
-                                      toggleWishlist(item);
-                                      removeFromCart(item.id, variant?.id);
-                                      addToast("Moved to wishlist", "success");
-                                    }}
-                                    className="w-11 h-11 flex items-center justify-center text-foreground/25 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all"
-                                    title="Save for later"
-                                    aria-label="Save for later"
-                                  >
-                                    <Heart className="w-5 h-5"/>
-                                  </button>
-                                  <button 
-                                    onClick={() => removeFromCart(item.id, variant?.id)} 
-                                    className="w-11 h-11 flex items-center justify-center text-foreground/25 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all"
-                                    title="Remove"
-                                    aria-label="Remove item"
-                                  >
-                                    <Trash2 className="w-5 h-5"/>
-                                  </button>
-                                </div>
+
+                              {/* Right actions */}
+                              <div className="flex items-center gap-1">
+                                <p className="text-[10px] font-black text-foreground/40 mr-2 hidden sm:block">{formatTZS(price * item.quantity)}</p>
+                                <button
+                                  onClick={() => { toggleWishlist(item); removeFromCart(item.id, variant?.id); addToast("Saved for later", "success"); }}
+                                  className="w-9 h-9 flex items-center justify-center rounded-lg text-foreground/25 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-all"
+                                  aria-label="Save for later"
+                                >
+                                  <Heart className="w-4 h-4 stroke-[1.5]" />
+                                </button>
+                                <button
+                                  onClick={() => removeFromCart(item.id, variant?.id)}
+                                  className="w-9 h-9 flex items-center justify-center rounded-lg text-foreground/25 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+                                  aria-label="Remove"
+                                >
+                                  <Trash2 className="w-4 h-4 stroke-[1.5]" />
+                                </button>
                               </div>
                             </div>
                           </div>
-                        </motion.div>
+                        </div>
                       );
                     })}
-                  </motion.div>
+                  </div>
                 </motion.div>
               );
             })}
           </div>
-        </div>
 
-        {/* RIGHT COLUMN: Summary */}
-        <motion.div 
-          initial={{ opacity: 0, x: 20 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true, margin: "-50px" }}
-          transition={{ duration: 0.6 }}
-          className="lg:w-[420px] shrink-0 relative"
-        >
-          <div className="space-y-6 lg:sticky lg:top-32">
-            <Card className="p-6 md:p-8 rounded-[3rem] bg-background border border-foreground/8 shadow-2xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-brand-500/5 blur-[80px] rounded-full pointer-events-none"></div>
-              
-              <h3 className="font-black text-lg mb-8 uppercase tracking-tight flex items-center gap-3">
-                <ShieldCheck className="w-5 h-5 text-brand-500" /> Order Summary
-              </h3>
-              
-              <div className="space-y-4 mb-8">
-                <div className="flex justify-between text-xs font-bold text-foreground/50 uppercase tracking-wide">
-                  <span>Subtotal</span>
-                  <span className="text-foreground">{formatTZS(subtotal)}</span>
-                </div>
-                <div className="flex justify-between text-xs font-bold text-foreground/50 uppercase tracking-wide">
-                  <span className="flex items-center gap-1">VAT Included <Info className="w-3 h-3"/></span>
-                  <span className="text-foreground">{formatTZS(Math.round(totalVAT))}</span>
-                </div>
-                <div className="flex justify-between text-xs font-bold text-foreground/50 uppercase tracking-wide">
-                  <span>Est. Delivery</span>
-                  <span className="text-foreground">{formatTZS(Number(deliveryFeeTotal))}</span>
-                </div>
-                
-                {autoApplyDiscount > 0 && (
-                  <div className="flex justify-between text-xs font-black text-emerald-500 uppercase tracking-wide bg-emerald-50 dark:bg-emerald-900/20 p-2 rounded-lg">
-                    <span>Auto-applied Savings</span>
-                    <span>-{formatTZS(autoApplyDiscount)}</span>
-                  </div>
-                )}
-                {couponDiscountOnSubtotal > 0 && (
-                  <div className="flex justify-between text-xs font-black text-emerald-500 uppercase tracking-wide bg-emerald-50 dark:bg-emerald-900/20 p-2 rounded-lg">
-                    <span>Coupon '{appliedCoupon?.code}'</span>
-                    <span>-{formatTZS(couponDiscountOnSubtotal)}</span>
-                  </div>
-                )}
-                {Number(deliveryFeeTotal) > shippingFee && (
-                  <div className="flex justify-between text-xs font-black text-emerald-500 uppercase tracking-wide bg-emerald-50 dark:bg-emerald-900/20 p-2 rounded-lg">
-                    <span>Free Shipping</span>
-                    <span>-{formatTZS(Number(deliveryFeeTotal) - shippingFee)}</span>
-                  </div>
-                )}
-                
-                <div className="h-px bg-foreground/8 my-4"></div>
-                
-                <div className="flex justify-between items-end">
-                  <span className="font-black text-sm uppercase text-foreground tracking-widest">Total Pay</span>
-                  <div className="text-right">
-                    <span className="font-black text-3xl md:text-5xl tracking-tighter text-foreground block leading-[0.9] font-display">
-                      {formatTZS(Math.round(total))}
-                    </span>
-                    <span className="text-[9px] font-bold text-foreground/40 uppercase tracking-widest">Inclusive of all taxes</span>
-                  </div>
-                </div>
-              </div>
+          {/* ── RIGHT: Summary ── */}
+          <div className="lg:w-[380px] xl:w-[420px] shrink-0">
+            <div className="lg:sticky lg:top-24 space-y-4">
 
-              {/* Coupon Input */}
-              <div className="mb-8">
-                <Label className="mb-2 ml-1">Promo Code</Label>
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <Tag className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/30" />
-                    <Input 
-                      placeholder="ENTER CODE" 
-                      value={couponCode} 
-                      onChange={(e: any) => setCouponCode(e.target.value)} 
-                      className="h-12 bg-foreground/[0.04] border-none rounded-2xl text-xs font-black uppercase tracking-widest pl-10" 
-                      disabled={!!appliedCoupon} 
+              {/* Summary card */}
+              <div className="rounded-2xl border border-foreground/10 bg-background overflow-hidden">
+                <div className="p-5 border-b border-foreground/8">
+                  <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4" /> Order Summary
+                  </h3>
+                </div>
+
+                <div className="p-5 space-y-3">
+                  <div className="flex justify-between text-[11px] font-bold text-foreground/50">
+                    <span className="uppercase tracking-wider">Subtotal ({cart.length} items)</span>
+                    <span className="text-foreground font-black">{formatTZS(subtotal)}</span>
+                  </div>
+                  <div className="flex justify-between text-[11px] font-bold text-foreground/50">
+                    <span className="uppercase tracking-wider flex items-center gap-1">VAT <Info className="w-3 h-3" /></span>
+                    <span className="text-foreground/60">{formatTZS(Math.round(totalVAT))}</span>
+                  </div>
+                  <div className="flex justify-between text-[11px] font-bold text-foreground/50">
+                    <span className="uppercase tracking-wider">Delivery</span>
+                    <span className="text-foreground/60">{loadingVendors ? '...' : formatTZS(deliveryFeeTotal)}</span>
+                  </div>
+
+                  {autoApplyDiscount > 0 && (
+                    <div className="flex justify-between text-[11px] font-black text-emerald-500 bg-emerald-50 dark:bg-emerald-900/15 px-2.5 py-2 rounded-lg">
+                      <span className="uppercase tracking-wider">Auto Savings</span>
+                      <span>-{formatTZS(autoApplyDiscount)}</span>
+                    </div>
+                  )}
+                  {couponDiscountOnSubtotal > 0 && (
+                    <div className="flex justify-between text-[11px] font-black text-emerald-500 bg-emerald-50 dark:bg-emerald-900/15 px-2.5 py-2 rounded-lg">
+                      <span className="uppercase tracking-wider">"{appliedCoupon?.code}"</span>
+                      <span>-{formatTZS(couponDiscountOnSubtotal)}</span>
+                    </div>
+                  )}
+
+                  <div className="border-t border-foreground/8 pt-3 flex justify-between items-end">
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/50">Total Pay</span>
+                    <div className="text-right">
+                      <p className="text-2xl md:text-3xl font-black tracking-tight text-foreground leading-none">{formatTZS(Math.round(total))}</p>
+                      <p className="text-[8px] font-bold text-foreground/30 uppercase tracking-wider mt-0.5">All taxes included</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Coupon */}
+                <div className="px-5 pb-5">
+                  <div className={`flex gap-2 border rounded-xl overflow-hidden transition-all ${couponFocused ? 'border-foreground/40' : 'border-foreground/12'}`}>
+                    <div className="flex items-center pl-4">
+                      <Tag className="w-3.5 h-3.5 text-foreground/30" />
+                    </div>
+                    <input
+                      placeholder="PROMO CODE"
+                      value={couponCode}
+                      onChange={e => setCouponCode(e.target.value)}
+                      onFocus={() => setCouponFocused(true)}
+                      onBlur={() => setCouponFocused(false)}
+                      onKeyDown={e => e.key === 'Enter' && handleApplyCoupon()}
+                      disabled={!!appliedCoupon}
+                      className="flex-1 h-11 bg-transparent text-[11px] font-black uppercase tracking-[0.15em] outline-none text-foreground placeholder:text-foreground/25 disabled:opacity-50 min-w-0"
                     />
+                    {appliedCoupon ? (
+                      <button onClick={() => setAppliedCoupon(null)} className="h-11 px-4 text-[9px] font-black uppercase text-foreground/40 hover:text-red-500 transition-colors flex-shrink-0">
+                        <X className="w-4 h-4" />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={handleApplyCoupon}
+                        disabled={!couponCode.trim() || validatingCoupon}
+                        className="h-11 px-4 bg-foreground text-background text-[9px] font-black uppercase tracking-[0.12em] flex-shrink-0 disabled:opacity-30 transition-opacity"
+                      >
+                        {validatingCoupon ? '...' : 'Apply'}
+                      </button>
+                    )}
                   </div>
-                  <Button 
-                    className="h-12 w-12 p-0 rounded-2xl bg-foreground text-background shadow-lg" 
-                    onClick={handleApplyCoupon} 
-                    disabled={!!appliedCoupon || !couponCode} 
-                    isLoading={validatingCoupon}
-                  >
-                    {appliedCoupon ? <CheckCircle2 className="w-5 h-5"/> : <ArrowRight className="w-5 h-5" />}
-                  </Button>
+                  {appliedCoupon && (
+                    <div className="flex items-center gap-2 mt-2 text-[9px] font-black uppercase tracking-wider text-emerald-500">
+                      <CheckCircle2 className="w-3 h-3" /> Coupon active
+                    </div>
+                  )}
                 </div>
-                {appliedCoupon && (
-                  <div className="mt-3 flex items-center justify-center gap-2 text-[10px] text-emerald-600 font-black uppercase tracking-widest bg-emerald-50 dark:bg-emerald-900/10 py-2 rounded-xl">
-                    <CheckCircle2 className="w-3 h-3"/> Coupon "{appliedCoupon.code}" Active
+
+                {/* CTA */}
+                <div className="px-5 pb-5">
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    onClick={handleCheckoutClick}
+                    className="w-full h-14 bg-foreground text-background rounded-xl text-[10px] font-black uppercase tracking-[0.22em] flex items-center justify-center gap-2 group"
+                  >
+                    <Lock className="w-3.5 h-3.5 stroke-[2]" />
+                    Secure Checkout
+                    <ArrowRight className="w-4 h-4 stroke-[2] group-hover:translate-x-0.5 transition-transform" />
+                  </motion.button>
+
+                  {/* Trust badges */}
+                  <div className="mt-4 flex items-center justify-center gap-4 text-[8px] font-black uppercase tracking-[0.15em] text-foreground/30">
+                    <span className="flex items-center gap-1"><Sparkles className="w-2.5 h-2.5" />M-Pesa</span>
+                    <span className="w-px h-3 bg-foreground/15" />
+                    <span>Tigo</span>
+                    <span className="w-px h-3 bg-foreground/15" />
+                    <span>Airtel</span>
+                    <span className="w-px h-3 bg-foreground/15" />
+                    <span>Bank</span>
                   </div>
-                )}
+                </div>
               </div>
 
-              <Button 
-                onClick={handleCheckoutClick} 
-                variant="brand" 
-                className="w-full h-16 text-xs font-black uppercase tracking-[0.25em] shadow-2xl shadow-brand-500/30 rounded-2xl transition-all group"
-              >
-                Secure Checkout <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-              </Button>
-              
-              <div className="mt-6 flex flex-col items-center gap-2">
-                <div className="flex gap-3 opacity-40 grayscale hover:grayscale-0 transition-all duration-500">
-                  <span className="text-[9px] font-bold uppercase tracking-widest text-foreground/40">M-Pesa</span>
-                  <span className="text-[9px] font-bold uppercase tracking-widest text-foreground/40">Tigo</span>
-                  <span className="text-[9px] font-bold uppercase tracking-widest text-foreground/40">Airtel</span>
-                  <span className="text-[9px] font-bold uppercase tracking-widest text-foreground/40">Bank</span>
-                </div>
-                <div className="flex items-center gap-2 text-[8px] font-bold text-foreground/40 uppercase tracking-widest">
-                  <ShieldCheck className="w-3 h-3" /> Encrypted & Secure
-                </div>
+              {/* Secure note */}
+              <div className="flex items-center gap-2 px-2 text-[9px] font-bold text-foreground/30 uppercase tracking-wider">
+                <Lock className="w-3 h-3" />
+                256-bit encrypted checkout
               </div>
-            </Card>
+            </div>
           </div>
-        </motion.div>
+        </div>
+      </div>
+
+      {/* ── Mobile sticky checkout bar ── */}
+      <div
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-t border-foreground/8 px-4 flex items-center gap-3"
+        style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))', paddingTop: '12px' }}
+      >
+        <div className="flex-1 min-w-0">
+          <p className="text-[8px] uppercase tracking-[0.18em] font-black text-foreground/40">Total</p>
+          <p className="text-base font-black text-foreground leading-tight">{formatTZS(Math.round(total))}</p>
+        </div>
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          onClick={handleCheckoutClick}
+          className="h-12 px-6 bg-foreground text-background rounded-xl text-[9px] font-black uppercase tracking-[0.2em] flex items-center gap-2 flex-shrink-0"
+        >
+          <Lock className="w-3 h-3 stroke-[2]" />
+          Checkout
+        </motion.button>
       </div>
 
       {isCheckoutOpen && (
-        <CheckoutModal 
-          total={total} 
-          subtotal={subtotal} 
-          vat={totalVAT} 
-          discount={totalDiscountAmount} 
-          onClose={() => setIsCheckoutOpen(false)} 
-          onComplete={handleCompleteOrder} 
-        />
+        <CheckoutModal total={total} subtotal={subtotal} vat={totalVAT} discount={totalDiscountAmount} onClose={() => setIsCheckoutOpen(false)} onComplete={handleCompleteOrder} />
       )}
-      
       {activeProduct && (
-        <ProductModal 
-          product={activeProduct} 
-          isOpen={!!activeProduct}
-          onClose={() => setActiveProduct(null)} 
-        />
+        <ProductModal product={activeProduct} isOpen={!!activeProduct} onClose={() => setActiveProduct(null)} />
       )}
     </div>
   );
