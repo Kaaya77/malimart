@@ -277,7 +277,7 @@ export const Navbar = () => {
  const searchRef = useRef<HTMLInputElement>(null);
 
  const isHome = location.pathname === '/';
- const isOnDark = isHome && !scrolled && !menuOpen;
+ const isOnDark = isHome && !scrolled && !menuOpen && isDark;
  const cartCount = cart.reduce((a,i)=>a+(i.quantity||1),0);
  const unread = notifications?.filter((n:any)=>!n.read).length||0;
 
