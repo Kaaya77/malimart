@@ -185,7 +185,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
                     await fetchUserData(session.user.id, profile.role);
                 }
             }
-            await fetchPublicData();
+            try { await fetchPublicData(); } catch(e) { console.error('fetchPublicData error:', e); }
             setIsLoading(false);
         };
         init();
@@ -340,7 +340,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
 
             if (prodsRes.error) {
                 console.error('Error fetching products (detailed):', prodsRes.error);
-                throw prodsRes.error;
+                // Don't throw — let setIsLoading(false) still run
             }
 
             if (prodsRes.data) {
