@@ -114,22 +114,29 @@ export const SellerOffers = ({ sellerId, preselectedProduct }: { sellerId: strin
  }
  }, [preselectedProduct]);
 
- const fetchOffers = async () => {
- setIsLoading(true);
- const { data, error } = await supabase
- .from('offers')
- .select('*')
- .eq('seller_id', sellerId)
- .order('created_at', { ascending: false });
- 
- if (error) addToast("Failed to load offers", "error");
- else setOffers(data as Offer[]);
- setIsLoading(false);
- };
+ const fetchOffers = async (silent = false) => {
+    if (!silent) setIsLoading(true);
+    try {
+      const { data, error } = await supabase.from('offers').select('*')
+        .eq('seller_id', sellerId).order('created_at', { ascending: false });
+      if (error) throw error;
+      setOffers(data as Offer[]);
+    } catch (err: any) {
+      if (!silent) addToast('Failed to load offers', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
- useEffect(() => {
- fetchOffers();
- }, [sellerId]);
+  useEffect(() => {
+    fetchOffers();
+    // Realtime: refresh when offers change for this seller
+    const ch = supabase.channel(`offers-${sellerId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'offers', filter: `seller_id=eq.${sellerId}` },
+        () => fetchOffers(true))
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [sellerId]);
 
  const handleCreate = async () => {
  const isAuto = formData.campaign_mode !== 'coupon';
