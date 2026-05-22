@@ -10,9 +10,14 @@ export default defineConfig(({ mode }) => {
   const pick = (k: string) =>
     env[k] || env['VITE_' + k] || process.env[k] || process.env['VITE_' + k] || '';
 
-  const GEMINI_API_KEY   = pick('GEMINI_API_KEY')   || 'AIzaSyCeVnbXNAuL8UiwIGWfYU4P-KUoWieKm64';
+  const GEMINI_API_KEY   = pick('GEMINI_API_KEY')   || '';
   const SUPABASE_URL     = pick('SUPABASE_URL')     || 'https://ubpapxdmqlepynonhaeo.supabase.co';
-  const SUPABASE_ANON_KEY = pick('SUPABASE_ANON_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVicGFweGRtcWxlcHlub25oYWVvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NTQ4NTY1NCwiZXhwIjoyMDgxMDYxNjU0fQ.2UczI3XynBDsSaI_9UycWCKOu6GpWq9kX6w2JmNLsGc';
+  // SECURITY: this is the public anon key, safe to ship to the browser. The
+  // previous fallback here was a service_role JWT which bypasses RLS — never
+  // ship that to the client. If you want to rotate keys, do it in Supabase
+  // dashboard then update Vercel env vars; this fallback is only a build-time
+  // last-resort and must remain an anon-scoped key.
+  const SUPABASE_ANON_KEY = pick('SUPABASE_ANON_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVicGFweGRtcWxlcHlub25oYWVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU0ODU2NTQsImV4cCI6MjA4MTA2MTY1NH0.kjkY_jrvek-7pp2KWQytVzxxK9LL2SL1sPhsMLnGBSY';
 
   return {
     server: { port: 3000, host: '0.0.0.0' },

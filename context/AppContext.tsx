@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback, useMemo, useRef } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { Product, CartItem, User, Order, Notification, VendorProfile, Address, ProductVariant, ChatMessage, Offer, Category, Payment, Shipment, TrustBadge, ReturnRequest, OrderNote, ActivityLog, WalletTransaction, SocialPost, SocialInteraction, Follower, Review } from '../types';
 import { useToast } from '../components/UI';
@@ -296,13 +296,22 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     // Returns all user data in one round trip: orders, cart, wishlist, addresses,
     // notifications, wallet, activity, payment methods, vendor profile (sellers),
     // admin stats (admins). Called on init and every sign-in.
+    //
+    // NOTE: fetchUserData is declared later in this component (it depends on
+    // a long chain of setters). Capturing it via useCallback dependency here
+    // creates a temporal dead zone — the minifier renames it and the closure
+    // tries to access the binding before its `const` initializer runs, throwing
+    // "Cannot access 'me' before initialization" in production. We use a ref
+    // that we wire up after fetchUserData exists to side-step this.
+    const fetchUserDataRef = useRef<((userId: string, userRole?: string, isBanned?: boolean) => Promise<void>) | null>(null);
+
     const applyDashboardRpc = useCallback(async (email: string, profile: any) => {
         try {
             const { data, error } = await supabase.rpc('get_dashboard_data');
             if (error) {
                 console.error('[applyDashboardRpc] RPC failed, falling back:', error.message);
                 // Fallback to old fetchUserData if RPC fails
-                await fetchUserData(profile.id, profile.role, profile.is_banned);
+                await fetchUserDataRef.current?.(profile.id, profile.role, profile.is_banned);
                 return;
             }
             if (!data) return;
@@ -344,9 +353,9 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
             }
         } catch (err: any) {
             console.error('[applyDashboardRpc] Unexpected error:', err.message);
-            await fetchUserData(profile.id, profile.role, profile.is_banned);
+            await fetchUserDataRef.current?.(profile.id, profile.role, profile.is_banned);
         }
-    }, [fetchUserData]);
+    }, []);
 
     const fetchPublicData = useCallback(async () => {
         // 1. Fetch other public data in parallel
@@ -518,6 +527,13 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         fetchAndSetCart(userId);
         fetchUnreadMessagesCount(userId);
     }, [fetchAndSetOrders, fetchAndSetWishlist, fetchAndSetCart, fetchUnreadMessagesCount]);
+
+    // Wire fetchUserData into the ref consumed by applyDashboardRpc. Done in
+    // an effect so the assignment happens on every render but never recreates
+    // applyDashboardRpc's identity (avoiding the TDZ bug from circular deps).
+    useEffect(() => {
+        fetchUserDataRef.current = fetchUserData;
+    }, [fetchUserData]);
 
     const logActivity = useCallback(async (action: string, details?: string, metadata: any = {}) => {
         if (!user) return;

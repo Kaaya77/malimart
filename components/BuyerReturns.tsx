@@ -116,10 +116,11 @@ export const BuyerReturns: React.FC<BuyerReturnsProps> = ({ userId, onContactSel
 
  setSubmitting(true);
  try {
+ const sellerIdForDispute = order.items?.[0]?.seller_id;
  const { error } = await supabase.from('disputes').insert({
  order_id: form.orderId,
  buyer_id: userId,
- seller_id: order.items?.[0]?.seller_id || order.items?.[0]?.seller_id,
+ seller_id: sellerIdForDispute,
  reason: form.reason,
  description: form.description,
  evidence_urls: form.images,
