@@ -23,7 +23,7 @@ import { BuyerReturns } from '../components/BuyerReturns';
 import { useBuyerStats } from '../src/hooks/useBuyerStats';
 import { BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts';
 
-// ─── Tooltip ─────────────────────────────────────────────────────────────────
+// âââ Tooltip âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 const ChartTip = ({ active, payload, label }: any) => {
  if (!active || !payload?.length) return null;
  return (
@@ -34,7 +34,7 @@ const ChartTip = ({ active, payload, label }: any) => {
  );
 };
 
-// ─── Offers ──────────────────────────────────────────────────────────────────
+// âââ Offers ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 const BuyerOffers = () => {
  const { addToast } = useToast();
  const [offers, setOffers] = useState<(Offer & { vendor: VendorProfile })[]>([]);
@@ -43,7 +43,7 @@ const BuyerOffers = () => {
  const [copied, setCopied] = useState<string|null>(null);
 
  useEffect(() => {
- // Re-use offers already in AppContext — only fetch vendor info (not all offers again)
+ // Re-use offers already in AppContext â only fetch vendor info (not all offers again)
  const { offers: ctxOffers } = (window as any).__malimart_ctx__ || {};
  setLoading(true);
  const now = new Date().toISOString();
@@ -87,7 +87,7 @@ const BuyerOffers = () => {
  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
  <div>
  <h2 className="text-xl font-bold text-foreground">Rewards & Vouchers</h2>
- <p className="text-xs text-foreground/45 mt-0.5">Exclusive offers curated for you · {filtered.length} active</p>
+ <p className="text-xs text-foreground/45 mt-0.5">Exclusive offers curated for you Â· {filtered.length} active</p>
  </div>
  <div className="flex p-1 bg-foreground/[0.05] rounded-xl gap-1 self-start sm:self-auto">
  {(['all','high_value','expiring'] as const).map(f=>(
@@ -151,7 +151,7 @@ const BuyerOffers = () => {
  );
 };
 
-// ─── Follows ─────────────────────────────────────────────────────────────────
+// âââ Follows âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 const BuyerFollows = ({ followers, unfollowSeller, navigate }: { followers:any[], unfollowSeller:(id:string)=>void, navigate:(p:string)=>void }) => {
  const [vendors, setVendors] = useState<VendorProfile[]>([]);
  const [loading, setLoading] = useState(false);
@@ -185,7 +185,7 @@ const BuyerFollows = ({ followers, unfollowSeller, navigate }: { followers:any[]
  );
 };
 
-// ─── Main page ────────────────────────────────────────────────────────────────
+// âââ Main page ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 const TABS = [
  { id:'dashboard',label:'Overview', icon:LayoutGrid },
  { id:'orders', label:'Orders', icon:ShoppingBag },
@@ -233,7 +233,7 @@ export const BuyerPage = () => {
  <div className="min-h-screen bg-background font-sans pb-[calc(5rem+env(safe-area-inset-bottom))] pt-20 md:pt-24">
  <div className="container mx-auto max-w-7xl px-4 md:px-6">
 
- {/* ── Page header ─────────────────────────────────────── */}
+ {/* ââ Page header âââââââââââââââââââââââââââââââââââââââ */}
  <motion.div initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} transition={{duration:0.4}}
  className="flex items-center justify-between py-6 md:py-8">
  <div className="flex items-center gap-3.5">
@@ -247,7 +247,7 @@ export const BuyerPage = () => {
  <div>
  <p className="text-[10px] text-foreground/35 uppercase tracking-[0.2em] font-bold">Buyer Account</p>
  <h1 className="text-xl md:text-2xl font-bold text-foreground tracking-tight leading-tight">
- Hello, {user.name?.split(' ')[0]||'there'} 👋
+ Hello, {user.name?.split(' ')[0]||'there'} ð
  </h1>
  </div>
  </div>
@@ -256,7 +256,7 @@ export const BuyerPage = () => {
  </button>
  </motion.div>
 
- {/* ── Tab strip ───────────────────────────────────────── */}
+ {/* ââ Tab strip âââââââââââââââââââââââââââââââââââââââââ */}
  <div className="flex gap-1 overflow-x-auto no-scrollbar bg-foreground/[0.04] p-1.5 rounded-2xl mb-6 sticky top-[60px] z-20 border border-foreground/8 backdrop-blur-xl">
  {TABS.map(t=>{
  const Icon=t.icon;
@@ -271,11 +271,11 @@ export const BuyerPage = () => {
  })}
  </div>
 
- {/* ── Tab content ─────────────────────────────────────── */}
+ {/* ââ Tab content âââââââââââââââââââââââââââââââââââââââ */}
  <AnimatePresence mode="wait">
  <motion.div key={tab} initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} exit={{opacity:0}} transition={{duration:0.2}}>
 
- {/* DASHBOARD ─────────────────────────────────────── */}
+ {/* DASHBOARD âââââââââââââââââââââââââââââââââââââââ */}
         {tab==='dashboard' && (
           <BuyerDashboard
             orders={orders}
@@ -285,7 +285,7 @@ export const BuyerPage = () => {
             onGoWishlist={()=>setTab('wishlist')}
             onGoOffers={()=>setTab('offers')}
           />
-        )}}
+        )}
 
  {tab==='orders' && (
  <BuyerOrders orders={orders} onCancel={cancelOrder} onDelete={deleteOrder}
