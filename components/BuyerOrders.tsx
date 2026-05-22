@@ -34,7 +34,9 @@ export const BuyerOrders = ({
  const filteredOrders = useMemo(() => {
  return orders.filter(o => {
  if (o.deleted_at) return false; // Filter out soft-deleted orders
- const matchesStatus = statusFilter === 'all' || o.status === statusFilter;
+ const matchesStatus = statusFilter === 'all'
+        || o.status === statusFilter
+        || (statusFilter === 'in_transit' && o.status === 'shipped');
  const matchesSearch = o.id.toLowerCase().includes(searchTerm.toLowerCase()) || 
  o.items?.some(i => i.products?.name.toLowerCase().includes(searchTerm.toLowerCase()));
  return matchesStatus && matchesSearch;
@@ -54,9 +56,9 @@ export const BuyerOrders = ({
  />
  </div>
  <div className="flex bg-foreground/[0.05] dark:bg-background/5 p-1.5 rounded-2xl">
- {['all', 'pending', 'shipped', 'delivered', 'disputed'].map(s => (
+ {['all', 'pending', 'processing', 'in_transit', 'delivered', 'cancelled', 'disputed'].map(s => (
  <button 
- key={s}
+ key={s === 'in_transit' ? 'Shipped' : s === 'processing' ? 'Confirmed' : s.charAt(0).toUpperCase() + s.slice(1)}
  onClick={() => setStatusFilter(s)}
  className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${statusFilter === s ? 'bg-card text-foreground shadow-sm' : 'text-foreground/40 hover:text-foreground/70'}`}
  >

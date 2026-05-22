@@ -379,7 +379,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     }, []);
 
     const fetchAndSetOrders = useCallback(async (userId: string) => {
-        const { data } = await supabase.from('orders').select('*, items:order_items(*, product:products(name, images))').eq('user_id', userId).order('created_at', { ascending: false });
+        const { data } = await supabase.from('orders').select('*, items:order_items(*, product:products(name, images, price))').eq('user_id', userId).is('deleted_at', null).order('created_at', { ascending: false });
         if (data) setOrders(data as any);
     }, []);
 
@@ -724,16 +724,34 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
             p_delivery_slot: details.deliverySlot
         });
 
-        if (error) throw error;
+        if (error) {
+            // Map common RPC errors to user-friendly messages
+            const msg = error.message || '';
+            if (msg.includes('Insufficient stock')) throw new Error('One or more items are out of stock. Please update your cart.');
+            if (msg.includes('Product not found')) throw new Error('A product in your cart is no longer available.');
+            if (msg.includes('Unauthorized')) throw new Error('Session expired. Please log in again.');
+            throw new Error(msg || 'Failed to place order. Please try again.');
+        }
         
         await clearCart();
-        await fetchUserData(user.id);
         
-        // Fetch the newly created order to return it
-        if (data && data.id) {
-            const { data: newOrder } = await supabase.from('orders').select('*, items:order_items(*, product:products(name, images)), buyer:profiles!user_id(*)').eq('id', data.id).single();
-            return newOrder;
+        // Fetch the newly created order with full details
+        const orderId = data?.id;
+        if (orderId) {
+            const { data: newOrder, error: fetchErr } = await supabase
+                .from('orders')
+                .select('*, items:order_items(*, product:products(name, images, price)), buyer:profiles!user_id(*)')
+                .eq('id', orderId)
+                .single();
+            if (!fetchErr && newOrder) {
+                // Update orders state immediately without waiting for realtime
+                setOrders(prev => [newOrder as any, ...prev]);
+                return newOrder;
+            }
         }
+        
+        // Fallback: refresh all user data
+        await fetchUserData(user.id);
         return data;
     }, [user, cart, clearCart, fetchUserData]);
 
