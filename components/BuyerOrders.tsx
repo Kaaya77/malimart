@@ -1,205 +1,324 @@
-import { OrderTracking } from './CheckoutComponents';
-
 import React, { useState, useMemo } from 'react';
-import { Search, Package, Clock, ChevronLeft, Receipt, RotateCcw, AlertCircle, ShoppingBag, CheckSquare } from 'lucide-react';
-import { Button, Card, Badge, Input, SatisfyingOrderGraphic } from './UI';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Search, Package, Clock, ChevronLeft, RotateCcw, AlertCircle,
+  ShoppingBag, MapPin, CreditCard, MessageCircle, Truck, CheckCircle2,
+  XCircle, RefreshCw, Star
+} from 'lucide-react';
+import { Badge, useToast } from './UI';
 import { ReceiptModal } from './ReceiptModal';
 import { formatTZS } from '../constants';
 import { Order, VendorProfile } from '../types';
 import { CancelOrderModal } from './CancelOrderModal';
+import { OrderTracking } from './CheckoutComponents';
 
-export const BuyerOrders = ({ 
- orders, 
- onCancel, 
- onDelete,
- onReorder, 
- onContactSeller, 
- onPrintReceipt, 
- fetchVendorProfile 
-}: { 
- orders: Order[], 
- onCancel: (id: string, reason: string) => void, 
- onDelete: (id: string) => void,
- onReorder: (order: Order) => void, 
- onContactSeller: (sellerId: string, context?: { type: 'order' | 'return' | 'support', id: string, label: string }) => void, 
- onPrintReceipt: (order: Order, seller?: VendorProfile) => void, 
- fetchVendorProfile: (id: string) => Promise<VendorProfile | null> 
+/**
+ * BuyerOrders — completely field-safe rewrite.
+ * Handles both item.products and item.product field shapes.
+ * Uses correct column names: discount_amount, shipping_address, cancel_reason.
+ */
+
+const getItemProduct = (item: any) => item.products || item.product || {};
+
+const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
+  pending:           { label: 'Pending',    color: 'text-amber-600',   bg: 'bg-amber-50 dark:bg-amber-900/20',    icon: Clock },
+  processing:        { label: 'Confirmed',  color: 'text-blue-600',    bg: 'bg-blue-50 dark:bg-blue-900/20',      icon: Package },
+  confirmed:         { label: 'Confirmed',  color: 'text-blue-600',    bg: 'bg-blue-50 dark:bg-blue-900/20',      icon: Package },
+  in_transit:        { label: 'Shipped',    color: 'text-purple-600',  bg: 'bg-purple-50 dark:bg-purple-900/20',  icon: Truck },
+  shipped:           { label: 'Shipped',    color: 'text-purple-600',  bg: 'bg-purple-50 dark:bg-purple-900/20',  icon: Truck },
+  delivered:         { label: 'Delivered',  color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20',icon: CheckCircle2 },
+  cancelled:         { label: 'Cancelled',  color: 'text-red-500',     bg: 'bg-red-50 dark:bg-red-900/20',        icon: XCircle },
+  refunded:          { label: 'Refunded',   color: 'text-orange-500',  bg: 'bg-orange-50 dark:bg-orange-900/20',  icon: RefreshCw },
+  disputed:          { label: 'Disputed',   color: 'text-red-700',     bg: 'bg-red-100 dark:bg-red-900/30',       icon: AlertCircle },
+  failed:            { label: 'Failed',     color: 'text-gray-500',    bg: 'bg-gray-50 dark:bg-gray-900/20',      icon: XCircle },
+  ready_for_pickup:  { label: 'Ready',      color: 'text-teal-600',    bg: 'bg-teal-50 dark:bg-teal-900/20',      icon: Package },
+};
+
+const StatusChip: React.FC<{ status: string; size?: 'sm' | 'md' }> = ({ status, size = 'md' }) => {
+  const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
+  const Icon = cfg.icon;
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full font-bold ${cfg.bg} ${cfg.color} ${size === 'sm' ? 'px-2 py-0.5 text-[9px]' : 'px-2.5 py-1 text-[10px]'}`}>
+      <Icon className={size === 'sm' ? 'w-2.5 h-2.5' : 'w-3 h-3'} />
+      {cfg.label}
+    </span>
+  );
+};
+
+const FILTER_TABS = [
+  { value: 'all', label: 'All' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'processing', label: 'Confirmed' },
+  { value: 'in_transit', label: 'Shipped' },
+  { value: 'delivered', label: 'Delivered' },
+  { value: 'cancelled', label: 'Cancelled' },
+];
+
+export const BuyerOrders = ({
+  orders,
+  onCancel,
+  onDelete,
+  onReorder,
+  onContactSeller,
+  onPrintReceipt,
+  fetchVendorProfile,
+}: {
+  orders: Order[];
+  onCancel: (id: string, reason: string) => void;
+  onDelete: (id: string) => void;
+  onReorder: (order: Order) => void;
+  onContactSeller: (sellerId: string, context?: any) => void;
+  onPrintReceipt: (order: Order, seller?: VendorProfile) => void;
+  fetchVendorProfile: (id: string) => Promise<VendorProfile | null>;
 }) => {
- const [searchTerm, setSearchTerm] = useState('');
- const [statusFilter, setStatusFilter] = useState('all');
- const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
- const [receiptOrder, setReceiptOrder] = useState<{ order: Order, seller: VendorProfile } | null>(null);
- const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const { addToast } = useToast();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [cancelModal, setCancelModal] = useState(false);
 
- const filteredOrders = useMemo(() => {
- return orders.filter(o => {
- if (o.deleted_at) return false; // Filter out soft-deleted orders
- const matchesStatus = statusFilter === 'all'
-        || o.status === statusFilter
-        || (statusFilter === 'in_transit' && o.status === 'shipped');
- const matchesSearch = o.id.toLowerCase().includes(searchTerm.toLowerCase()) || 
- o.items?.some(i => (i.products?.name || i.product?.name || '').toLowerCase().includes(searchTerm.toLowerCase()));
- return matchesStatus && matchesSearch;
- }).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
- }, [orders, statusFilter, searchTerm]);
+  const filtered = useMemo(() => {
+    return orders
+      .filter(o => {
+        if (o.deleted_at) return false;
+        const matchStatus =
+          statusFilter === 'all'
+          || o.status === statusFilter
+          || (statusFilter === 'processing' && o.status === 'confirmed')
+          || (statusFilter === 'in_transit' && (o.status === 'shipped' || o.status === 'in_transit'));
+        const q = searchTerm.toLowerCase();
+        const matchSearch = !q
+          || o.id.toLowerCase().includes(q)
+          || o.items?.some((i: any) => {
+            const p = getItemProduct(i);
+            return (p.name || '').toLowerCase().includes(q);
+          });
+        return matchStatus && matchSearch;
+      })
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }, [orders, statusFilter, searchTerm]);
 
- return (
- <div className="flex flex-col h-[700px] animate-in fade-in">
- <div className="flex gap-4 mb-6 shrink-0">
- <div className="relative flex-1">
- <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40" />
- <Input 
- placeholder="Search Order ID or Product..." 
- value={searchTerm}
- onChange={(e: any) => setSearchTerm(e.target.value)}
- className="h-14 pl-12 rounded-2xl bg-background dark:bg-background/5 border-foreground/10"
- />
- </div>
- <div className="flex bg-foreground/[0.05] dark:bg-background/5 p-1.5 rounded-2xl">
- {['all', 'pending', 'processing', 'in_transit', 'delivered', 'cancelled', 'disputed'].map(s => (
- <button 
- key={s === 'in_transit' ? 'Shipped' : s === 'processing' ? 'Confirmed' : s.charAt(0).toUpperCase() + s.slice(1)}
- onClick={() => setStatusFilter(s)}
- className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${statusFilter === s ? 'bg-card text-foreground shadow-sm' : 'text-foreground/40 hover:text-foreground/70'}`}
- >
- {s}
- </button>
- ))}
- </div>
- </div>
+  // ── Detail view ─────────────────────────────────────────────────────────────
+  if (selectedOrder) {
+    const addr = (selectedOrder as any).shipping_address || {};
+    const sellerId = selectedOrder.items?.[0] ? (getItemProduct(selectedOrder.items[0]).seller_id || (selectedOrder.items[0] as any).seller_id) : null;
 
- <div className="flex-1 flex gap-6 overflow-hidden rounded-3xl border border-foreground/8 bg-card shadow-sm relative">
- <div className={`${selectedOrder ? 'hidden lg:flex w-1/3 border-r' : 'w-full flex'} border-foreground/8 flex-col`}>
- <div className="flex-1 overflow-y-auto no-scrollbar p-3 space-y-2">
- {filteredOrders.length === 0 ? <div className="p-10 text-center text-foreground/40 text-xs font-bold uppercase">No orders found</div> :
- filteredOrders.map(order => (
- <div 
- key={order.id} 
- onClick={() => setSelectedOrder(order)}
- className={`p-4 rounded-2xl border-2 transition-all cursor-pointer hover:bg-foreground/[0.03] dark:hover:bg-background/5 flex gap-3 ${selectedOrder?.id === order.id ? 'border-brand-500 bg-brand-50/10' : 'border-transparent'}`}
- >
- <div className="flex-1">
- <div className="flex justify-between items-start mb-2">
- <span className="font-mono text-[10px] font-bold text-foreground/40">#{order.id.slice(0,8)}</span>
- <Badge variant={['delivered'].includes(order.status) ? 'success' : ['cancelled'].includes(order.status) ? 'danger' : 'secondary'} className="text-[8px]">
- {order.status}
- </Badge>
- </div>
- <p className="font-black text-xs text-foreground mb-1">{order.items?.[0]?.product?.name || order.items?.[0]?.products?.name || 'Multiple Items'}</p>
- <div className="flex justify-between items-center pt-2 border-t border-foreground/8">
- <span className="text-[10px] font-bold text-foreground/40 uppercase">{new Date(order.created_at).toLocaleDateString()}</span>
- <span className="font-black text-sm">{formatTZS(order.total)}</span>
- </div>
- </div>
- </div>
- ))}
- </div>
- </div>
+    return (
+      <div className="flex flex-col h-[calc(100vh-200px)] min-h-0">
+        <div className="flex items-center gap-3 mb-5 flex-shrink-0">
+          <button onClick={() => setSelectedOrder(null)}
+            className="w-9 h-9 rounded-full bg-foreground/[0.05] hover:bg-foreground/10 flex items-center justify-center transition-colors">
+            <ChevronLeft className="w-4 h-4 text-foreground" />
+          </button>
+          <div className="flex-1 min-w-0">
+            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/35">Order</p>
+            <h3 className="font-bold text-sm text-foreground font-mono">#{selectedOrder.id.slice(0,8).toUpperCase()}</h3>
+          </div>
+          <StatusChip status={selectedOrder.status} />
+        </div>
 
- {selectedOrder ? (
- <div className="flex-1 flex flex-col h-full bg-foreground/[0.02]">
- <div className="p-6 border-b border-foreground/8 flex justify-between items-center bg-card">
- <div className="flex items-center gap-4">
- <button onClick={() => setSelectedOrder(null)} className="lg:hidden p-2 bg-foreground/[0.06] rounded-full hover:bg-foreground/10 transition-colors active:scale-90"><ChevronLeft className="w-4 h-4"/></button>
- <div>
- <h2 className="font-black text-xl font-display uppercase tracking-tight">Order Details</h2>
- <p className="text-[10px] font-bold text-foreground/40 font-mono">ID: {selectedOrder.id}</p>
- </div>
- </div>
- <div className="flex gap-1.5 flex-wrap">
- <button onClick={() => onReorder(selectedOrder)}
- className="flex items-center gap-1.5 h-8 px-3 rounded-xl bg-foreground/[0.06] text-foreground text-xs font-semibold hover:bg-foreground/10 transition-colors active:scale-95">
- Reorder
- </button>
- <button onClick={() => onContactSeller(selectedOrder.items?.[0]?.products?.seller_id || selectedOrder.items?.[0]?.seller_id, { type: 'order', id: selectedOrder.id, label: `Order #${selectedOrder.id.slice(0,8)}` })}
- className="flex items-center gap-1.5 h-8 px-3 rounded-xl bg-foreground/[0.06] text-foreground text-xs font-semibold hover:bg-foreground/10 transition-colors active:scale-95">
- Message Seller
- </button>
- <button onClick={async () => {
- const sellerId = selectedOrder.items?.[0]?.products?.seller_id || selectedOrder.items?.[0]?.seller_id;
- const seller = sellerId ? await fetchVendorProfile(sellerId) : undefined;
- setReceiptOrder({ order: selectedOrder, seller: seller || {} as VendorProfile });
- if (onPrintReceipt) onPrintReceipt(selectedOrder, seller as any);
- }} className="flex items-center gap-1.5 h-8 px-3 rounded-xl bg-foreground/[0.06] text-foreground text-xs font-semibold hover:bg-foreground/10 transition-colors active:scale-95">
- Receipt
- </button>
- {selectedOrder.status === 'pending' && (
- <button onClick={() => setIsCancelModalOpen(true)}
- className="flex items-center gap-1.5 h-8 px-3 rounded-xl bg-rose-500/10 text-rose-600 text-xs font-semibold hover:bg-rose-500/15 transition-colors active:scale-95">
- Cancel Order
- </button>
- )}
- </div>
- </div>
+        <div className="flex-1 overflow-y-auto space-y-4 min-h-0">
+          {/* Order tracking */}
+          <OrderTracking order={selectedOrder} />
 
- <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8">
- {/* Order Progress */}
- <div className="mb-6">
- <SatisfyingOrderGraphic status={selectedOrder.status as any} />
- </div>
+          {/* Items */}
+          <div className="rounded-2xl border border-foreground/8 overflow-hidden">
+            <div className="px-4 py-2.5 border-b border-foreground/8 bg-foreground/[0.02]">
+              <p className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/40">Items ({selectedOrder.items?.length || 0})</p>
+            </div>
+            {selectedOrder.items?.map((item: any, i: number) => {
+              const prod = getItemProduct(item);
+              const unitPrice = Number(item.price_at_purchase) || Number(prod.price) || 0;
+              return (
+                <div key={item.id || i} className="flex items-center gap-3 px-4 py-3 border-b border-foreground/5 last:border-0">
+                  <div className="w-10 h-10 rounded-lg overflow-hidden bg-foreground/[0.05] flex-shrink-0">
+                    {prod.images?.[0] && <img src={prod.images[0]} alt="" className="w-full h-full object-cover" loading="lazy" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-foreground truncate">{prod.name || 'Product'}</p>
+                    <p className="text-[10px] text-foreground/40">Qty: {item.quantity}</p>
+                  </div>
+                  <p className="text-xs font-bold text-foreground">{formatTZS(unitPrice * item.quantity)}</p>
+                </div>
+              );
+            })}
+            {/* Totals */}
+            <div className="px-4 py-3 bg-foreground/[0.02] space-y-1.5">
+              <div className="flex justify-between text-[10px] text-foreground/50">
+                <span>Subtotal</span><span>{formatTZS(Number((selectedOrder as any).subtotal) || 0)}</span>
+              </div>
+              {Number((selectedOrder as any).delivery_fee) > 0 && (
+                <div className="flex justify-between text-[10px] text-foreground/50">
+                  <span>Delivery</span><span>{formatTZS(Number((selectedOrder as any).delivery_fee))}</span>
+                </div>
+              )}
+              {Number((selectedOrder as any).discount_amount) > 0 && (
+                <div className="flex justify-between text-[10px] text-emerald-600">
+                  <span>Discount</span><span>−{formatTZS(Number((selectedOrder as any).discount_amount))}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-sm font-bold text-foreground pt-1 border-t border-foreground/8">
+                <span>Total Paid</span><span>{formatTZS(Number(selectedOrder.total) || 0)}</span>
+              </div>
+            </div>
+          </div>
 
- {/* Live Order Tracking */}
- {!['cancelled','refunded','failed'].includes(selectedOrder.status) && (
- <div className="bg-foreground/[0.02] border border-foreground/8 rounded-3xl p-5">
- <h4 className="text-[10px] font-bold uppercase tracking-widest text-foreground/35 mb-4 flex items-center gap-2">
- <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"/>
- Live Tracking
- </h4>
- <OrderTracking order={selectedOrder as any} />
- </div>
- )}
+          {/* Address */}
+          {addr.city && (
+            <div className="rounded-2xl border border-foreground/8 overflow-hidden">
+              <div className="px-4 py-2.5 border-b border-foreground/8 bg-foreground/[0.02] flex items-center gap-1.5">
+                <MapPin className="w-3 h-3 text-foreground/40" />
+                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/40">Delivery</p>
+              </div>
+              <div className="p-4 space-y-0.5">
+                {addr.label && <p className="text-sm font-semibold text-foreground">{addr.label}</p>}
+                {addr.street && <p className="text-xs text-foreground/60">{addr.street}</p>}
+                {addr.city && <p className="text-xs text-foreground/60">{[addr.city, addr.postal_code].filter(Boolean).join(', ')}</p>}
+                {addr.landmark && <p className="text-xs text-foreground/40">Near: {addr.landmark}</p>}
+                {addr.phone && <p className="text-xs text-foreground/40 mt-1">{addr.phone}</p>}
+              </div>
+            </div>
+          )}
 
- {selectedOrder.status === 'cancelled' && selectedOrder.cancel_reason && (
- <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 rounded-2xl flex items-start gap-3">
- <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
- <div>
- <p className="text-xs font-black uppercase tracking-widest text-red-600 dark:text-red-400 mb-1">Cancellation Reason</p>
- <p className="text-sm font-medium text-red-900 dark:text-red-200">{selectedOrder.cancel_reason}</p>
- </div>
- </div>
- )}
+          {/* Payment */}
+          <div className="rounded-2xl border border-foreground/8 p-4">
+            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/40 mb-2">Payment</p>
+            <div className="flex justify-between text-xs">
+              <span className="text-foreground/50">Method</span>
+              <span className="font-semibold text-foreground">{(selectedOrder as any).payment_method || '—'}</span>
+            </div>
+          </div>
 
- <div className="space-y-3">
- <h4 className="text-[10px] font-black uppercase tracking-widest text-foreground/40 mb-4 flex items-center gap-2"><ShoppingBag className="w-3 h-3"/> Items ({selectedOrder.items?.length || 0})</h4>
- {selectedOrder.items?.map((item: any) => (
- <div key={item.id} className="flex gap-4 p-4 bg-card rounded-2xl border border-foreground/8 items-center">
- <div className="w-12 h-12 bg-foreground/[0.05] rounded-xl overflow-hidden shrink-0">
- <img src={item.product?.images?.[0] || item.products?.images?.[0]} className="w-full h-full object-cover" loading="lazy" decoding="async" />
- </div>
- <div className="flex-1 min-w-0">
- <p className="font-bold text-sm truncate">{item.product?.name || item.products?.name}</p>
- <p className="text-[10px] text-foreground/55 font-mono">Qty: {item.quantity}</p>
- </div>
- <div className="text-right">
- <p className="font-black text-sm">{formatTZS(item.price_at_purchase * item.quantity)}</p>
- </div>
- </div>
- ))}
- </div>
- </div>
- {receiptOrder && <ReceiptModal isOpen={!!receiptOrder} order={receiptOrder.order} seller={receiptOrder.seller} onClose={() => setReceiptOrder(null)} />}
- </div>
- ) : (
- <div className="hidden lg:flex flex-1 flex-col items-center justify-center text-foreground/20">
- <Receipt className="w-16 h-16 mb-4 opacity-20"/>
- <p className="font-black uppercase tracking-widest text-xs">Select an order to view details</p>
- </div>
- )}
- </div>
- <CancelOrderModal 
- isOpen={isCancelModalOpen}
- onClose={() => setIsCancelModalOpen(false)}
- onConfirm={async (reason) => {
- if (selectedOrder) {
- try {
- await onCancel(selectedOrder.id, reason);
- setIsCancelModalOpen(false);
- } catch (e) {
- }
- }
- }}
- role="buyer"
- />
- </div>
- );
+          {/* Cancel reason */}
+          {selectedOrder.status === 'cancelled' && (selectedOrder as any).cancel_reason && (
+            <div className="rounded-2xl bg-red-50 dark:bg-red-900/10 border border-red-200/40 p-4">
+              <p className="text-[9px] font-black uppercase tracking-[0.2em] text-red-500 mb-1">Cancellation Reason</p>
+              <p className="text-xs text-foreground/70">{(selectedOrder as any).cancel_reason}</p>
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="space-y-2 pb-4">
+            {sellerId && (
+              <button onClick={() => onContactSeller(sellerId, { type: 'order', id: selectedOrder.id, label: `Order #${selectedOrder.id.slice(0,8)}` })}
+                className="w-full flex items-center justify-center gap-2 h-11 rounded-2xl border border-foreground/10 hover:bg-foreground/[0.04] text-sm font-semibold text-foreground/60 hover:text-foreground transition-all">
+                <MessageCircle className="w-4 h-4" />Contact Seller
+              </button>
+            )}
+            {!['cancelled','refunded','failed','delivered'].includes(selectedOrder.status) && (
+              <button onClick={() => setCancelModal(true)}
+                className="w-full flex items-center justify-center gap-2 h-11 rounded-2xl border border-red-200 dark:border-red-900/40 text-sm font-semibold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all">
+                <XCircle className="w-4 h-4" />Cancel Order
+              </button>
+            )}
+          </div>
+        </div>
+
+        {cancelModal && (
+          <CancelOrderModal
+            isOpen={cancelModal}
+            role="buyer"
+            onClose={() => setCancelModal(false)}
+            onConfirm={async (reason: string) => {
+              await onCancel(selectedOrder.id, reason);
+              setCancelModal(false);
+              setSelectedOrder(null);
+            }}
+          />
+        )}
+      </div>
+    );
+  }
+
+  // ── Orders list ─────────────────────────────────────────────────────────────
+  return (
+    <div className="flex flex-col h-[calc(100vh-200px)] min-h-0">
+      {/* Search */}
+      <div className="relative mb-3 flex-shrink-0">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground/30" />
+        <input
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          placeholder="Search orders or products…"
+          className="w-full h-10 pl-9 pr-3 rounded-xl bg-foreground/[0.04] border border-foreground/8 text-xs text-foreground placeholder:text-foreground/30 outline-none focus:border-foreground/25 transition-colors"
+        />
+      </div>
+
+      {/* Status tabs */}
+      <div className="flex gap-1 mb-4 overflow-x-auto no-scrollbar flex-shrink-0">
+        {FILTER_TABS.map(tab => (
+          <button key={tab.value} onClick={() => setStatusFilter(tab.value)}
+            className={`flex-shrink-0 h-7 px-3 rounded-full text-[10px] font-bold transition-all ${
+              statusFilter === tab.value ? 'bg-foreground text-background' : 'bg-foreground/[0.05] text-foreground/45 hover:bg-foreground/10'
+            }`}>
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* List */}
+      <div className="flex-1 overflow-y-auto space-y-2 min-h-0">
+        {filtered.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-3">
+            <div className="w-14 h-14 rounded-2xl bg-foreground/[0.04] flex items-center justify-center">
+              <ShoppingBag className="w-7 h-7 text-foreground/20" />
+            </div>
+            <p className="text-xs font-bold text-foreground/30 uppercase tracking-wider">
+              {statusFilter === 'all' ? 'No orders yet' : `No ${statusFilter} orders`}
+            </p>
+          </div>
+        ) : (
+          filtered.map(order => {
+            const firstItem = order.items?.[0] as any;
+            const firstProduct = firstItem ? getItemProduct(firstItem) : {};
+
+            return (
+              <motion.button
+                key={order.id}
+                onClick={() => setSelectedOrder(order)}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="w-full text-left rounded-2xl border border-foreground/8 bg-foreground/[0.02] hover:bg-foreground/[0.04] hover:border-foreground/20 transition-all p-3.5 flex items-center gap-3"
+              >
+                {/* Thumb */}
+                <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-foreground/[0.06] flex-shrink-0">
+                  {firstProduct.images?.[0]
+                    ? <img src={firstProduct.images[0]} alt="" className="w-full h-full object-cover" loading="lazy" />
+                    : <Package className="w-5 h-5 text-foreground/20 m-auto mt-3.5" />
+                  }
+                  {(order.items?.length || 0) > 1 && (
+                    <span className="absolute bottom-0 right-0 bg-foreground/80 text-background text-[7px] font-black px-0.5 rounded-tl-md">
+                      +{(order.items?.length || 0) - 1}
+                    </span>
+                  )}
+                </div>
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <span className="text-[10px] font-black text-foreground/35 font-mono">
+                      #{order.id.slice(0,8).toUpperCase()}
+                    </span>
+                    <StatusChip status={order.status} size="sm" />
+                  </div>
+                  <p className="text-xs font-semibold text-foreground truncate">
+                    {firstProduct.name || 'Order'}
+                    {(order.items?.length || 0) > 1 ? ` +${(order.items?.length || 0) - 1} more` : ''}
+                  </p>
+                  <div className="flex items-center justify-between mt-0.5">
+                    <span className="text-[10px] text-foreground/35">
+                      {new Date(order.created_at).toLocaleDateString('en-TZ', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </span>
+                    <span className="text-xs font-bold text-foreground">
+                      {formatTZS(Number(order.total) || 0)}
+                    </span>
+                  </div>
+                </div>
+              </motion.button>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
 };

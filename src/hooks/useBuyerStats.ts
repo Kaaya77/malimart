@@ -22,8 +22,9 @@ export const useBuyerStats = () => {
                 // Fetch orders
                 const { data: orders, error: ordersError } = await supabase
                     .from('orders')
-                    .select('total, discount, created_at, status, items:order_items(price_at_purchase, quantity, product:products(category))')
-                    .eq('user_id', user.id);
+                    .select('total, discount_amount, created_at, status, items:order_items(price_at_purchase, quantity, products(category))')
+                    .eq('user_id', user.id)
+                    .is('deleted_at', null);
 
                 if (ordersError) throw ordersError;
 
@@ -55,7 +56,7 @@ export const useBuyerStats = () => {
                         }
 
                         order.items?.forEach((item: any) => {
-                            const cat = item.product?.category || item.products?.category || 'Other';
+                            const cat = item.products?.category || item.product?.category || 'Other';
                             const itemPrice = Number(item.price_at_purchase) || 0;
                             const itemQty = Number(item.quantity) || 0;
                             categories.set(cat, (categories.get(cat) || 0) + (itemPrice * itemQty));
@@ -64,11 +65,11 @@ export const useBuyerStats = () => {
                 });
 
                 const spendingHistory = Array.from(historyMap.entries()).map(([month, amount]) => ({ month, amount }));
-                // Calculate real savings from discount field on orders
+                // Calculate real savings from discount_amount
                 let savings = 0;
                 orders?.forEach((order: any) => {
-                    if (order.status !== 'cancelled' && order.discount) {
-                        savings += Number(order.discount) || 0;
+                    if (order.status !== 'cancelled') {
+                        savings += Number(order.discount_amount) || 0;
                     }
                 });
                 const categoryDistribution = Array.from(categories.entries()).map(([name, value]) => ({ name, value }));

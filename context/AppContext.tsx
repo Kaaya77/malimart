@@ -262,11 +262,12 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
             })
             .subscribe();
 
-        // Orders
+        // Orders — listen on both orders AND order_items so status changes propagate
         const ordersChannel = supabase.channel(`orders:${user.id}`)
             .on('postgres_changes', { event: '*', schema: 'public', table: 'orders', filter: `user_id=eq.${user.id}` }, 
                 () => fetchAndSetOrders(user.id)
-            ).subscribe();
+            )
+            .subscribe();
 
         // Wishlist — fixed: table name was 'wishlist' (doesn't exist), correct name is 'wishlist_items'
         const wishlistChannel = supabase.channel(`wishlist:${user.id}`)
@@ -379,7 +380,24 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     }, []);
 
     const fetchAndSetOrders = useCallback(async (userId: string) => {
-        const { data } = await supabase.from('orders').select('*, items:order_items(*, products(name, images, price))').eq('user_id', userId).is('deleted_at', null).order('created_at', { ascending: false });
+        const { data, error } = await supabase
+            .from('orders')
+            .select(`
+                id, user_id, status, created_at, updated_at,
+                total, subtotal, delivery_fee, discount_amount,
+                payment_method, payment_ref, note,
+                shipping_address, cancel_reason, is_gift, gift_message,
+                deleted_at,
+                items:order_items(
+                    id, order_id, seller_id, product_id,
+                    quantity, price_at_purchase,
+                    products(id, name, images, price, seller_id)
+                )
+            `)
+            .eq('user_id', userId)
+            .is('deleted_at', null)
+            .order('created_at', { ascending: false });
+        if (error) { console.error('[Orders fetch]', error.message); return; }
         if (data) setOrders(data as any);
     }, []);
 
@@ -740,7 +758,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         if (orderId) {
             const { data: newOrder, error: fetchErr } = await supabase
                 .from('orders')
-                .select('*, items:order_items(*, products(name, images, price)), buyer:profiles!user_id(*)')
+                .select(`id, user_id, status, created_at, updated_at, total, subtotal, delivery_fee, discount_amount, payment_method, payment_ref, note, shipping_address, cancel_reason, is_gift, gift_message, items:order_items(id, order_id, seller_id, product_id, quantity, price_at_purchase, products(id, name, images, price, seller_id))`)
                 .eq('id', orderId)
                 .single();
             if (!fetchErr && newOrder) {
