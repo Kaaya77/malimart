@@ -379,7 +379,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     }, []);
 
     const fetchAndSetOrders = useCallback(async (userId: string) => {
-        const { data } = await supabase.from('orders').select('*, items:order_items(*, product:products(name, images, price))').eq('user_id', userId).is('deleted_at', null).order('created_at', { ascending: false });
+        const { data } = await supabase.from('orders').select('*, items:order_items(*, products(name, images, price))').eq('user_id', userId).is('deleted_at', null).order('created_at', { ascending: false });
         if (data) setOrders(data as any);
     }, []);
 
@@ -740,7 +740,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         if (orderId) {
             const { data: newOrder, error: fetchErr } = await supabase
                 .from('orders')
-                .select('*, items:order_items(*, product:products(name, images, price)), buyer:profiles!user_id(*)')
+                .select('*, items:order_items(*, products(name, images, price)), buyer:profiles!user_id(*)')
                 .eq('id', orderId)
                 .single();
             if (!fetchErr && newOrder) {

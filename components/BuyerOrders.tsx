@@ -38,7 +38,7 @@ export const BuyerOrders = ({
         || o.status === statusFilter
         || (statusFilter === 'in_transit' && o.status === 'shipped');
  const matchesSearch = o.id.toLowerCase().includes(searchTerm.toLowerCase()) || 
- o.items?.some(i => i.products?.name.toLowerCase().includes(searchTerm.toLowerCase()));
+ o.items?.some(i => (i.products?.name || i.product?.name || '').toLowerCase().includes(searchTerm.toLowerCase()));
  return matchesStatus && matchesSearch;
  }).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
  }, [orders, statusFilter, searchTerm]);
