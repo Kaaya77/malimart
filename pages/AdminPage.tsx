@@ -82,7 +82,7 @@ export const AdminPage = () => {
             const totalRev = orderData?.reduce((sum, order) => sum + (order.total || 0), 0) || 0;
 
             // 2. Fetch All Vendors
-            const { data: vendors } = await supabase.from('vendor_profiles').select('*, profiles(full_name, email)');
+            const { data: vendors } = await supabase.from('vendor_profiles').select('*, profiles!seller_id(full_name, email)');
             
             // 3. Fetch Disputes
             const { data: activeDisputes } = await supabase.from('disputes').select('*, orders(total), profiles!buyer_id(full_name, email)').eq('status', 'open');
@@ -94,7 +94,7 @@ export const AdminPage = () => {
             const { data: allUsers } = await supabase.from('profiles').select('*').order('created_at', { ascending: false }).limit(50);
 
             // 6. Fetch Products
-            const { data: allProducts } = await supabase.from('products').select('*, profiles!seller_id(full_name)').order('created_at', { ascending: false }).limit(50);
+            const { data: allProducts } = await supabase.from('products').select('id, name, price, stock, status, created_at, seller_id, images, category, is_boosted, profiles!seller_id(full_name)').order('created_at', { ascending: false }).limit(50);
 
             // 7. Fetch Settings
             const { data: settings } = await supabase.from('platform_settings').select('*').eq('id', 1).single();
@@ -113,7 +113,11 @@ export const AdminPage = () => {
             }
 
             // 8. Fetch Real Revenue Data
-            const { data: revData } = await supabase.from('revenue_stats').select('*').order('name', { ascending: true });
+            let revData = null;
+            try {
+                const { data: _revData } = await supabase.from('revenue_stats').select('*').order('name', { ascending: true });
+                revData = _revData;
+            } catch (e) { console.warn('[Admin] revenue_stats unavailable:', e); }
             if (revData) setRevenueData(revData);
 
             setStats({
@@ -192,7 +196,7 @@ export const AdminPage = () => {
 
     const handleApprovePayout = async (payoutId: string) => {
         try {
-            await supabase.from('seller_payouts').update({ status: 'completed' }).eq('id', payoutId);
+            await supabase.from('seller_payouts').update({ status: 'paid', paid_at: new Date().toISOString() }).eq('id', payoutId);
             addToast("Payout approved and processed", "success");
             fetchAdminData();
         } catch (error) {
