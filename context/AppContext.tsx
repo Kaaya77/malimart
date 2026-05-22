@@ -389,8 +389,8 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     }, []);
 
     const fetchAndSetWishlist = useCallback(async (userId: string) => {
-        const { data } = await supabase.from('wishlist').select('product:products(*)').eq('user_id', userId);
-        if (data) setWishlist(data.map((w: any) => w.product));
+        const { data } = await supabase.from('wishlist_items').select('product:products(*)').eq('user_id', userId).is('deleted_at', null);
+        if (data) setWishlist(data.map((w: any) => w.product).filter(Boolean));
     }, []);
 
     const fetchAndSetCart = useCallback(async (userId: string) => {
@@ -421,7 +421,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
 
     const fetchUserData = useCallback(async (userId: string, userRole?: string, isBanned?: boolean) => {
         const [addrsRes, notifsRes, walletRes, logsRes, paymentsRes, shipmentsRes, payMethodsRes, connAccountsRes, loginHistRes, blockedRes] = await Promise.all([
-            supabase.from('addresses').select('*').eq('user_id', userId),
+            supabase.from('addresses').select('*').eq('user_id', userId).is('deleted_at', null),
             isBanned ? { data: [] } : supabase.from('notifications').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
             supabase.from('wallet_transactions').select('*').eq('profile_id', userId).order('created_at', { ascending: false }).limit(20),
             supabase.from('activity_logs').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(20),
@@ -633,10 +633,11 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         if (!user) return;
         const exists = wishlist.some(p => p.id === product.id);
         if (exists) {
-            await supabase.from('wishlist').delete().match({ user_id: user.id, product_id: product.id });
+            await supabase.from('wishlist_items').update({ deleted_at: new Date().toISOString() }).match({ user_id: user.id, product_id: product.id });
             setWishlist(prev => prev.filter(p => p.id !== product.id));
         } else {
-            await supabase.from('wishlist').insert({ user_id: user.id, product_id: product.id });
+            // Upsert in case a soft-deleted row exists
+            await supabase.from('wishlist_items').upsert({ user_id: user.id, product_id: product.id, deleted_at: null }, { onConflict: 'id' });
             setWishlist(prev => [...prev, product]);
         }
     }, [user, wishlist]);
@@ -757,10 +758,12 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         if (address.is_default) {
             await supabase.from('addresses').update({ is_default: false }).eq('user_id', user.id);
         }
-        await supabase.from('addresses').insert({ ...address, user_id: user.id });
-        const { data } = await supabase.from('addresses').select('*').eq('user_id', user.id);
+        const { error } = await supabase.from('addresses').insert({ ...address, user_id: user.id, created_at: new Date().toISOString() });
+        if (error) { addToast(error.message, 'error'); throw error; }
+        await logActivity('add_address', `New address added: ${address.label || address.street}`);
+        const { data } = await supabase.from('addresses').select('*').eq('user_id', user.id).is('deleted_at', null);
         if (data) setAddresses(data);
-    }, [user]);
+    }, [user, logActivity, addToast]);
 
     const fetchMessages = useCallback(async () => {
       if (!user) return [];
@@ -1053,19 +1056,22 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     }, [user, fetchUserData]);
 
     const deleteAddress = useCallback(async (id: string) => { 
-        await supabase.from('addresses').delete().eq('id', id); 
+        const { error } = await supabase.from('addresses').update({ deleted_at: new Date().toISOString() }).eq('id', id);
+        if (error) { addToast(error.message, 'error'); return; }
         if (user) await logActivity('delete_address', `Address deleted`, { address_id: id });
-        fetchUserData(user?.id!); 
-    }, [user, logActivity, fetchUserData]);
+        setAddresses(prev => prev.filter(a => a.id !== id));
+    }, [user, logActivity, addToast]);
     const updateAddress = useCallback(async (id: string, address: Partial<Address>) => {
         if (!user) return;
         if (address.is_default) {
             await supabase.from('addresses').update({ is_default: false }).eq('user_id', user.id);
         }
-        await supabase.from('addresses').update(address).eq('id', id);
+        const { error } = await supabase.from('addresses').update({ ...address, updated_at: new Date().toISOString() }).eq('id', id);
+        if (error) { addToast(error.message, 'error'); throw error; }
         if (user) await logActivity('update_address', `Address updated`, { address_id: id });
-        fetchUserData(user?.id!);
-    }, [user, logActivity, fetchUserData]);
+        const { data } = await supabase.from('addresses').select('*').eq('user_id', user.id).is('deleted_at', null);
+        if (data) setAddresses(data);
+    }, [user, logActivity, addToast, fetchUserData]);
 
     const updateUserProfile = useCallback(async (data: Partial<User>) => { 
         if (!user) return;
