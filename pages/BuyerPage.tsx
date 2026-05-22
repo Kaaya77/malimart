@@ -15,6 +15,7 @@ import { OrderTracking } from '../components/CheckoutComponents';
 import { formatTZS, CURRENCY } from '../constants';
 import { VendorProfile, Order, Offer, Product } from '../types';
 import { BuyerOrders } from '../components/BuyerOrders';
+import { BuyerDashboard } from '../components/BuyerDashboard';
 import { BuyerMessages } from '../components/BuyerMessages';
 import { ProductCard } from '../components/ProductCard';
 import { BuyerSettingsPage } from './BuyerSettingsPage';
@@ -275,129 +276,16 @@ export const BuyerPage = () => {
  <motion.div key={tab} initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} exit={{opacity:0}} transition={{duration:0.2}}>
 
  {/* DASHBOARD ─────────────────────────────────────── */}
- {tab==='dashboard' && (
- <div className="space-y-6">
- {/* KPI cards */}
- <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
- {kpiStats.map((s,i)=><PremiumStatCard key={i} title={s.title} value={s.value} icon={s.icon} trend={i===1?{value:'+12.5%',positive:true}:undefined}/>)}
- </div>
-
- {/* Charts row */}
- <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
- <div className="lg:col-span-2 bg-card border border-foreground/8 rounded-3xl p-5 md:p-6">
- <p className="text-xs font-bold uppercase tracking-widest text-foreground/35 mb-4">Spending · Last 6 months</p>
- <div className="h-48">
- <ResponsiveContainer width="100%" height="100%">
- <BarChart data={stats.spendingHistory} barSize={28}>
- <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="opacity-5"/>
- <XAxis dataKey="month" tick={{fontSize:10,fill:'currentColor',opacity:0.4}} tickLine={false} axisLine={false}/>
- <YAxis hide/>
- <Tooltip content={<ChartTip/>} cursor={{fill:'currentColor',opacity:0.04}}/>
- <Bar dataKey="amount" radius={[6,6,0,0]} fill="currentColor" className="text-foreground"/>
- </BarChart>
- </ResponsiveContainer>
- </div>
- </div>
- <div className="bg-card border border-foreground/8 rounded-3xl p-5 md:p-6">
- <p className="text-xs font-bold uppercase tracking-widest text-foreground/35 mb-4">Category split</p>
- {stats.categoryDistribution.length>0 ? (
- <>
- <div className="h-36">
- <ResponsiveContainer width="100%" height="100%">
- <PieChart>
- <Pie data={stats.categoryDistribution} cx="50%" cy="50%" innerRadius={45} outerRadius={65} paddingAngle={4} dataKey="value" nameKey="name">
- {stats.categoryDistribution.map((_:any,i:number)=><Cell key={i} fillOpacity={1-(i*0.18)} fill="currentColor" className="text-foreground"/>)}
- </Pie>
- <Tooltip content={<ChartTip/>}/>
- </PieChart>
- </ResponsiveContainer>
- </div>
- <div className="space-y-1.5 mt-2">
- {stats.categoryDistribution.slice(0,3).map((c:any,i:number)=>(
- <div key={i} className="flex items-center justify-between text-xs">
- <span className="text-foreground/55 truncate">{c.name}</span>
- <span className="font-bold text-foreground shrink-0">{formatTZS(c.value)}</span>
- </div>
- ))}
- </div>
- </>
- ) : (
- <div className="flex items-center justify-center h-36 text-foreground/20 text-xs">No data yet</div>
- )}
- </div>
- </div>
-
- {/* Recent orders + Savings */}
- <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
- <div className="bg-card border border-foreground/8 rounded-3xl p-5">
- <div className="flex items-center justify-between mb-4">
- <p className="text-xs font-bold uppercase tracking-widest text-foreground/35">Recent Orders</p>
- <button onClick={()=>changeTab('orders')} className="text-[10px] font-bold text-foreground/45 hover:text-foreground flex items-center gap-1">
- View all <ChevronRight className="w-3 h-3"/>
- </button>
- </div>
- {orders.length===0 ? (
- <div className="flex flex-col items-center py-8 text-foreground/25">
- <Package className="w-10 h-10 mb-2 opacity-30"/>
- <p className="text-xs">No orders yet</p>
- <button onClick={()=>navigate('/shop')} className="mt-3 h-9 px-4 rounded-xl bg-foreground text-background text-xs font-bold">Shop Now</button>
- </div>
- ) : (
- <div className="space-y-2">
- {orders.slice(0,4).map(o=>(
- <button key={o.id} onClick={()=>changeTab('orders')}
- className="w-full flex items-center gap-3 p-3 rounded-2xl hover:bg-foreground/[0.04] transition-colors text-left">
- <div className="w-9 h-9 rounded-xl bg-foreground/[0.06] flex items-center justify-center shrink-0">
- <Package className="w-4 h-4 text-foreground/50 stroke-[2]"/>
- </div>
- <div className="flex-1 min-w-0">
- <p className="text-xs font-bold text-foreground truncate">#{o.id.slice(0,8).toUpperCase()}</p>
- <p className="text-[10px] text-foreground/40 capitalize">{o.status}</p>
- </div>
- <div className="text-right shrink-0">
- <p className="text-xs font-bold text-foreground">{formatTZS(o.total||0)}</p>
- <p className="text-[10px] text-foreground/35">{new Date(o.created_at||'').toLocaleDateString()}</p>
- </div>
- </button>
- ))}
- </div>
- )}
- </div>
-
- {/* Savings card */}
- <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-3xl p-5 md:p-6 relative overflow-hidden text-white">
- <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/10 rounded-full blur-xl"/>
- <div className="relative z-10">
- <p className="text-[10px] text-white/60 uppercase tracking-widest font-bold mb-1">Your Savings</p>
- <p className="text-3xl font-black mb-1">{formatTZS(stats.savings)}</p>
- <p className="text-white/70 text-xs mb-5">Saved this month using platform vouchers and promotions.</p>
- <button onClick={()=>changeTab('offers')}
- className="h-10 px-5 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold transition-colors flex items-center gap-2">
- <Ticket className="w-4 h-4"/> Explore Deals
- </button>
- </div>
- </div>
- </div>
-
- {/* Quick actions */}
- <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
- {[
- {label:'Track Orders', icon:Package, action:()=>changeTab('orders'), color:'bg-blue-500/10 text-blue-600'},
- {label:'My Wishlist', icon:Heart, action:()=>changeTab('wishlist'), color:'bg-rose-500/10 text-rose-600'},
- {label:'Messages', icon:MessageSquare,action:()=>changeTab('inbox'), color:'bg-purple-500/10 text-purple-600'},
- {label:'Rewards', icon:Ticket, action:()=>changeTab('offers'), color:'bg-amber-500/10 text-amber-600'},
- ].map(({label,icon:Icon,action,color})=>(
- <button key={label} onClick={action}
- className="flex flex-col items-center gap-2.5 p-4 rounded-2xl bg-foreground/[0.03] border border-foreground/8 hover:bg-foreground/[0.06] transition-all active:scale-[0.97]">
- <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${color}`}>
- <Icon className="w-4.5 h-4.5 stroke-[2]"/>
- </div>
- <span className="text-xs font-semibold text-foreground/70">{label}</span>
- </button>
- ))}
- </div>
- </div>
- )}
+        {tab==='dashboard' && (
+          <BuyerDashboard
+            orders={orders}
+            wishlist={wishlist}
+            user={user}
+            onGoOrders={()=>setTab('orders')}
+            onGoWishlist={()=>setTab('wishlist')}
+            onGoOffers={()=>setTab('offers')}
+          />
+        )}}
 
  {tab==='orders' && (
  <BuyerOrders orders={orders} onCancel={cancelOrder} onDelete={deleteOrder}
