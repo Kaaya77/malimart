@@ -42,19 +42,17 @@ const BuyerOffers = () => {
  const [copied, setCopied] = useState<string|null>(null);
 
  useEffect(() => {
- const fetch = async () => {
+ // Re-use offers already in AppContext — only fetch vendor info (not all offers again)
+ const { offers: ctxOffers } = (window as any).__malimart_ctx__ || {};
  setLoading(true);
  const now = new Date().toISOString();
- const { data: offersData } = await supabase.from('offers').select('*').eq('status','active')
- .or(`end_date.is.null,end_date.gte.${now}`).order('created_at',{ascending:false});
- if (!offersData) { setLoading(false); return; }
- const ids = [...new Set(offersData.map((o:any)=>o.seller_id))];
- const { data: vData } = await supabase.from('vendor_profiles').select('seller_id,store_name,logo_url,is_verified').in('seller_id',ids);
- const vMap = new Map((vData||[]).map((v:any)=>[v.seller_id,v]));
- setOffers(offersData.map((o:any)=>({...o, vendor: vMap.get(o.seller_id)})) as any);
- setLoading(false);
- };
- fetch();
+ supabase.from('offers').select('*, vendor:vendor_profiles!seller_id(seller_id,store_name,logo_url,is_verified)')
+   .eq('status','active').or(`end_date.is.null,end_date.gte.${now}`)
+   .order('created_at',{ascending:false}).limit(30)
+   .then(({ data }) => {
+     if (data) setOffers(data as any);
+     setLoading(false);
+   });
  },[]);
 
  const filtered = useMemo(()=>offers.filter(o=>{
