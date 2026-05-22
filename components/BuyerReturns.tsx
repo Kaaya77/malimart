@@ -11,14 +11,15 @@ import { supabase } from '../services/supabaseClient';
 import { useAppState } from '../context/AppContext';
 import { formatTZS } from '../constants';
 
-const RETURN_REASONS = [
- 'Wrong item received',
- 'Item damaged/defective',
- 'Not as described',
- 'Changed my mind',
- 'Item never arrived',
- 'Duplicate order',
- 'Other',
+// DB enum: item_not_received | item_not_as_described | wrong_item_sent | item_damaged | seller_not_responding | refund_not_processed | other
+const RETURN_REASONS: { label: string; value: string }[] = [
+ { label: 'Wrong item received', value: 'wrong_item_sent' },
+ { label: 'Item damaged / defective', value: 'item_damaged' },
+ { label: 'Not as described', value: 'item_not_as_described' },
+ { label: 'Item never arrived', value: 'item_not_received' },
+ { label: 'Seller not responding', value: 'seller_not_responding' },
+ { label: 'Refund not processed', value: 'refund_not_processed' },
+ { label: 'Other', value: 'other' },
 ];
 
 const STATUS_CONFIG: Record<string, { color: string; label: string; icon: React.ElementType }> = {
@@ -121,7 +122,7 @@ export const BuyerReturns: React.FC<BuyerReturnsProps> = ({ userId, onContactSel
  seller_id: order.items?.[0]?.seller_id || order.items?.[0]?.seller_id,
  reason: form.reason,
  description: form.description,
- evidence_images: form.images,
+ evidence_urls: form.images,
  status: 'open',
  type: 'return',
  created_at: new Date().toISOString(),
@@ -130,7 +131,7 @@ export const BuyerReturns: React.FC<BuyerReturnsProps> = ({ userId, onContactSel
 
  // Notify seller
  await supabase.from('notifications').insert({
- user_id: order.items?.[0]?.seller_id || order.items?.[0]?.seller_id,
+ user_id: sellerIdForDispute,
  type: 'return',
  title: 'New Return Request',
  message: `Buyer has submitted a return request for order #${form.orderId.slice(0,8)}. Reason: ${form.reason}`,
@@ -189,11 +190,11 @@ export const BuyerReturns: React.FC<BuyerReturnsProps> = ({ userId, onContactSel
  </div>
 
  {/* Evidence images */}
- {selected.evidence_images?.length > 0 && (
+ {selected.evidence_urls?.length > 0 && (
  <div>
  <p className="text-[10px] font-bold uppercase tracking-widest text-foreground/35 mb-2">Evidence Photos</p>
  <div className="flex gap-2">
- {selected.evidence_images.map((img:string, i:number) => (
+ {selected.evidence_urls.map((img:string, i:number) => (
  <a key={i} href={img} target="_blank" rel="noopener noreferrer" className="w-20 h-20 rounded-xl overflow-hidden bg-foreground/[0.04] shrink-0 hover:opacity-80 transition-opacity">
  <img src={img} className="w-full h-full object-cover" alt="Evidence" loading="lazy" decoding="async"/>
  </a>
@@ -288,9 +289,9 @@ export const BuyerReturns: React.FC<BuyerReturnsProps> = ({ userId, onContactSel
  <label className="text-[10px] font-bold uppercase tracking-widest text-foreground/35 mb-2 block">Reason for return</label>
  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
  {RETURN_REASONS.map(r => (
- <button key={r} onClick={() => setForm(p=>({...p,reason:r}))}
- className={`text-left p-3 rounded-xl border text-sm font-medium transition-all ${form.reason===r?'border-foreground bg-foreground/[0.04] text-foreground font-semibold':'border-foreground/10 text-foreground/60 hover:border-foreground/25'}`}>
- {r}
+ <button key={r.value} onClick={() => setForm(p=>({...p,reason:r.value}))}
+ className={`text-left p-3 rounded-xl border text-sm font-medium transition-all ${form.reason===r.value?'border-foreground bg-foreground/[0.04] text-foreground font-semibold':'border-foreground/10 text-foreground/60 hover:border-foreground/25'}`}>
+ {r.label}
  </button>
  ))}
  </div>
