@@ -26,34 +26,37 @@ export const AdminModeration = () => {
  }, [activeTab]);
 
  const fetchData = async () => {
- if (activeTab === 'content') {
- const { data: socialPosts } = await supabase.from('social_posts').select('*, profiles!user_id(full_name, email)');
- const { data: reviews } = await supabase.from('reviews').select('*, profiles!user_id(full_name, email)');
- const combined = [
- ...(socialPosts || []).map(p => ({ ...p, type: 'social_post', content: p.caption || 'No caption', image: p.image_url })),
- ...(reviews || []).map(r => ({ ...r, type: 'review', content: r.comment }))
- ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
- setPosts(combined);
- } else if (activeTab === 'reports') {
- const { data: userReports } = await supabase.from('reports').select('*, reporter:profiles!reports_reporter_id_fkey(full_name, email), reported:profiles!reports_reported_id_fkey(full_name, email)');
- setReports(userReports || []);
- } else if (activeTab === 'users') {
- const { data: allUsers } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
- setUsers(allUsers || []);
- } else if (activeTab === 'vendors') {
- const { data: allVendors } = await supabase.from('vendor_profiles').select('*, profiles!seller_id(full_name, email), documents:vendor_documents(*)').order('created_at', { ascending: false });
- setVendors(allVendors || []);
- } else if (activeTab === 'logs') {
- const { data: allLogs } = await supabase.from('moderation_logs').select('*, admin:profiles!admin_id(full_name)').order('created_at', { ascending: false });
- setLogs(allLogs || []);
- } else if (activeTab === 'appeals') {
- const { data: allAppeals } = await supabase.from('moderation_appeals').select('*, user:profiles!user_id(full_name, email)').order('created_at', { ascending: false });
- setAppeals(allAppeals || []);
- } else if (activeTab === 'products') {
- const { data: allProducts } = await supabase.from('products').select('*, profiles!seller_id(full_name, email)').order('created_at', { ascending: false }).limit(100);
- setProducts(allProducts || []);
- }
- };
+    if (activeTab === 'content') {
+      // Parallel fetch for content tab
+      const [postsRes, reviewsRes] = await Promise.all([
+        supabase.from('social_posts').select('*, profiles!user_id(full_name, email)').order('created_at',{ascending:false}).limit(100),
+        supabase.from('reviews').select('*, profiles!user_id(full_name, email)').order('created_at',{ascending:false}).limit(100)
+      ]);
+      const combined = [
+        ...(postsRes.data || []).map(p => ({ ...p, type: 'social_post', content: p.caption || 'No caption', image: p.image_url })),
+        ...(reviewsRes.data || []).map(r => ({ ...r, type: 'review', content: r.comment }))
+      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      setPosts(combined);
+    } else if (activeTab === 'reports') {
+      const { data: userReports } = await supabase.from('reports').select('*, reporter:profiles!reports_reporter_id_fkey(full_name, email), reported:profiles!reports_reported_id_fkey(full_name, email)').order('created_at',{ascending:false}).limit(100);
+      setReports(userReports || []);
+    } else if (activeTab === 'users') {
+      const { data: allUsers } = await supabase.from('profiles').select('*').order('created_at', { ascending: false }).limit(100).is('deleted_at',null);
+      setUsers(allUsers || []);
+    } else if (activeTab === 'vendors') {
+      const { data: allVendors } = await supabase.from('vendor_profiles').select('*, profiles!seller_id(full_name, email), documents:vendor_documents(*)').order('created_at', { ascending: false }).limit(100);
+      setVendors(allVendors || []);
+    } else if (activeTab === 'logs') {
+      const { data: allLogs } = await supabase.from('moderation_logs').select('*, admin:profiles!admin_id(full_name)').order('created_at', { ascending: false }).limit(100);
+      setLogs(allLogs || []);
+    } else if (activeTab === 'appeals') {
+      const { data: allAppeals } = await supabase.from('moderation_appeals').select('*, user:profiles!user_id(full_name, email)').order('created_at', { ascending: false }).limit(100);
+      setAppeals(allAppeals || []);
+    } else if (activeTab === 'products') {
+      const { data: allProducts } = await supabase.from('products').select('*, profiles!seller_id(full_name, email)').order('created_at', { ascending: false }).limit(100).is('deleted_at',null);
+      setProducts(allProducts || []);
+    }
+  };
 
  const toggleSelect = (id: string) => {
  setSelectedItems(prev => prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]);
