@@ -419,7 +419,7 @@ export const SellerInventory = ({ products: initialProducts, userId, refresh, on
  user_id: userId,
  action_type: 'stock_update',
  entity_id: id,
- details: { old: product.stock, new: newStock, delta }
+ metadata: { old: product.stock, new: newStock, delta }, details: `Stock updated: ${product.stock} → ${newStock}`
  });
  }
  };
