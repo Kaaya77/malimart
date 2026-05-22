@@ -85,7 +85,7 @@ export const AdminPage = () => {
             const { data: vendors } = await supabase.from('vendor_profiles').select('*, profiles!seller_id(full_name, email)');
             
             // 3. Fetch Disputes
-            const { data: activeDisputes } = await supabase.from('disputes').select('*, orders(total), profiles!buyer_id(full_name, email)').eq('status', 'open');
+            const { data: activeDisputes } = await supabase.from('disputes').select('*, order:orders!order_id(id, total, status), buyer:profiles!buyer_id(full_name, email)').eq('status', 'open');
             
             // 4. Fetch Payouts
             const { data: pendingPayouts } = await supabase.from('seller_payouts').select('*, profiles!seller_id(full_name, email)').eq('status', 'pending');
@@ -232,7 +232,11 @@ export const AdminPage = () => {
     const handleDeleteUser = async () => {
         if (!userToDelete) return;
         try {
-            await supabase.from('profiles').delete().eq('id', userToDelete);
+            // Soft-delete: mark deleted_at. Hard auth.users deletion requires admin API.
+                await supabase.from('profiles').update({ 
+                    deleted_at: new Date().toISOString(),
+                    is_banned: true 
+                }).eq('id', userToDelete);
             addToast("User deleted successfully", "success");
             fetchAdminData();
         } catch (error) {
