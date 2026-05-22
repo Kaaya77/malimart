@@ -296,13 +296,17 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     // Returns all user data in one round trip: orders, cart, wishlist, addresses,
     // notifications, wallet, activity, payment methods, vendor profile (sellers),
     // admin stats (admins). Called on init and every sign-in.
-    const applyDashboardRpc = useCallback(async (email: string, profile: any) => {
+    // Ref to fetchUserData — prevents TDZ when applyDashboardRpc is minified
+    const fetchUserDataRef = React.useRef<any>(null);
+
+        const applyDashboardRpc = useCallback(async (email: string, profile: any) => {
         try {
             const { data, error } = await supabase.rpc('get_dashboard_data');
             if (error) {
                 console.error('[applyDashboardRpc] RPC failed, falling back:', error.message);
                 // Fallback to old fetchUserData if RPC fails
-                await fetchUserData(profile.id, profile.role, profile.is_banned);
+                // fetchUserData called via ref to avoid TDZ (applyDashboardRpc defined before fetchUserData)
+            if (fetchUserDataRef.current) await fetchUserDataRef.current(profile.id, profile.role, profile.is_banned);
                 return;
             }
             if (!data) return;
@@ -344,9 +348,10 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
             }
         } catch (err: any) {
             console.error('[applyDashboardRpc] Unexpected error:', err.message);
-            await fetchUserData(profile.id, profile.role, profile.is_banned);
+            // fetchUserData called via ref to avoid TDZ (applyDashboardRpc defined before fetchUserData)
+            if (fetchUserDataRef.current) await fetchUserDataRef.current(profile.id, profile.role, profile.is_banned);
         }
-    }, [fetchUserData]);
+    }, []);  // fetchUserData accessed via ref — no TDZ
 
     const fetchPublicData = useCallback(async () => {
         // 1. Fetch other public data in parallel
@@ -524,6 +529,9 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         fetchAndSetCart(userId);
         fetchUnreadMessagesCount(userId);
     }, [fetchAndSetOrders, fetchAndSetWishlist, fetchAndSetCart, fetchUnreadMessagesCount]);
+
+    // Wire fetchUserData into the ref so applyDashboardRpc can call it
+    React.useEffect(() => { fetchUserDataRef.current = fetchUserData; }, [fetchUserData]);
 
     const logActivity = useCallback(async (action: string, details?: string, metadata: any = {}) => {
         if (!user) return;
