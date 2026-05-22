@@ -22,26 +22,27 @@ export const SellerReturns = ({ userId, onContactBuyer }: { userId: string, onCo
  refunded: disputes.filter(d => d.status === 'refunded').length
  };
 
- const fetchDisputes = async () => {
- setIsLoading(true);
- const { data, error } = await supabase
- .from('disputes')
- .select('*, order:orders(*), buyer:profiles!buyer_id(id, full_name, avatar_url, email, phone)')
- .eq('seller_id', userId)
- .order('created_at', { ascending: false });
- 
- if (error) {
- addToast("Failed to load returns", "error");
- } else {
- setDisputes(data || []);
- }
- setIsLoading(false);
- };
+ const fetchDisputes = async (silent = false) => {
+    if (!silent) setIsLoading(true);
+    try {
+      const { data, error } = await supabase.rpc('get_seller_disputes', { p_seller_id: userId });
+      if (error) throw error;
+      setDisputes((data as any[]) || []);
+    } catch (err: any) {
+      if (!silent) addToast('Failed to load returns', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
- useEffect(() => {
- fetchDisputes();
- }, [userId]);
-
+  useEffect(() => {
+    fetchDisputes();
+    const ch = supabase.channel(`disputes-${userId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'disputes', filter: `seller_id=eq.${userId}` },
+        () => fetchDisputes(true))
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [userId]);
  const handleUpdateStatus = async (disputeId: string, newStatus: string, orderId: string) => {
  const { error } = await supabase.from('disputes').update({ status: newStatus, updated_at: new Date().toISOString() }).eq('id', disputeId);
  if (error) {
