@@ -27,8 +27,8 @@ export const AdminModeration = () => {
 
  const fetchData = async () => {
  if (activeTab === 'content') {
- const { data: socialPosts } = await supabase.from('social_posts').select('*, profiles(full_name, email)');
- const { data: reviews } = await supabase.from('reviews').select('*, profiles(full_name, email)');
+ const { data: socialPosts } = await supabase.from('social_posts').select('*, profiles!user_id(full_name, email)');
+ const { data: reviews } = await supabase.from('reviews').select('*, profiles!user_id(full_name, email)');
  const combined = [
  ...(socialPosts || []).map(p => ({ ...p, type: 'social_post', content: p.caption || 'No caption', image: p.image_url })),
  ...(reviews || []).map(r => ({ ...r, type: 'review', content: r.comment }))
@@ -41,16 +41,16 @@ export const AdminModeration = () => {
  const { data: allUsers } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
  setUsers(allUsers || []);
  } else if (activeTab === 'vendors') {
- const { data: allVendors } = await supabase.from('vendor_profiles').select('*, profiles(full_name, email), documents:vendor_documents(*)').order('created_at', { ascending: false });
+ const { data: allVendors } = await supabase.from('vendor_profiles').select('*, profiles!seller_id(full_name, email), documents:vendor_documents(*)').order('created_at', { ascending: false });
  setVendors(allVendors || []);
  } else if (activeTab === 'logs') {
  const { data: allLogs } = await supabase.from('moderation_logs').select('*, admin:profiles!admin_id(full_name)').order('created_at', { ascending: false });
  setLogs(allLogs || []);
  } else if (activeTab === 'appeals') {
- const { data: allAppeals } = await supabase.from('moderation_appeals').select('*, profiles(full_name, email)').order('created_at', { ascending: false });
+ const { data: allAppeals } = await supabase.from('moderation_appeals').select('*, user:profiles!user_id(full_name, email)').order('created_at', { ascending: false });
  setAppeals(allAppeals || []);
  } else if (activeTab === 'products') {
- const { data: allProducts } = await supabase.from('products').select('*, profiles(full_name, email)').order('created_at', { ascending: false }).limit(100);
+ const { data: allProducts } = await supabase.from('products').select('*, profiles!seller_id(full_name, email)').order('created_at', { ascending: false }).limit(100);
  setProducts(allProducts || []);
  }
  };
@@ -364,7 +364,7 @@ export const AdminModeration = () => {
  <div className="flex flex-col md:flex-row justify-between items-center pt-6 border-t border-foreground/8 gap-6">
  <div className="space-y-1">
  <p className="text-[10px] font-bold uppercase tracking-wider text-foreground/50">From</p>
- <p className="text-sm font-bold text-foreground">{appeal.profiles?.full_name} <span className="text-foreground/50 font-medium ml-2">{appeal.profiles?.email}</span></p>
+ <p className="text-sm font-bold text-foreground">{appeal.user?.full_name} <span className="text-foreground/50 font-medium ml-2">{appeal.user?.email}</span></p>
  </div>
  <div className="flex gap-2 w-full md:w-auto">
  {appeal.status === 'pending' && (
