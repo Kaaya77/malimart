@@ -312,7 +312,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
                 .limit(20),
             supabase.from('trust_badges').select('*').limit(50),
             supabase.from('social_posts')
-                .select('*, user:profiles(full_name, avatar_url)')
+                .select('*, user:profiles!user_id(full_name, avatar_url)')
                 .eq('status', 'approved')
                 .is('is_shadowbanned', false)
                 .order('created_at', { ascending: false })
@@ -332,10 +332,10 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         try {
             const prodsRes = await supabase.from('products')
                 .select(`
-                    id, name, price, sale_price, images, category, subcategory, 
-                    stock, rating, review_count, status, is_boosted, created_at,
-                    seller_id, brand, condition, warranty_period, location,
-                    latitude, longitude, description, tags
+                    id, name, price, sale_price, base_price, images, category, subcategory, 
+                    stock, low_stock_threshold, rating, review_count, status, is_boosted, created_at,
+                    seller_id, brand, condition, warranty_period, location, region, slug,
+                    latitude, longitude, description, tags, badges, attributes
                 `)
                 .is('deleted_at', null)
                 .order('created_at', { ascending: false })
