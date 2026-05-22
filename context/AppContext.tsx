@@ -435,11 +435,17 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         }
     }, []);
 
-    const fetchAndSetOrders = useCallback(async (userId: string) => {
+    const fetchAndSetOrders = useCallback(async (userId: string, limit = 50, offset = 0) => {
         const { data, error } = await supabase
-            .rpc('get_buyer_orders', { p_user_id: userId });
+            .rpc('get_buyer_orders', { p_user_id: userId, p_limit: limit, p_offset: offset });
         if (error) { console.error('[Orders fetch]', error.message); return; }
-        if (data) setOrders((data as any[]) || []);
+        if (data) {
+            if (offset === 0) {
+                setOrders((data as any[]) || []);
+            } else {
+                setOrders(prev => [...prev, ...((data as any[]) || [])]);
+            }
+        }
     }, []);
 
     const fetchAndSetWishlist = useCallback(async (userId: string) => {
