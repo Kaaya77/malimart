@@ -15,6 +15,7 @@ import { supabase } from '../services/supabaseClient';
 import { formatTZS } from '../constants';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { AdminModeration } from '../components/AdminModeration';
+import { AdminDashboard } from '../components/AdminDashboard';
 import { AdminGrowth } from '../components/AdminGrowth';
 import { AdminVendorVerification } from '../components/AdminVendorVerification';
 import { AdminMessages } from '../components/AdminMessages';
@@ -410,74 +411,16 @@ export const AdminPage = () => {
                         
                         {/* OVERVIEW TAB */}
                         {activeTab === 'overview' && (
-                            <motion.div 
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.5 }}
-                                className="space-y-12"
-                            >
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                    <PremiumStatCard 
-                                        title="Total Users" 
-                                        value={stats.totalUsers.toLocaleString()} 
-                                        icon={Users} 
-                                        trend={{ value: "+5.2%", positive: true }}
-                                    />
-                                    <PremiumStatCard 
-                                        title="Platform Volume" 
-                                        value={formatTZS(stats.totalRevenue)} 
-                                        icon={DollarSign} 
-                                        trend={{ value: "+12.8%", positive: true }}
-                                    />
-                                    <PremiumStatCard 
-                                        title="Total Products" 
-                                        value={stats.totalProducts.toLocaleString()} 
-                                        icon={Package} 
-                                    />
-                                    <PremiumStatCard 
-                                        title="Active Disputes" 
-                                        value={stats.activeDisputes} 
-                                        icon={AlertCircle} 
-                                        trend={stats.activeDisputes > 0 ? { value: "Action Required", positive: false } : undefined}
-                                    />
-                                </div>
-
-                                {/* Chart Section */}
-                                <div className="p-8 border border-border bg-card rounded-3xl shadow-sm">
-                                    <div className="flex items-center justify-between mb-8">
-                                        <div>
-                                            <h3 className="font-sans font-bold text-lg mb-1 tracking-tight">Revenue Trend</h3>
-                                            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Last 7 days performance</p>
-                                        </div>
-                                        <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-wider rounded-full shadow-sm">
-                                            <TrendingUp className="w-3 h-3 mr-1" /> +14.5%
-                                        </Badge>
-                                    </div>
-                                    <div className="h-96 w-full min-w-0 relative">
-                                        <ResponsiveContainer width="100%" aspect={2.5}>
-                                            <BarChart data={revenueData.length > 0 ? revenueData : [
-                                                { name: 'Mon', revenue: 0 },
-                                                { name: 'Tue', revenue: 0 },
-                                                { name: 'Wed', revenue: 0 },
-                                                { name: 'Thu', revenue: 0 },
-                                                { name: 'Fri', revenue: 0 },
-                                                { name: 'Sat', revenue: 0 },
-                                                { name: 'Sun', revenue: 0 },
-                                            ]} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                                                <CartesianGrid strokeDasharray="3 3" stroke="currentColor" opacity={0.1} vertical={false} />
-                                                <XAxis dataKey="name" stroke="currentColor" opacity={0.5} fontSize={10} tickLine={false} axisLine={false} />
-                                                <YAxis stroke="currentColor" opacity={0.5} fontSize={10} tickLine={false} axisLine={false} tickFormatter={(value) => `TSh ${value/1000}k`} />
-                                                <Tooltip 
-                                                    contentStyle={{ backgroundColor: 'var(--bg-color)', border: '1px solid currentColor', borderRadius: '0', color: 'currentColor' }}
-                                                    itemStyle={{ color: 'currentColor', fontWeight: 'normal', fontFamily: 'serif' }}
-                                                />
-                                                <Bar dataKey="revenue" fill="currentColor" radius={[2, 2, 0, 0]} />
-                                            </BarChart>
-                                        </ResponsiveContainer>
-                                    </div>
-                                </div>
-                            </motion.div>
-                        )}
+                            <AdminDashboard
+                                initialStats={stats}
+                                onGoUsers={()=>setActiveTab('users')}
+                                onGoVendors={()=>setActiveTab('vendors')}
+                                onGoProducts={()=>setActiveTab('products')}
+                                onGoDisputes={()=>setActiveTab('disputes')}
+                                onGoPayouts={()=>setActiveTab('payouts')}
+                                onGoGrowth={()=>setActiveTab('growth')}
+                            />
+                        )}}
 
                          {/* USERS TAB */}
                         {activeTab === 'users' && (
