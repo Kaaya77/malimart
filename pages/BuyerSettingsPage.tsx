@@ -14,9 +14,16 @@ export const BuyerSettingsPage = () => {
 
   const [profileData, setProfileData] = useState({ 
     full_name: user?.full_name || user?.name || '', 
+    display_name: user?.display_name || '',
     phone: user?.phone || '',
     avatar_url: user?.avatar_url || '',
-    region: user?.region || 'Dar es Salaam'
+    cover_image_url: user?.cover_image_url || '',
+    region: user?.region || 'Dar es Salaam',
+    bio: user?.bio || '',
+    timezone: user?.timezone || 'Africa/Dar_es_Salaam',
+    pronouns: user?.pronouns || '',
+    signature_emoji: user?.signature_emoji || '',
+    greeting_style: user?.greeting_style || 'karibu',
   });
   const [addressData, setAddressData] = useState({ label: '', street: '', city: 'Dar es Salaam', district: 'Kinondoni', phone: '' });
   const [editingAddress, setEditingAddress] = useState<any | null>(null);
@@ -54,9 +61,16 @@ export const BuyerSettingsPage = () => {
     if (user) {
         setProfileData({ 
             full_name: user.full_name || user.name || '', 
+            display_name: user.display_name || '',
             phone: user.phone || '',
             avatar_url: user.avatar_url || '',
-            region: user.region || 'Dar es Salaam'
+            cover_image_url: user.cover_image_url || '',
+            region: user.region || 'Dar es Salaam',
+            bio: user.bio || '',
+            timezone: user.timezone || 'Africa/Dar_es_Salaam',
+            pronouns: user.pronouns || '',
+            signature_emoji: user.signature_emoji || '',
+            greeting_style: user.greeting_style || 'karibu',
         });
         setPreferences({
             emailNotifications: user.email_notifications ?? true,
@@ -408,6 +422,10 @@ export const BuyerSettingsPage = () => {
                           <Input icon={UserIcon} placeholder="Full Name" value={profileData.full_name || ''} onChange={(e: any) => setProfileData({ ...profileData, full_name: e.target.value })} />
                         </div>
                         <div className="space-y-1">
+                          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Display Name</label>
+                          <Input icon={UserIcon} placeholder="Display name (shown publicly)" value={profileData.display_name || ''} onChange={(e: any) => setProfileData({ ...profileData, display_name: e.target.value })} />
+                        </div>
+                        <div className="space-y-1">
                           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Email Address</label>
                           <Input icon={Mail} placeholder="Email Address" value={user?.email || ''} disabled className="bg-foreground/[0.03] /50 opacity-70" />
                         </div>
@@ -429,6 +447,42 @@ export const BuyerSettingsPage = () => {
                                   ))}
                               </select>
                           </div>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Pronouns</label>
+                          <Input placeholder="e.g. he/him, she/her, they/them" value={profileData.pronouns || ''} onChange={(e: any) => setProfileData({ ...profileData, pronouns: e.target.value })} />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Signature Emoji</label>
+                          <Input placeholder="e.g. 🌟" value={profileData.signature_emoji || ''} onChange={(e: any) => setProfileData({ ...profileData, signature_emoji: e.target.value })} />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Greeting Style</label>
+                          <select className="w-full h-10 bg-background border border-foreground/10 rounded-xl px-4 text-sm outline-none text-foreground appearance-none" value={profileData.greeting_style || 'karibu'} onChange={(e: any) => setProfileData({ ...profileData, greeting_style: e.target.value })}>
+                            <option value="karibu">Karibu (Welcome)</option>
+                            <option value="habari">Habari (How are you?)</option>
+                            <option value="hello">Hello (English)</option>
+                            <option value="mambo">Mambo (Swahili casual)</option>
+                          </select>
+                        </div>
+                        <div className="space-y-1 md:col-span-2">
+                          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Bio</label>
+                          <textarea placeholder="Tell people a little about yourself..." value={profileData.bio || ''} onChange={(e: any) => setProfileData({ ...profileData, bio: e.target.value })} maxLength={500} rows={3} className="w-full bg-background border border-foreground/10 rounded-xl px-4 py-3 text-sm outline-none text-foreground focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all resize-none" />
+                          <p className="text-xs text-muted-foreground text-right">{(profileData.bio || '').length}/500</p>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Timezone</label>
+                          <select className="w-full h-10 bg-background border border-foreground/10 rounded-xl px-4 text-sm outline-none text-foreground appearance-none" value={profileData.timezone || 'Africa/Dar_es_Salaam'} onChange={(e: any) => setProfileData({ ...profileData, timezone: e.target.value })}>
+                            <option value="Africa/Dar_es_Salaam">East Africa Time (Dar es Salaam)</option>
+                            <option value="Africa/Nairobi">East Africa Time (Nairobi)</option>
+                            <option value="UTC">UTC</option>
+                            <option value="Europe/London">GMT (London)</option>
+                            <option value="America/New_York">EST (New York)</option>
+                          </select>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Cover Image URL</label>
+                          <Input placeholder="Cover image URL (banner)" value={profileData.cover_image_url || ''} onChange={(e: any) => setProfileData({ ...profileData, cover_image_url: e.target.value })} />
                         </div>
                     </div>
                     <div className="flex justify-end pt-4 border-t border-slate-100 dark:border-white/5">

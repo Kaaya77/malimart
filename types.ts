@@ -102,6 +102,20 @@ export interface User {
     export_format?: 'csv' | 'json' | 'pdf';
     opt_out_analytics?: boolean;
     user_metadata?: any;
+    // Extended profile fields (DB-backed)
+    display_name?: string;
+    bio?: string;
+    timezone?: string;
+    pronouns?: string;
+    signature_emoji?: string;
+    greeting_style?: string;
+    cover_image_url?: string;
+    theme_accent?: 'sahara' | 'ocean' | 'forest' | 'sunset' | 'royal' | 'mono';
+    theme_mode?: 'light' | 'dark' | 'system';
+    reduced_motion?: boolean;
+    sound_effects?: boolean;
+    dashboard_layout?: 'compact' | 'comfortable' | 'spacious';
+    last_seen_at?: string;
 }
 
 export interface ChatMessage {

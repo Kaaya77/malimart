@@ -213,6 +213,8 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
 
                 if (profile) {
                     setUser({ ...profile, name: profile.full_name || 'User', email: session.user.email } as User);
+                    // Update last_seen_at so it stays current
+                    supabase.from('profiles').update({ last_seen_at: new Date().toISOString() }).eq('id', session.user.id);
                     await fetchUserData(session.user.id, profile.role, profile.is_banned);
                 } else {
                 }
@@ -1072,15 +1074,29 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         // Supabase RLS is the authoritative gate — this is defense-in-depth.
         const {
             role, is_banned, is_admin, wallet_balance, points,
-            deleted_at, id, created_at, email,
+            deleted_at, id, created_at, email, last_seen_at,
             ...safe
         } = data as any;
         
         // Additional sanitization of text fields
-        if (safe.name)     safe.name     = safe.name.slice(0, 100).replace(/<[^>]*>/g, '').trim();
-        if (safe.bio)      safe.bio      = safe.bio.slice(0, 500).replace(/<[^>]*>/g, '').trim();
-        if (safe.phone)    safe.phone    = safe.phone.slice(0, 20).replace(/[^0-9+\s-]/g, '').trim();
-        if (safe.location) safe.location = safe.location.slice(0, 100).replace(/<[^>]*>/g, '').trim();
+        if (safe.name)         safe.name         = safe.name.slice(0, 100).replace(/<[^>]*>/g, '').trim();
+        if (safe.full_name)    safe.full_name     = safe.full_name.slice(0, 100).replace(/<[^>]*>/g, '').trim();
+        if (safe.display_name) safe.display_name  = safe.display_name.slice(0, 60).replace(/<[^>]*>/g, '').trim();
+        if (safe.bio)          safe.bio           = safe.bio.slice(0, 500).replace(/<[^>]*>/g, '').trim();
+        if (safe.phone)        safe.phone         = safe.phone.slice(0, 20).replace(/[^0-9+\s-]/g, '').trim();
+        if (safe.location)     safe.location      = safe.location.slice(0, 100).replace(/<[^>]*>/g, '').trim();
+        if (safe.pronouns)     safe.pronouns      = safe.pronouns.slice(0, 30).replace(/<[^>]*>/g, '').trim();
+        if (safe.signature_emoji) safe.signature_emoji = safe.signature_emoji.slice(0, 10).trim();
+        if (safe.cover_image_url) safe.cover_image_url = safe.cover_image_url.slice(0, 500).trim();
+        // Only allow safe enum values for DB-constrained fields
+        const validAccents = ['sahara', 'ocean', 'forest', 'sunset', 'royal', 'mono'];
+        const validModes = ['light', 'dark', 'system'];
+        const validLayouts = ['compact', 'comfortable', 'spacious'];
+        const validGreetings = ['karibu', 'habari', 'hello', 'mambo'];
+        if (safe.theme_accent && !validAccents.includes(safe.theme_accent)) delete safe.theme_accent;
+        if (safe.theme_mode && !validModes.includes(safe.theme_mode)) delete safe.theme_mode;
+        if (safe.dashboard_layout && !validLayouts.includes(safe.dashboard_layout)) delete safe.dashboard_layout;
+        if (safe.greeting_style && !validGreetings.includes(safe.greeting_style)) delete safe.greeting_style;
         
         const { error } = await supabase.from('profiles').update(safe).eq('id', user.id); 
         if (error) {
