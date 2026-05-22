@@ -83,10 +83,8 @@ export const SellerSettingsPage = () => {
  }
  if (vendorProfile.payment_methods) {
  setPaymentMethods(vendorProfile.payment_methods);
- } else if (paymentMethods.length === 0) {
- setPaymentMethods([
- { id: '1', type: 'mobile', provider: 'M-Pesa (Vodacom)', accountName: vendorProfile.store_name || 'My Store', accountNumber: vendorProfile.lipa_namba || '555555' }
- ]);
+ } else {
+ setPaymentMethods([]);
  }
  }
  }, [vendorProfile, user]);
