@@ -111,7 +111,12 @@ export const AdminPage = () => {
                     .order('created_at', { ascending: false })
                     .limit(50),
                 supabase.from('platform_settings').select('*').eq('id', 1).single(),
-                supabase.from('revenue_stats').select('*').order('name', { ascending: true }).then(r => r).catch(() => ({ data: null })),
+                // Revenue trend derived from orders — no separate table needed
+                supabase.from('orders')
+                    .select('total, created_at')
+                    .in('status', ['paid','shipped','delivered'])
+                    .gte('created_at', new Date(Date.now() - 180 * 86400000).toISOString())
+                    .order('created_at', { ascending: true }),
                 user?.id
                     ? supabase.from('messages').select('*', { count: 'exact', head: true })
                         .eq('receiver_id', user.id).eq('read', false)
@@ -133,7 +138,17 @@ export const AdminPage = () => {
             if (payoutsRes.data)          setPayouts(payoutsRes.data);
             if (usersRes.data)            setUsersList(usersRes.data);
             if (productsRes.data)         setProducts(productsRes.data);
-            if (revenueRes.data)          setRevenueData(revenueRes.data);
+            // Build monthly revenue chart data from orders
+            if (revenueRes.data && revenueRes.data.length > 0) {
+                const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                const map = new Map<string, number>();
+                revenueRes.data.forEach((row: any) => {
+                    const d = new Date(row.created_at);
+                    const key = months[d.getMonth()] + ' ' + d.getFullYear();
+                    map.set(key, (map.get(key) || 0) + Number(row.total || 0));
+                });
+                setRevenueData(Array.from(map.entries()).map(([name, revenue]) => ({ name, revenue })));
+            }
             if (typeof unreadRes.count === 'number') setUnreadMessagesCount(unreadRes.count);
 
             if (settingsRes.data) {
