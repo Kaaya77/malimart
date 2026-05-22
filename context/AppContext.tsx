@@ -163,60 +163,52 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
             setIsLoading(true);
             const { data: { session } } = await supabase.auth.getSession();
             if (session?.user) {
-                let { data: profile, error } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
-                
-                if (error && error.code === 'PGRST116') {
-                    const { data: newProfile, error: insertError } = await supabase.from('profiles').insert({
+                // Ensure profile row exists
+                let { data: profile, error: pErr } = await supabase
+                    .from('profiles').select('*').eq('id', session.user.id).single();
+                if (pErr && pErr.code === 'PGRST116') {
+                    const { data: np } = await supabase.from('profiles').insert({
                         id: session.user.id,
                         full_name: session.user.user_metadata.full_name || 'User',
                         role: session.user.user_metadata.role || 'buyer',
                         email: session.user.email
                     }).select().single();
-                    
-                    if (insertError) {
-                        console.error('Error creating profile:', insertError);
-                    } else {
-                        profile = newProfile;
-                    }
+                    profile = np;
                 }
-
                 if (profile) {
                     setUser({ ...profile, name: profile.full_name || 'User', email: session.user.email } as User);
-                    await fetchUserData(session.user.id, profile.role);
+                    supabase.from('profiles').update({ last_seen_at: new Date().toISOString() }).eq('id', session.user.id);
+                    // 🚀 Single RPC for ALL user data + public data in parallel
+                    await Promise.all([
+                        applyDashboardRpc(session.user.email || '', profile),
+                        fetchPublicData()
+                    ]);
                 }
+            } else {
+                try { await fetchPublicData(); } catch(e) { console.error('fetchPublicData:', e); }
             }
-            try { await fetchPublicData(); } catch(e) { console.error('fetchPublicData error:', e); }
             setIsLoading(false);
         };
         init();
 
         const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
             if (event === 'SIGNED_IN' && session?.user) {
-                let { data: profile, error } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
-                
-                if (error && error.code === 'PGRST116') {
-                    const { data: newProfile, error: insertError } = await supabase.from('profiles').insert({
+                let { data: profile, error: pErr } = await supabase
+                    .from('profiles').select('*').eq('id', session.user.id).single();
+                if (pErr && pErr.code === 'PGRST116') {
+                    const { data: np } = await supabase.from('profiles').insert({
                         id: session.user.id,
                         full_name: session.user.user_metadata.full_name || 'User',
                         role: session.user.user_metadata.role || 'buyer',
                         email: session.user.email
                     }).select().single();
-                    
-                    if (insertError) {
-                        console.error('Error creating profile:', insertError);
-                    } else {
-                        profile = newProfile;
-                    }
-                } else if (error) {
-                    console.error('Error fetching profile:', error);
+                    profile = np;
                 }
-
                 if (profile) {
                     setUser({ ...profile, name: profile.full_name || 'User', email: session.user.email } as User);
-                    // Update last_seen_at so it stays current
                     supabase.from('profiles').update({ last_seen_at: new Date().toISOString() }).eq('id', session.user.id);
-                    await fetchUserData(session.user.id, profile.role, profile.is_banned);
-                } else {
+                    // 🚀 One RPC replaces 10+ sequential queries on every sign-in
+                    await applyDashboardRpc(session.user.email || '', profile);
                 }
             } else if (event === 'SIGNED_OUT') {
                 setUser(null);
@@ -299,6 +291,63 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         };
     }, [user]);
 
+    // ─── ONE-SHOT DASHBOARD HYDRATION ────────────────────────────────────────
+    // Replaces 10+ sequential queries with a single SECURITY DEFINER RPC.
+    // Returns all user data in one round trip: orders, cart, wishlist, addresses,
+    // notifications, wallet, activity, payment methods, vendor profile (sellers),
+    // admin stats (admins). Called on init and every sign-in.
+    const applyDashboardRpc = useCallback(async (email: string, profile: any) => {
+        try {
+            const { data, error } = await supabase.rpc('get_dashboard_data');
+            if (error) {
+                console.error('[applyDashboardRpc] RPC failed, falling back:', error.message);
+                // Fallback to old fetchUserData if RPC fails
+                await fetchUserData(profile.id, profile.role, profile.is_banned);
+                return;
+            }
+            if (!data) return;
+
+            // Hydrate all user state from single RPC response
+            if (data.addresses)         setAddresses(data.addresses);
+            if (data.notifications)     setNotifications(data.notifications);
+            if (data.wallet_transactions) setWalletTransactions(data.wallet_transactions);
+            if (data.activity_logs)     setActivityLogs(data.activity_logs);
+            if (data.payment_methods)   setPaymentMethods(data.payment_methods);
+            if (data.connected_accounts) setConnectedAccounts(data.connected_accounts);
+            if (data.login_history)     setLoginHistory(data.login_history);
+            if (data.blocked_user_ids)  setBlockedUsers(new Set(data.blocked_user_ids));
+            if (data.followers)         setFollowers(data.followers);
+            if (typeof data.unread_messages_count === 'number') setUnreadMessages(data.unread_messages_count);
+
+            // Orders — RPC returns them with embedded items
+            if (data.orders)            setOrders(data.orders);
+
+            // Wishlist — RPC returns product objects directly
+            if (data.wishlist)          setWishlist(data.wishlist);
+
+            // Cart — map to CartItem shape
+            if (data.cart) {
+                const cartItems = data.cart.map((ci: any) => ({
+                    ...ci.product,
+                    quantity: ci.quantity,
+                    variant_id: ci.variant_id,
+                    cart_item_id: ci.cart_item_id,
+                }));
+                setCart(cartItems);
+            }
+
+            // Seller-specific data
+            if (profile.role === 'seller') {
+                if (data.vendor_profile)   setVendorProfile(data.vendor_profile);
+                if (data.staff_accounts)   setStaffAccounts(data.staff_accounts);
+                if (data.shipping_zones)   setShippingZones(data.shipping_zones);
+            }
+        } catch (err: any) {
+            console.error('[applyDashboardRpc] Unexpected error:', err.message);
+            await fetchUserData(profile.id, profile.role, profile.is_banned);
+        }
+    }, [fetchUserData]);
+
     const fetchPublicData = useCallback(async () => {
         // 1. Fetch other public data in parallel
         const otherResults = await Promise.allSettled([
@@ -328,35 +377,40 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         if (badgesRes.data) setTrustBadges(badgesRes.data);
         if (postsRes.data) setSocialPosts(postsRes.data as any);
 
-        // 2. Fetch products separately to avoid timeout with complex joins
+        // 2. Products + variants + vendor info — all launched together
         try {
-            const prodsRes = await supabase.from('products')
+            // Start products query immediately
+            const prodsPromise = supabase.from('products')
                 .select(`
-                    id, name, price, sale_price, base_price, images, category, subcategory, 
+                    id, name, price, sale_price, base_price, images, category, subcategory,
                     stock, low_stock_threshold, rating, review_count, status, is_boosted, created_at,
                     seller_id, brand, condition, warranty_period, location, region, slug,
                     latitude, longitude, description, tags, badges, attributes
                 `)
+                .eq('status', 'active')
                 .is('deleted_at', null)
+                .order('is_boosted', { ascending: false })
                 .order('created_at', { ascending: false })
-                .limit(40);
+                .limit(60);
+
+            const prodsRes = await prodsPromise;
 
             if (prodsRes.error) {
-                console.error('Error fetching products (detailed):', prodsRes.error);
-                // Don't throw — let setIsLoading(false) still run
+                console.error('Error fetching products:', prodsRes.error);
             }
 
-            if (prodsRes.data) {
+            if (prodsRes.data && prodsRes.data.length > 0) {
                 const productIds = prodsRes.data.map(p => p.id);
                 const sellerIds = [...new Set(prodsRes.data.map(p => p.seller_id))];
-                
-                // Fetch variants and vendor info in parallel
+
+                // Variants + vendor profiles — truly parallel
                 const [variantsRes, vendorsRes] = await Promise.all([
                     supabase.from('product_variants')
-                        .select('*')
-                        .in('product_id', productIds),
+                        .select('id, product_id, attributes, base_price, sale_price, price, stock, image_url, is_active, sku')
+                        .in('product_id', productIds)
+                        .eq('is_active', true),
                     supabase.from('vendor_profiles')
-                        .select('seller_id, is_verified, store_name')
+                        .select('seller_id, is_verified, store_name, logo_url, rating, trust_score')
                         .in('seller_id', sellerIds)
                 ]);
                 
@@ -1221,6 +1275,13 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     const refreshNotifications = useCallback(async () => { if (user) await fetchUserData(user.id, user.role); }, [user, fetchUserData]);
     const refreshWishlist = useCallback(async () => { if (user) await fetchAndSetWishlist(user.id); }, [user, fetchAndSetWishlist]);
     const refreshCart = useCallback(async () => { if (user) await fetchAndSetCart(user.id); }, [user, fetchAndSetCart]);
+
+    // Fast dashboard refresh — replaces fetchUserData calls post-action
+    const refreshDashboard = useCallback(async () => {
+        if (!user) return;
+        const { data: profile } = await supabase.from('profiles').select('role, is_banned').eq('id', user.id).single();
+        if (profile) await applyDashboardRpc(user.email, { ...user, ...profile });
+    }, [user, applyDashboardRpc]);
 
     const value: AppContextType = useMemo(() => ({
         user, setUser, isLoading, products, categories, cart, wishlist, orders, notifications, unreadMessages, addresses, walletTransactions, activityLogs, offers, payments, shipments, trustBadges, socialPosts, followers, isDark, vendorProfile, paymentMethods, connectedAccounts, loginHistory, staffAccounts, shippingZones, isCartOpen, blockedUsers, recentlyViewed,
