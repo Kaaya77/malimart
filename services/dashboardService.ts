@@ -95,11 +95,13 @@ export interface SellerDashboard {
 
 export async function getSellerDashboard(
     sellerId?: string,
-    days = 30,
+    _days = 30,
 ): Promise<SellerDashboard | null> {
-    const { data, error } = await supabase.rpc('get_seller_dashboard', {
+    // get_seller_dashboard_fast: O(1) snapshot read with on-demand recompute.
+    // We keep the `_days` param for API stability but the snapshot's revenue
+    // series is fixed to a 30-day window (the only one any UI currently uses).
+    const { data, error } = await supabase.rpc('get_seller_dashboard_fast', {
         p_seller_id: sellerId ?? null,
-        p_days: days,
     });
     if (error) {
         console.error('[getSellerDashboard]', error.message);

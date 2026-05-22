@@ -12,8 +12,7 @@ import { PremiumStatCard } from '../components/UI';
 import { supabase } from '../services/supabaseClient';
 import { VendorProfile } from '../types';
 import { formatTZS } from '../constants';
-import { SellerAnalytics } from '../components/SellerAnalytics';
-import { AdvancedAnalytics } from '../components/AdvancedAnalytics';
+import { SellerDashboard } from '../components/SellerDashboard';
 import { SellerInventory } from '../components/SellerInventory';
 import { SellerOffers } from '../components/SellerOffers';
 import { SellerOrders } from '../components/SellerOrders';
@@ -39,7 +38,7 @@ export const SellerPage = () => {
  const [selectedChatUser, setSelectedChatUser] = useState<string|null>(searchParams.get('chat'));
  const [selectedProductId, setSelectedProductId] = useState<string|null>(searchParams.get('productId'));
  const [selectedOrderId, setSelectedOrderId] = useState<string|null>(searchParams.get('orderId'));
- const { stats, loading: loadingStats } = useSellerStats(user?.id);
+ const { stats, loading: loadingStats, refetch } = useSellerStats(user?.id);
  const [vendor, setVendor] = useState<VendorProfile|null>(null);
 
  const myProducts = products.filter(p=>p.seller_id===user?.id);
@@ -130,69 +129,12 @@ export const SellerPage = () => {
  <motion.div key={tab} initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} exit={{opacity:0}} transition={{duration:0.2}}>
 
  {tab==='dashboard' && (
- <div className="space-y-6">
- {/* KPIs */}
- <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
- <PremiumStatCard title="Revenue" value={formatTZS(stats.revenue)} icon={Wallet} loading={loadingStats} trend={{value:'+8.2%',positive:true}}/>
- <PremiumStatCard title="Listings" value={stats.listings} icon={Package} loading={loadingStats}/>
- <PremiumStatCard title="Avg Order" value={formatTZS(stats.aov)} icon={ShoppingBag} loading={loadingStats}/>
- <PremiumStatCard title="Pending" value={stats.pending} icon={Clock} loading={loadingStats} trend={stats.pending>5?{value:'Action needed',positive:false}:undefined}/>
- </div>
-
- {/* Alert cards */}
- {(lowStock>0||pendingOrders>0) && (
- <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
- {pendingOrders>0 && (
- <button onClick={()=>setTab('orders')}
- className="flex items-center gap-4 p-4 rounded-2xl bg-amber-500/8 border border-amber-500/20 text-left hover:bg-amber-500/12 transition-colors active:scale-[0.98]">
- <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center shrink-0">
- <ShoppingBag className="w-5 h-5 text-amber-600"/>
- </div>
- <div className="flex-1">
- <p className="text-sm font-bold text-amber-900 dark:text-amber-200">{pendingOrders} orders need attention</p>
- <p className="text-xs text-amber-600/70">Tap to review and confirm</p>
- </div>
- <ChevronRight className="w-4 h-4 text-amber-500/60"/>
- </button>
- )}
- {lowStock>0 && (
- <button onClick={()=>setTab('products')}
- className="flex items-center gap-4 p-4 rounded-2xl bg-rose-500/8 border border-rose-500/20 text-left hover:bg-rose-500/12 transition-colors active:scale-[0.98]">
- <div className="w-10 h-10 rounded-xl bg-rose-500/20 flex items-center justify-center shrink-0">
- <Package className="w-5 h-5 text-rose-600"/>
- </div>
- <div className="flex-1">
- <p className="text-sm font-bold text-rose-900 dark:text-rose-200">{lowStock} products running low</p>
- <p className="text-xs text-rose-600/70">Update stock before selling out</p>
- </div>
- <ChevronRight className="w-4 h-4 text-rose-500/60"/>
- </button>
- )}
- </div>
- )}
-
- {/* Analytics */}
- <SellerAnalytics stats={stats}/>
- <AdvancedAnalytics stats={stats}/>
-
- {/* Quick actions */}
- <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
- {[
- {label:'Add Product', icon:Plus, action:()=>setTab('products'), color:'bg-emerald-500/10 text-emerald-600'},
- {label:'View Orders', icon:ShoppingBag,action:()=>setTab('orders'), color:'bg-blue-500/10 text-blue-600'},
- {label:'Campaigns', icon:Zap, action:()=>setTab('offers'), color:'bg-amber-500/10 text-amber-600'},
- {label:'Messages', icon:MessageSquare,action:()=>setTab('messages'),color:'bg-purple-500/10 text-purple-600'},
- ].map(({label,icon:Icon,action,color})=>(
- <button key={label} onClick={action}
- className="flex flex-col items-center gap-2.5 p-4 rounded-2xl bg-foreground/[0.03] border border-foreground/8 hover:bg-foreground/[0.06] transition-all active:scale-[0.97]">
- <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${color}`}>
- <Icon className="w-4.5 h-4.5 stroke-[2]"/>
- </div>
- <span className="text-xs font-semibold text-foreground/70">{label}</span>
- </button>
- ))}
- </div>
- </div>
+ <SellerDashboard
+   stats={stats}
+   loading={loadingStats}
+   onTab={setTab}
+   onRefresh={refetch}
+ />
  )}
 
  {tab==='products' && (
