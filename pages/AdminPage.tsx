@@ -76,7 +76,7 @@ export const AdminPage = () => {
     const fetchAdminData = async () => {
         setIsLoading(true);
         try {
-            // 🚀 All 8 admin queries run in parallel — was sequential (1.5s+), now ~200ms
+            // ð All 8 admin queries run in parallel â was sequential (1.5s+), now ~200ms
             const [
                 statsRes,
                 vendorsRes,
@@ -112,7 +112,7 @@ export const AdminPage = () => {
                     .order('created_at', { ascending: false })
                     .limit(50),
                 supabase.from('platform_settings').select('*').eq('id', 1).single(),
-                // Revenue trend derived from orders — no separate table needed
+                // Revenue trend derived from orders â no separate table needed
                 supabase.from('orders')
                     .select('total, created_at')
                     .in('status', ['paid','shipped','delivered'])
@@ -420,7 +420,7 @@ export const AdminPage = () => {
                                 onGoPayouts={()=>setActiveTab('payouts')}
                                 onGoGrowth={()=>setActiveTab('growth')}
                             />
-                        )}}
+                        )}
 
                          {/* USERS TAB */}
                         {activeTab === 'users' && (
@@ -715,7 +715,7 @@ export const AdminPage = () => {
                                                                 </h4>
                                                                 <div className="flex items-center gap-3 text-xs font-medium text-muted-foreground">
                                                                     <span className="flex items-center gap-1.5"><Users className="w-4 h-4" /> Buyer: <span className="text-foreground">{dispute.profiles?.full_name}</span></span>
-                                                                    <span>•</span>
+                                                                    <span>â¢</span>
                                                                     <span>Opened {new Date(dispute.created_at).toLocaleDateString()}</span>
                                                                 </div>
                                                             </div>
