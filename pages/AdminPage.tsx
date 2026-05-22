@@ -75,20 +75,22 @@ export const AdminPage = () => {
     const fetchAdminData = async () => {
         setIsLoading(true);
         try {
-            // 🚀 All 8 admin queries run in parallel — was sequential (1.5s+), now ~200ms
+            // Single server-aggregated RPC for stats + revenue series + top sellers,
+            // plus parallel list queries for the table tabs. Replaces a 9-call mix
+            // that included a deleted (and unscoped, RLS-bypassing) `revenue_stats`
+            // view and a multi-purpose `get_dashboard_data` RPC.
+            const { getAdminDashboard } = await import('../services/dashboardService');
             const [
-                statsRes,
+                adminDash,
                 vendorsRes,
                 disputesRes,
                 payoutsRes,
                 usersRes,
                 productsRes,
                 settingsRes,
-                revenueRes,
                 unreadRes
             ] = await Promise.all([
-                // Admin stats: 12 counts in one RPC (already built into get_dashboard_data)
-                supabase.rpc('get_dashboard_data'),
+                getAdminDashboard(7),
                 supabase.from('vendor_profiles')
                     .select('*, profiles!seller_id(full_name, email)')
                     .order('created_at', { ascending: false }),
@@ -111,21 +113,19 @@ export const AdminPage = () => {
                     .order('created_at', { ascending: false })
                     .limit(50),
                 supabase.from('platform_settings').select('*').eq('id', 1).single(),
-                supabase.from('revenue_stats').select('*').order('name', { ascending: true }).then(r => r).catch(() => ({ data: null })),
                 user?.id
                     ? supabase.from('messages').select('*', { count: 'exact', head: true })
                         .eq('receiver_id', user.id).eq('read', false)
                     : Promise.resolve({ count: 0 })
             ]);
 
-            // Apply admin stats from RPC (one DB round-trip for all counts)
-            const adminStats = statsRes.data?.admin_stats;
+            // Apply admin stats from RPC (single round-trip for all counts + GMV series)
             setStats({
-                totalUsers:     adminStats?.total_users    ?? usersRes.data?.length    ?? 0,
-                totalProducts:  adminStats?.total_products ?? productsRes.data?.length ?? 0,
-                totalRevenue:   adminStats?.total_revenue  ?? 0,
-                activeDisputes: adminStats?.open_disputes  ?? disputesRes.data?.length ?? 0,
-                pendingPayouts: payoutsRes.data?.length ?? 0,
+                totalUsers:     adminDash?.users.total_users        ?? usersRes.data?.length    ?? 0,
+                totalProducts:  adminDash?.products.total_products  ?? productsRes.data?.length ?? 0,
+                totalRevenue:   adminDash?.orders.gmv_total         ?? 0,
+                activeDisputes: adminDash?.disputes.open_disputes   ?? disputesRes.data?.length ?? 0,
+                pendingPayouts: adminDash?.payouts.pending_payouts  ?? payoutsRes.data?.length  ?? 0,
             });
 
             if (vendorsRes.data)          setVendorsList(vendorsRes.data);
@@ -133,7 +133,7 @@ export const AdminPage = () => {
             if (payoutsRes.data)          setPayouts(payoutsRes.data);
             if (usersRes.data)            setUsersList(usersRes.data);
             if (productsRes.data)         setProducts(productsRes.data);
-            if (revenueRes.data)          setRevenueData(revenueRes.data);
+            if (adminDash?.gmv_series)    setRevenueData(adminDash.gmv_series);
             if (typeof unreadRes.count === 'number') setUnreadMessagesCount(unreadRes.count);
 
             if (settingsRes.data) {
