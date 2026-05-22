@@ -32,7 +32,7 @@ const TABS = [
 ];
 
 export const SellerPage = () => {
- const { user, products, refreshProducts } = useAppState();
+ const { user, products, refreshProducts, vendorProfile: contextVendor } = useAppState();
  const [searchParams] = useSearchParams();
  const [tab, setTab] = useState<string>(searchParams.get('tab')||'dashboard');
  const [preselectedProduct, setPreselectedProduct] = useState<any>(null);
@@ -46,11 +46,7 @@ export const SellerPage = () => {
  const lowStock = myProducts.filter(p=>typeof p.stock==='number'&&p.stock>0&&p.stock<=5).length;
  const pendingOrders = stats.pending;
 
- useEffect(()=>{
- if (!user) return;
- supabase.from('vendor_profiles').select('*').eq('seller_id',user.id).single()
- .then(({data})=>{ if(data) setVendor(data); });
- },[user]);
+ // Vendor profile is already loaded in AppContext on sign-in — no extra fetch needed
 
  const switchToMessages = (buyerId: string, productId?: string|null, orderId?: string|null) => {
  setTab('messages');
