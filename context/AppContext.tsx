@@ -383,57 +383,13 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         if (postsRes.data) setSocialPosts(postsRes.data as any);
 
         // 2. Products + variants + vendor info — all launched together
+        // Single RPC call replaces 3 queries (products + variants + vendor_profiles)
         try {
-            // Start products query immediately
-            const prodsPromise = supabase.from('products')
-                .select(`
-                    id, name, price, sale_price, base_price, images, category, subcategory,
-                    stock, low_stock_threshold, rating, review_count, status, is_boosted, created_at,
-                    seller_id, brand, condition, warranty_period, location, region, slug,
-                    latitude, longitude, description, tags, badges, attributes
-                `)
-                .eq('status', 'active')
-                .is('deleted_at', null)
-                .order('is_boosted', { ascending: false })
-                .order('created_at', { ascending: false })
-                .limit(60);
-
-            const prodsRes = await prodsPromise;
-
-            if (prodsRes.error) {
-                console.error('Error fetching products:', prodsRes.error);
-            }
-
-            if (prodsRes.data && prodsRes.data.length > 0) {
-                const productIds = prodsRes.data.map(p => p.id);
-                const sellerIds = [...new Set(prodsRes.data.map(p => p.seller_id))];
-
-                // Variants + vendor profiles — truly parallel
-                const [variantsRes, vendorsRes] = await Promise.all([
-                    supabase.from('product_variants')
-                        .select('id, product_id, attributes, base_price, sale_price, price, stock, image_url, is_active, sku')
-                        .in('product_id', productIds)
-                        .eq('is_active', true),
-                    supabase.from('vendor_profiles')
-                        .select('seller_id, is_verified, store_name, logo_url, rating, trust_score')
-                        .in('seller_id', sellerIds)
-                ]);
-                
-                const variantMap = new Map<string, any[]>();
-                variantsRes.data?.forEach(v => {
-                    if (!variantMap.has(v.product_id)) variantMap.set(v.product_id, []);
-                    variantMap.get(v.product_id)?.push(v);
-                });
-
-                const vendorMap = new Map(vendorsRes.data?.map(v => [v.seller_id, v]));
-                
-                const productsWithVerification = prodsRes.data.map((p: any) => ({
-                    ...p,
-                    variants: variantMap.get(p.id) || [],
-                    is_verified: vendorMap.get(p.seller_id)?.is_verified || false,
-                    seller_name: vendorMap.get(p.seller_id)?.store_name || p.seller_name || 'Maison'
-                }));
-                setProducts(productsWithVerification as any);
+            const { data: products, error } = await supabase.rpc('get_public_products', { p_limit: 60 });
+            if (error) {
+                console.error('Error fetching products:', error);
+            } else if (products && Array.isArray(products)) {
+                setProducts(products as any);
             }
         } catch (error) {
             console.error('Error fetching products:', error);
