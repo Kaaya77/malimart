@@ -425,8 +425,8 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
             isBanned ? { data: [] } : supabase.from('notifications').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
             supabase.from('wallet_transactions').select('*').eq('profile_id', userId).order('created_at', { ascending: false }).limit(20),
             supabase.from('activity_logs').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(20),
-            supabase.from('payments').select('*, order:orders(*)').filter('order.user_id', 'eq', userId),
-            supabase.from('shipments').select('*, order:orders(*)').filter('order.user_id', 'eq', userId),
+            supabase.from('payments').select('*, order:orders!inner(id, status, total, created_at)').eq('orders.user_id', userId).limit(20),
+            supabase.from('shipments').select('*, order:orders!inner(id, status, total, created_at)').eq('orders.user_id', userId).limit(20),
             supabase.from('payment_methods').select('*').eq('user_id', userId),
             supabase.from('connected_accounts').select('*').eq('user_id', userId),
             supabase.from('login_history').select('*').eq('user_id', userId).order('login_time', { ascending: false }).limit(10),
@@ -636,8 +636,18 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
             await supabase.from('wishlist_items').update({ deleted_at: new Date().toISOString() }).match({ user_id: user.id, product_id: product.id });
             setWishlist(prev => prev.filter(p => p.id !== product.id));
         } else {
-            // Upsert in case a soft-deleted row exists
-            await supabase.from('wishlist_items').upsert({ user_id: user.id, product_id: product.id, deleted_at: null }, { onConflict: 'id' });
+            // Check if a soft-deleted row exists and restore it, otherwise insert fresh
+            const { data: existing } = await supabase
+                .from('wishlist_items')
+                .select('id')
+                .eq('user_id', user.id)
+                .eq('product_id', product.id)
+                .single();
+            if (existing) {
+                await supabase.from('wishlist_items').update({ deleted_at: null }).eq('id', existing.id);
+            } else {
+                await supabase.from('wishlist_items').insert({ user_id: user.id, product_id: product.id });
+            }
             setWishlist(prev => [...prev, product]);
         }
     }, [user, wishlist]);
@@ -1033,17 +1043,23 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         await supabase.from('orders').update({ cancel_reason: reason }).eq('id', id); 
         if (user) await logActivity('cancel_order', `Order ${id} cancelled`, { order_id: id, reason });
         
-        // Send notification to seller
-        const { data: order } = await supabase.from('orders').select('seller_id').eq('id', id).single();
-        if (order) {
-            await supabase.from('notifications').insert({
-                user_id: order.seller_id,
-                type: 'order',
-                title: 'Order Cancelled',
-                message: `Order #${id.slice(0,8)} was cancelled by the buyer. Reason: ${reason}`,
-                read: false,
-                created_at: new Date().toISOString()
-            });
+        // Notify all unique sellers in this order
+        const { data: orderItems } = await supabase
+            .from('order_items')
+            .select('seller_id')
+            .eq('order_id', id);
+        const sellerIds = [...new Set((orderItems || []).map((i: any) => i.seller_id).filter(Boolean))];
+        if (sellerIds.length > 0) {
+            await supabase.from('notifications').insert(
+                sellerIds.map(sid => ({
+                    user_id: sid,
+                    type: 'order',
+                    title: 'Order Cancelled',
+                    message: `Order #${id.slice(0,8)} was cancelled by the buyer. Reason: ${reason}`,
+                    read: false,
+                    created_at: new Date().toISOString()
+                }))
+            );
         }
 
         addToast("Order cancelled successfully", "success");
@@ -1165,9 +1181,19 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         }
     }, [user]);
 
-    const markNotificationRead = useCallback(async (id: string) => { await supabase.from('notifications').update({ read: true }).eq('id', id); fetchUserData(user?.id!); }, [user, fetchUserData]);
-    const markAllNotificationsRead = useCallback(async () => { await supabase.from('notifications').update({ read: true }).eq('user_id', user?.id); fetchUserData(user?.id!); }, [user, fetchUserData]);
-    const dismissNotification = useCallback(async (id: string) => { await supabase.from('notifications').delete().eq('id', id); fetchUserData(user?.id!); }, [user, fetchUserData]);
+    const markNotificationRead = useCallback(async (id: string) => {
+        await supabase.from('notifications').update({ read: true }).eq('id', id);
+        setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    }, []);
+    const markAllNotificationsRead = useCallback(async () => {
+        if (!user) return;
+        await supabase.from('notifications').update({ read: true }).eq('user_id', user.id);
+        setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    }, [user]);
+    const dismissNotification = useCallback(async (id: string) => {
+        await supabase.from('notifications').delete().eq('id', id);
+        setNotifications(prev => prev.filter(n => n.id !== id));
+    }, []);
 
     const updateVendorProfile = useCallback(async (data: Partial<VendorProfile>) => {
         if (!user) return;
