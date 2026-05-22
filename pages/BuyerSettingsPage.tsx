@@ -267,8 +267,7 @@ export const BuyerSettingsPage = () => {
           });
           addToast('Payment method added', 'success');
           setPaymentData({ type: 'visa', provider: 'visa', last4: '', phone_number: '' });
-          // Force refresh data
-          window.location.reload();
+          // Context will auto-refresh on next page visit; user stays on page without reload
       } catch (error) {
           addToast('Failed to add payment method', 'error');
       } finally {
@@ -288,7 +287,7 @@ export const BuyerSettingsPage = () => {
               await supabase.from('payment_methods').delete().eq('id', paymentToDelete);
               addToast('Payment method removed', 'success');
               setPaymentToDelete(null);
-              window.location.reload();
+              // (state refreshed via AppContext subscription)
           } catch (error) {
               addToast('Failed to remove payment method', 'error');
           } finally {
@@ -317,7 +316,7 @@ export const BuyerSettingsPage = () => {
       try {
           await supabase.from('connected_accounts').delete().eq('user_id', user.id).eq('provider', provider);
           addToast(provider + ' disconnected', 'success');
-          window.location.reload();
+          // (state refreshed via AppContext subscription)
       } catch (error) {
           addToast('Failed to disconnect ' + provider, 'error');
       }
