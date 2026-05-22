@@ -20,7 +20,6 @@ import { BuyerMessages } from '../components/BuyerMessages';
 import { ProductCard } from '../components/ProductCard';
 import { BuyerSettingsPage } from './BuyerSettingsPage';
 import { BuyerReturns } from '../components/BuyerReturns';
-import { useBuyerStats } from '../src/hooks/useBuyerStats';
 import { BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts';
 
 // âââ Tooltip âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
@@ -156,12 +155,16 @@ const BuyerFollows = ({ followers, unfollowSeller, navigate }: { followers:any[]
  const [vendors, setVendors] = useState<VendorProfile[]>([]);
  const [loading, setLoading] = useState(false);
 
+ // Stable key prevents re-fetch when array reference changes but IDs are the same
+ const stableIds = followers.map((f:any)=>f.seller_id).sort().join(',');
  useEffect(()=>{
  if (!followers.length) { setVendors([]); return; }
  setLoading(true);
- supabase.from('vendor_profiles').select('*').in('seller_id',followers.map((f:any)=>f.seller_id))
- .then(({data})=>{ if(data) setVendors(data); setLoading(false); });
- },[followers]);
+ supabase.from('vendor_profiles')
+ .select('seller_id,store_name,logo_url,is_verified,rating,trust_score,description,region')
+ .in('seller_id',followers.map((f:any)=>f.seller_id))
+ .then(({data})=>{ if(data) setVendors(data as any); setLoading(false); });
+ },[stableIds]);
 
  if (loading) return <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{[1,2,3].map(i=><div key={i} className="h-48 rounded-3xl shimmer"/>)}</div>;
  if (!vendors.length) return (
@@ -199,7 +202,6 @@ const TABS = [
 
 export const BuyerPage = () => {
  const { user, orders, cancelOrder, deleteOrder, addToCart, fetchVendorProfile, wishlist, followers, unfollowSeller } = useAppState();
- const stats = useBuyerStats();
  const [searchParams, setSearchParams] = useSearchParams();
  const navigate = useNavigate();
  const [tab, setTab] = useState<string>((searchParams.get('tab'))||'dashboard');
@@ -221,13 +223,6 @@ export const BuyerPage = () => {
  };
 
  if (!user) return null;
-
- const kpiStats = [
- { title:'Orders', value: stats.orderCount, icon: ShoppingBag, color:'text-blue-600' },
- { title:'Total Spent', value: formatTZS(stats.totalSpent), icon: DollarSign, color:'text-indigo-600' },
- { title:'Points', value: (user.points||0).toLocaleString(), icon: Star, color:'text-amber-500' },
- { title:'Wallet', value: formatTZS(user.wallet_balance||0), icon: Wallet, color:'text-emerald-500' },
- ];
 
  return (
  <div className="min-h-screen bg-background font-sans pb-[calc(5rem+env(safe-area-inset-bottom))] pt-20 md:pt-24">
