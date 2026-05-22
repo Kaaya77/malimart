@@ -443,7 +443,7 @@ export const SellerInventory = ({ products: initialProducts, userId, refresh, on
  const newProduct = {
  ...rest,
  name: `${rest.name} (Copy)`,
- status: 'draft',
+ status: 'inactive',
  sku: `${rest.sku}-COPY-${Math.floor(Math.random() * 1000)}`,
  sort_order: 0
  };
@@ -703,7 +703,7 @@ export const SellerInventory = ({ products: initialProducts, userId, refresh, on
  onSelect={() => { const s = new Set(selectedIds); if (s.has(p.id)) s.delete(p.id); else s.add(p.id); setSelectedIds(s); }}
  onEdit={(p) => { setEditingProduct(p); setIsFormOpen(true); }}
  onDelete={(id) => confirmDelete([id])}
- onToggleStatus={async (prod) => { await supabase.from('products').update({ status: prod.status === 'active' ? 'draft' : 'active' }).eq('id', prod.id); fetchInventory(); }}
+ onToggleStatus={async (prod) => { await supabase.from('products').update({ status: prod.status === 'active' ? 'inactive' : 'active' }).eq('id', prod.id); fetchInventory(); }}
  onToggleBoost={handleToggleBoost}
  onDuplicate={handleDuplicate}
  onDuplicateVariant={handleDuplicateVariant}
