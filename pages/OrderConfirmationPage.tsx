@@ -39,18 +39,21 @@ export const OrderConfirmationPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { orders, user } = useAppState();
-  const [confirmedOrder, setConfirmedOrder] = useState<Order | null>(location.state?.order || null);
+  const orderId = location.state?.order?.id || location.state?.id;
   const [showConfetti, setShowConfetti] = useState(true);
 
+  // Find the confirmed order from context (loaded via RPC after placing)
+  const confirmedOrder = orderId
+    ? (orders as any[]).find((o: any) => o.id === orderId) || null
+    : (orders as any[])[0] || null;
+
   useEffect(() => {
-    if (!confirmedOrder) {
-      const latestOrder = orders?.[0];
-      if (latestOrder) setConfirmedOrder(latestOrder);
-      else setTimeout(() => navigate('/'), 4000);
+    if (!orderId && orders.length === 0) {
+      setTimeout(() => navigate('/'), 4000);
     }
     const t = setTimeout(() => setShowConfetti(false), 4000);
     return () => clearTimeout(t);
-  }, [orders, confirmedOrder, navigate]);
+  }, [orderId, orders, navigate]);
 
   const handleShare = () => {
     if (navigator.share) {

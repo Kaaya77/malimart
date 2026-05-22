@@ -1,95 +1,65 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../services/supabaseClient';
 import { useAppState } from '../../context/AppContext';
 
+/**
+ * useBuyerStats — uses get_buyer_orders RPC. Same pattern as useSellerStats.
+ * No PostgREST nested joins. No ambiguous column names. Works.
+ */
 export const useBuyerStats = () => {
-    const { user } = useAppState();
+    const { user, orders } = useAppState();
     const [stats, setStats] = useState({
         totalSpent: 0,
         orderCount: 0,
         savings: 0,
-        spendingHistory: [] as { month: string, amount: number }[],
-        categoryDistribution: [] as { name: string, value: number }[],
-        isLoading: true
+        spendingHistory: [] as { month: string; amount: number }[],
+        categoryDistribution: [] as { name: string; value: number }[],
+        isLoading: true,
     });
 
+    // Derive stats from orders already in context (fetched via RPC)
     useEffect(() => {
         if (!user) return;
 
-        const fetchStats = async () => {
-            try {
-                // Fetch orders
-                const { data: orders, error: ordersError } = await supabase
-                    .from('orders')
-                    .select('total, discount_amount, created_at, status, items:order_items(price_at_purchase, quantity, products(category))')
-                    .eq('user_id', user.id)
-                    .is('deleted_at', null);
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        const now = new Date();
+        const historyMap = new Map<string, number>();
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            historyMap.set(`${months[d.getMonth()]} ${d.getFullYear()}`, 0);
+        }
 
-                if (ordersError) throw ordersError;
+        let totalSpent = 0;
+        let savings = 0;
+        const categories = new Map<string, number>();
 
-                let totalSpent = 0;
-                let orderCount = orders?.length || 0;
-                
-                // Calculate spending history (last 6 months)
-                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                const historyMap = new Map<string, number>();
-                
-                const now = new Date();
-                for (let i = 5; i >= 0; i--) {
-                    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-                    const key = `${months[d.getMonth()]} ${d.getFullYear()}`;
-                    historyMap.set(key, 0);
-                }
+        (orders as any[]).forEach((order: any) => {
+            if (['cancelled','refunded','failed'].includes(order.status)) return;
+            const orderTotal = Number(order.total) || 0;
+            totalSpent += orderTotal;
+            savings += Number(order.discount_amount) || 0;
 
-                const categories = new Map<string, number>();
+            const date = new Date(order.created_at);
+            const key = `${months[date.getMonth()]} ${date.getFullYear()}`;
+            if (historyMap.has(key)) historyMap.set(key, (historyMap.get(key) || 0) + orderTotal);
 
-                orders?.forEach(order => {
-                    if (order.status !== 'cancelled') {
-                        const orderTotal = Number(order.total) || 0;
-                        totalSpent += orderTotal;
-                        
-                        const date = new Date(order.created_at);
-                        const key = `${months[date.getMonth()]} ${date.getFullYear()}`;
-                        if (historyMap.has(key)) {
-                            historyMap.set(key, (historyMap.get(key) || 0) + orderTotal);
-                        }
+            (order.items || []).forEach((item: any) => {
+                const prod = item.products || item.product || {};
+                const cat = prod.category || 'Other';
+                const amount = Number(item.price_at_purchase) * Number(item.quantity);
+                if (amount > 0) categories.set(cat, (categories.get(cat) || 0) + amount);
+            });
+        });
 
-                        order.items?.forEach((item: any) => {
-                            const cat = item.products?.category || item.product?.category || 'Other';
-                            const itemPrice = Number(item.price_at_purchase) || 0;
-                            const itemQty = Number(item.quantity) || 0;
-                            categories.set(cat, (categories.get(cat) || 0) + (itemPrice * itemQty));
-                        });
-                    }
-                });
-
-                const spendingHistory = Array.from(historyMap.entries()).map(([month, amount]) => ({ month, amount }));
-                // Calculate real savings from discount_amount
-                let savings = 0;
-                orders?.forEach((order: any) => {
-                    if (order.status !== 'cancelled') {
-                        savings += Number(order.discount_amount) || 0;
-                    }
-                });
-                const categoryDistribution = Array.from(categories.entries()).map(([name, value]) => ({ name, value }));
-
-                setStats({
-                    totalSpent,
-                    orderCount,
-                    savings,
-                    spendingHistory,
-                    categoryDistribution,
-                    isLoading: false
-                });
-            } catch (error) {
-                console.error("Error fetching buyer stats:", error);
-                setStats(prev => ({ ...prev, isLoading: false }));
-            }
-        };
-
-        fetchStats();
-    }, [user]);
+        setStats({
+            totalSpent,
+            orderCount: orders.length,
+            savings,
+            spendingHistory: Array.from(historyMap.entries()).map(([month, amount]) => ({ month, amount })),
+            categoryDistribution: Array.from(categories.entries()).map(([name, value]) => ({ name, value })),
+            isLoading: false,
+        });
+    }, [user, orders]);
 
     return stats;
 };

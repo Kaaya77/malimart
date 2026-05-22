@@ -381,24 +381,9 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
 
     const fetchAndSetOrders = useCallback(async (userId: string) => {
         const { data, error } = await supabase
-            .from('orders')
-            .select(`
-                id, user_id, status, created_at, updated_at,
-                total, subtotal, delivery_fee, discount_amount,
-                payment_method, payment_ref, note,
-                shipping_address, cancel_reason, is_gift, gift_message,
-                deleted_at,
-                items:order_items(
-                    id, order_id, seller_id, product_id,
-                    quantity, price_at_purchase,
-                    products(id, name, images, price, seller_id)
-                )
-            `)
-            .eq('user_id', userId)
-            .is('deleted_at', null)
-            .order('created_at', { ascending: false });
+            .rpc('get_buyer_orders', { p_user_id: userId });
         if (error) { console.error('[Orders fetch]', error.message); return; }
-        if (data) setOrders(data as any);
+        if (data) setOrders((data as any[]) || []);
     }, []);
 
     const fetchAndSetWishlist = useCallback(async (userId: string) => {
@@ -753,23 +738,10 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         
         await clearCart();
         
-        // Fetch the newly created order with full details
-        const orderId = data?.id;
-        if (orderId) {
-            const { data: newOrder, error: fetchErr } = await supabase
-                .from('orders')
-                .select(`id, user_id, status, created_at, updated_at, total, subtotal, delivery_fee, discount_amount, payment_method, payment_ref, note, shipping_address, cancel_reason, is_gift, gift_message, items:order_items(id, order_id, seller_id, product_id, quantity, price_at_purchase, products(id, name, images, price, seller_id))`)
-                .eq('id', orderId)
-                .single();
-            if (!fetchErr && newOrder) {
-                // Update orders state immediately without waiting for realtime
-                setOrders(prev => [newOrder as any, ...prev]);
-                return newOrder;
-            }
-        }
+        // Re-fetch all orders via RPC to get the full picture immediately
+        await fetchAndSetOrders(user.id);
         
-        // Fallback: refresh all user data
-        await fetchUserData(user.id);
+        // Return basic order data for confirmation page
         return data;
     }, [user, cart, clearCart, fetchUserData]);
 
