@@ -9,6 +9,7 @@ import { FeaturedProducts } from '../components/home/FeaturedProducts';
 import { FeaturedStores } from '../components/home/FeaturedStores';
 import { ProductGridSection } from '../components/home/ProductGridSection';
 import { TrustStrip } from '../components/home/TrustStrip';
+import { LivePulseStrip } from '../components/home/LivePulseStrip';
 import { ProductModal } from '../components/ProductModal';
 import { StoreModal } from '../components/StoreModal';
 import { HomePageSkeleton } from '../components/skeletons/HomePageSkeleton';
@@ -96,7 +97,9 @@ const HomePage: React.FC = () => {
  />
 
  {/* Categories */}
- <CategoryStrip />
+ <LivePulseStrip />
+
+      <CategoryStrip />
 
  {/* Featured / Boosted Products */}
  {boostedProducts.length > 0 && (

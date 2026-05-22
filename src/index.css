@@ -118,6 +118,61 @@
   @keyframes float {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-15px); }
+  /* ─── Elite additions ─── */
+  
+  @keyframes ticker {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  
+  @keyframes glow-pulse {
+    0%, 100% { box-shadow: 0 0 20px rgba(16,185,129,0.2); }
+    50% { box-shadow: 0 0 40px rgba(16,185,129,0.4), 0 0 80px rgba(16,185,129,0.1); }
+  }
+
+  @keyframes card-float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    33% { transform: translateY(-8px) rotate(0.5deg); }
+    66% { transform: translateY(-4px) rotate(-0.3deg); }
+  }
+}
+
+/* ─── Shimmer utility ─── */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--color-foreground, #000) 0%,
+    rgba(255,255,255,0.08) 40%,
+    rgba(255,255,255,0.15) 50%,
+    rgba(255,255,255,0.08) 60%,
+    var(--color-foreground, #000) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+.dark .shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.03) 0%,
+    rgba(255,255,255,0.08) 40%,
+    rgba(255,255,255,0.12) 50%,
+    rgba(255,255,255,0.08) 60%,
+    rgba(255,255,255,0.03) 100%
+  );
+  background-size: 200% 100%;
+}
+
+/* ─── Bento perspective ─── */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+/* ─── Animate glow pulse ─── */
+.animate-glow-pulse {
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+
   }
 }
 
