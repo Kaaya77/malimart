@@ -73,42 +73,22 @@ export const useHomePageData = () => {
                     }));
                 }
 
-                // FIX 1: Ticker — fetch order_items without the broken nested profile join.
-                // Instead, fetch product names directly and use a static region fallback.
-                const { data: recentOrderItems } = await supabase
-                    .from('order_items')
-                    .select('product_id, products(name), orders(id)')
-                    .order('created_at', { ascending: false })
-                    .limit(3);
-
-                const { data: recentVendors } = await supabase
-                    .from('vendor_profiles')
-                    .select('store_name, region')
-                    .order('created_at', { ascending: false })
-                    .limit(2);
-
+                // Ticker + weekly order count — single SECURITY DEFINER RPC avoids RLS issues
+                const { data: tickerData } = await supabase.rpc('get_ticker_data');
                 const newTickerItems: string[] = [];
-                if (recentOrderItems && recentOrderItems.length > 0) {
-                    recentOrderItems.forEach((item: any) => {
-                        if (item.products) {
-                            newTickerItems.push(`Someone in Tanzania just bought ${item.products.name}`);
+                if (tickerData?.recent_sales) {
+                    tickerData.recent_sales.forEach((item: any) => {
+                        if (item.product_name) {
+                            newTickerItems.push(`Someone in ${item.region || 'Tanzania'} just bought ${item.product_name}`);
                         }
                     });
                 }
-                if (recentVendors && recentVendors.length > 0) {
-                    recentVendors.forEach((vendor: any) => {
+                if (tickerData?.recent_vendors) {
+                    tickerData.recent_vendors.forEach((vendor: any) => {
                         newTickerItems.push(`New artisan '${vendor.store_name}' from ${vendor.region || 'Tanzania'} just joined`);
                     });
                 }
-
-                // FIX 2: Weekly order count — use orders table directly (no join issues)
-                const sevenDaysAgo = new Date();
-                sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-                const { count: wCount } = await supabase
-                    .from('orders')
-                    .select('*', { count: 'exact', head: true })
-                    .gte('created_at', sevenDaysAgo.toISOString())
-                    .not('status', 'in', '(cancelled,failed,refunded)');
+                const wCount = tickerData?.weekly_order_count || 0;
 
                 // Hero settings
                 const { data: settings } = await supabase
