@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback, useMemo } from 'react';
 import { supabase } from '../services/supabaseClient';
+import { withCache, invalidatePrefix, TTL } from '../services/queryCache';
 import { Product, CartItem, User, Order, Notification, VendorProfile, Address, ProductVariant, ChatMessage, Offer, Category, Payment, Shipment, TrustBadge, ReturnRequest, OrderNote, ActivityLog, WalletTransaction, SocialPost, SocialInteraction, Follower, Review } from '../types';
 import { useToast } from '../components/UI';
 
@@ -354,46 +355,59 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     }, []);  // fetchUserData accessed via ref — no TDZ
 
     const fetchPublicData = useCallback(async () => {
-        // 1. Fetch other public data in parallel
-        const otherResults = await Promise.allSettled([
-            supabase.from('categories').select('*').eq('is_active', true).limit(50),
-            supabase
-                .from('offers')
-                .select('*')
-                .eq('status', 'active')
-                .lte('start_date', new Date().toISOString())
-                .or(`end_date.is.null,end_date.gte.${new Date().toISOString()}`)
-                .limit(20),
-            supabase.from('trust_badges').select('*').limit(50),
-            supabase.from('social_posts')
-                .select('*, user:profiles!user_id(full_name, avatar_url)')
-                .eq('status', 'approved')
-                .is('is_shadowbanned', false)
-                .order('created_at', { ascending: false })
-                .limit(20)
+        // All public queries use stale-while-revalidate:
+        // → serve cached data instantly, revalidate in background after TTL.
+        // This eliminates repeated egress for data that rarely changes.
+
+        const [cats, offers_, badges, posts, products_] = await Promise.all([
+            withCache('public:categories', TTL.CATEGORIES,
+                async () => {
+                    const { data } = await supabase.from('categories').select('*').eq('is_active', true).limit(50);
+                    return data;
+                },
+                (data) => setCategories(data as Category[])
+            ),
+            withCache('public:offers', TTL.OFFERS,
+                async () => {
+                    const now = new Date().toISOString();
+                    const { data } = await supabase.from('offers').select('*').eq('status', 'active')
+                        .lte('start_date', now).or(`end_date.is.null,end_date.gte.${now}`).limit(20);
+                    return data;
+                },
+                (data) => setOffers(data as Offer[])
+            ),
+            withCache('public:trust_badges', TTL.TRUST_BADGES,
+                async () => {
+                    const { data } = await supabase.from('trust_badges').select('*').limit(50);
+                    return data;
+                },
+                (data) => setTrustBadges(data)
+            ),
+            withCache('public:social_posts', TTL.SOCIAL_POSTS,
+                async () => {
+                    const { data } = await supabase.from('social_posts')
+                        .select('*, user:profiles!user_id(full_name, avatar_url)')
+                        .eq('status', 'approved').is('is_shadowbanned', false)
+                        .order('created_at', { ascending: false }).limit(20);
+                    return data;
+                },
+                (data) => setSocialPosts(data as any)
+            ),
+            withCache('public:products', TTL.PUBLIC_PRODUCTS,
+                async () => {
+                    const { data, error } = await supabase.rpc('get_public_products', { p_limit: 60 });
+                    if (error) { console.error('Error fetching products:', error); return null; }
+                    return data;
+                },
+                (data) => setProducts(data as any)
+            ),
         ]);
 
-        const [catsRes, offersRes, badgesRes, postsRes] = otherResults.map(r => 
-            r.status === 'fulfilled' ? r.value : { data: null, error: r.reason }
-        );
-
-        if (catsRes.data) setCategories(catsRes.data as Category[]);
-        if (offersRes.data) setOffers(offersRes.data as Offer[]);
-        if (badgesRes.data) setTrustBadges(badgesRes.data);
-        if (postsRes.data) setSocialPosts(postsRes.data as any);
-
-        // 2. Products + variants + vendor info — all launched together
-        // Single RPC call replaces 3 queries (products + variants + vendor_profiles)
-        try {
-            const { data: products, error } = await supabase.rpc('get_public_products', { p_limit: 60 });
-            if (error) {
-                console.error('Error fetching products:', error);
-            } else if (products && Array.isArray(products)) {
-                setProducts(products as any);
-            }
-        } catch (error) {
-            console.error('Error fetching products:', error);
-        }
+        if (cats)     setCategories(cats as Category[]);
+        if (offers_)  setOffers(offers_ as Offer[]);
+        if (badges)   setTrustBadges(badges);
+        if (posts)    setSocialPosts(posts as any);
+        if (products_ && Array.isArray(products_)) setProducts(products_ as any);
     }, []);
 
     const fetchAndSetOrders = useCallback(async (userId: string, limit = 50, offset = 0) => {
@@ -1262,7 +1276,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         openCart, closeCart,
         toggleWishlist, isInWishlist: (pid: string) => wishlist.some(p => p.id === pid),
         followSeller, unfollowSeller, isFollowing,
-        refreshProducts: fetchPublicData, 
+        refreshProducts: async () => { invalidatePrefix('public:'); await fetchPublicData(); }, 
         refreshNotifications,
         refreshWishlist,
         refreshCart,

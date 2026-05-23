@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../../services/supabaseClient';
+import { withCache, invalidate, TTL } from '../../services/queryCache';
 
 /**
  * useSellerStats v3 — single fast RPC, snapshot-backed.
@@ -76,11 +77,18 @@ export const useSellerStats = (sellerId: string | undefined) => {
     const load = useCallback(async (silent = false) => {
         if (!sellerId) return;
         if (!silent) setLoading(true);
+        const cacheKey = `seller:dashboard:${sellerId}`;
         try {
-            const { data, error } = await supabase.rpc('get_seller_dashboard_fast', {
-                p_seller_id: sellerId,
-            });
-            if (error) throw error;
+            const data = await withCache(
+                cacheKey,
+                TTL.SELLER_DASHBOARD,
+                async () => {
+                    const { data, error } = await supabase.rpc('get_seller_dashboard_fast', { p_seller_id: sellerId });
+                    if (error) throw error;
+                    return data;
+                },
+                (fresh) => applyPayload(fresh)  // background refresh updates state
+            );
             applyPayload(data);
         } catch (err: any) {
             console.error('[useSellerStats] RPC failed:', err?.message);
@@ -118,5 +126,5 @@ export const useSellerStats = (sellerId: string | undefined) => {
         };
     }, [sellerId, load]);
 
-    return { stats, loading, refresh: () => load() };
+    return { stats, loading, refresh: () => { invalidate(`seller:dashboard:${sellerId}`); load(); } };
 };
