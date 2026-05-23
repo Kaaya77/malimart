@@ -532,11 +532,14 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
  if (!initialData) delete productPayload.id;
  const { data: prod, error: prodError } = await supabase.from('products').upsert(productPayload).select().single();
  if (prodError) throw prodError;
- if (variants.length > 0 && prod) {
- if (initialData) await supabase.from('product_variants').delete().eq('product_id', prod.id);
- const variantsPayload = variants.map(v => ({ ...v, product_id: prod.id }));
- const { error: varError } = await supabase.from('product_variants').insert(variantsPayload);
- if (varError) throw varError;
+      if (prod) {
+        // Atomic upsert — delete+insert in same DB transaction
+        const { error: varError } = await supabase.rpc('upsert_product_variants', {
+          p_product_id: prod.id,
+          p_variants: JSON.stringify(variants),
+        });
+        if (varError) throw varError;
+      }
  }
  if (!moderation.isFlagged) {
  addToast("Product published successfully!", "success");

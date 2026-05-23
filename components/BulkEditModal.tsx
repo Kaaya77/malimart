@@ -1,149 +1,262 @@
-import { rateLimit } from '../src/security';
+/**
+ * BulkEditModal — production-grade batch product editor
+ * All saves go through bulk_edit_products() SECURITY DEFINER RPC
+ * which validates ownership per-row and writes inventory_logs for stock changes.
+ */
 import React, { useState, useEffect } from 'react';
-import { X, Save, AlertCircle } from 'lucide-react';
+import { X, Save, AlertCircle, Check, Loader2 } from 'lucide-react';
 import { Product } from '../types';
 import { supabase } from '../services/supabaseClient';
-import { Input, useToast } from './UI';
+import { useToast } from './UI';
+import { formatTZS } from '../constants';
+import { rateLimit } from '../src/security';
 
-export const BulkEditModal = ({ isOpen, onClose, products, onSave }: { isOpen: boolean, onClose: () => void, products: Product[], onSave: () => void }) => {
- const [editedProducts, setEditedProducts] = useState<Product[]>([]);
- const [isSaving, setIsSaving] = useState(false);
- const { addToast } = useToast();
+interface EditRow {
+  id: string;
+  name: string;
+  price: number;
+  stock: number;
+  status: string;
+  sku: string;
+  // track dirty state
+  _dirty: boolean;
+  _original: { name: string; price: number; stock: number; status: string };
+}
 
- useEffect(() => {
- if (isOpen) {
- // Deep copy to avoid mutating original state directly
- setEditedProducts(JSON.parse(JSON.stringify(products)));
- }
- }, [isOpen, products]);
+export const BulkEditModal = ({
+  isOpen, onClose, products, onSave,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  products: Product[];
+  onSave: () => void;
+}) => {
+  const [rows, setRows] = useState<EditRow[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveResult, setSaveResult] = useState<{ saved: number; errors: any[] } | null>(null);
+  const { addToast } = useToast();
 
- if (!isOpen) return null;
+  useEffect(() => {
+    if (isOpen) {
+      setRows(products.map(p => ({
+        id: p.id,
+        name: p.name,
+        price: p.price,
+        stock: p.stock,
+        status: p.status,
+        sku: p.sku || '',
+        _dirty: false,
+        _original: { name: p.name, price: p.price, stock: p.stock, status: p.status },
+      })));
+      setSaveResult(null);
+    }
+  }, [isOpen, products]);
 
- const handleUpdate = (id: string, field: keyof Product, value: any) => {
- setEditedProducts(prev => prev.map(p => p.id === id ? { ...p, [field]: value } : p));
- };
+  if (!isOpen) return null;
 
- const handleSave = async () => {
- setIsSaving(true);
- try {
- // Find changed products
- const changedProducts = editedProducts.filter(ep => {
- const original = products.find(p => p.id === ep.id);
- return original && (original.price !== ep.price || original.stock !== ep.stock || original.name !== ep.name || original.status !== ep.status);
- });
+  const update = (id: string, field: keyof EditRow, value: any) => {
+    setRows(prev => prev.map(r => {
+      if (r.id !== id) return r;
+      const updated = { ...r, [field]: value };
+      // Mark dirty if different from original
+      updated._dirty = (
+        updated.name !== r._original.name ||
+        updated.price !== r._original.price ||
+        updated.stock !== r._original.stock ||
+        updated.status !== r._original.status
+      );
+      return updated;
+    }));
+  };
 
- if (changedProducts.length === 0) {
- addToast("No changes to save", "info");
- onClose();
- return;
- }
+  const dirtyRows = rows.filter(r => r._dirty);
 
- // Update in Supabase (sequentially for simplicity, could use RPC for batch)
- for (const p of changedProducts) {
- await supabase.from('products').update({
- name: p.name,
- price: p.price,
- stock: p.stock,
- status: p.status
- }).eq('id', p.id);
- }
+  const handleSave = async () => {
+    if (dirtyRows.length === 0) { addToast('No changes to save', 'info'); onClose(); return; }
+    if (!rateLimit('bulk-edit', 5)) { addToast('Too fast — wait a moment', 'error'); return; }
 
- addToast(`Successfully updated ${changedProducts.length} products`, "success");
- onSave();
- onClose();
- } catch (error) {
- addToast("Failed to save some changes", "error");
- } finally {
- setIsSaving(false);
- }
- };
+    // Validate
+    for (const row of dirtyRows) {
+      if (!row.name.trim()) { addToast(`Row: empty product name not allowed`, 'error'); return; }
+      if (row.price < 0) { addToast(`"${row.name}": price cannot be negative`, 'error'); return; }
+      if (row.stock < 0) { addToast(`"${row.name}": stock cannot be negative`, 'error'); return; }
+    }
 
- return (
- <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
- <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
- <div className="relative w-full max-w-6xl bg-background dark:bg-background border border-foreground/10 shadow-2xl flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-300">
- 
- <div className="flex justify-between items-center p-6 border-b border-foreground/10">
- <div>
- <h2 className="font-serif text-2xl text-foreground">Bulk Inventory Edit</h2>
- <p className="text-xs opacity-60 text-foreground mt-1">Quickly adjust prices, stock, and status for all your products.</p>
- </div>
- <button onClick={onClose} className="p-2 hover:bg-foreground/[0.04] rounded-full transition-colors">
- <X className="w-5 h-5 text-foreground" />
- </button>
- </div>
+    setIsSaving(true);
+    try {
+      const payload = dirtyRows.map(r => ({
+        id: r.id,
+        name: r.name.trim(),
+        price: r.price,
+        stock: r.stock,
+        status: r.status,
+      }));
 
- <div className="flex-1 overflow-auto p-6">
- <div className="min-w-[800px]">
- <div className="grid grid-cols-12 gap-4 pb-4 border-b border-foreground/10 text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground mb-4">
- <div className="col-span-4">Product Name</div>
- <div className="col-span-2">Price (TZS)</div>
- <div className="col-span-2">Stock</div>
- <div className="col-span-2">Status</div>
- <div className="col-span-2">SKU</div>
- </div>
+      const { data, error } = await supabase.rpc('bulk_edit_products', {
+        p_updates: JSON.stringify(payload),
+      });
+      if (error) throw error;
 
- <div className="space-y-2">
- {editedProducts.map(product => (
- <div key={product.id} className="grid grid-cols-12 gap-4 items-center bg-card p-2 border border-foreground/5">
- <div className="col-span-4">
- <Input 
- value={product.name} 
- onChange={(e: any) => handleUpdate(product.id, 'name', e.target.value)}
- className="h-10 text-sm bg-transparent border-transparent hover:border-foreground/20 dark:hover:border-background/20 focus:border-foreground rounded-none px-2"
- />
- </div>
- <div className="col-span-2">
- <Input 
- type="number"
- value={product.price} 
- onChange={(e: any) => handleUpdate(product.id, 'price', Number(e.target.value))}
- className="h-10 text-sm bg-transparent border-transparent hover:border-foreground/20 dark:hover:border-background/20 focus:border-foreground rounded-none px-2"
- />
- </div>
- <div className="col-span-2">
- <Input 
- type="number"
- value={product.stock} 
- onChange={(e: any) => handleUpdate(product.id, 'stock', Number(e.target.value))}
- className="h-10 text-sm bg-transparent border-transparent hover:border-foreground/20 dark:hover:border-background/20 focus:border-foreground rounded-none px-2"
- />
- </div>
- <div className="col-span-2">
- <select 
- value={product.status}
- onChange={(e: any) => handleUpdate(product.id, 'status', e.target.value)}
- className="w-full h-10 text-xs uppercase tracking-[0.1em] bg-transparent border-transparent hover:border-foreground/20 dark:hover:border-background/20 focus:border-foreground rounded-none px-2 text-foreground outline-none"
- >
- <option value="active" className="bg-background dark:bg-background">Active</option>
- <option value="draft" className="bg-background dark:bg-background">Draft</option>
- </select>
- </div>
- <div className="col-span-2 px-2 text-xs font-mono opacity-50 truncate">
- {product.sku || '-'}
- </div>
- </div>
- ))}
- </div>
- </div>
- </div>
+      const result = data as { saved: number; errors: any[] };
+      setSaveResult(result);
 
- <div className="p-6 border-t border-foreground/10 flex justify-end gap-4 bg-background dark:bg-background">
- <button 
- onClick={onClose}
- className="px-8 py-3 text-[10px] uppercase tracking-[0.2em] font-bold text-foreground hover:opacity-70 transition-opacity"
- >
- Cancel
- </button>
- <button 
- onClick={handleSave}
- disabled={isSaving}
- className="px-8 py-3 bg-primary text-background dark:bg-background dark:text-foreground text-[10px] uppercase tracking-[0.2em] font-bold hover:opacity-90 transition-opacity flex items-center gap-2"
- >
- {isSaving ? 'Saving...' : <><Save className="w-4 h-4" /> Save Changes</>}
- </button>
- </div>
- </div>
- </div>
- );
+      if (result.saved > 0) {
+        addToast(`${result.saved} product${result.saved !== 1 ? 's' : ''} updated`, 'success');
+        onSave();
+      }
+      if (result.errors?.length > 0) {
+        addToast(`${result.errors.length} item${result.errors.length !== 1 ? 's' : ''} failed`, 'error');
+      }
+      if (result.errors?.length === 0) onClose();
+    } catch (err: any) {
+      addToast(err.message || 'Save failed', 'error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-5xl bg-background border border-foreground/8 rounded-3xl shadow-2xl flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-5 border-b border-foreground/8">
+          <div>
+            <h2 className="text-base font-black text-foreground">Bulk Edit</h2>
+            <p className="text-xs text-foreground/40 mt-0.5">
+              {dirtyRows.length > 0 ? `${dirtyRows.length} unsaved change${dirtyRows.length !== 1 ? 's' : ''}` : `${rows.length} products`}
+            </p>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-xl bg-foreground/[0.05] flex items-center justify-center hover:bg-foreground/10 transition-colors">
+            <X className="w-4 h-4 text-foreground/60" />
+          </button>
+        </div>
+
+        {/* Error summary */}
+        {saveResult?.errors && saveResult.errors.length > 0 && (
+          <div className="mx-6 mt-4 p-3 rounded-xl bg-red-50 dark:bg-red-900/10 border border-red-200/50 dark:border-red-900/30">
+            <p className="text-xs font-bold text-red-700 dark:text-red-400 mb-1 flex items-center gap-1.5">
+              <AlertCircle className="w-3.5 h-3.5" />
+              {saveResult.errors.length} items could not be saved:
+            </p>
+            {saveResult.errors.slice(0, 3).map((e, i) => (
+              <p key={i} className="text-[10px] text-red-600 dark:text-red-400">• {e.error}</p>
+            ))}
+            {saveResult.errors.length > 3 && (
+              <p className="text-[10px] text-red-500">...and {saveResult.errors.length - 3} more</p>
+            )}
+          </div>
+        )}
+
+        {/* Table */}
+        <div className="flex-1 overflow-auto">
+          <table className="w-full text-sm" style={{ minWidth: 700 }}>
+            <thead className="sticky top-0 bg-foreground/[0.02] border-b border-foreground/8 z-10">
+              <tr>
+                <th className="px-4 py-3 text-left text-[9px] font-black uppercase tracking-widest text-foreground/40 w-8"></th>
+                <th className="px-4 py-3 text-left text-[9px] font-black uppercase tracking-widest text-foreground/40">Product</th>
+                <th className="px-4 py-3 text-right text-[9px] font-black uppercase tracking-widest text-foreground/40 w-32">Price (TZS)</th>
+                <th className="px-4 py-3 text-right text-[9px] font-black uppercase tracking-widest text-foreground/40 w-24">Stock</th>
+                <th className="px-4 py-3 text-center text-[9px] font-black uppercase tracking-widest text-foreground/40 w-28">Status</th>
+                <th className="px-4 py-3 text-left text-[9px] font-black uppercase tracking-widest text-foreground/40 w-28">SKU</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map(row => (
+                <tr key={row.id} className={`border-b border-foreground/5 last:border-0 ${row._dirty ? 'bg-amber-50/30 dark:bg-amber-900/10' : ''}`}>
+                  {/* Dirty indicator */}
+                  <td className="px-4 py-2 w-8">
+                    {row._dirty && (
+                      <div className="w-1.5 h-1.5 rounded-full bg-amber-500 mx-auto" title="Unsaved changes" />
+                    )}
+                  </td>
+
+                  {/* Name */}
+                  <td className="px-2 py-1.5">
+                    <input
+                      value={row.name}
+                      onChange={e => update(row.id, 'name', e.target.value)}
+                      className="w-full h-9 px-3 rounded-lg border border-transparent bg-transparent text-sm text-foreground hover:border-foreground/15 focus:border-foreground/25 focus:bg-foreground/[0.03] outline-none transition-all"
+                    />
+                  </td>
+
+                  {/* Price */}
+                  <td className="px-2 py-1.5 w-32">
+                    <input
+                      type="number"
+                      min="0"
+                      step="100"
+                      value={row.price}
+                      onChange={e => update(row.id, 'price', Math.max(0, parseFloat(e.target.value) || 0))}
+                      className="w-full h-9 px-3 rounded-lg border border-transparent bg-transparent text-sm text-foreground text-right hover:border-foreground/15 focus:border-foreground/25 focus:bg-foreground/[0.03] outline-none transition-all"
+                    />
+                  </td>
+
+                  {/* Stock */}
+                  <td className="px-2 py-1.5 w-24">
+                    <input
+                      type="number"
+                      min="0"
+                      value={row.stock}
+                      onChange={e => update(row.id, 'stock', Math.max(0, parseInt(e.target.value) || 0))}
+                      className={`w-full h-9 px-3 rounded-lg border border-transparent bg-transparent text-sm text-right hover:border-foreground/15 focus:border-foreground/25 focus:bg-foreground/[0.03] outline-none transition-all ${
+                        row.stock === 0 ? 'text-red-500 font-bold' :
+                        row.stock < 5 ? 'text-amber-600 font-bold' :
+                        'text-foreground'
+                      }`}
+                    />
+                  </td>
+
+                  {/* Status */}
+                  <td className="px-2 py-1.5 w-28">
+                    <select
+                      value={row.status}
+                      onChange={e => update(row.id, 'status', e.target.value)}
+                      className="w-full h-9 px-2 rounded-lg border border-transparent bg-transparent text-xs text-foreground hover:border-foreground/15 focus:border-foreground/25 outline-none transition-all"
+                    >
+                      <option value="active">Active</option>
+                      <option value="draft">Draft</option>
+                      <option value="inactive">Inactive</option>
+                    </select>
+                  </td>
+
+                  {/* SKU (read-only) */}
+                  <td className="px-4 py-1.5 w-28">
+                    <span className="text-[10px] font-mono text-foreground/30 truncate block">{row.sku || '—'}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-foreground/8 flex items-center justify-between gap-4 bg-foreground/[0.01]">
+          <p className="text-[11px] text-foreground/40">
+            {dirtyRows.length === 0
+              ? 'Edit cells above to make changes'
+              : `${dirtyRows.length} product${dirtyRows.length !== 1 ? 's' : ''} will be updated · stock changes are logged`
+            }
+          </p>
+          <div className="flex gap-3">
+            <button onClick={onClose}
+              className="h-10 px-5 rounded-xl border border-foreground/15 text-sm font-semibold text-foreground/60 hover:bg-foreground/[0.04] transition-colors">
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={isSaving || dirtyRows.length === 0}
+              className="h-10 px-6 rounded-xl bg-emerald-600 text-white text-sm font-black hover:bg-emerald-700 active:scale-95 transition-all disabled:opacity-40 flex items-center gap-2"
+            >
+              {isSaving
+                ? <><Loader2 className="w-4 h-4 animate-spin" />Saving…</>
+                : <><Save className="w-4 h-4" />Save {dirtyRows.length > 0 ? dirtyRows.length : ''} Changes</>
+              }
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 };
