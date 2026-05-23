@@ -148,7 +148,7 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: { sellerId: string; o
     if (selected?.id === orderId) setSelected(p => p ? { ...p, status: newStatus } : p);
 
     try {
-      const { error } = await supabase.rpc('update_order_status_rbac', { p_order_id: orderId, p_new_status: newStatus });
+      const { error } = await supabase.rpc('update_order_status_rbac', { p_order_id: orderId, p_new_status: newStatus, p_cancel_reason: null });
       if (error) throw error;
       const labels: Record<string,string> = { processing:'Order confirmed ✓', in_transit:'Marked as shipped ✓', delivered:'Marked as delivered ✓', cancelled:'Order cancelled' };
       addToast(labels[newStatus] || `Updated to ${newStatus}`, 'success');
