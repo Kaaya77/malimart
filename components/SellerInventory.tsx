@@ -41,32 +41,32 @@ const timeAgo = (dateStr?: string) => {
 // --- Sub-Components ---
 
 const StatCard = ({ title, value, subtext, icon: Icon, color, secondaryValue, secondaryLabel }: any) => (
- <div className="relative overflow-hidden p-8 bg-background dark:bg-background border border-foreground/10 group hover:border-foreground/30 dark:hover:border-background/30 transition-all duration-500">
- <div className="flex justify-between items-start mb-8 relative z-10">
- <div>
- <p className="text-[10px] uppercase tracking-[0.2em] opacity-60 mb-2 text-foreground">{title}</p>
- <h3 className="text-4xl font-serif font-light text-foreground tracking-wide">{value}</h3>
- </div>
- <div className="w-10 h-10 flex items-center justify-center border border-foreground/10 rounded-none">
- <Icon className="w-4 h-4 text-foreground stroke-[1]" />
- </div>
- </div>
- <div className="flex items-center justify-between relative z-10">
- <p className="text-[11px] uppercase tracking-[0.1em] opacity-60 text-foreground">{subtext}</p>
- {secondaryValue && (
- <div className="text-right">
- <span className="block text-lg font-serif text-foreground">{secondaryValue}</span>
- <span className="text-[9px] uppercase tracking-[0.2em] opacity-40 text-foreground">{secondaryLabel}</span>
- </div>
- )}
- </div>
- </div>
+  <div className="relative overflow-hidden p-5 bg-card border border-foreground/8 rounded-2xl group hover:shadow-sm transition-all duration-300">
+    <div className="flex justify-between items-start mb-3 relative z-10">
+      <div>
+        <p className="text-[10px] uppercase tracking-widest opacity-50 mb-1 text-foreground">{title}</p>
+        <h3 className="text-2xl font-black text-foreground">{value}</h3>
+      </div>
+      <div className="w-10 h-10 flex items-center justify-center bg-foreground/[0.06] rounded-xl">
+        <Icon className="w-4 h-4 text-foreground/60" />
+      </div>
+    </div>
+    <div className="flex items-center justify-between relative z-10">
+      <p className="text-[11px] text-foreground/40">{subtext}</p>
+      {secondaryValue && (
+        <div className="text-right">
+          <span className="block text-sm font-black text-foreground">{secondaryValue}</span>
+          <span className="text-[9px] uppercase tracking-widest opacity-40 text-foreground">{secondaryLabel}</span>
+        </div>
+      )}
+    </div>
+  </div>
 );
 
 const AdvancedFilterDrawer = ({ isOpen, onClose, filters, setFilters, onApply }: any) => {
  if (!isOpen) return null;
  return (
- <div className="absolute top-full left-0 mt-4 w-[320px] bg-background dark:bg-background border border-foreground/10 z-50 p-8 animate-in slide-in-from-top-4 shadow-2xl">
+ <div className="absolute top-full left-0 mt-2 w-[300px] bg-background border border-foreground/8 rounded-2xl z-50 p-5 animate-in slide-in-from-top-2 shadow-xl">
  <div className="flex justify-between items-center mb-8">
  <h3 className="text-[10px] uppercase tracking-[0.2em] text-foreground">Advanced Filters</h3>
  <button onClick={onClose} className="hover:opacity-50 transition-opacity"><X className="w-4 h-4 stroke-[1] text-foreground"/></button>
@@ -75,15 +75,15 @@ const AdvancedFilterDrawer = ({ isOpen, onClose, filters, setFilters, onApply }:
  <div>
  <Label className="text-[10px] uppercase tracking-[0.1em] opacity-60 mb-4 block">Price Range ({formatTZS(filters.priceMin || 0)} - {formatTZS(filters.priceMax || 1000000)})</Label>
  <div className="flex gap-4">
- <Input type="number" placeholder="Min" value={filters.priceMin} onChange={(e:any) => setFilters({...filters, priceMin: Number(e.target.value)})} className="h-12 bg-transparent border-foreground/20 rounded-none text-xs focus:border-foreground" />
- <Input type="number" placeholder="Max" value={filters.priceMax} onChange={(e:any) => setFilters({...filters, priceMax: Number(e.target.value)})} className="h-12 bg-transparent border-foreground/20 rounded-none text-xs focus:border-foreground" />
+ <Input type="number" placeholder="Min" value={filters.priceMin} onChange={(e:any) => setFilters({...filters, priceMin: Number(e.target.value)})} className="h-10 bg-foreground/[0.04] border-foreground/15 rounded-xl text-xs focus:border-foreground/30" />
+ <Input type="number" placeholder="Max" value={filters.priceMax} onChange={(e:any) => setFilters({...filters, priceMax: Number(e.target.value)})} className="h-10 bg-foreground/[0.04] border-foreground/15 rounded-xl text-xs focus:border-foreground/30" />
  </div>
  </div>
  <div>
  <Label className="text-[10px] uppercase tracking-[0.1em] opacity-60 mb-4 block">Stock Level</Label>
  <div className="flex gap-4">
- <Input type="number" placeholder="Min Stock" value={filters.stockMin} onChange={(e:any) => setFilters({...filters, stockMin: Number(e.target.value)})} className="h-12 bg-transparent border-foreground/20 rounded-none text-xs focus:border-foreground" />
- <Input type="number" placeholder="Max Stock" value={filters.stockMax} onChange={(e:any) => setFilters({...filters, stockMax: Number(e.target.value)})} className="h-12 bg-transparent border-foreground/20 rounded-none text-xs focus:border-foreground" />
+ <Input type="number" placeholder="Min Stock" value={filters.stockMin} onChange={(e:any) => setFilters({...filters, stockMin: Number(e.target.value)})} className="h-10 bg-foreground/[0.04] border-foreground/15 rounded-xl text-xs focus:border-foreground/30" />
+ <Input type="number" placeholder="Max Stock" value={filters.stockMax} onChange={(e:any) => setFilters({...filters, stockMax: Number(e.target.value)})} className="h-10 bg-foreground/[0.04] border-foreground/15 rounded-xl text-xs focus:border-foreground/30" />
  </div>
  </div>
  <div>
@@ -226,7 +226,7 @@ const InventoryRow: React.FC<InventoryRowProps> = ({
  </div>
  <div className="min-w-0">
  <div className="flex items-center gap-3">
- <p className="font-serif text-lg truncate cursor-pointer hover:opacity-70 transition-opacity text-foreground" onClick={() => onEdit(product)}>{product.name}</p>
+ <p className="font-semibold text-sm truncate cursor-pointer hover:opacity-70 transition-opacity text-foreground" onClick={() => onEdit(product)}>{product.name}</p>
  {/* Feature 1: Status Badges */}
  {product.status === 'draft' && <span className="text-[9px] uppercase tracking-[0.2em] border border-foreground/20 px-2 py-1 text-foreground">Draft</span>}
  </div>
@@ -243,7 +243,7 @@ const InventoryRow: React.FC<InventoryRowProps> = ({
 
  {/* Financials (Price & Margin) */}
  <div className="col-span-2 text-right">
- <p className="font-serif text-lg text-foreground">
+ <p className="font-bold text-base text-foreground">
  {formatTZS(minPrice)}
  {isRange && <span className="opacity-60 text-sm"> - {formatTZS(maxPrice)}</span>}
  </p>
@@ -263,7 +263,7 @@ const InventoryRow: React.FC<InventoryRowProps> = ({
  <span className={`text-[10px] uppercase tracking-[0.2em] ${isLowStock ? 'text-red-500 animate-pulse' : 'opacity-60 text-foreground'}`}>
  {isLowStock ? 'Low Stock' : 'In Stock'}
  </span>
- <span className="text-sm font-serif text-foreground">{product.stock}</span>
+ <span className="text-sm font-bold text-foreground">{product.stock}</span>
  </div>
  {/* Feature 5: Stock Level Animation */}
  <div className="h-px w-full bg-primary/10 dark:bg-background/10 relative">
@@ -309,7 +309,7 @@ const InventoryRow: React.FC<InventoryRowProps> = ({
  <button onClick={() => setIsExpanded(!isExpanded)} className={`p-2 transition-opacity hover:opacity-50 ${isExpanded ? 'opacity-100 text-foreground' : 'opacity-40 text-foreground'}`}><History className="w-4 h-4 stroke-[1]"/></button>
  <div className="relative group/menu">
  <button className="p-2 transition-opacity hover:opacity-50 opacity-40 text-foreground"><MoreHorizontal className="w-4 h-4 stroke-[1]"/></button>
- <div className="absolute right-0 top-full mt-2 w-56 bg-background dark:bg-background border border-foreground/10 shadow-2xl hidden group-hover/menu:block z-50 animate-in fade-in zoom-in-95">
+ <div className="absolute right-0 top-full mt-2 w-48 bg-background border border-foreground/8 rounded-2xl shadow-xl hidden group-hover/menu:block z-50 animate-in fade-in zoom-in-95 overflow-hidden">
  <button onClick={() => onEdit(product)} className="w-full text-left px-6 py-4 text-[10px] uppercase tracking-[0.2em] hover:bg-foreground/[0.04] flex items-center gap-4 text-foreground transition-colors"><Edit3 className="w-3 h-3 stroke-[1]"/> Edit</button>
  <button onClick={() => onCreatePromo(product)} className="w-full text-left px-6 py-4 text-[10px] uppercase tracking-[0.2em] hover:bg-foreground/[0.04] flex items-center gap-4 text-foreground transition-colors"><Percent className="w-3 h-3 stroke-[1]"/> Create Promo</button>
  <button onClick={() => onAutoDiscount(product)} className="w-full text-left px-6 py-4 text-[10px] uppercase tracking-[0.2em] hover:bg-foreground/[0.04] flex items-center gap-4 text-foreground transition-colors"><Clock className="w-3 h-3 stroke-[1]"/> Auto-Discount Rule</button>

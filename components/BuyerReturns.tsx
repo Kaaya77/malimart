@@ -228,9 +228,9 @@ export const BuyerReturns: React.FC<BuyerReturnsProps> = ({ userId, onContactSel
  </button>
  <button
  onClick={async () => {
- await supabase.from('disputes').update({ status:'cancelled' }).eq('id',selected.id);
- addToast('Return request cancelled', 'success');
- setSelected(null);
+              const { error } = await supabase.rpc('update_dispute_status', { p_dispute_id: selected.id, p_new_status: 'closed' });
+              if (!error) { addToast('Return request cancelled', 'success'); setSelected(null); fetchDisputes(); }
+              else addToast('Failed to cancel', 'error');
  fetchDisputes();
  }}
  className="flex-1 h-11 rounded-2xl bg-rose-500/8 text-rose-600 text-sm font-semibold hover:bg-rose-500/12 transition-colors flex items-center justify-center gap-2">

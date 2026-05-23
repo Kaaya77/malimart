@@ -185,9 +185,9 @@ export const SellerSettingsPage = () => {
 
  return (
  <div className="max-w-6xl mx-auto pb-12 animate-in fade-in">
- <div className="mb-8">
- <h1 className="text-4xl font-serif font-light text-foreground tracking-tight">Seller Settings</h1>
- <p className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground mt-2">Manage your store profile, payments, and operations efficiently.</p>
+ <div className="mb-5">
+ <h1 className="text-xl font-black text-foreground tracking-tight">Store Settings</h1>
+ <p className="text-xs text-foreground/40 mt-0.5">Manage your store profile, payments, and operations.</p>
  </div>
 
  <div className="flex flex-col md:flex-row gap-8">
@@ -216,7 +216,7 @@ export const SellerSettingsPage = () => {
  onClick={() => setActiveTab(tab.id)}
  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] uppercase tracking-[0.15em] transition-colors whitespace-nowrap ${
  activeTab === tab.id 
- ? 'bg-primary text-background dark:text-foreground' 
+ ? 'bg-emerald-600 text-white' 
  : 'text-foreground/60 hover:bg-foreground/[0.04]'
  }`}
  >
@@ -233,10 +233,10 @@ export const SellerSettingsPage = () => {
  <CardContent className="p-6">
  <div className="flex items-center justify-between mb-3">
  <h3 className="text-[10px] uppercase tracking-[0.2em] text-foreground">Setup Progress</h3>
- <span className="text-lg font-serif text-foreground">{setupProgress}%</span>
+ <span className="text-base font-black text-foreground">{setupProgress}%</span>
  </div>
- <div className="w-full h-1 bg-primary/10 dark:bg-background/10 rounded-none overflow-hidden">
- <div className="h-full bg-primary transition-all duration-1000" style={{ width: `${setupProgress}%` }}></div>
+ <div className="w-full h-1.5 bg-foreground/10 rounded-full overflow-hidden">
+ <div className="h-full bg-emerald-500 rounded-full transition-all duration-1000" style={{ width: `${setupProgress}%` }}></div>
  </div>
  </CardContent>
  </Card>
@@ -268,7 +268,7 @@ export const SellerSettingsPage = () => {
  <div className="space-y-1">
  <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground mb-2 block">Region</label>
  <select 
- className="flex h-12 w-full rounded-none border border-foreground/20 bg-transparent px-4 text-sm focus:outline-none focus:border-foreground transition-all dark:text-background"
+ className="flex h-11 w-full rounded-xl border border-foreground/15 bg-foreground/[0.04] px-4 text-sm text-foreground focus:outline-none focus:border-foreground/30 transition-all"
  value={profileData.region}
  onChange={(e) => setProfileData({...profileData, region: e.target.value, district: TANZANIA_DISTRICTS[e.target.value]?.[0] || ''})}
  >
@@ -280,7 +280,7 @@ export const SellerSettingsPage = () => {
  <div className="space-y-1">
  <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground mb-2 block">District</label>
  <select 
- className="flex h-12 w-full rounded-none border border-foreground/20 bg-transparent px-4 text-sm focus:outline-none focus:border-foreground transition-all dark:text-background disabled:opacity-50"
+ className="flex h-11 w-full rounded-xl border border-foreground/15 bg-foreground/[0.04] px-4 text-sm text-foreground focus:outline-none focus:border-foreground/30 transition-all disabled:opacity-50"
  value={profileData.district}
  onChange={(e) => setProfileData({...profileData, district: e.target.value})}
  disabled={!profileData.region || !TANZANIA_DISTRICTS[profileData.region]}
@@ -318,7 +318,7 @@ export const SellerSettingsPage = () => {
  <div className="space-y-1">
  <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground mb-2 block">Return Policy</label>
  <select 
- className="flex h-12 w-full rounded-none border border-foreground/20 bg-transparent px-4 text-sm focus:outline-none focus:border-foreground transition-all dark:text-background"
+ className="flex h-11 w-full rounded-xl border border-foreground/15 bg-foreground/[0.04] px-4 text-sm text-foreground focus:outline-none focus:border-foreground/30 transition-all"
  value={policiesData.return_policy}
  onChange={(e) => setPoliciesData({...policiesData, return_policy: e.target.value})}
  >
@@ -331,7 +331,7 @@ export const SellerSettingsPage = () => {
  <div className="space-y-1">
  <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground mb-2 block">Processing Time</label>
  <select 
- className="flex h-12 w-full rounded-none border border-foreground/20 bg-transparent px-4 text-sm focus:outline-none focus:border-foreground transition-all dark:text-background"
+ className="flex h-11 w-full rounded-xl border border-foreground/15 bg-foreground/[0.04] px-4 text-sm text-foreground focus:outline-none focus:border-foreground/30 transition-all"
  value={policiesData.processing_time}
  onChange={(e) => setPoliciesData({...policiesData, processing_time: e.target.value})}
  >
@@ -364,10 +364,10 @@ export const SellerSettingsPage = () => {
  {socialLinks.length > 0 && (
  <div className="space-y-2 mb-4">
  {socialLinks.map((link, idx) => (
- <div key={idx} className="flex items-center justify-between p-4 border border-foreground/10 rounded-none bg-background">
+ <div key={idx} className="flex items-center justify-between p-3 border border-foreground/8 rounded-xl bg-foreground/[0.02]">
  <div className="flex items-center gap-3">
  <Globe className="w-4 h-4 text-foreground/40" />
- <span className="font-serif text-sm text-foreground">{link.platform}</span>
+ <span className="font-bold text-sm text-foreground">{link.platform}</span>
  <span className="text-[10px] uppercase tracking-[0.1em] text-foreground/60 truncate max-w-[200px]">{link.url}</span>
  </div>
  <Button variant="ghost" size="icon" className="text-red-500 h-8 w-8" onClick={() => handleRemoveSocial(idx)}>
@@ -380,7 +380,7 @@ export const SellerSettingsPage = () => {
 
  <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-foreground/10">
  <select 
- className="flex h-12 w-full sm:w-auto rounded-none border border-foreground/20 bg-transparent px-4 text-sm focus:outline-none focus:border-foreground transition-all dark:text-background"
+ className="flex h-11 w-full sm:w-auto rounded-xl border border-foreground/15 bg-foreground/[0.04] px-4 text-sm text-foreground focus:outline-none focus:border-foreground/30 transition-all"
  value={newSocial.platform}
  onChange={(e) => setNewSocial({...newSocial, platform: e.target.value})}
  >
@@ -418,7 +418,7 @@ export const SellerSettingsPage = () => {
  {paymentMethods.length > 0 ? (
  <div className="grid grid-cols-1 gap-3">
  {paymentMethods.map(method => (
- <div key={method.id} className="flex items-center justify-between p-4 border border-foreground/10 rounded-none bg-background">
+ <div key={method.id} className="flex items-center justify-between p-3 border border-foreground/8 rounded-xl bg-foreground/[0.02]">
  <div className="flex items-center gap-4">
  <div className={`w-10 h-10 rounded-none flex items-center justify-center border border-foreground/10 ${method.type === 'mobile' ? 'bg-foreground/[0.04]' : 'bg-foreground/[0.04]'}`}>
  <DollarSign className="w-5 h-5 text-foreground stroke-[1.5]" />
@@ -442,7 +442,7 @@ export const SellerSettingsPage = () => {
  <h4 className="text-[10px] uppercase tracking-[0.2em] text-foreground mb-2">Add New Payment Method</h4>
  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
  <select 
- className="flex h-12 w-full rounded-none border border-foreground/20 bg-transparent px-4 text-sm focus:outline-none focus:border-foreground transition-all dark:text-background"
+ className="flex h-11 w-full rounded-xl border border-foreground/15 bg-foreground/[0.04] px-4 text-sm text-foreground focus:outline-none focus:border-foreground/30 transition-all"
  value={newPayment.type}
  onChange={(e) => setNewPayment({
  ...newPayment, 
@@ -455,7 +455,7 @@ export const SellerSettingsPage = () => {
  </select>
  
  <select 
- className="flex h-12 w-full rounded-none border border-foreground/20 bg-transparent px-4 text-sm focus:outline-none focus:border-foreground transition-all dark:text-background"
+ className="flex h-11 w-full rounded-xl border border-foreground/15 bg-foreground/[0.04] px-4 text-sm text-foreground focus:outline-none focus:border-foreground/30 transition-all"
  value={newPayment.provider}
  onChange={(e) => setNewPayment({...newPayment, provider: e.target.value})}
  >
@@ -494,7 +494,7 @@ export const SellerSettingsPage = () => {
  <div className="space-y-1">
  <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground mb-2 block">Payout Schedule</label>
  <select 
- className="flex h-12 w-full rounded-none border border-foreground/20 bg-transparent px-4 text-sm focus:outline-none focus:border-foreground transition-all dark:text-background"
+ className="flex h-11 w-full rounded-xl border border-foreground/15 bg-foreground/[0.04] px-4 text-sm text-foreground focus:outline-none focus:border-foreground/30 transition-all"
  value={businessData.payout_schedule}
  onChange={(e) => setBusinessData({...businessData, payout_schedule: e.target.value})}
  >
@@ -646,21 +646,21 @@ export const SellerSettingsPage = () => {
  <p className="font-bold text-sm text-foreground">Order Notifications</p>
  <p className="text-xs text-foreground/55">Get alerts for new orders</p>
  </div>
- <Switch checked={preferences.orderNotifications} onChange={() => setPreferences({...preferences, orderNotifications: !preferences.orderNotifications})} />
+ <Switch checked={preferences.orderNotifications} onCheckedChange={() => setPreferences({...preferences, orderNotifications: !preferences.orderNotifications})} />
  </div>
  <div className="flex items-center justify-between p-4 bg-foreground/[0.03] rounded-xl">
  <div>
  <p className="font-bold text-sm text-foreground">Low Stock Alerts</p>
  <p className="text-xs text-foreground/55">Notify when inventory is low</p>
  </div>
- <Switch checked={preferences.stockAlerts} onChange={() => setPreferences({...preferences, stockAlerts: !preferences.stockAlerts})} />
+ <Switch checked={preferences.stockAlerts} onCheckedChange={() => setPreferences({...preferences, stockAlerts: !preferences.stockAlerts})} />
  </div>
  <div className="flex items-center justify-between p-4 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/30 rounded-xl mt-4">
  <div>
  <p className="font-bold text-sm text-amber-900 dark:text-amber-100">Vacation Mode</p>
  <p className="text-xs text-amber-700 dark:text-amber-300">Temporarily hide your store and products</p>
  </div>
- <Switch checked={preferences.vacationMode} onChange={() => setPreferences({...preferences, vacationMode: !preferences.vacationMode})} />
+ <Switch checked={preferences.vacationMode} onCheckedChange={() => setPreferences({...preferences, vacationMode: !preferences.vacationMode})} />
  </div>
  </CardContent>
  </Card>
