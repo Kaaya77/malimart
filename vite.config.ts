@@ -12,7 +12,7 @@ export default defineConfig(({ mode }) => {
 
   const GEMINI_API_KEY   = pick('GEMINI_API_KEY')   || 'AIzaSyCeVnbXNAuL8UiwIGWfYU4P-KUoWieKm64';
   const SUPABASE_URL     = pick('SUPABASE_URL')     || 'https://ubpapxdmqlepynonhaeo.supabase.co';
-  const SUPABASE_ANON_KEY = pick('SUPABASE_ANON_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVicGFweGRtcWxlcHlub25oYWVvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NTQ4NTY1NCwiZXhwIjoyMDgxMDYxNjU0fQ.2UczI3XynBDsSaI_9UycWCKOu6GpWq9kX6w2JmNLsGc';
+  const SUPABASE_ANON_KEY = pick('SUPABASE_ANON_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVicGFweGRtcWxlcHlub25oYWVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU0ODU2NTQsImV4cCI6MjA4MTA2MTY1NH0.kjkY_jrvek-7pp2KWQytVzxxK9LL2SL1sPhsMLnGBSY';
 
   return {
     server: { port: 3000, host: '0.0.0.0' },
@@ -34,7 +34,7 @@ export default defineConfig(({ mode }) => {
           runtimeCaching: [
             {
               // Image CDN — stale-while-revalidate
-              urlPattern: /^https:\/\/(images\.unsplash\.com|cdn-icons-png\.flaticon\.com|ui-avatars\.com|picsum\.photos)\//,
+              urlPattern: /^https:\/\/(images\.unsplash\.com|cdn-icons-png\.flaticon\.com|ui-avatars\.com)\//,
               handler: 'StaleWhileRevalidate',
               options: {
                 cacheName: 'external-images',
