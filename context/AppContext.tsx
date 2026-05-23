@@ -1028,14 +1028,12 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     }, [user]);
 
     const updateOrderStatus = useCallback(async (id: string, status: string, reason?: string) => { 
-        const { error } = await supabase.rpc('update_order_status_rbac', { p_order_id: id, p_new_status: status });
+        const { error } = await supabase.rpc('update_order_status_rbac', { p_order_id: id, p_new_status: status, p_cancel_reason: reason || null });
         if (error) {
             console.error('Status update failed', error);
             throw error;
         }
-        if (reason) {
-            await supabase.from('orders').update({ cancel_reason: reason }).eq('id', id);
-        }
+        // cancel_reason passed via p_cancel_reason param in RPC — no direct PATCH needed
         if (user) await logActivity('update_order_status', `Order ${id} status changed to ${status}`, { order_id: id, status, reason });
         
         // Send notification to buyer
@@ -1058,13 +1056,13 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     }, [user, logActivity]);
 
     const cancelOrder = useCallback(async (id: string, reason: string) => { 
-        const { error } = await supabase.rpc('update_order_status_rbac', { p_order_id: id, p_new_status: 'cancelled' });
+        const { error } = await supabase.rpc('update_order_status_rbac', { p_order_id: id, p_new_status: 'cancelled', p_cancel_reason: reason });
         if (error) {
             console.error('Cancel order failed', error);
             addToast("Failed to cancel order", "error");
             throw error;
         }
-        await supabase.from('orders').update({ cancel_reason: reason }).eq('id', id); 
+        // cancel_reason now set by RPC — no separate PATCH needed 
         if (user) await logActivity('cancel_order', `Order ${id} cancelled`, { order_id: id, reason });
         
         // Notify all unique sellers in this order
