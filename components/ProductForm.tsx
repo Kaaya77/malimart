@@ -258,21 +258,40 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
  };
 
  const handleImageUpload = async (fileOrUrl: File | string) => {
- setIsLoading(true);
- try {
- const url = await uploadFileOrDataUrl(fileOrUrl);
- 
- const newImages = [...(formData.images || []), url];
- setFormData({ ...formData, images: newImages });
- if (newImages.length === 1 && !formData.name) {
- handleVisionAnalyze(url);
- }
- } catch (e: any) {
- addToast(`Failed to upload image: ${e.message || 'Unknown error'}`, "error");
- } finally {
- setIsLoading(false);
- }
- };
+    setIsLoading(true);
+    try {
+      const moderation = await aiService.moderateContent(formData.name, formData.description || '');
+      let finalStatus = formData.status || 'active';
+
+      if (moderation.isFlagged) {
+        finalStatus = 'draft';
+        addToast(`Product flagged for review: ${moderation.reason}. Saved as draft.`, "warning");
+      }
+
+      const productPayload = { ...formData, status: finalStatus, seller_id: user.id, updated_at: new Date().toISOString() };
+      if (!initialData) delete productPayload.id;
+      const { data: prod, error: prodError } = await supabase.from('products').upsert(productPayload).select().single();
+      if (prodError) throw prodError;
+
+      if (prod) {
+        const { error: varError } = await supabase.rpc('upsert_product_variants', {
+          p_product_id: prod.id,
+          p_variants: JSON.stringify(variants),
+        });
+        if (varError) throw varError;
+      }
+
+      if (!moderation.isFlagged) {
+        addToast("Product published successfully!", "success");
+      }
+      onSuccess();
+      onClose();
+    } catch (e: any) {
+      addToast(e.message || "Failed to save", "error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
  const handleVariantImageUpload = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
  if (e.target.files?.[0]) {
@@ -517,41 +536,40 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
  }
  }
 
- setIsLoading(true);
- try {
- // AI Moderation Check
- const moderation = await aiService.moderateContent(formData.name, formData.description || '');
- let finalStatus = formData.status || 'active';
- 
- if (moderation.isFlagged) {
- finalStatus = 'draft';
- addToast(`Product flagged for review: ${moderation.reason}. Saved as draft.`, "warning");
- }
+    setIsLoading(true);
+    try {
+      const moderation = await aiService.moderateContent(formData.name, formData.description || '');
+      let finalStatus = formData.status || 'active';
 
- const productPayload = { ...formData, status: finalStatus, seller_id: user.id, updated_at: new Date().toISOString() };
- if (!initialData) delete productPayload.id;
- const { data: prod, error: prodError } = await supabase.from('products').upsert(productPayload).select().single();
- if (prodError) throw prodError;
+      if (moderation.isFlagged) {
+        finalStatus = 'draft';
+        addToast(`Product flagged for review: ${moderation.reason}. Saved as draft.`, "warning");
+      }
+
+      const productPayload = { ...formData, status: finalStatus, seller_id: user.id, updated_at: new Date().toISOString() };
+      if (!initialData) delete productPayload.id;
+      const { data: prod, error: prodError } = await supabase.from('products').upsert(productPayload).select().single();
+      if (prodError) throw prodError;
+
       if (prod) {
-        // Atomic upsert — delete+insert in same DB transaction
         const { error: varError } = await supabase.rpc('upsert_product_variants', {
           p_product_id: prod.id,
           p_variants: JSON.stringify(variants),
         });
         if (varError) throw varError;
       }
- }
- if (!moderation.isFlagged) {
- addToast("Product published successfully!", "success");
- }
- onSuccess();
- onClose();
- } catch (e: any) {
- addToast(e.message || "Failed to save", "error");
- } finally {
- setIsLoading(false);
- }
- };
+
+      if (!moderation.isFlagged) {
+        addToast("Product published successfully!", "success");
+      }
+      onSuccess();
+      onClose();
+    } catch (e: any) {
+      addToast(e.message || "Failed to save", "error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
  const margin = formData.price && formData.cost_price ? ((formData.price - formData.cost_price) / formData.price) * 100 : 0;
  const profit = (formData.price || 0) - (formData.cost_price || 0);
