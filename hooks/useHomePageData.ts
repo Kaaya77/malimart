@@ -2,14 +2,6 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { VendorProfile } from '../types';
 
-// FIX: Hero recommendation query now:
-//   1. Fetches up to 4 approved hero_recommendations (not just 1) so the
-//      hero carousel can display multiple admin-curated products.
-//   2. Joins vendor_profiles!seller_id to resolve seller store_name and
-//      is_verified — these live on vendor_profiles, not on products or profiles.
-//   3. Normalises each recommendation into a flat `heroProduct` shape that
-//      HeroSection can consume directly without further processing.
-
 export const useHomePageData = () => {
     const [data, setData] = useState({
         topShops: [] as VendorProfile[],
@@ -24,7 +16,6 @@ export const useHomePageData = () => {
             subheadline: 'Shop directly from verified artisans, farmers, and creators across Tanzania. Experience the pinnacle of local heritage and modern design.'
         },
         heroRecommendation: null as any,
-        // NEW: array of all approved featured products for multi-slide hero
         heroFeaturedProducts: [] as any[],
         loadingShops: true
     });
@@ -32,41 +23,38 @@ export const useHomePageData = () => {
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
-                // Fetch Shops with retry logic
+                // Shops
                 let shopsData = null;
                 let retryCount = 0;
-                const maxRetries = 2;
-
-                while (retryCount <= maxRetries) {
+                while (retryCount <= 2) {
                     try {
-                        const { data, error } = await supabase
+                        const { data: d, error } = await supabase
                             .from('vendor_profiles')
                             .select('*')
                             .eq('is_verified', true)
                             .limit(6);
                         if (error) throw error;
-                        shopsData = data;
+                        shopsData = d;
                         break;
                     } catch (e) {
                         retryCount++;
-                        if (retryCount > maxRetries) throw e;
-                        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+                        if (retryCount > 2) break;
+                        await new Promise(r => setTimeout(r, 1000 * retryCount));
                     }
                 }
 
-                // Fetch User Count
+                // User count + avatars
                 const { count: uCount } = await supabase
                     .from('profiles')
                     .select('*', { count: 'exact', head: true });
 
-                // Fetch Recent User Avatars
                 const { data: rUsers } = await supabase
                     .from('profiles')
                     .select('avatar_url')
                     .not('avatar_url', 'is', null)
                     .limit(3);
 
-                // Fetch Real Categories for Pills with Counts
+                // Categories with counts
                 const { data: cats } = await supabase
                     .from('categories')
                     .select('name, icon_url')
@@ -81,22 +69,18 @@ export const useHomePageData = () => {
                             .select('*', { count: 'exact', head: true })
                             .eq('category', c.name)
                             .eq('status', 'active');
-                        return {
-                            name: c.name,
-                            icon: c.icon_url || '✨',
-                            count: count || 0
-                        };
+                        return { name: c.name, icon: c.icon_url || '✨', count: count || 0 };
                     }));
                 }
 
-                // Fetch Recent Orders for Ticker
-                const { data: recentOrders } = await supabase
+                // FIX 1: Ticker — fetch order_items without the broken nested profile join.
+                // Instead, fetch product names directly and use a static region fallback.
+                const { data: recentOrderItems } = await supabase
                     .from('order_items')
-                    .select('product_id, products(name), orders(profiles:user_id(region))')
+                    .select('product_id, products(name), orders(id)')
                     .order('created_at', { ascending: false })
                     .limit(3);
 
-                // Fetch Recent Vendors for Ticker
                 const { data: recentVendors } = await supabase
                     .from('vendor_profiles')
                     .select('store_name, region')
@@ -104,10 +88,10 @@ export const useHomePageData = () => {
                     .limit(2);
 
                 const newTickerItems: string[] = [];
-                if (recentOrders && recentOrders.length > 0) {
-                    recentOrders.forEach((item: any) => {
-                        if (item.products && item.orders?.profiles) {
-                            newTickerItems.push(`Someone in ${item.orders.profiles.region || 'Tanzania'} just bought ${item.products.name}`);
+                if (recentOrderItems && recentOrderItems.length > 0) {
+                    recentOrderItems.forEach((item: any) => {
+                        if (item.products) {
+                            newTickerItems.push(`Someone in Tanzania just bought ${item.products.name}`);
                         }
                     });
                 }
@@ -117,23 +101,26 @@ export const useHomePageData = () => {
                     });
                 }
 
-                // Fetch Weekly Order Count
+                // FIX 2: Weekly order count — use orders table directly (no join issues)
                 const sevenDaysAgo = new Date();
                 sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
                 const { count: wCount } = await supabase
-                    .from('order_items')
+                    .from('orders')
                     .select('*', { count: 'exact', head: true })
-                    .gte('created_at', sevenDaysAgo.toISOString());
+                    .gte('created_at', sevenDaysAgo.toISOString())
+                    .not('status', 'in', '(cancelled,failed,refunded)');
 
-                // Fetch Hero Settings
+                // Hero settings
                 const { data: settings } = await supabase
                     .from('platform_settings')
                     .select('hero_badge_text, hero_headline, hero_subheadline')
                     .eq('id', 1)
                     .maybeSingle();
 
-                // FIX: Fetch up to 4 approved hero recommendations, joining
-                // vendor_profiles to get store_name + is_verified on the product.
+                // FIX 3: Hero recommendations — join products then vendor_profiles separately
+                // PostgREST cannot traverse hero_recommendations → products → vendor_profiles
+                // in a single query because vendor_profiles FK is on products.seller_id,
+                // not on hero_recommendations. Fetch products first, then enrich.
                 const { data: recommendations } = await supabase
                     .from('hero_recommendations')
                     .select(`
@@ -141,51 +128,57 @@ export const useHomePageData = () => {
                         products (
                             id, name, description, price, base_price, sale_price,
                             images, category, stock, rating, review_count,
-                            is_boosted, status, variants, seller_id,
-                            vendor_profiles!seller_id (
-                                store_name, is_verified, logo_url, region
-                            )
+                            is_boosted, status, seller_id
                         )
                     `)
                     .eq('status', 'approved')
                     .order('approved_at', { ascending: false })
                     .limit(4);
 
-                // Normalise into hero product shape HeroSection expects
-                const heroFeaturedProducts = (recommendations || [])
-                    .filter((rec: any) => rec.products)
-                    .map((rec: any) => {
-                        const p = rec.products;
-                        const vendor = p.vendor_profiles;
-                        return {
-                            // Product fields
-                            ...p,
-                            // Flatten vendor fields onto product (what HeroSection reads)
-                            seller_name: vendor?.store_name || null,
-                            is_verified: vendor?.is_verified || false,
-                            seller_logo: vendor?.logo_url || null,
-                            seller_region: vendor?.region || null,
-                            // price fallback chain
-                            price: p.price ?? p.sale_price ?? p.base_price ?? 0,
-                            // Hero recommendation metadata
-                            _hero: {
-                                id: rec.id,
-                                title: rec.title,
-                                description: rec.description,
-                                price_display: rec.price_display,
-                                offer_text: rec.offer_text,
-                                approved_at: rec.approved_at,
-                            },
-                        };
-                    });
+                // Enrich with vendor info in a second query (avoids the invalid nested join)
+                let heroFeaturedProducts: any[] = [];
+                if (recommendations && recommendations.length > 0) {
+                    const sellerIds = [...new Set(
+                        recommendations
+                            .filter((r: any) => r.products?.seller_id)
+                            .map((r: any) => r.products.seller_id)
+                    )];
 
-                // Keep backward-compat heroRecommendation (first rec, raw shape)
-                const firstRec = recommendations && recommendations.length > 0
-                    ? {
-                        ...recommendations[0],
-                        // Attach products array shape that HeroSection's old path expects
-                        products: heroFeaturedProducts[0] || null,
+                    let vendorMap: Record<string, any> = {};
+                    if (sellerIds.length > 0) {
+                        const { data: vendors } = await supabase
+                            .from('vendor_profiles')
+                            .select('seller_id, store_name, is_verified, logo_url, region')
+                            .in('seller_id', sellerIds);
+                        (vendors || []).forEach((v: any) => { vendorMap[v.seller_id] = v; });
                     }
+
+                    heroFeaturedProducts = recommendations
+                        .filter((rec: any) => rec.products)
+                        .map((rec: any) => {
+                            const p = rec.products;
+                            const vendor = vendorMap[p.seller_id] || {};
+                            return {
+                                ...p,
+                                seller_name: vendor.store_name || null,
+                                is_verified: vendor.is_verified || false,
+                                seller_logo: vendor.logo_url || null,
+                                seller_region: vendor.region || null,
+                                price: p.price ?? p.sale_price ?? p.base_price ?? 0,
+                                _hero: {
+                                    id: rec.id,
+                                    title: rec.title,
+                                    description: rec.description,
+                                    price_display: rec.price_display,
+                                    offer_text: rec.offer_text,
+                                    approved_at: rec.approved_at,
+                                },
+                            };
+                        });
+                }
+
+                const firstRec = recommendations && recommendations.length > 0
+                    ? { ...recommendations[0], products: heroFeaturedProducts[0] || null }
                     : null;
 
                 setData({
