@@ -665,7 +665,7 @@ export const SellerInventory = ({
   }, [contextInventory]);
 
   useEffect(() => { setPage(0); }, [debouncedSearch, status, lowStockOnly]);
-  useEffect(() => { fetchInventory(); }, [fetchInventory]);
+  useEffect(() => { fetchInventory(!!contextInventory?.length); }, [fetchInventory]);
 
   // ── Mutations (all via secure RPCs) ─────────────────────────────────────────
 

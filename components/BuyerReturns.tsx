@@ -51,8 +51,8 @@ export const BuyerReturns: React.FC<BuyerReturnsProps> = ({ userId, onContactSel
  const [submitting, setSubmitting] = useState(false);
  const [uploading, setUploading] = useState(false);
 
- const fetchDisputes = async () => {
- setLoading(true);
+ const fetchDisputes = async (silent = false) => {
+ if (!silent) setLoading(true);
  const { data } = await supabase
  .from('disputes')
  .select('*, order:orders(*), seller:profiles!seller_id(id, full_name, avatar_url)')
@@ -70,7 +70,7 @@ export const BuyerReturns: React.FC<BuyerReturnsProps> = ({ userId, onContactSel
    }
  }, [contextReturns]);
 
- useEffect(() => { fetchDisputes(); }, [userId]);
+ useEffect(() => { fetchDisputes(!!contextReturns?.length); }, [userId]);
 
  // Eligible orders (delivered, not already in dispute)
  const eligibleOrders = useMemo(() => {

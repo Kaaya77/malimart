@@ -1,4 +1,5 @@
 
+// @model-version: gemini-2.0-flash — updated from gemini-3-flash-preview
 import { GoogleGenAI, Type } from "@google/genai";
 import { Product } from '../types';
 
