@@ -506,9 +506,18 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
             if (bust) invalidate(ordKey);
             const ordData = await withCache(ordKey, 30_000, async () => {
                 const { data, error } = await supabase.rpc('get_seller_orders', {
-                    p_seller_id: userId, p_limit: 200, p_offset: 0,
+                    p_seller_id: userId, p_limit: 50, p_offset: 0,
                 });
-                if (error) throw error;
+                if (error) {
+                    // Timeout: try smaller batch
+                    if (error.message?.includes('timeout') || error.code === '57014') {
+                        const { data: d2, error: e2 } = await supabase.rpc('get_seller_orders', {
+                            p_seller_id: userId, p_limit: 20, p_offset: 0,
+                        });
+                        if (!e2) return d2;
+                    }
+                    throw error;
+                }
                 return data;
             });
             if (ordData) setSellerOrders(ordData);
