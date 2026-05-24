@@ -646,7 +646,7 @@ export const SellerOffers = ({ sellerId, preselectedProduct }: { sellerId: strin
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const myProducts = useMemo(() => products.filter(p => p.seller_id === sellerId), [products, sellerId]);
-  const CACHE_KEY = `seller:offers:direct:${sellerId}`;
+  const CACHE_KEY = `seller:offers:${sellerId}`;
 
   useEffect(() => {
     if (preselectedProduct) { setEditingOffer(null); setModalOpen(true); }

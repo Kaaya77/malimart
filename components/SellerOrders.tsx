@@ -449,7 +449,7 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: {
   const [search, setSearch] = useState('');
   const [updating, setUpdating] = useState<Set<string>>(new Set());
 
-  const ORDERS_CACHE_KEY = `seller:orders:rpc:${sellerId}`;
+  const ORDERS_CACHE_KEY = `seller:orders:${sellerId}`;
 
   const fetchOrders = useCallback(async (silent = false) => {
     silent ? setRefreshing(true) : setLoading(true);
