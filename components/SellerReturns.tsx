@@ -5,10 +5,11 @@ import { supabase } from '../services/supabaseClient';
 import { withCache, invalidate } from '../services/queryCache';
 import { rateLimit } from '../src/security';
 import { formatTZS } from '../constants';
-import { 
-  Search, RefreshCw, PackageX, Clock, CheckCircle2, 
-  XCircle, MessageCircle, ChevronLeft, AlertCircle,
-  RotateCcw, Loader2, User, Package
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Search, RefreshCw, PackageX, Clock, CheckCircle2,
+  XCircle, MessageCircle, AlertCircle,
+  RotateCcw, Loader2, User, X, ChevronRight, FileText, Calendar
 } from 'lucide-react';
 
 interface Dispute {
@@ -26,25 +27,15 @@ interface Dispute {
 }
 
 const STATUS_CFG: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
-  open:     { label: 'Under Review', color: 'text-amber-600',   bg: 'bg-amber-50 dark:bg-amber-900/20',    icon: Clock },
-  resolved: { label: 'Resolved',     color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20', icon: CheckCircle2 },
-  refunded: { label: 'Refunded',     color: 'text-blue-600',    bg: 'bg-blue-50 dark:bg-blue-900/20',       icon: RefreshCw },
-  closed:   { label: 'Closed',       color: 'text-foreground/40',bg: 'bg-foreground/[0.05]',                icon: XCircle },
-};
-
-const StatusChip = ({ status }: { status: string }) => {
-  const cfg = STATUS_CFG[status] || STATUS_CFG.open;
-  const Icon = cfg.icon;
-  return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${cfg.bg} ${cfg.color}`}>
-      <Icon className="w-2.5 h-2.5" />{cfg.label}
-    </span>
-  );
+  open:     { label: 'Under Review', color: 'text-amber-600',    bg: 'bg-amber-50 dark:bg-amber-900/20',    icon: Clock },
+  resolved: { label: 'Resolved',     color: 'text-emerald-600',  bg: 'bg-emerald-50 dark:bg-emerald-900/20', icon: CheckCircle2 },
+  refunded: { label: 'Refunded',     color: 'text-blue-600',     bg: 'bg-blue-50 dark:bg-blue-900/20',       icon: RotateCcw },
+  closed:   { label: 'Closed',       color: 'text-foreground/40', bg: 'bg-foreground/[0.05]',               icon: XCircle },
 };
 
 const REASON_LABELS: Record<string, string> = {
   wrong_item_sent:       'Wrong item sent',
-  item_damaged:          'Item damaged / defective',
+  item_damaged:          'Item damaged or defective',
   item_not_as_described: 'Not as described',
   item_not_received:     'Item not received',
   seller_not_responding: 'Seller not responding',
@@ -52,15 +43,188 @@ const REASON_LABELS: Record<string, string> = {
   other:                 'Other',
 };
 
-export const SellerReturns = ({
-  userId,
-  onContactBuyer,
-}: {
+const StatusBadge = ({ status }: { status: string }) => {
+  const cfg = STATUS_CFG[status] || STATUS_CFG.open;
+  const Icon = cfg.icon;
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wide ${cfg.bg} ${cfg.color}`}>
+      <Icon className="w-2.5 h-2.5" strokeWidth={2.5} />
+      {cfg.label}
+    </span>
+  );
+};
+
+// ── Detail modal ──────────────────────────────────────────────────────────────
+const DisputeModal = ({ dispute, onClose, onUpdateStatus, onMessage, updating }: {
+  dispute: Dispute;
+  onClose: () => void;
+  onUpdateStatus: (id: string, status: 'resolved' | 'refunded' | 'closed') => void;
+  onMessage: (buyerId: string, orderId: string) => void;
+  updating: boolean;
+}) => {
+  const dateStr = new Date(dispute.created_at).toLocaleDateString('en-TZ', { weekday:'short', day:'numeric', month:'long', year:'numeric' });
+
+  return (
+    <>
+      <motion.div
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <motion.div
+        initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
+        transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+        className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-lg bg-background shadow-2xl border-l border-foreground/[0.08] flex flex-col overflow-hidden"
+      >
+        {/* Header */}
+        <div className="flex items-center gap-4 px-5 py-4 border-b border-foreground/[0.07] shrink-0">
+          <button onClick={onClose}
+            className="w-8 h-8 rounded-xl bg-foreground/[0.05] hover:bg-foreground/10 flex items-center justify-center transition-colors">
+            <X className="w-4 h-4 text-foreground/60" />
+          </button>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-black font-mono text-foreground/35 uppercase tracking-widest">
+                #{dispute.order_id.slice(0, 8).toUpperCase()}
+              </span>
+              <StatusBadge status={dispute.status} />
+            </div>
+            <p className="text-[10px] text-foreground/30 mt-0.5">{dateStr}</p>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-5 space-y-4">
+
+            {/* Action card for open disputes */}
+            {dispute.status === 'open' && (
+              <motion.div
+                initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+                className="rounded-2xl bg-amber-500/10 border border-amber-500/20 p-4"
+              >
+                <p className="text-xs font-black text-amber-700 dark:text-amber-400 mb-1">Review required</p>
+                <p className="text-[11px] text-foreground/55 mb-3 leading-relaxed">
+                  This customer has filed a dispute. Review the claim and choose how to proceed.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => onUpdateStatus(dispute.id, 'resolved')}
+                    disabled={updating}
+                    className="flex-1 h-9 rounded-xl bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wide hover:bg-emerald-700 transition-all flex items-center justify-center gap-1.5 disabled:opacity-60"
+                  >
+                    {updating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <><CheckCircle2 className="w-3.5 h-3.5" />Mark Resolved</>}
+                  </button>
+                  <button
+                    onClick={() => onUpdateStatus(dispute.id, 'refunded')}
+                    disabled={updating}
+                    className="flex-1 h-9 rounded-xl bg-blue-600 text-white text-[10px] font-black uppercase tracking-wide hover:bg-blue-700 transition-all flex items-center justify-center gap-1.5 disabled:opacity-60"
+                  >
+                    {updating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <><RotateCcw className="w-3.5 h-3.5" />Approve Refund</>}
+                  </button>
+                </div>
+                <button
+                  onClick={() => onUpdateStatus(dispute.id, 'closed')}
+                  disabled={updating}
+                  className="mt-2 text-[10px] font-bold text-foreground/35 hover:text-foreground/60 transition-colors block"
+                >
+                  Close without action
+                </button>
+              </motion.div>
+            )}
+
+            {/* Claim details */}
+            <section>
+              <p className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/35 mb-2 px-1">Claim details</p>
+              <div className="rounded-2xl border border-foreground/[0.08] overflow-hidden divide-y divide-foreground/[0.05]">
+                <div className="p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0 mt-0.5">
+                      <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-black uppercase tracking-[0.18em] text-foreground/35 mb-1">Reason</p>
+                      <p className="text-sm font-bold text-foreground">{REASON_LABELS[dispute.reason] || dispute.reason}</p>
+                    </div>
+                  </div>
+                </div>
+                {dispute.description && (
+                  <div className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-7 h-7 rounded-lg bg-foreground/[0.05] flex items-center justify-center shrink-0 mt-0.5">
+                        <FileText className="w-3.5 h-3.5 text-foreground/40" />
+                      </div>
+                      <div>
+                        <p className="text-[9px] font-black uppercase tracking-[0.18em] text-foreground/35 mb-1">Customer statement</p>
+                        <p className="text-[11px] text-foreground/65 leading-relaxed">{dispute.description}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <div className="p-4 flex items-center gap-3">
+                  <div className="w-7 h-7 rounded-lg bg-foreground/[0.05] flex items-center justify-center shrink-0">
+                    <Calendar className="w-3.5 h-3.5 text-foreground/40" />
+                  </div>
+                  <div>
+                    <p className="text-[9px] font-black uppercase tracking-[0.18em] text-foreground/35 mb-0.5">Filed</p>
+                    <p className="text-xs font-semibold text-foreground">{dateStr}</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Customer */}
+            {dispute.buyer && (
+              <section>
+                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/35 mb-2 px-1">Customer</p>
+                <div className="rounded-2xl border border-foreground/[0.08] p-4 flex items-center gap-4">
+                  <div className="w-11 h-11 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-sm font-black text-white shrink-0 overflow-hidden">
+                    {dispute.buyer.avatar_url
+                      ? <img src={dispute.buyer.avatar_url} alt="" className="w-full h-full object-cover" />
+                      : (dispute.buyer.full_name?.[0] || '?').toUpperCase()
+                    }
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-foreground truncate">{dispute.buyer.full_name}</p>
+                    <p className="text-[10px] text-foreground/40 truncate">{dispute.buyer.email}</p>
+                  </div>
+                  <button onClick={() => onMessage(dispute.buyer_id, dispute.order_id)}
+                    className="shrink-0 flex items-center gap-1.5 h-9 px-3.5 rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-400 text-[10px] font-black uppercase tracking-wide hover:bg-brand-500/15 transition-colors">
+                    <MessageCircle className="w-3.5 h-3.5" /> Message
+                  </button>
+                </div>
+              </section>
+            )}
+
+            {/* Order ref */}
+            {dispute.order && (
+              <section>
+                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/35 mb-2 px-1">Linked order</p>
+                <div className="rounded-2xl border border-foreground/[0.08] p-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-[9px] font-black font-mono text-foreground/35 uppercase tracking-widest mb-0.5">
+                      #{dispute.order_id.slice(0, 8).toUpperCase()}
+                    </p>
+                    <p className="text-sm font-bold text-foreground">{formatTZS(Number(dispute.order.total) || 0)}</p>
+                  </div>
+                  <span className={`text-[10px] font-black uppercase tracking-wide px-2.5 py-1 rounded-full ${
+                    dispute.order.status === 'delivered' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-foreground/[0.05] text-foreground/40'
+                  }`}>{dispute.order.status}</span>
+                </div>
+              </section>
+            )}
+          </div>
+        </div>
+      </motion.div>
+    </>
+  );
+};
+
+// ── Main component ─────────────────────────────────────────────────────────────
+export const SellerReturns = ({ userId, onContactBuyer }: {
   userId: string;
   onContactBuyer: (buyerId: string, productId?: string, orderId?: string) => void;
 }) => {
   const { addToast } = useToast();
-  const { sellerOrders } = useAppState(); // available for cross-reference
   const DISPUTES_CACHE_KEY = `seller:disputes:${userId}`;
   const [disputes, setDisputes] = useState<Dispute[]>([]);
   const [loading, setLoading] = useState(true);
@@ -105,10 +269,7 @@ export const SellerReturns = ({
     if (!rateLimit(`dispute-${disputeId}`, 3)) return addToast('Too fast, slow down', 'error');
     setUpdating(disputeId);
     try {
-      const { error } = await supabase.rpc('update_dispute_status', {
-        p_dispute_id: disputeId,
-        p_new_status: newStatus,
-      });
+      const { error } = await supabase.rpc('update_dispute_status', { p_dispute_id: disputeId, p_new_status: newStatus });
       if (error) throw error;
       const labels = { resolved: 'Marked as resolved ✓', refunded: 'Refund approved ✓', closed: 'Case closed' };
       addToast(labels[newStatus], 'success');
@@ -137,228 +298,172 @@ export const SellerReturns = ({
     return matchStatus && matchSearch;
   }), [disputes, statusFilter, search]);
 
-  // ── Detail panel ───────────────────────────────────────────────────────────
-  if (selected) {
-    const cfg = STATUS_CFG[selected.status] || STATUS_CFG.open;
-    const isUpd = updating === selected.id;
+  const STATUS_PILLS = [
+    { id: 'all',      label: 'All',      color: '#94a3b8', count: disputes.length },
+    { id: 'open',     label: 'Open',     color: '#f59e0b', count: stats.open },
+    { id: 'resolved', label: 'Resolved', color: '#10b981', count: stats.resolved },
+    { id: 'refunded', label: 'Refunded', color: '#3b82f6', count: stats.refunded },
+    { id: 'closed',   label: 'Closed',   color: '#94a3b8', count: disputes.filter(d => d.status === 'closed').length },
+  ];
 
-    return (
-      <div className="flex flex-col h-full min-h-0">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-5 flex-shrink-0">
-          <button onClick={() => setSelected(null)}
-            className="w-9 h-9 flex items-center justify-center rounded-full bg-foreground/[0.05] hover:bg-foreground/10 transition-colors">
-            <ChevronLeft className="w-4 h-4 text-foreground" />
-          </button>
-          <div className="flex-1 min-w-0">
-            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/35">Return / Dispute</p>
-            <h3 className="font-bold text-sm text-foreground font-mono">#{selected.order_id.slice(0, 8).toUpperCase()}</h3>
-          </div>
-          <StatusChip status={selected.status} />
-        </div>
-
-        <div className="flex-1 overflow-y-auto space-y-3 pr-0.5 min-h-0">
-          {/* Action card for open disputes */}
-          {selected.status === 'open' && (
-            <div className="rounded-2xl bg-amber-500/10 border border-amber-500/20 p-4 space-y-2">
-              <p className="text-xs font-bold text-amber-700 dark:text-amber-400">Action required</p>
-              <p className="text-[11px] text-amber-600/70">Review this claim and choose how to proceed.</p>
-              <div className="flex gap-2 pt-1">
-                <button
-                  onClick={() => handleUpdateStatus(selected.id, 'resolved')}
-                  disabled={!!isUpd}
-                  className="flex-1 h-9 rounded-xl bg-emerald-600 text-white text-[11px] font-black hover:bg-emerald-700 active:scale-95 transition-all flex items-center justify-center gap-1.5 disabled:opacity-60"
-                >
-                  {isUpd ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <><CheckCircle2 className="w-3 h-3" />Resolve</>}
-                </button>
-                <button
-                  onClick={() => handleUpdateStatus(selected.id, 'refunded')}
-                  disabled={!!isUpd}
-                  className="flex-1 h-9 rounded-xl bg-blue-600 text-white text-[11px] font-black hover:bg-blue-700 active:scale-95 transition-all flex items-center justify-center gap-1.5 disabled:opacity-60"
-                >
-                  {isUpd ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <><RefreshCw className="w-3 h-3" />Refund</>}
-                </button>
-              </div>
-              <button
-                onClick={() => handleUpdateStatus(selected.id, 'closed')}
-                disabled={!!isUpd}
-                className="text-[11px] font-bold text-foreground/40 hover:text-foreground/60 transition-colors"
-              >
-                Close without action
-              </button>
-            </div>
-          )}
-
-          {/* Reason & Description */}
-          <div className="rounded-2xl border border-foreground/8 overflow-hidden">
-            <div className="px-4 py-2.5 border-b border-foreground/8 bg-foreground/[0.02]">
-              <p className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/40">Claim Details</p>
-            </div>
-            <div className="p-4 space-y-3">
-              <div>
-                <p className="text-[10px] text-foreground/40 mb-0.5">Reason</p>
-                <p className="text-sm font-semibold text-foreground">
-                  {REASON_LABELS[selected.reason] || selected.reason}
-                </p>
-              </div>
-              {selected.description && (
-                <div>
-                  <p className="text-[10px] text-foreground/40 mb-0.5">Description</p>
-                  <p className="text-xs text-foreground/70 leading-relaxed">{selected.description}</p>
-                </div>
-              )}
-              <p className="text-[10px] text-foreground/30">
-                Filed {new Date(selected.created_at).toLocaleDateString('en-TZ', { day: 'numeric', month: 'short', year: 'numeric' })}
-              </p>
-            </div>
-          </div>
-
-          {/* Buyer */}
-          {selected.buyer && (
-            <div className="rounded-2xl border border-foreground/8 overflow-hidden">
-              <div className="px-4 py-2.5 border-b border-foreground/8 bg-foreground/[0.02] flex items-center gap-1.5">
-                <User className="w-3 h-3 text-foreground/40" />
-                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/40">Customer</p>
-              </div>
-              <div className="p-4 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-9 h-9 rounded-full bg-foreground/[0.06] overflow-hidden flex-shrink-0">
-                    {selected.buyer.avatar_url
-                      ? <img src={selected.buyer.avatar_url} alt="" className="w-full h-full object-cover" loading="lazy" />
-                      : <div className="w-full h-full flex items-center justify-center text-sm font-black text-foreground/30">{selected.buyer.full_name?.[0]}</div>
-                    }
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-foreground truncate">{selected.buyer.full_name}</p>
-                    <p className="text-[10px] text-foreground/40 truncate">{selected.buyer.email}</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => onContactBuyer(selected.buyer_id, undefined, selected.order_id)}
-                  className="flex-shrink-0 inline-flex items-center gap-1.5 h-8 px-3 rounded-xl border border-foreground/15 text-[10px] font-bold text-foreground/60 hover:bg-foreground/[0.05] transition-colors"
-                >
-                  <MessageCircle className="w-3 h-3" />Message
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Order reference */}
-          {selected.order && (
-            <div className="rounded-2xl border border-foreground/8 p-4">
-              <p className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/40 mb-2">Order</p>
-              <div className="flex justify-between text-xs">
-                <span className="text-foreground/50 font-mono">#{selected.order_id.slice(0, 8).toUpperCase()}</span>
-                <span className="font-bold text-foreground">{formatTZS(Number(selected.order.total) || 0)}</span>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  // ── List view ──────────────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col h-full min-h-0">
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-2 mb-4 flex-shrink-0">
+    <div>
+      {/* Stat tiles */}
+      <div className="grid grid-cols-3 gap-2.5 mb-5">
         {[
-          { label: 'Open',     value: stats.open,     color: 'text-amber-500',   s: 'open' },
-          { label: 'Resolved', value: stats.resolved, color: 'text-emerald-500', s: 'resolved' },
-          { label: 'Refunded', value: stats.refunded, color: 'text-blue-500',    s: 'refunded' },
+          { label: 'Open',     value: stats.open,     color: '#f59e0b', filter: 'open' },
+          { label: 'Resolved', value: stats.resolved, color: '#10b981', filter: 'resolved' },
+          { label: 'Refunded', value: stats.refunded, color: '#3b82f6', filter: 'refunded' },
         ].map(st => (
-          <button key={st.s} onClick={() => setStatusFilter(p => p === st.s ? 'all' : st.s)}
-            className={`rounded-xl p-2.5 text-center transition-all ${statusFilter === st.s ? 'bg-foreground/10 ring-1 ring-foreground/20' : 'bg-foreground/[0.03] hover:bg-foreground/[0.06]'}`}>
-            <p className={`text-xl font-black tabular-nums ${st.color}`}>{st.value}</p>
-            <p className="text-[9px] font-bold uppercase tracking-wide text-foreground/35 mt-0.5">{st.label}</p>
+          <button key={st.filter}
+            onClick={() => setStatusFilter(p => p === st.filter ? 'all' : st.filter)}
+            className={`rounded-2xl p-3 text-center transition-all border ${
+              statusFilter === st.filter
+                ? 'border-foreground/20 bg-foreground/[0.06] shadow-sm'
+                : 'border-foreground/[0.07] bg-foreground/[0.02] hover:bg-foreground/[0.04]'
+            }`}>
+            <p className="text-2xl font-black tabular-nums" style={{ color: st.color }}>{st.value}</p>
+            <p className="text-[9px] font-black uppercase tracking-widest text-foreground/35 mt-0.5">{st.label}</p>
           </button>
         ))}
       </div>
 
-      {/* Search + refresh */}
-      <div className="flex gap-2 mb-3 flex-shrink-0">
+      {/* Search */}
+      <div className="flex gap-2 mb-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground/30" />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search order, customer, reason…"
-            className="w-full h-10 pl-9 pr-3 rounded-xl bg-foreground/[0.04] border border-foreground/8 text-xs text-foreground placeholder:text-foreground/30 outline-none focus:border-foreground/25 transition-colors" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground/30" />
+          <input value={search} onChange={e => setSearch(e.target.value)}
+            placeholder="Search order, customer, reason…"
+            className="w-full h-10 pl-10 pr-3 rounded-xl bg-foreground/[0.04] border border-foreground/[0.08] text-xs text-foreground placeholder:text-foreground/30 outline-none focus:border-foreground/25 transition-all" />
         </div>
         <button onClick={() => fetchDisputes(true)} disabled={refreshing}
-          className="w-10 h-10 rounded-xl bg-foreground/[0.04] border border-foreground/8 flex items-center justify-center hover:bg-foreground/[0.07] transition-colors disabled:opacity-50">
+          className="w-10 h-10 rounded-xl bg-foreground/[0.04] border border-foreground/[0.08] flex items-center justify-center hover:bg-foreground/[0.08] transition-colors disabled:opacity-50">
           <RefreshCw className={`w-3.5 h-3.5 text-foreground/50 ${refreshing ? 'animate-spin' : ''}`} />
         </button>
       </div>
 
-      {/* Status tabs */}
-      <div className="flex gap-1 mb-3 overflow-x-auto no-scrollbar flex-shrink-0">
-        {['all', 'open', 'resolved', 'refunded', 'closed'].map(s => (
-          <button key={s} onClick={() => setStatusFilter(s)}
-            className={`flex-shrink-0 h-6 px-3 rounded-full text-[10px] font-bold uppercase tracking-wide transition-all ${statusFilter === s ? 'bg-foreground text-background' : 'bg-foreground/[0.05] text-foreground/45 hover:bg-foreground/10'}`}>
-            {s === 'all' ? 'All' : s.charAt(0).toUpperCase() + s.slice(1)}
+      {/* Status pills */}
+      <div className="flex gap-1.5 mb-4 overflow-x-auto no-scrollbar pb-0.5">
+        {STATUS_PILLS.map(sp => (
+          <button key={sp.id}
+            onClick={() => setStatusFilter(sp.id)}
+            className="flex-shrink-0 flex items-center gap-1.5 h-7 px-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all"
+            style={statusFilter === sp.id ? { background: sp.color, color: 'white' } : { background: 'rgba(var(--foreground-rgb, 0 0 0) / 0.05)', color: 'rgba(var(--foreground-rgb, 0 0 0) / 0.4)' }}
+          >
+            {sp.label}
+            {sp.count > 0 && (
+              <span className="px-1 rounded text-[8px] font-black"
+                style={statusFilter === sp.id ? { background: 'rgba(255,255,255,0.25)' } : { background: 'rgba(0,0,0,0.08)' }}>
+                {sp.count}
+              </span>
+            )}
           </button>
         ))}
       </div>
 
       {/* List */}
-      <div className="flex-1 overflow-y-auto space-y-2 min-h-0">
-        {loading ? (
-          Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-20 rounded-2xl bg-foreground/[0.04] animate-pulse" />)
-        ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-foreground/[0.04] flex items-center justify-center">
-              <PackageX className="w-6 h-6 text-foreground/20" />
-            </div>
-            <p className="text-xs font-bold text-foreground/30 uppercase tracking-wider">
-              {search ? 'No results match' : statusFilter === 'open' ? 'No open claims' : 'No returns'}
-            </p>
+      {loading ? (
+        <div className="space-y-2.5">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="h-20 rounded-2xl bg-foreground/[0.04] animate-pulse" />
+          ))}
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 gap-4">
+          <div className="w-16 h-16 rounded-3xl bg-foreground/[0.04] border border-foreground/[0.07] flex items-center justify-center">
+            <PackageX className="w-7 h-7 text-foreground/15" />
           </div>
-        ) : (
-          filtered.map(dispute => {
-            const cfg = STATUS_CFG[dispute.status] || STATUS_CFG.open;
-            const Icon = cfg.icon;
-            const isOpen = dispute.status === 'open';
-            const isUpd = updating === dispute.id;
+          <div className="text-center">
+            <p className="text-sm font-bold text-foreground/25 uppercase tracking-widest">
+              {search ? 'No matching disputes' : statusFilter === 'open' ? 'No open claims' : 'No returns yet'}
+            </p>
+            <p className="text-[10px] text-foreground/20 mt-1">Returns and disputes will appear here</p>
+          </div>
+        </div>
+      ) : (
+        <AnimatePresence mode="popLayout">
+          <div className="space-y-2">
+            {filtered.map(dispute => {
+              const cfg = STATUS_CFG[dispute.status] || STATUS_CFG.open;
+              const Icon = cfg.icon;
+              const isOpen = dispute.status === 'open';
+              const isUpd = updating === dispute.id;
 
-            return (
-              <div key={dispute.id} onClick={() => setSelected(dispute)}
-                className={`rounded-2xl border cursor-pointer transition-all hover:shadow-sm ${isOpen
-                  ? 'border-amber-300 dark:border-amber-700/40 bg-amber-50/30 dark:bg-amber-900/10'
-                  : 'border-foreground/8 bg-foreground/[0.015] hover:bg-foreground/[0.03]'}`}>
-                <div className="flex items-center gap-3 p-3.5">
-                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${cfg.bg}`}>
-                    <Icon className={`w-4 h-4 ${cfg.color}`} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2 mb-0.5">
-                      <span className="text-[10px] font-black text-foreground/35 font-mono">#{dispute.order_id.slice(0, 8).toUpperCase()}</span>
-                      <StatusChip status={dispute.status} />
+              return (
+                <motion.div
+                  key={dispute.id}
+                  layout
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.97 }}
+                  onClick={() => setSelected(dispute)}
+                  className={`rounded-2xl border cursor-pointer transition-all group hover:shadow-md ${
+                    isOpen
+                      ? 'border-amber-300/50 dark:border-amber-700/30 bg-amber-50/20 dark:bg-amber-900/10 hover:border-amber-400/60'
+                      : 'border-foreground/[0.07] bg-foreground/[0.015] hover:bg-foreground/[0.03] hover:border-foreground/15'
+                  }`}
+                >
+                  <div className="flex items-center gap-3 p-3.5">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${cfg.bg}`}>
+                      <Icon className={`w-4.5 h-4.5 ${cfg.color}`} strokeWidth={2} />
                     </div>
-                    <p className="text-xs font-semibold text-foreground truncate">
-                      {REASON_LABELS[dispute.reason] || dispute.reason}
-                    </p>
-                    <p className="text-[10px] text-foreground/35 mt-0.5">
-                      {dispute.buyer?.full_name || 'Customer'} · {new Date(dispute.created_at).toLocaleDateString('en-TZ', { day: 'numeric', month: 'short' })}
-                    </p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2 mb-0.5">
+                        <span className="text-[10px] font-black font-mono text-foreground/30 uppercase tracking-widest">
+                          #{dispute.order_id.slice(0, 8).toUpperCase()}
+                        </span>
+                        <StatusBadge status={dispute.status} />
+                      </div>
+                      <p className="text-xs font-bold text-foreground truncate">
+                        {REASON_LABELS[dispute.reason] || dispute.reason}
+                      </p>
+                      <p className="text-[10px] text-foreground/35 mt-0.5">
+                        {dispute.buyer?.full_name || 'Customer'} · {new Date(dispute.created_at).toLocaleDateString('en-TZ', { day:'numeric', month:'short' })}
+                      </p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-foreground/20 shrink-0 group-hover:text-foreground/40 transition-colors" />
                   </div>
-                </div>
-                {/* Quick actions for open disputes */}
-                {isOpen && (
-                  <div className="px-3.5 pb-3 flex gap-2" onClick={e => e.stopPropagation()}>
-                    <button onClick={() => handleUpdateStatus(dispute.id, 'resolved')} disabled={!!isUpd}
-                      className="flex-1 h-8 rounded-xl bg-emerald-600 text-white text-[10px] font-black hover:bg-emerald-700 active:scale-[0.98] transition-all flex items-center justify-center gap-1 disabled:opacity-60">
-                      {isUpd ? <Loader2 className="w-3 h-3 animate-spin" /> : <><CheckCircle2 className="w-3 h-3" />Resolve</>}
-                    </button>
-                    <button onClick={() => handleUpdateStatus(dispute.id, 'refunded')} disabled={!!isUpd}
-                      className="flex-1 h-8 rounded-xl bg-blue-600 text-white text-[10px] font-black hover:bg-blue-700 active:scale-[0.98] transition-all flex items-center justify-center gap-1 disabled:opacity-60">
-                      {isUpd ? <Loader2 className="w-3 h-3 animate-spin" /> : <><RefreshCw className="w-3 h-3" />Refund</>}
-                    </button>
-                  </div>
-                )}
-              </div>
-            );
-          })
+
+                  {isOpen && (
+                    <div className="px-3.5 pb-3.5 flex gap-2" onClick={e => e.stopPropagation()}>
+                      <button
+                        onClick={() => handleUpdateStatus(dispute.id, 'resolved')}
+                        disabled={!!isUpd}
+                        className="flex-1 h-8 rounded-xl bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all flex items-center justify-center gap-1.5 disabled:opacity-60"
+                      >
+                        {isUpd ? <Loader2 className="w-3 h-3 animate-spin" /> : <><CheckCircle2 className="w-3 h-3" />Resolve</>}
+                      </button>
+                      <button
+                        onClick={() => handleUpdateStatus(dispute.id, 'refunded')}
+                        disabled={!!isUpd}
+                        className="flex-1 h-8 rounded-xl bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all flex items-center justify-center gap-1.5 disabled:opacity-60"
+                      >
+                        {isUpd ? <Loader2 className="w-3 h-3 animate-spin" /> : <><RotateCcw className="w-3 h-3" />Refund</>}
+                      </button>
+                    </div>
+                  )}
+                </motion.div>
+              );
+            })}
+          </div>
+        </AnimatePresence>
+      )}
+
+      {/* Detail modal */}
+      <AnimatePresence>
+        {selected && (
+          <DisputeModal
+            dispute={selected}
+            onClose={() => setSelected(null)}
+            onUpdateStatus={handleUpdateStatus}
+            onMessage={(buyerId, orderId) => {
+              setSelected(null);
+              onContactBuyer(buyerId, undefined, orderId);
+            }}
+            updating={updating === selected.id}
+          />
         )}
-      </div>
+      </AnimatePresence>
     </div>
   );
 };
