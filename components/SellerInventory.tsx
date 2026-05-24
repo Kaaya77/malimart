@@ -15,6 +15,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Search, Filter, Plus, Zap, Trash2,
   CheckSquare, Square, Copy, Package, X,
@@ -33,7 +34,7 @@ import { Product } from '../types';
 import { formatTZS, CURRENCY, CATEGORY_HIERARCHY } from '../constants';
 import { supabase } from '../services/supabaseClient';
 import { rateLimit } from '../src/security';
-import { ProductForm } from './ProductForm';
+import { withCache, invalidate, TTL } from '../services/queryCache';
 import { QuickProductForm } from './QuickProductForm';
 import { CSVImport } from './CSVImport';
 import { BulkEditModal } from './BulkEditModal';
@@ -586,6 +587,7 @@ export const SellerInventory = ({
   onCreatePromo: (p: Product) => void;
 }) => {
   const { addToast } = useToast();
+  const navigate = useNavigate();
   const [products, setProducts] = useState<InventoryProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -605,9 +607,7 @@ export const SellerInventory = ({
   // Selection + operations
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [updatingIds, setUpdatingIds] = useState<Set<string>>(new Set());
-  const [editingProduct, setEditingProduct] = useState<InventoryProduct | null>(null);
   const [stockAdjProduct, setStockAdjProduct] = useState<InventoryProduct | null>(null);
-  const [isFormOpen, setIsFormOpen] = useState(false);
   const [isQuickFormOpen, setIsQuickFormOpen] = useState(false);
   const [isCSVImportOpen, setIsCSVImportOpen] = useState(false);
   const [isBulkEditOpen, setIsBulkEditOpen] = useState(false);
@@ -625,16 +625,22 @@ export const SellerInventory = ({
         stock: sort.asc ? 'stock_asc' : 'stock_desc',
         name: 'name_asc',
       };
-      const { data, error } = await supabase.rpc('get_seller_inventory', {
-        p_seller_id: userId,
-        p_limit: PAGE_SIZE,
-        p_offset: page * PAGE_SIZE,
-        p_status: status !== 'All' ? status.toLowerCase() : null,
-        p_search: debouncedSearch || null,
-        p_low_stock_only: lowStockOnly,
-        p_sort: sortMap[sort.key] ?? 'created_desc',
+      const cacheKey = `seller:inventory:${userId}:${page}:${status}:${debouncedSearch}:${lowStockOnly}:${sort.key}:${sort.asc}`;
+      // Use 60s cache; silent=true (mutations) busts the cache before refetching
+      if (silent) invalidate(cacheKey);
+      const data = await withCache(cacheKey, 60_000, async () => {
+        const { data: d, error } = await supabase.rpc('get_seller_inventory', {
+          p_seller_id: userId,
+          p_limit: PAGE_SIZE,
+          p_offset: page * PAGE_SIZE,
+          p_status: status !== 'All' ? status.toLowerCase() : null,
+          p_search: debouncedSearch || null,
+          p_low_stock_only: lowStockOnly,
+          p_sort: sortMap[sort.key] ?? 'created_desc',
+        });
+        if (error) throw error;
+        return d;
       });
-      if (error) throw error;
       setProducts((data?.products ?? []) as InventoryProduct[]);
       setTotalCount(data?.pagination?.matched ?? 0);
       if (data?.totals) setTotals(data.totals as RpcTotals);
@@ -912,7 +918,7 @@ export const SellerInventory = ({
         </button>
 
         {/* Actions */}
-        <button onClick={() => { setEditingProduct(null); setIsFormOpen(true); }}
+        <button onClick={() => navigate('/seller/products/new')}
           className="h-10 px-5 rounded-xl bg-emerald-600 text-white text-sm font-black hover:bg-emerald-700 active:scale-95 transition-all flex items-center gap-2 flex-shrink-0">
           <Plus className="w-4 h-4" /> Add
         </button>
@@ -995,7 +1001,7 @@ export const SellerInventory = ({
                 {debouncedSearch ? 'No products match your search' : lowStockOnly ? 'No low-stock products' : 'No products yet'}
               </p>
               {!debouncedSearch && !lowStockOnly && (
-                <button onClick={() => { setEditingProduct(null); setIsFormOpen(true); }}
+                <button onClick={() => navigate('/seller/products/new')}
                   className="mt-2 h-10 px-6 rounded-xl bg-emerald-600 text-white text-sm font-black hover:bg-emerald-700 transition-colors">
                   Add your first product
                 </button>
@@ -1008,7 +1014,7 @@ export const SellerInventory = ({
                 product={p}
                 isSelected={selectedIds.has(p.id)}
                 onSelect={() => toggleSelect(p.id)}
-                onEdit={prod => { setEditingProduct(prod); setIsFormOpen(true); }}
+                onEdit={prod => navigate(`/seller/products/${prod.id}/edit`)}
                 onArchive={id => setArchiveModal({ ids: [id], open: true })}
                 onToggleStatus={handleToggleStatus}
                 onToggleBoost={handleToggleBoost}
@@ -1069,13 +1075,7 @@ export const SellerInventory = ({
       />
 
       {/* Forms */}
-      {isFormOpen && (
-        <ProductForm
-          initialData={editingProduct as any}
-          onClose={() => { setIsFormOpen(false); setEditingProduct(null); }}
-          onSuccess={() => { fetchInventory(true); setIsFormOpen(false); setEditingProduct(null); }}
-        />
-      )}
+
       {isQuickFormOpen && (
         <QuickProductForm
           onClose={() => setIsQuickFormOpen(false)}
