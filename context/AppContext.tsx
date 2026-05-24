@@ -492,68 +492,76 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     // Background-refreshed every 60s while the tab is open.
 
     const fetchSellerData = useCallback(async (userId: string, bust = false) => {
-        try {
-            // Inventory (cached 60s)
-            const invKey = `seller:inventory:${userId}:0:All::false:created_at:false`;
-            if (bust) invalidate(invKey);
-            const invData = await withCache(invKey, 60_000, async () => {
-                const { data, error } = await supabase.rpc('get_seller_inventory', {
-                    p_seller_id: userId, p_limit: 50, p_offset: 0,
-                    p_status: null, p_search: null, p_low_stock_only: false, p_sort: 'created_desc',
-                });
-                if (error) throw error;
-                return data;
-            });
-            if (invData?.products) setSellerInventory(invData.products);
-
-            // Orders (cached 30s)
-            const ordKey = `seller:orders:${userId}`;
-            if (bust) invalidate(ordKey);
-            const ordData = await withCache(ordKey, 30_000, async () => {
-                const { data, error } = await supabase.rpc('get_seller_orders', {
-                    p_seller_id: userId, p_limit: 50, p_offset: 0,
-                });
-                if (error) {
-                    // Timeout: try smaller batch
-                    if (error.message?.includes('timeout') || error.code === '57014') {
-                        const { data: d2, error: e2 } = await supabase.rpc('get_seller_orders', {
-                            p_seller_id: userId, p_limit: 20, p_offset: 0,
+        await Promise.allSettled([
+            (async () => {
+                try {
+                    const invKey = `seller:inventory:${userId}:0:All::false:created_at:false`;
+                    if (bust) invalidate(invKey);
+                    const invData = await withCache(invKey, 60_000, async () => {
+                        const { data, error } = await supabase.rpc('get_seller_inventory', {
+                            p_seller_id: userId, p_limit: 50, p_offset: 0,
+                            p_status: null, p_search: null, p_low_stock_only: false, p_sort: 'created_desc',
                         });
-                        if (!e2) return d2;
-                    }
-                    throw error;
-                }
-                return data;
-            });
-            if (ordData) setSellerOrders(ordData);
-
-            // Offers (cached 60s)
-            const offKey = `seller:offers:${userId}`;
-            if (bust) invalidate(offKey);
-            const offData = await withCache(offKey, 60_000, async () => {
-                const { data, error } = await supabase.from('offers')
-                    .select('*').eq('seller_id', userId).order('created_at', { ascending: false });
-                if (error) throw error;
-                return data;
-            });
-            if (offData) setSellerOffers(offData);
-
-            // Dashboard stats (cached 3min)
-            const statsKey = `seller:stats:${userId}`;
-            if (bust) invalidate(statsKey);
-            const statsData = await withCache(statsKey, 3 * 60_000, async () => {
-                const { data, error } = await supabase.rpc('get_seller_dashboard_fast', { p_seller_id: userId });
-                if (error) throw error;
-                return data;
-            });
-            if (statsData) setSellerStats(statsData);
-
-            // Messages (all roles) — 30s cache
-            const msgs = await fetchMessages(false);
-            if (msgs?.length) setPreloadedMessages(msgs);
-        } catch (err: any) {
-            console.error('[fetchSellerData]', err?.message);
-        }
+                        if (error) throw error;
+                        return data;
+                    });
+                    if (invData?.products) setSellerInventory(invData.products);
+                } catch (e: any) { console.error('[fetchSellerData:inventory]', e?.message); }
+            })(),
+            (async () => {
+                try {
+                    const ordKey = `seller:orders:${userId}`;
+                    if (bust) invalidate(ordKey);
+                    const ordData = await withCache(ordKey, 30_000, async () => {
+                        const { data, error } = await supabase.rpc('get_seller_orders', {
+                            p_seller_id: userId, p_limit: 50, p_offset: 0,
+                        });
+                        if (error) {
+                            if (error.message?.includes('timeout') || error.code === '57014') {
+                                const { data: d2, error: e2 } = await supabase.rpc('get_seller_orders', {
+                                    p_seller_id: userId, p_limit: 20, p_offset: 0,
+                                });
+                                if (!e2) return d2;
+                            }
+                            throw error;
+                        }
+                        return data;
+                    });
+                    if (ordData) setSellerOrders(ordData);
+                } catch (e: any) { console.error('[fetchSellerData:orders]', e?.message); }
+            })(),
+            (async () => {
+                try {
+                    const offKey = `seller:offers:${userId}`;
+                    if (bust) invalidate(offKey);
+                    const offData = await withCache(offKey, 60_000, async () => {
+                        const { data, error } = await supabase.from('offers')
+                            .select('*').eq('seller_id', userId).order('created_at', { ascending: false });
+                        if (error) throw error;
+                        return data;
+                    });
+                    if (offData) setSellerOffers(offData);
+                } catch (e: any) { console.error('[fetchSellerData:offers]', e?.message); }
+            })(),
+            (async () => {
+                try {
+                    const statsKey = `seller:stats:${userId}`;
+                    if (bust) invalidate(statsKey);
+                    const statsData = await withCache(statsKey, 3 * 60_000, async () => {
+                        const { data, error } = await supabase.rpc('get_seller_dashboard_fast', { p_seller_id: userId });
+                        if (error) throw error;
+                        return data;
+                    });
+                    if (statsData) setSellerStats(statsData);
+                } catch (e: any) { console.error('[fetchSellerData:stats]', e?.message); }
+            })(),
+            (async () => {
+                try {
+                    const msgs = await fetchMessages(false);
+                    if (msgs?.length) setPreloadedMessages(msgs);
+                } catch (e: any) { console.error('[fetchSellerData:messages]', e?.message); }
+            })(),
+        ]);
     }, []);
 
     const fetchPreloadedMessages = useCallback(async () => {

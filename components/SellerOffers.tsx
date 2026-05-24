@@ -638,8 +638,8 @@ const OfferCard = ({ offer, onEdit, onDelete, onToggle, addToast }: any) => {
 export const SellerOffers = ({ sellerId, preselectedProduct }: { sellerId: string; preselectedProduct?: any }) => {
   const { products, sellerOffers: contextOffers } = useAppState();
   const { addToast } = useToast();
-  const [offers, setOffers] = useState<Offer[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [offers, setOffers] = useState<Offer[]>(contextOffers as Offer[] || []);
+  const [isLoading, setIsLoading] = useState(!contextOffers?.length);
   const [modalOpen, setModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingOffer, setEditingOffer] = useState<Offer | null>(null);
@@ -668,6 +668,14 @@ export const SellerOffers = ({ sellerId, preselectedProduct }: { sellerId: strin
       setIsLoading(false);
     }
   };
+
+  // Seed from context instantly (same pattern as SellerOrders)
+  useEffect(() => {
+    if (contextOffers?.length) {
+      setOffers(contextOffers as Offer[]);
+      setIsLoading(false);
+    }
+  }, [contextOffers]);
 
   useEffect(() => {
     fetchOffers(!!contextOffers?.length);
