@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { Badge, Button, Input, Textarea, useToast, GraphicalTag } from './UI';
 import { supabase } from '../services/supabaseClient';
+import { withCache, invalidate } from '../services/queryCache';
 import { useAppState } from '../context/AppContext';
 import { formatTZS } from '../constants';
 
@@ -51,15 +52,27 @@ export const BuyerReturns: React.FC<BuyerReturnsProps> = ({ userId, onContactSel
  const [submitting, setSubmitting] = useState(false);
  const [uploading, setUploading] = useState(false);
 
+ const BUYER_DISPUTES_KEY = `buyer:disputes:${userId}`;
+
  const fetchDisputes = async (silent = false) => {
  if (!silent) setLoading(true);
- const { data } = await supabase
- .from('disputes')
- .select('*, order:orders(*), seller:profiles!seller_id(id, full_name, avatar_url)')
- .eq('buyer_id', userId)
- .order('created_at', { ascending: false });
- setDisputes(data || []);
- setLoading(false);
+ try {
+   if (silent) invalidate(BUYER_DISPUTES_KEY);
+   const data = await withCache(BUYER_DISPUTES_KEY, 30_000, async () => {
+     const { data: d, error } = await supabase
+       .from('disputes')
+       .select('*, order:orders(*), seller:profiles!seller_id(id, full_name, avatar_url)')
+       .eq('buyer_id', userId)
+       .order('created_at', { ascending: false });
+     if (error) throw error;
+     return d;
+   });
+   setDisputes(data || []);
+ } catch (err: any) {
+   console.error('[BuyerReturns]', err?.message);
+ } finally {
+   setLoading(false);
+ }
  };
 
  // Seed from preloaded context instantly

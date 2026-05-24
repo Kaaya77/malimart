@@ -55,9 +55,11 @@ export const ProductOrderTag = ({ product, order, onViewProduct, onViewOrder }: 
 };
 
 export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, products, initialProductId, initialOrderId, initialChatUser }: { userId: string, selectedChatUser: string | null, setSelectedChatUser: (uid: string | null) => void, products: Product[], initialProductId?: string | null, initialOrderId?: string | null, initialChatUser?: string | null }) => {
- const { user, fetchMessages, sendMessage, deleteMessage, softDeleteMessage, reportUser, addReaction, removeReaction, blockedUsers, markMessagesAsRead, blockUser, unblockUser } = useAppState();
+ const { user, fetchMessages, sendMessage, deleteMessage, softDeleteMessage, reportUser, addReaction, removeReaction, blockedUsers, markMessagesAsRead, blockUser, unblockUser, preloadedMessages } = useAppState();
  const { addToast } = useToast();
- const [chats, setChats] = useState<any[]>([]);
+ const [chats, setChats] = useState<any[]>(
+   preloadedMessages?.filter(m => !blockedUsers.has(m.sender_id) && !blockedUsers.has(m.receiver_id)) || []
+ );
  const [newMsg, setNewMsg] = useState('');
  const [searchTerm, setSearchTerm] = useState('');
  const [filterUnread, setFilterUnread] = useState(false);
@@ -83,16 +85,16 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
  const scrollRef = useRef<HTMLDivElement>(null);
 
  useEffect(() => {
- const load = async () => {
- const msgs = await fetchMessages();
- // Filter out messages from/to blocked users
+ const load = async (bust = false) => {
+ const msgs = await fetchMessages(bust);
  const filteredMsgs = msgs.filter(m => !blockedUsers.has(m.sender_id) && !blockedUsers.has(m.receiver_id));
  setChats(filteredMsgs);
  };
- load();
+ // If preloaded, silent background refresh; otherwise show nothing while loading
+ load(false);
  const channel = supabase.channel('messages_channel')
  .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
- if(payload.new.receiver_id === userId || payload.new.sender_id === userId) load();
+ if(payload.new.receiver_id === userId || payload.new.sender_id === userId) load(true);
  })
  .subscribe();
 

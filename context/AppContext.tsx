@@ -69,7 +69,7 @@ interface AppContextType {
     updateAddress: (id: string, address: Partial<Address>) => Promise<void>;
     updateUserProfile: (data: Partial<User>) => Promise<void>;
     deleteAccount: () => Promise<void>;
-    fetchMessages: () => Promise<ChatMessage[]>;
+    fetchMessages: (bust?: boolean) => Promise<ChatMessage[]>;
     markMessagesAsRead: (senderId: string) => Promise<void>;
     sendMessage: (to: string, text: string, productId?: string, orderId?: string, attachment?: { url: string, type: string }, replyToId?: string) => Promise<void>;
     deleteMessage: (id: string) => Promise<void>;
@@ -96,6 +96,7 @@ interface AppContextType {
     buyerReturns: any[];
     refreshSellerData: () => Promise<void>;
     refreshBuyerReturns: () => Promise<void>;
+    preloadedMessages: any[];
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -131,6 +132,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     const [sellerOffers, setSellerOffers] = useState<any[]>([]);
     const [sellerStats, setSellerStats] = useState<any | null>(null);
     const [buyerReturns, setBuyerReturns] = useState<any[]>([]);
+    const [preloadedMessages, setPreloadedMessages] = useState<any[]>([]);
     const [isDark, setIsDark] = useState(false);
     const [vendorProfile, setVendorProfile] = useState<VendorProfile | null>(null);
     const [isCartOpen, setIsCartOpen] = useState(false);
@@ -231,7 +233,10 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
                     // 🚀 One RPC replaces 10+ sequential queries on every sign-in
                     await applyDashboardRpc(session.user.email || '', profile);
                     if (profile.role === 'seller') fetchSellerData(profile.id);
-                    else if (profile.role === 'buyer') fetchBuyerReturns(profile.id);
+                    else if (profile.role === 'buyer') {
+                        fetchBuyerReturns(profile.id);
+                        fetchPreloadedMessages();
+                    }
                 }
             } else if (event === 'SIGNED_OUT') {
                 setUser(null);
@@ -542,9 +547,18 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
                 return data;
             });
             if (statsData) setSellerStats(statsData);
+
+            // Messages (all roles) — 30s cache
+            const msgs = await fetchMessages(false);
+            if (msgs?.length) setPreloadedMessages(msgs);
         } catch (err: any) {
             console.error('[fetchSellerData]', err?.message);
         }
+    }, []);
+
+    const fetchPreloadedMessages = useCallback(async () => {
+        const msgs = await fetchMessages(false);
+        if (msgs?.length) setPreloadedMessages(msgs);
     }, []);
 
     const fetchBuyerReturns = useCallback(async (userId: string, bust = false) => {
@@ -943,9 +957,12 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         if (data) setAddresses(data);
     }, [user, logActivity, addToast]);
 
-    const fetchMessages = useCallback(async () => {
+    const fetchMessages = useCallback(async (bust = false) => {
       if (!user) return [];
+      const msgCacheKey = `messages:${user.id}`;
+      if (bust) invalidate(msgCacheKey);
       
+      return await withCache(msgCacheKey, 30_000, async () => {
       // Fetch messages without reactions first to avoid join errors
       const { data: messages, error } = await supabase.from('messages')
           .select('*, sender:profiles!sender_id(full_name, avatar_url), receiver:profiles!receiver_id(full_name, avatar_url), product:products(id, name, images, price, slug), reply_to:messages!reply_to_id(*)')
@@ -978,6 +995,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
           reactions: reactions?.filter(r => r.message_id === m.id) || []
       }));
       return (messagesWithReactions as any[]) || [];
+      }); // end withCache
     }, [user]);
 
     const markMessagesAsRead = useCallback(async (senderId: string) => {
@@ -1002,6 +1020,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
             console.error("Message delete failed:", error);
             return;
         }
+        invalidate(`messages:${user.id}`);
     }, [user]);
 
     const sendMessage = useCallback(async (to: string, text: string, productId?: string, orderId?: string, attachment?: { url: string, type: string }, replyToId?: string) => {
@@ -1050,6 +1069,8 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
             link: targetLink,
             created_at: new Date().toISOString()
         });
+        // Bust messages cache so next fetchMessages gets fresh data
+        invalidate(`messages:${user.id}`);
     }, [user, blockedUsers, addToast]);
 
     const getActiveOfferForProduct = useCallback((productId: string) => {
@@ -1396,7 +1417,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     }, [user, applyDashboardRpc]);
 
     const value: AppContextType = useMemo(() => ({
-        user, setUser, isLoading, products, categories, cart, wishlist, orders, notifications, unreadMessages, addresses, walletTransactions, activityLogs, offers, payments, shipments, trustBadges, socialPosts, followers, isDark, vendorProfile, paymentMethods, connectedAccounts, loginHistory, staffAccounts, shippingZones, isCartOpen, blockedUsers, recentlyViewed, sellerInventory, sellerOrders, sellerOffers, sellerStats, buyerReturns,
+        user, setUser, isLoading, products, categories, cart, wishlist, orders, notifications, unreadMessages, addresses, walletTransactions, activityLogs, offers, payments, shipments, trustBadges, socialPosts, followers, isDark, vendorProfile, paymentMethods, connectedAccounts, loginHistory, staffAccounts, shippingZones, isCartOpen, blockedUsers, recentlyViewed, sellerInventory, sellerOrders, sellerOffers, sellerStats, buyerReturns, preloadedMessages,
         toggleTheme,
         blockUser,
         unblockUser,
@@ -1441,7 +1462,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         fetchReviews
     }), [
         user, isLoading, products, categories, cart, wishlist, orders, notifications, unreadMessages, addresses, walletTransactions, activityLogs, offers, payments, shipments, trustBadges, socialPosts, followers, isDark, vendorProfile, paymentMethods, connectedAccounts, loginHistory, staffAccounts, shippingZones, isCartOpen, blockedUsers, recentlyViewed,
-        toggleTheme, blockUser, unblockUser, logout, notify, addToCart, removeFromCart, updateQuantity, clearCart, openCart, closeCart, toggleWishlist, followSeller, unfollowSeller, isFollowing, fetchPublicData, refreshNotifications, refreshWishlist, refreshCart, placeOrder, updateOrderStatus, cancelOrder, deleteOrder, fetchVendorProfile, addAddress, deleteAddress, updateAddress, updateUserProfile, deleteAccount, fetchMessages, markMessagesAsRead, sendMessage, deleteMessage, softDeleteMessage, reportUser, addReaction, removeReaction, markNotificationRead, markAllNotificationsRead, dismissNotification, getActiveOfferForProduct, logActivity, requestReturn, addOrderNote, fetchOrderDetails, interactWithPost, updateVendorProfile, addToRecentlyViewed, addReview, fetchReviews, fetchSellerData, fetchBuyerReturns, sellerInventory, sellerOrders, sellerOffers, sellerStats, buyerReturns
+        toggleTheme, blockUser, unblockUser, logout, notify, addToCart, removeFromCart, updateQuantity, clearCart, openCart, closeCart, toggleWishlist, followSeller, unfollowSeller, isFollowing, fetchPublicData, refreshNotifications, refreshWishlist, refreshCart, placeOrder, updateOrderStatus, cancelOrder, deleteOrder, fetchVendorProfile, addAddress, deleteAddress, updateAddress, updateUserProfile, deleteAccount, fetchMessages, markMessagesAsRead, sendMessage, deleteMessage, softDeleteMessage, reportUser, addReaction, removeReaction, markNotificationRead, markAllNotificationsRead, dismissNotification, getActiveOfferForProduct, logActivity, requestReturn, addOrderNote, fetchOrderDetails, interactWithPost, updateVendorProfile, addToRecentlyViewed, addReview, fetchReviews, fetchSellerData, fetchBuyerReturns, sellerInventory, sellerOrders, sellerOffers, sellerStats, buyerReturns, preloadedMessages
     ]);
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

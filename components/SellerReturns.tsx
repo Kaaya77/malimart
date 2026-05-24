@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAppState } from '../context/AppContext';
 import { useToast } from './UI';
 import { supabase } from '../services/supabaseClient';
+import { withCache, invalidate } from '../services/queryCache';
 import { rateLimit } from '../src/security';
 import { formatTZS } from '../constants';
 import { 
@@ -59,6 +60,8 @@ export const SellerReturns = ({
   onContactBuyer: (buyerId: string, productId?: string, orderId?: string) => void;
 }) => {
   const { addToast } = useToast();
+  const { sellerOrders } = useAppState(); // available for cross-reference
+  const DISPUTES_CACHE_KEY = `seller:disputes:${userId}`;
   const [disputes, setDisputes] = useState<Dispute[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -70,8 +73,12 @@ export const SellerReturns = ({
   const fetchDisputes = useCallback(async (silent = false) => {
     silent ? setRefreshing(true) : setLoading(true);
     try {
-      const { data, error } = await supabase.rpc('get_seller_disputes', { p_seller_id: userId });
-      if (error) throw error;
+      if (silent) invalidate(DISPUTES_CACHE_KEY);
+      const data = await withCache(DISPUTES_CACHE_KEY, 60_000, async () => {
+        const { data: d, error } = await supabase.rpc('get_seller_disputes', { p_seller_id: userId });
+        if (error) throw error;
+        return d;
+      });
       setDisputes((data as Dispute[]) || []);
       if (selected) {
         const fresh = (data as Dispute[]).find(d => d.id === selected.id);
@@ -105,6 +112,7 @@ export const SellerReturns = ({
       if (error) throw error;
       const labels = { resolved: 'Marked as resolved ✓', refunded: 'Refund approved ✓', closed: 'Case closed' };
       addToast(labels[newStatus], 'success');
+      invalidate(DISPUTES_CACHE_KEY);
       fetchDisputes(true);
     } catch (err: any) {
       addToast(err.message || 'Update failed', 'error');

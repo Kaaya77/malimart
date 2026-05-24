@@ -1,12 +1,13 @@
+import { useAppState } from '../context/AppContext';
 import { rateLimit, isValidPrice } from '../src/security';
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
  Zap, Truck, Repeat, Percent, Tag, Copy, 
  CheckCircle2, Trash2, Edit, Power, PowerOff, Ticket, Plus, X, ChevronDown
 } from 'lucide-react';
-import { useAppState } from '../context/AppContext'; // already imported
 import { Button, Input, Card, Badge, useToast, Label, Switch, ConfirmModal } from './UI';
 import { supabase } from '../services/supabaseClient';
+import { withCache, invalidate } from '../services/queryCache';
 import { Offer } from '../types';
 import { formatTZS, CURRENCY } from '../constants';
 
@@ -73,7 +74,7 @@ const CampaignPreview = ({ formData, getPreviewGradient }: any) => (
 );
 
 export const SellerOffers = ({ sellerId, preselectedProduct }: { sellerId: string, preselectedProduct?: any }) => {
- const { products } = useAppState();
+ const { products, sellerOffers: contextOffers } = useAppState();
  const { addToast } = useToast();
  const [offers, setOffers] = useState<Offer[]>([]);
  const [isLoading, setIsLoading] = useState(true);
@@ -114,12 +115,18 @@ export const SellerOffers = ({ sellerId, preselectedProduct }: { sellerId: strin
  }
  }, [preselectedProduct]);
 
- const fetchOffers = async (silent = false) => {
+ const OFFERS_CACHE_KEY = `seller:offers:direct:${sellerId}`;
+
+  const fetchOffers = async (silent = false) => {
     if (!silent) setIsLoading(true);
     try {
-      const { data, error } = await supabase.from('offers').select('*')
-        .eq('seller_id', sellerId).order('created_at', { ascending: false });
-      if (error) throw error;
+      if (silent) invalidate(OFFERS_CACHE_KEY);
+      const data = await withCache(OFFERS_CACHE_KEY, 60_000, async () => {
+        const { data: d, error } = await supabase.from('offers').select('*')
+          .eq('seller_id', sellerId).order('created_at', { ascending: false });
+        if (error) throw error;
+        return d;
+      });
       setOffers(data as Offer[]);
     } catch (err: any) {
       if (!silent) addToast('Failed to load offers', 'error');
@@ -129,8 +136,7 @@ export const SellerOffers = ({ sellerId, preselectedProduct }: { sellerId: strin
   };
 
   useEffect(() => {
-    fetchOffers();
-    // Realtime: refresh when offers change for this seller
+    fetchOffers(!!contextOffers?.length);
     const ch = supabase.channel(`offers-${sellerId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'offers', filter: `seller_id=eq.${sellerId}` },
         () => fetchOffers(true))
@@ -254,7 +260,8 @@ export const SellerOffers = ({ sellerId, preselectedProduct }: { sellerId: strin
  const { error } = await supabase.from('offers').update({ status: newStatus }).eq('id', offer.id);
  if (!error) {
  addToast(`Campaign ${newStatus === 'active' ? 'activated' : 'deactivated'}`, 'info');
- setOffers(prev => prev.map(o => o.id === offer.id ? { ...o, status: newStatus as any } : o));
+ invalidate(OFFERS_CACHE_KEY);
+      setOffers(prev => prev.map(o => o.id === offer.id ? { ...o, status: newStatus as any } : o));
  }
  };
 

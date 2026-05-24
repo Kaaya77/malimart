@@ -10,6 +10,7 @@ import { useToast } from './UI';
 import { supabase } from '../services/supabaseClient';
 import { formatTZS } from '../constants';
 import { rateLimit } from '../src/security';
+import { withCache, invalidate } from '../services/queryCache';
 import { motion, AnimatePresence } from 'framer-motion';
 
 /**
@@ -107,29 +108,28 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: { sellerId: string; o
   const [updating, setUpdating] = useState<Set<string>>(new Set());
 
   // ── Fetch via RPC ──────────────────────────────────────────────────────────
+  const ORDERS_CACHE_KEY = `seller:orders:rpc:${sellerId}`;
+
   const fetchOrders = useCallback(async (silent = false) => {
     silent ? setRefreshing(true) : setLoading(true);
     try {
-      // Try full fetch; on timeout retry with smaller limit
-      let data: any;
-      const { data: d1, error: e1 } = await supabase.rpc('get_seller_orders', {
-        p_seller_id: sellerId, p_limit: 50, p_offset: 0,
-      });
-      if (e1) {
-        const isTimeout = e1.message?.includes('timeout') || e1.code === '57014' || e1.message?.includes('canceling');
-        if (isTimeout) {
-          // Retry with smaller batch — don't show error to user
-          const { data: d2, error: e2 } = await supabase.rpc('get_seller_orders', {
-            p_seller_id: sellerId, p_limit: 20, p_offset: 0,
-          });
-          if (e2) throw e2;
-          data = d2;
-        } else {
-          throw e1;
+      if (silent) invalidate(ORDERS_CACHE_KEY);
+      const data = await withCache(ORDERS_CACHE_KEY, 30_000, async () => {
+        const { data: d, error } = await supabase.rpc('get_seller_orders', {
+          p_seller_id: sellerId, p_limit: 50, p_offset: 0,
+        });
+        if (error) {
+          const isTimeout = error.message?.includes('timeout') || error.code === '57014' || error.message?.includes('canceling');
+          if (isTimeout) {
+            const { data: d2, error: e2 } = await supabase.rpc('get_seller_orders', {
+              p_seller_id: sellerId, p_limit: 20, p_offset: 0,
+            });
+            if (!e2) return d2;
+          }
+          throw error;
         }
-      } else {
-        data = d1;
-      }
+        return d;
+      });
       const rows = (data as OrderRow[]) || [];
       const grouped = groupRows(rows);
       setOrders(grouped);
@@ -138,10 +138,8 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: { sellerId: string; o
         if (fresh) setSelected(fresh);
       }
     } catch (err: any) {
-      // Only show error on non-silent fetches and non-timeout errors
       const isTimeout = err?.message?.includes('timeout') || err?.code === '57014' || err?.message?.includes('canceling');
-      if (!silent && !isTimeout) addToast(`Failed to load orders: ${err.message}`, 'error');
-      // On timeout, keep existing data — don't clear orders
+      if (!silent && !isTimeout) addToast('Failed to load orders', 'error');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -181,6 +179,7 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: { sellerId: string; o
       if (error) throw error;
       const labels: Record<string,string> = { processing:'Order confirmed ✓', in_transit:'Marked as shipped ✓', delivered:'Marked as delivered ✓', cancelled:'Order cancelled' };
       addToast(labels[newStatus] || `Updated to ${newStatus}`, 'success');
+      invalidate(ORDERS_CACHE_KEY);
       fetchOrders(true);
     } catch (err: any) {
       addToast(err.message || 'Update failed', 'error');
