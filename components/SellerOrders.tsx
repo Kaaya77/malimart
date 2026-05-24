@@ -97,8 +97,9 @@ function groupRows(rows: OrderRow[]): GroupedOrder[] {
 
 export const SellerOrders = ({ sellerId, onContactBuyer }: { sellerId: string; onContactBuyer: (buyerId: string, productId?: string, orderId?: string) => void }) => {
   const { addToast } = useToast();
+  const { sellerOrders: contextOrders, refreshSellerData } = useAppState();
   const [orders, setOrders] = useState<GroupedOrder[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!contextOrders?.length);
   const [refreshing, setRefreshing] = useState(false);
   const [selected, setSelected] = useState<GroupedOrder | null>(null);
   const [statusFilter, setStatusFilter] = useState('all');
@@ -128,6 +129,14 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: { sellerId: string; o
   }, [sellerId, selected?.id]);
 
   // ── Realtime subscription ─────────────────────────────────────────────────
+  // Seed from preloaded context data instantly (no spinner)
+  useEffect(() => {
+    if (contextOrders?.length) {
+      setOrders(groupRows(contextOrders as any));
+      setLoading(false);
+    }
+  }, [contextOrders]);
+
   useEffect(() => {
     fetchOrders();
     const ch = supabase.channel(`seller-orders-${sellerId}`)

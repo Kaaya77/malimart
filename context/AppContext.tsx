@@ -88,6 +88,14 @@ interface AppContextType {
     fetchOrderDetails: (orderId: string) => Promise<{ payments: Payment[], shipments: Shipment[], notes: OrderNote[] }>;
     interactWithPost: (postId: string, type: SocialInteraction['type'], comment?: string) => Promise<void>;
     updateVendorProfile: (data: Partial<VendorProfile>) => Promise<void>;
+    // Preloaded per-role data (loaded eagerly on login, background-refreshed)
+    sellerInventory: any[];
+    sellerOrders: any[];
+    sellerOffers: any[];
+    sellerStats: any | null;
+    buyerReturns: any[];
+    refreshSellerData: () => Promise<void>;
+    refreshBuyerReturns: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -117,6 +125,12 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     const [loginHistory, setLoginHistory] = useState<any[]>([]);
     const [staffAccounts, setStaffAccounts] = useState<any[]>([]);
     const [shippingZones, setShippingZones] = useState<any[]>([]);
+    // Preloaded per-role data
+    const [sellerInventory, setSellerInventory] = useState<any[]>([]);
+    const [sellerOrders, setSellerOrders] = useState<any[]>([]);
+    const [sellerOffers, setSellerOffers] = useState<any[]>([]);
+    const [sellerStats, setSellerStats] = useState<any | null>(null);
+    const [buyerReturns, setBuyerReturns] = useState<any[]>([]);
     const [isDark, setIsDark] = useState(false);
     const [vendorProfile, setVendorProfile] = useState<VendorProfile | null>(null);
     const [isCartOpen, setIsCartOpen] = useState(false);
@@ -184,6 +198,12 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
                         applyDashboardRpc(session.user.email || '', profile),
                         fetchPublicData()
                     ]);
+                    // 🚀 Eager role-specific preload — data ready before user navigates
+                    if (profile.role === 'seller') {
+                        fetchSellerData(profile.id);
+                    } else if (profile.role === 'buyer') {
+                        fetchBuyerReturns(profile.id);
+                    }
                 }
             } else {
                 try { await fetchPublicData(); } catch(e) { console.error('fetchPublicData:', e); }
@@ -210,6 +230,8 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
                     supabase.from('profiles').update({ last_seen_at: new Date().toISOString() }).eq('id', session.user.id);
                     // 🚀 One RPC replaces 10+ sequential queries on every sign-in
                     await applyDashboardRpc(session.user.email || '', profile);
+                    if (profile.role === 'seller') fetchSellerData(profile.id);
+                    else if (profile.role === 'buyer') fetchBuyerReturns(profile.id);
                 }
             } else if (event === 'SIGNED_OUT') {
                 setUser(null);
@@ -410,6 +432,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         if (products_ && Array.isArray(products_)) setProducts(products_ as any);
     }, []);
 
+
     const fetchAndSetOrders = useCallback(async (userId: string, limit = 50, offset = 0, bust = false) => {
         const cacheKey = `buyer:orders:${userId}:${limit}:${offset}`;
         if (bust) invalidate(cacheKey);
@@ -459,7 +482,85 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         }
     }, []);
 
-    const fetchUserData = useCallback(async (userId: string, userRole?: string, isBanned?: boolean) => {
+    // ─── EAGER PRELOADERS ────────────────────────────────────────────────────────
+    // Loaded immediately on login. Components read from context — no per-mount fetch.
+    // Background-refreshed every 60s while the tab is open.
+
+    const fetchSellerData = useCallback(async (userId: string, bust = false) => {
+        try {
+            // Inventory (cached 60s)
+            const invKey = `seller:inventory:${userId}:0:All::false:created_at:false`;
+            if (bust) invalidate(invKey);
+            const invData = await withCache(invKey, 60_000, async () => {
+                const { data, error } = await supabase.rpc('get_seller_inventory', {
+                    p_seller_id: userId, p_limit: 50, p_offset: 0,
+                    p_status: null, p_search: null, p_low_stock_only: false, p_sort: 'created_desc',
+                });
+                if (error) throw error;
+                return data;
+            });
+            if (invData?.products) setSellerInventory(invData.products);
+
+            // Orders (cached 30s)
+            const ordKey = `seller:orders:${userId}`;
+            if (bust) invalidate(ordKey);
+            const ordData = await withCache(ordKey, 30_000, async () => {
+                const { data, error } = await supabase.rpc('get_seller_orders', {
+                    p_seller_id: userId, p_limit: 200, p_offset: 0,
+                });
+                if (error) throw error;
+                return data;
+            });
+            if (ordData) setSellerOrders(ordData);
+
+            // Offers (cached 60s)
+            const offKey = `seller:offers:${userId}`;
+            if (bust) invalidate(offKey);
+            const offData = await withCache(offKey, 60_000, async () => {
+                const { data, error } = await supabase.from('offers')
+                    .select('*').eq('seller_id', userId).order('created_at', { ascending: false });
+                if (error) throw error;
+                return data;
+            });
+            if (offData) setSellerOffers(offData);
+
+            // Dashboard stats (cached 3min)
+            const statsKey = `seller:stats:${userId}`;
+            if (bust) invalidate(statsKey);
+            const statsData = await withCache(statsKey, 3 * 60_000, async () => {
+                const { data, error } = await supabase.rpc('get_seller_dashboard_fast', { p_seller_id: userId });
+                if (error) throw error;
+                return data;
+            });
+            if (statsData) setSellerStats(statsData);
+        } catch (err: any) {
+            console.error('[fetchSellerData]', err?.message);
+        }
+    }, []);
+
+    const fetchBuyerReturns = useCallback(async (userId: string, bust = false) => {
+        try {
+            const key = `buyer:returns:${userId}`;
+            if (bust) invalidate(key);
+            const data = await withCache(key, 30_000, async () => {
+                const { data: d, error } = await supabase.rpc('get_buyer_disputes', { p_user_id: userId });
+                if (error) {
+                    // Fallback: direct query
+                    const { data: fallback } = await supabase.from('disputes')
+                        .select('*, order:orders(*), items:dispute_items(*)')
+                        .eq('buyer_id', userId)
+                        .order('created_at', { ascending: false });
+                    return fallback;
+                }
+                return d;
+            });
+            if (data) setBuyerReturns(data);
+        } catch (err: any) {
+            console.error('[fetchBuyerReturns]', err?.message);
+        }
+    }, []);
+
+        const fetchUserData = useCallback(async (userId: string, userRole?: string, isBanned?: boolean) => {
         const [addrsRes, notifsRes, walletRes, logsRes, paymentsRes, shipmentsRes, payMethodsRes, connAccountsRes, loginHistRes, blockedRes] = await Promise.all([
             supabase.from('addresses').select('*').eq('user_id', userId).is('deleted_at', null),
             isBanned ? { data: [] } : supabase.from('notifications').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
@@ -507,6 +608,21 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
 
     // Wire fetchUserData into the ref so applyDashboardRpc can call it
     React.useEffect(() => { fetchUserDataRef.current = fetchUserData; }, [fetchUserData]);
+
+    // ─── BACKGROUND REFRESH ────────────────────────────────────────────────────
+    // Silently re-fetches role data every 60s so the user never sees stale data
+    // when switching tabs, returning from another page, or leaving the app open.
+    useEffect(() => {
+        if (!user) return;
+        const interval = setInterval(() => {
+            if (user.role === 'seller') fetchSellerData(user.id, true);
+            else if (user.role === 'buyer') {
+                fetchAndSetOrders(user.id, 50, 0, true);
+                fetchBuyerReturns(user.id, true);
+            }
+        }, 60_000);
+        return () => clearInterval(interval);
+    }, [user, fetchSellerData, fetchBuyerReturns, fetchAndSetOrders]);
 
     const logActivity = useCallback(async (action: string, details?: string, metadata: any = {}) => {
         if (!user) return;
@@ -1271,7 +1387,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     }, [user, applyDashboardRpc]);
 
     const value: AppContextType = useMemo(() => ({
-        user, setUser, isLoading, products, categories, cart, wishlist, orders, notifications, unreadMessages, addresses, walletTransactions, activityLogs, offers, payments, shipments, trustBadges, socialPosts, followers, isDark, vendorProfile, paymentMethods, connectedAccounts, loginHistory, staffAccounts, shippingZones, isCartOpen, blockedUsers, recentlyViewed,
+        user, setUser, isLoading, products, categories, cart, wishlist, orders, notifications, unreadMessages, addresses, walletTransactions, activityLogs, offers, payments, shipments, trustBadges, socialPosts, followers, isDark, vendorProfile, paymentMethods, connectedAccounts, loginHistory, staffAccounts, shippingZones, isCartOpen, blockedUsers, recentlyViewed, sellerInventory, sellerOrders, sellerOffers, sellerStats, buyerReturns,
         toggleTheme,
         blockUser,
         unblockUser,
@@ -1281,7 +1397,9 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         openCart, closeCart,
         toggleWishlist, isInWishlist: (pid: string) => wishlist.some(p => p.id === pid),
         followSeller, unfollowSeller, isFollowing,
-        refreshProducts: async () => { invalidatePrefix('public:'); await fetchPublicData(); }, 
+        refreshProducts: async () => { invalidatePrefix('public:'); await fetchPublicData(); },
+        refreshSellerData: async () => { if (user) await fetchSellerData(user.id, true); },
+        refreshBuyerReturns: async () => { if (user) await fetchBuyerReturns(user.id, true); }, 
         refreshNotifications,
         refreshWishlist,
         refreshCart,
@@ -1314,7 +1432,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         fetchReviews
     }), [
         user, isLoading, products, categories, cart, wishlist, orders, notifications, unreadMessages, addresses, walletTransactions, activityLogs, offers, payments, shipments, trustBadges, socialPosts, followers, isDark, vendorProfile, paymentMethods, connectedAccounts, loginHistory, staffAccounts, shippingZones, isCartOpen, blockedUsers, recentlyViewed,
-        toggleTheme, blockUser, unblockUser, logout, notify, addToCart, removeFromCart, updateQuantity, clearCart, openCart, closeCart, toggleWishlist, followSeller, unfollowSeller, isFollowing, fetchPublicData, refreshNotifications, refreshWishlist, refreshCart, placeOrder, updateOrderStatus, cancelOrder, deleteOrder, fetchVendorProfile, addAddress, deleteAddress, updateAddress, updateUserProfile, deleteAccount, fetchMessages, markMessagesAsRead, sendMessage, deleteMessage, softDeleteMessage, reportUser, addReaction, removeReaction, markNotificationRead, markAllNotificationsRead, dismissNotification, getActiveOfferForProduct, logActivity, requestReturn, addOrderNote, fetchOrderDetails, interactWithPost, updateVendorProfile, addToRecentlyViewed, addReview, fetchReviews
+        toggleTheme, blockUser, unblockUser, logout, notify, addToCart, removeFromCart, updateQuantity, clearCart, openCart, closeCart, toggleWishlist, followSeller, unfollowSeller, isFollowing, fetchPublicData, refreshNotifications, refreshWishlist, refreshCart, placeOrder, updateOrderStatus, cancelOrder, deleteOrder, fetchVendorProfile, addAddress, deleteAddress, updateAddress, updateUserProfile, deleteAccount, fetchMessages, markMessagesAsRead, sendMessage, deleteMessage, softDeleteMessage, reportUser, addReaction, removeReaction, markNotificationRead, markAllNotificationsRead, dismissNotification, getActiveOfferForProduct, logActivity, requestReturn, addOrderNote, fetchOrderDetails, interactWithPost, updateVendorProfile, addToRecentlyViewed, addReview, fetchReviews, fetchSellerData, fetchBuyerReturns, sellerInventory, sellerOrders, sellerOffers, sellerStats, buyerReturns
     ]);
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

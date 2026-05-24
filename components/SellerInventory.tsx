@@ -587,9 +587,12 @@ export const SellerInventory = ({
   onCreatePromo: (p: Product) => void;
 }) => {
   const { addToast } = useToast();
+  const { sellerInventory: contextInventory, refreshSellerData } = useAppState();
   const navigate = useNavigate();
-  const [products, setProducts] = useState<InventoryProduct[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [products, setProducts] = useState<InventoryProduct[]>(
+    (contextInventory || []) as InventoryProduct[]
+  );
+  const [loading, setLoading] = useState(!contextInventory?.length);
   const [refreshing, setRefreshing] = useState(false);
   const [totals, setTotals] = useState<RpcTotals | null>(null);
   const [totalCount, setTotalCount] = useState(0);
@@ -652,6 +655,14 @@ export const SellerInventory = ({
       setRefreshing(false);
     }
   }, [userId, page, debouncedSearch, status, sort, lowStockOnly]);
+
+  // Seed from preloaded context data — instant display on first visit
+  useEffect(() => {
+    if (contextInventory?.length && !debouncedSearch && status === 'All' && !lowStockOnly && page === 0) {
+      setProducts(contextInventory as InventoryProduct[]);
+      setLoading(false);
+    }
+  }, [contextInventory]);
 
   useEffect(() => { setPage(0); }, [debouncedSearch, status, lowStockOnly]);
   useEffect(() => { fetchInventory(); }, [fetchInventory]);

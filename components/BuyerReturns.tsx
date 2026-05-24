@@ -38,8 +38,9 @@ interface BuyerReturnsProps {
 export const BuyerReturns: React.FC<BuyerReturnsProps> = ({ userId, onContactSeller }) => {
  const { orders } = useAppState();
  const { addToast } = useToast();
- const [disputes, setDisputes] = useState<any[]>([]);
- const [loading, setLoading] = useState(true);
+ const { buyerReturns: contextReturns, refreshBuyerReturns } = useAppState();
+ const [disputes, setDisputes] = useState<any[]>(contextReturns || []);
+ const [loading, setLoading] = useState(!contextReturns?.length);
  const [search, setSearch] = useState('');
  const [statusFilter, setStatusFilter] = useState<'all'|'open'|'resolved'|'refunded'>('all');
  const [selected, setSelected] = useState<any|null>(null);
@@ -60,6 +61,14 @@ export const BuyerReturns: React.FC<BuyerReturnsProps> = ({ userId, onContactSel
  setDisputes(data || []);
  setLoading(false);
  };
+
+ // Seed from preloaded context instantly
+ useEffect(() => {
+   if (contextReturns?.length) {
+     setDisputes(contextReturns);
+     setLoading(false);
+   }
+ }, [contextReturns]);
 
  useEffect(() => { fetchDisputes(); }, [userId]);
 

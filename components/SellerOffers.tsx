@@ -4,7 +4,7 @@ import {
  Zap, Truck, Repeat, Percent, Tag, Copy, 
  CheckCircle2, Trash2, Edit, Power, PowerOff, Ticket, Plus, X, ChevronDown
 } from 'lucide-react';
-import { useAppState } from '../context/AppContext';
+import { useAppState } from '../context/AppContext'; // already imported
 import { Button, Input, Card, Badge, useToast, Label, Switch, ConfirmModal } from './UI';
 import { supabase } from '../services/supabaseClient';
 import { Offer } from '../types';
