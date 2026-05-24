@@ -378,7 +378,7 @@ export const AIChatAssistant = () => {
  }));
 
  const chat = ai.chats.create({
- model: 'gemini-3-flash-preview',
+ model: 'gemini-2.0-flash',
  history: history,
  config: { 
  systemInstruction: getSystemInstruction(),
@@ -429,7 +429,7 @@ export const AIChatAssistant = () => {
  try {
  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
  const response = await ai.models.generateContent({
- model: 'gemini-3-flash-preview',
+ model: 'gemini-2.0-flash',
  contents: `Refine this shopping query to be more specific and professional for a shopping assistant: "${input}". Return ONLY the refined query.`,
  });
  const refined = response.text?.trim() || input;

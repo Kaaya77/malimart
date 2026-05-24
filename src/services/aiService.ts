@@ -4,7 +4,7 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export const analyzeContent = async (content: string) => {
     const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-2.0-flash",
         contents: `Analyze the following content for hate speech, spam, or inappropriate language. Return a JSON object with 'is_flagged' (boolean), 'reason' (string), and 'confidence' (number). Content: "${content}"`,
         config: {
             responseMimeType: "application/json",
@@ -23,7 +23,7 @@ export const analyzeContent = async (content: string) => {
 
 export const extractDocumentData = async (documentBase64: string) => {
     const response = await ai.models.generateContent({
-        model: "gemini-3.1-flash-image-preview",
+        model: "gemini-2.0-flash",
         contents: [
             { inlineData: { mimeType: "image/jpeg", data: documentBase64 } },
             { text: "Extract the Business Registration Number, TIN, and Owner Name from this document. Return JSON." }

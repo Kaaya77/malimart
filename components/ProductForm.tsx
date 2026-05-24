@@ -268,7 +268,8 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
         addToast(`Product flagged for review: ${moderation.reason}. Saved as draft.`, "warning");
       }
 
-      const productPayload = { ...formData, status: finalStatus, seller_id: user.id, updated_at: new Date().toISOString() };
+      const { is_low_stock: _ilk, is_out_of_stock: _ioos, units_sold_30d: _u, revenue_30d: _r, recent_movements: _rm, profiles: _prof, ...cleanData } = formData as any;
+      const productPayload = { ...cleanData, status: finalStatus, seller_id: user.id, updated_at: new Date().toISOString() };
       if (!initialData) delete productPayload.id;
       const { data: prod, error: prodError } = await supabase.from('products').upsert(productPayload).select().single();
       if (prodError) throw prodError;
@@ -546,7 +547,8 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
         addToast(`Product flagged for review: ${moderation.reason}. Saved as draft.`, "warning");
       }
 
-      const productPayload = { ...formData, status: finalStatus, seller_id: user.id, updated_at: new Date().toISOString() };
+      const { is_low_stock: _ilk, is_out_of_stock: _ioos, units_sold_30d: _u, revenue_30d: _r, recent_movements: _rm, profiles: _prof, ...cleanData } = formData as any;
+      const productPayload = { ...cleanData, status: finalStatus, seller_id: user.id, updated_at: new Date().toISOString() };
       if (!initialData) delete productPayload.id;
       const { data: prod, error: prodError } = await supabase.from('products').upsert(productPayload).select().single();
       if (prodError) throw prodError;
