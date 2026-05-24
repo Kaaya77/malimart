@@ -30,6 +30,8 @@ const NotificationsPage = lazy(() => import('./pages/NotificationsPage').then(m 
 const OrderConfirmationPage = lazy(() => import('./pages/OrderConfirmationPage').then(m => ({ default: m.OrderConfirmationPage })));
 const SellerSettingsPage = lazy(() => import('./pages/SellerSettingsPage').then(m => ({ default: m.SellerSettingsPage })));
 const ProductEditPage = lazy(() => import('./pages/ProductEditPage').then(m => ({ default: m.ProductEditPage })));
+const CheckoutPage = lazy(() => import('./pages/CheckoutPage').then(m => ({ default: m.CheckoutPage })));
+const ReceiptPage = lazy(() => import('./pages/ReceiptPage').then(m => ({ default: m.ReceiptPage })));
 const BuyerSettingsPage = lazy(() => import('./pages/BuyerSettingsPage').then(m => ({ default: m.BuyerSettingsPage })));
 const CategoriesPage = lazy(() => import('./pages/CategoriesPage').then(m => ({ default: m.CategoriesPage })));
 const MessagesPage = lazy(() => import('./pages/MessagesPage').then(m => ({ default: m.MessagesPage })));
@@ -236,6 +238,8 @@ const AppContent = () => {
               <Route path="/seller" element={<RouteGuard requiredRole="seller"><SellerPage /></RouteGuard>} />
               <Route path="/seller/products/new" element={<RouteGuard requiredRole="seller"><ProductEditPage /></RouteGuard>} />
               <Route path="/seller/products/:id/edit" element={<RouteGuard requiredRole="seller"><ProductEditPage /></RouteGuard>} />
+              <Route path="/checkout" element={<RouteGuard><CheckoutPage /></RouteGuard>} />
+              <Route path="/order/:id/receipt" element={<RouteGuard><ReceiptPage /></RouteGuard>} />
               <Route path="/admin" element={<RouteGuard requiredRole="admin"><AdminPage /></RouteGuard>} />
               <Route path="/profile" element={<DashboardRedirect />} />
               <Route path="/orders" element={<DashboardRedirect />} />

@@ -6,7 +6,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppState } from '../context/AppContext';
 import { ProductCard } from '../components/ProductCard';
 import { FilterSidebar } from '../components/FilterSidebar';
-import { ProductModal } from '../components/ProductModal';
 import { Product } from '../types';
 
 const SORT_OPTIONS = [
@@ -37,7 +36,6 @@ export const ShopPage: React.FC = () => {
  verified: false,
  stock: false,
  });
- const [activeProduct, setActiveProduct] = useState<Product | null>(null);
 
  // Sync URL search query
  useEffect(() => {
@@ -279,7 +277,7 @@ export const ShopPage: React.FC = () => {
  product={p}
  index={i}
  onClick={() => navigate(`/product/${p.id}`)}
- onQuickView={() => setActiveProduct(p)}
+ onQuickView={() => navigate(`/product/${p.id}`)}
  />
  ))}
  </motion.div>
@@ -296,13 +294,6 @@ export const ShopPage: React.FC = () => {
  />
 
  {/* Quick view modal */}
- {activeProduct && (
- <ProductModal
- product={activeProduct}
- isOpen={!!activeProduct}
- onClose={() => setActiveProduct(null)}
- />
- )}
  </div>
  );
 };

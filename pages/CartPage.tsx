@@ -8,8 +8,6 @@ import {
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAppState } from '../context/AppContext';
 import { Button, Input, Badge, useToast, Card, Label, Skeleton } from '../components/UI';
-import { CheckoutModal } from '../components/CheckoutComponents';
-import { ProductModal } from '../components/ProductModal';
 import { CURRENCY, formatTZS, getEffectiveUnitPrice, calculateVatIncluded, normalizeVatRate } from '../constants';
 import { Product, Offer, Address, CartItem } from '../types';
 import { supabase } from '../services/supabaseClient';
@@ -281,7 +279,7 @@ export const CartPage = () => {
  navigate(`/login?redirect=${encodeURIComponent(location.pathname)}`);
  return;
  }
- setIsCheckoutOpen(true);
+ navigate('/checkout', { state: { total, subtotal, vat: totalVAT, discount: totalDiscountAmount } });
  };
 
  const handleCompleteOrder = async (details: { address: Address, paymentMethod: string, deliveryFee: number, note: string, paymentRef?: string, isGift?: boolean, giftMessage?: string, deliveryDate?: string, deliverySlot?: string }) => {
@@ -412,7 +410,7 @@ export const CartPage = () => {
  {/* Image */}
  <div 
  className="w-full sm:w-32 aspect-square rounded-[1.5rem] overflow-hidden bg-foreground/[0.06] shrink-0 border border-foreground/10 relative cursor-pointer group/img" 
- onClick={() => setActiveProduct(item)}
+ onClick={() => navigate(`/product/${(item as any).product_id || (item as any).id}`)}
  >
  <img 
  src={image} 
@@ -432,7 +430,7 @@ export const CartPage = () => {
  <div className="flex justify-between items-start">
  <h3 
  className="font-bold text-sm sm:text-base text-foreground leading-tight truncate pr-4 cursor-pointer hover:text-brand-600 transition-colors uppercase" 
- onClick={() => setActiveProduct(item)}
+ onClick={() => navigate(`/product/${(item as any).product_id || (item as any).id}`)}
  >
  {item.name}
  </h3>
@@ -640,25 +638,6 @@ export const CartPage = () => {
  </div>
  </motion.div>
  </div>
-
- {isCheckoutOpen && (
- <CheckoutModal 
- total={total} 
- subtotal={subtotal} 
- vat={totalVAT} 
- discount={totalDiscountAmount} 
- onClose={() => setIsCheckoutOpen(false)} 
- onComplete={handleCompleteOrder} 
- />
- )}
- 
- {activeProduct && (
- <ProductModal 
- product={activeProduct} 
- isOpen={!!activeProduct}
- onClose={() => setActiveProduct(null)} 
- />
- )}
  </div>
  );
 };

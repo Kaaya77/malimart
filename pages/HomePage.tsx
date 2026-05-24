@@ -9,7 +9,6 @@ import { FeaturedProducts } from '../components/home/FeaturedProducts';
 import { FeaturedStores } from '../components/home/FeaturedStores';
 import { ProductGridSection } from '../components/home/ProductGridSection';
 import { TrustStrip } from '../components/home/TrustStrip';
-import { ProductModal } from '../components/ProductModal';
 import { StoreModal } from '../components/StoreModal';
 import { HomePageSkeleton } from '../components/skeletons/HomePageSkeleton';
 import { Product, VendorProfile } from '../types';
@@ -35,7 +34,6 @@ const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const homeData = useHomePageData();
 
-  const [activeProduct, setActiveProduct] = useState<Product | null>(null);
   const [activeStore, setActiveStore] = useState<VendorProfile | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -94,7 +92,7 @@ const HomePage: React.FC = () => {
         <FeaturedProducts
           products={boostedProducts}
           navigate={navigate}
-          setActiveProduct={setActiveProduct}
+          setActiveProduct={(p) => navigate(`/product/${p.id}`)}
         />
       )}
 
@@ -105,7 +103,7 @@ const HomePage: React.FC = () => {
           description="Fresh drops from Tanzania's best sellers."
           products={newArrivals}
           navigate={navigate}
-          setActiveProduct={setActiveProduct}
+          setActiveProduct={(p) => navigate(`/product/${p.id}`)}
         />
       )}
 
@@ -125,7 +123,7 @@ const HomePage: React.FC = () => {
           description="Pick up where you left off."
           products={recentlyViewed.slice(0, 8)}
           navigate={navigate}
-          setActiveProduct={setActiveProduct}
+          setActiveProduct={(p) => navigate(`/product/${p.id}`)}
         />
       )}
 
@@ -134,13 +132,6 @@ const HomePage: React.FC = () => {
 
       {/* Modals */}
       <AnimatePresence>
-        {activeProduct && (
-          <ProductModal
-            product={activeProduct}
-            isOpen={!!activeProduct}
-            onClose={() => setActiveProduct(null)}
-          />
-        )}
       </AnimatePresence>
 
       <AnimatePresence>

@@ -6,7 +6,6 @@ import {
   XCircle, RefreshCw, Star
 } from 'lucide-react';
 import { Badge, useToast } from './UI';
-import { ReceiptModal } from './ReceiptModal';
 import { formatTZS } from '../constants';
 import { Order, VendorProfile } from '../types';
 import { CancelOrderModal } from './CancelOrderModal';

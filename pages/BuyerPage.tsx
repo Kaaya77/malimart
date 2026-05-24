@@ -9,7 +9,6 @@ import {
 } from 'lucide-react';
 import { useAppState } from '../context/AppContext';
 import { Button, Card, Badge, Input, useToast, PremiumStatCard, ModernFollowCard, GraphicalTag } from '../components/UI';
-import { ReceiptModal } from '../components/ReceiptModal';
 import { supabase } from '../services/supabaseClient';
 import { OrderTracking } from '../components/CheckoutComponents';
 import { formatTZS, CURRENCY } from '../constants';
@@ -205,7 +204,6 @@ export const BuyerPage = () => {
  const [searchParams, setSearchParams] = useSearchParams();
  const navigate = useNavigate();
  const [tab, setTab] = useState<string>((searchParams.get('tab'))||'dashboard');
- const [receiptOrder, setReceiptOrder] = useState<{order:Order,seller:VendorProfile}|null>(null);
 
  useEffect(()=>{ const t=searchParams.get('tab'); if(t) setTab(t); },[searchParams]);
 
@@ -286,7 +284,7 @@ export const BuyerPage = () => {
  <BuyerOrders orders={orders} onCancel={cancelOrder} onDelete={deleteOrder}
  onReorder={(o)=>{ o.items?.forEach((i:any)=>{ if(i.products) addToCart(i.products,undefined,i.quantity); }); navigate('/cart'); }}
  onContactSeller={handleContactSeller}
- onPrintReceipt={(o,s)=>setReceiptOrder({order:o,seller:s||{} as VendorProfile})}
+ onPrintReceipt={(o,s)=>navigate(`/order/${o.id}/receipt`, { state: { order:o, seller:s||{} } })}
  fetchVendorProfile={fetchVendorProfile}/>
  )}
 
@@ -329,10 +327,6 @@ export const BuyerPage = () => {
  </motion.div>
  </AnimatePresence>
  </div>
-
- {receiptOrder && (
- <ReceiptModal isOpen={!!receiptOrder} order={receiptOrder.order} seller={receiptOrder.seller} onClose={()=>setReceiptOrder(null)}/>
- )}
  </div>
  );
 };

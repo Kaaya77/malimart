@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback, useMemo } from 'react';
 import { supabase } from '../services/supabaseClient';
-import { withCache, invalidatePrefix, TTL } from '../services/queryCache';
+import { withCache, invalidate, invalidatePrefix, TTL } from '../services/queryCache';
 import { Product, CartItem, User, Order, Notification, VendorProfile, Address, ProductVariant, ChatMessage, Offer, Category, Payment, Shipment, TrustBadge, ReturnRequest, OrderNote, ActivityLog, WalletTransaction, SocialPost, SocialInteraction, Follower, Review } from '../types';
 import { useToast } from '../components/UI';
 
@@ -410,10 +410,15 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         if (products_ && Array.isArray(products_)) setProducts(products_ as any);
     }, []);
 
-    const fetchAndSetOrders = useCallback(async (userId: string, limit = 50, offset = 0) => {
-        const { data, error } = await supabase
-            .rpc('get_buyer_orders', { p_user_id: userId, p_limit: limit, p_offset: offset });
-        if (error) { console.error('[Orders fetch]', error.message); return; }
+    const fetchAndSetOrders = useCallback(async (userId: string, limit = 50, offset = 0, bust = false) => {
+        const cacheKey = `buyer:orders:${userId}:${limit}:${offset}`;
+        if (bust) invalidate(cacheKey);
+        const data = await withCache(cacheKey, 30_000, async () => {
+            const { data: d, error } = await supabase
+                .rpc('get_buyer_orders', { p_user_id: userId, p_limit: limit, p_offset: offset });
+            if (error) { console.error('[Orders fetch]', error.message); return null; }
+            return d;
+        });
         if (data) {
             if (offset === 0) {
                 setOrders((data as any[]) || []);
