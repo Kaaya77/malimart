@@ -81,7 +81,7 @@ const StepBar = ({ step, total }: { step: number; total: number }) => (
         transition={{ duration: 0.3 }}
       />
     ))}
-    <span className="text-[10px] text-foreground/30 font-bold ml-1">{step + 1} / {total}</step>
+    <span className="text-[10px] text-foreground/30 font-bold ml-1">{step + 1} / {total}</span>
   </div>
 );
 
