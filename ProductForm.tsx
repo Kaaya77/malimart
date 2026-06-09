@@ -14,6 +14,7 @@ import { Button, Input, Label, Textarea, ImageDropzone, Switch, useToast, Badge,
 import { Product, ProductVariant } from '../types';
 import * as aiService from '../services/geminiService';
 import { supabase } from '../services/supabaseClient';
+import { compressImage, extFor, IMMUTABLE_CACHE } from '../services/imageCompression';
 import { CURRENCY, CATEGORY_HIERARCHY, formatTZS } from '../constants';
 
 interface ProductFormProps {
@@ -223,17 +224,17 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
  if (typeof fileOrUrl === 'string') {
  if (!fileOrUrl.startsWith('data:')) return fileOrUrl;
  const res = await fetch(fileOrUrl);
- const blob = await res.blob();
- const fileExt = blob.type.split('/')[1] || 'png';
- const fileName = `${Math.random()}.${fileExt}`;
- const { error: uploadError } = await supabase.storage.from('mali-mart-uploads').upload(fileName, blob);
+ const raw = await res.blob();
+ const blob = await compressImage(raw);
+ const fileName = `${Math.random()}.${extFor(blob)}`;
+ const { error: uploadError } = await supabase.storage.from('mali-mart-uploads').upload(fileName, blob, { cacheControl: IMMUTABLE_CACHE, contentType: blob.type });
  if (uploadError) throw uploadError;
  const { data: publicUrlData } = supabase.storage.from('mali-mart-uploads').getPublicUrl(fileName);
  return publicUrlData.publicUrl;
  } else {
- const fileExt = fileOrUrl.name.split('.').pop();
- const fileName = `${Math.random()}.${fileExt}`;
- const { error: uploadError } = await supabase.storage.from('mali-mart-uploads').upload(fileName, fileOrUrl);
+ const blob = await compressImage(fileOrUrl);
+ const fileName = `${Math.random()}.${extFor(blob, fileOrUrl.name.split('.').pop() || 'webp')}`;
+ const { error: uploadError } = await supabase.storage.from('mali-mart-uploads').upload(fileName, blob, { cacheControl: IMMUTABLE_CACHE, contentType: blob.type });
  if (uploadError) throw uploadError;
  const { data: publicUrlData } = supabase.storage.from('mali-mart-uploads').getPublicUrl(fileName);
  return publicUrlData.publicUrl;

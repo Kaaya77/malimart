@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { Badge, Button, Input, Textarea, useToast, GraphicalTag } from './UI';
 import { supabase } from '../services/supabaseClient';
+import { compressImage, IMMUTABLE_CACHE } from '../services/imageCompression';
 import { withCache, invalidate } from '../services/queryCache';
 import { useAppState } from '../context/AppContext';
 import { formatTZS } from '../constants';
@@ -115,7 +116,7 @@ export const BuyerReturns: React.FC<BuyerReturnsProps> = ({ userId, onContactSel
  const urls: string[] = [];
  for (const file of Array.from(files).slice(0, 3)) {
  const name = `returns/${userId}/${Date.now()}-${file.name}`;
- const { error } = await supabase.storage.from('mali-mart-uploads').upload(name, file);
+ const { error } = await supabase.storage.from('mali-mart-uploads').upload(name, await compressImage(file), { cacheControl: IMMUTABLE_CACHE });
  if (!error) {
  const { data: pub } = supabase.storage.from('mali-mart-uploads').getPublicUrl(name);
  if (pub?.publicUrl) urls.push(pub.publicUrl);
