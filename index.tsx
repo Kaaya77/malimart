@@ -4,6 +4,21 @@ import App from './App';
 import './src/index.css';
 import { registerSW } from 'virtual:pwa-register';
 
+// Error monitoring — only loads if VITE_SENTRY_DSN is set in Vercel env vars.
+// Dynamic import keeps Sentry out of the bundle entirely when unconfigured.
+const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN as string | undefined;
+if (SENTRY_DSN) {
+  import('@sentry/react').then(Sentry => {
+    Sentry.init({
+      dsn: SENTRY_DSN,
+      environment: import.meta.env.MODE,
+      tracesSampleRate: 0.1,
+      // Don't report errors from browser extensions or third-party scripts
+      allowUrls: [/malimart/],
+    });
+  }).catch(() => { /* monitoring is optional — never block the app */ });
+}
+
 // Register service worker with auto-reload on new deployment
 // skipWaiting + clientsClaim in vite.config means the new SW installs immediately.
 // onNeedRefresh fires when a new version is detected — we reload to activate it.
