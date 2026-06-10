@@ -469,7 +469,7 @@ export const UserProfileModal = ({ isOpen, onClose, user }: { isOpen: boolean, o
 
  <div className="flex flex-col items-center text-center space-y-6">
  <div className="w-24 h-24 bg-foreground/[0.05] dark:bg-foreground/[0.05] rounded-full flex items-center justify-center font-black text-3xl overflow-hidden shadow-sm">
- {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" loading="lazy" decoding="async" /> : user.name?.slice(0, 1).toUpperCase()}
+ {user.avatar ? <img src={user.avatar} alt={`${user.name || "User"} avatar`} className="w-full h-full object-cover" loading="lazy" decoding="async" /> : user.name?.slice(0, 1).toUpperCase()}
  </div>
 
  <div className="space-y-2">
@@ -596,7 +596,7 @@ export const ModernFollowCard = ({ vendor, onUnfollow, onViewStore }: { vendor: 
  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
  <div className="absolute bottom-4 left-6 flex items-center gap-4">
  <div className="w-16 h-16 rounded-2xl bg-white p-1 shadow-lg overflow-hidden border-2 border-white">
- <img src={vendor.logo_url || `https://ui-avatars.com/api/?name=${vendor.store_name}`} className="w-full h-full object-cover rounded-xl" loading="lazy" decoding="async" />
+ <img src={vendor.logo_url || `https://ui-avatars.com/api/?name=${vendor.store_name}`} alt={`${vendor.store_name} logo`} className="w-full h-full object-cover rounded-xl" loading="lazy" decoding="async" />
  </div>
  <div className="text-white">
  <h3 className="font-black text-lg leading-tight flex items-center gap-2">
