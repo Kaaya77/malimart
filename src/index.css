@@ -482,3 +482,74 @@ a, button {
     scroll-behavior: auto !important;
   }
 }
+
+/* ═══════════════════════ MOBILE FIXES ═══════════════════════ */
+
+/* iOS Safari auto-zooms the page when focusing any input under 16px,
+   and the page STAYS zoomed — the #1 "broken on mobile" complaint.
+   Forcing 16px on touch devices stops the zoom; desktop is untouched. */
+@media (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Stop pull-to-refresh hijacking and scroll chaining behind modals */
+html, body {
+  overscroll-behavior-y: contain;
+}
+
+/* Remove the grey tap flash on Android/iOS */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Momentum scrolling inside modal bodies on iOS */
+.modal-scroll {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* ═══════════════════════ MALIMART SOUL ═══════════════════════ */
+
+/* Kitenge wave — a strip of East African pattern energy.
+   Use: <div class="kitenge-strip" /> under headers, cards, receipts */
+.kitenge-strip {
+  height: 6px;
+  border-radius: 999px;
+  background: repeating-linear-gradient(
+    -45deg,
+    #059669 0 12px,      /* emerald — the brand */
+    #f59e0b 12px 18px,   /* amber — Serengeti sun */
+    #0c4a6e 18px 30px,   /* deep ocean — the coast */
+    #f59e0b 30px 36px
+  );
+  opacity: 0.85;
+}
+
+/* Heartbeat for moments of joy (order placed, payment confirmed) */
+@keyframes mali-pop {
+  0%   { transform: scale(0.6); opacity: 0; }
+  60%  { transform: scale(1.08); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.mali-pop { animation: mali-pop 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* Confetti dot — used by the CelebrationBurst component */
+@keyframes mali-confetti {
+  0%   { transform: translateY(0) rotate(0); opacity: 1; }
+  100% { transform: translateY(90px) rotate(540deg); opacity: 0; }
+}
+.mali-confetti { animation: mali-confetti 1.1s ease-in forwards; }
+
+/* Gentle sway for empty-state illustrations — life, not loading */
+@keyframes mali-sway {
+  0%, 100% { transform: rotate(-3deg); }
+  50%      { transform: rotate(3deg); }
+}
+.mali-sway { animation: mali-sway 3.2s ease-in-out infinite; transform-origin: bottom center; }
+
+/* Brand-colored text selection — a one-line signature most apps forget */
+::selection {
+  background: rgba(5, 150, 105, 0.25);
+}

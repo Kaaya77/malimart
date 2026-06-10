@@ -110,7 +110,7 @@ export const LoginPage = () => {
  setMode('login');
  } else if (mode === 'forgot') {
  if (!formData.email) throw new Error("Email is required.");
- const { error } = await supabase.auth.resetPasswordForEmail(formData.email);
+ const { error } = await supabase.auth.resetPasswordForEmail(formData.email, { redirectTo: `${window.location.origin}/auth/reset` });
  if (error) throw error;
  addToast("Password reset email sent.", "success");
  setMode('login');

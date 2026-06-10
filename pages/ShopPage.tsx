@@ -7,6 +7,8 @@ import { useAppState } from '../context/AppContext';
 import { ProductCard } from '../components/ProductCard';
 import { FilterSidebar } from '../components/FilterSidebar';
 import { Product } from '../types';
+import { searchProductsServer } from '../services/searchService';
+import { MaliEmptyState } from '../components/MaliSoul';
 
 const SORT_OPTIONS = [
  { value: 'relevance', label: 'Relevance' },
@@ -58,11 +60,29 @@ export const ShopPage: React.FC = () => {
  return count;
  }, [activeFilters]);
 
- const filteredProducts = useMemo(() => {
- let list = products.filter(p => p.status !== 'inactive');
+ // Server full-text search — searches the ENTIRE catalog, not just loaded products.
+ // Falls back silently to client filtering if the RPC isn't available.
+ const debouncedQuery = useDebounce(searchQuery, 350);
+ const [serverResults, setServerResults] = useState<Product[] | null>(null);
+ useEffect(() => {
+   let cancelled = false;
+   if (debouncedQuery.trim().length < 2) { setServerResults(null); return; }
+   searchProductsServer(debouncedQuery).then(res => {
+     if (!cancelled) setServerResults(res);
+   });
+   return () => { cancelled = true; };
+ }, [debouncedQuery]);
 
- // Search query
- if (searchQuery.trim()) {
+ const filteredProducts = useMemo(() => {
+ // Base list: server search results when available (full catalog),
+ // otherwise the in-memory products from context.
+ const source = (searchQuery.trim().length >= 2 && serverResults?.length)
+   ? serverResults
+   : products;
+ let list = source.filter(p => p.status !== 'inactive');
+
+ // Search query (client fallback / refinement when server results unavailable)
+ if (searchQuery.trim() && !(serverResults?.length)) {
  const q = searchQuery.toLowerCase();
  list = list.filter(p =>
  p.name?.toLowerCase().includes(q) ||
@@ -135,7 +155,7 @@ export const ShopPage: React.FC = () => {
  }
 
  return list;
- }, [products, searchQuery, activeFilters, sortBy]);
+ }, [products, serverResults, searchQuery, activeFilters, sortBy]);
 
  const handleSearch = (e: React.FormEvent) => {
  e.preventDefault();
@@ -250,10 +270,9 @@ export const ShopPage: React.FC = () => {
  ))}
  </div>
  ) : filteredProducts.length === 0 ? (
- <div className="py-24 text-center">
- <p className="text-4xl mb-4">🔍</p>
- <p className="text-lg font-semibold text-foreground mb-2">No products found</p>
- <p className="text-sm text-foreground/50 mb-6">Try adjusting your search or filters</p>
+ <div className="py-16 text-center">
+ <MaliEmptyState kind="search" />
+ <div className="-mt-6">
  <button
  onClick={() => {
  setSearchQuery('');
@@ -264,6 +283,7 @@ export const ShopPage: React.FC = () => {
  >
  Clear all filters
  </button>
+ </div>
  </div>
  ) : (
  <motion.div

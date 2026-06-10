@@ -9,6 +9,7 @@
 
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
+import { maliGreeting, KitengeStrip } from './MaliSoul';
 import {
   ShoppingBag, DollarSign, Star, Wallet,
   TrendingUp, TrendingDown, Heart, ArrowRight,
@@ -151,6 +152,13 @@ export const BuyerDashboard: React.FC<BuyerDashboardProps> = ({
 
   return (
     <div className="space-y-5">
+      {/* Time-aware Swahili greeting */}
+      <div>
+        <h2 className="text-xl font-black tracking-tight text-foreground">
+          {maliGreeting(user?.display_name || user?.full_name?.split(' ')[0] || user?.name?.split(' ')[0])}
+        </h2>
+        <KitengeStrip className="w-16 mt-2" />
+      </div>
       {/* Active order alerts */}
       {(stats.pending > 0 || stats.inTransit > 0) && (
         <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} className="flex flex-wrap gap-2">

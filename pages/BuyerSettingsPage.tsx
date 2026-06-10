@@ -706,8 +706,8 @@ export const BuyerSettingsPage = () => {
                       <p className="text-sm font-medium opacity-80 mb-2 flex items-center gap-2"><Wallet className="w-4 h-4" /> Available Balance</p>
                       <h2 className="text-5xl md:text-6xl font-display font-bold tracking-tight">{CURRENCY} {(user?.wallet_balance || 0).toLocaleString()}</h2>
                       <div className="mt-8 flex gap-3">
-                        <Button variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20 dark:bg-black/5 dark:border-black/10 dark:text-slate-900 dark:hover:bg-black/10">Top Up</Button>
-                        <Button variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20 dark:bg-black/5 dark:border-black/10 dark:text-slate-900 dark:hover:bg-black/10">Withdraw</Button>
+                        <Button variant="outline" onClick={() => addToast('Wallet top-up is coming soon — mobile money integration (M-Pesa, Tigo Pesa, Airtel Money) is in progress', 'info')} className="bg-white/10 border-white/20 text-white hover:bg-white/20 dark:bg-black/5 dark:border-black/10 dark:text-slate-900 dark:hover:bg-black/10">Top Up</Button>
+                        <Button variant="outline" onClick={() => addToast('Withdrawals are coming soon — contact support to redeem your balance in the meantime', 'info')} className="bg-white/10 border-white/20 text-white hover:bg-white/20 dark:bg-black/5 dark:border-black/10 dark:text-slate-900 dark:hover:bg-black/10">Withdraw</Button>
                       </div>
                     </div>
                 </CardContent>
@@ -928,7 +928,7 @@ export const BuyerSettingsPage = () => {
       </div>
 
       {editingAddress && (
-        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in">
+        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
             <Card className="max-w-md w-full shadow-2xl border-none">
                 <CardHeader>
                     <CardTitle>Edit Address</CardTitle>

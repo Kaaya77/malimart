@@ -681,8 +681,20 @@ export const AdminPage = () => {
                                     <div className="flex items-center justify-between pb-6">
                                         <h3 className="font-sans font-bold text-2xl tracking-tight">Pending Resolutions</h3>
                                         <div className="flex gap-2">
-                                            <Button variant="outline" size="sm" className="hidden sm:flex text-[10px] font-bold uppercase tracking-wider rounded-xl">Filter by Priority</Button>
-                                            <Button variant="outline" size="sm" className="text-[10px] font-bold uppercase tracking-wider rounded-xl">Export CSV</Button>
+                                            <Button variant="outline" size="sm" onClick={() => {
+                                                if (!disputes.length) { addToast('No disputes to export', 'info'); return; }
+                                                const esc = (v: any) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+                                                const rows = [
+                                                    ['ID', 'Order ID', 'Buyer ID', 'Seller ID', 'Reason', 'Status', 'Description', 'Created At'].join(','),
+                                                    ...disputes.map(d => [d.id, d.order_id, d.buyer_id, d.seller_id, d.reason, d.status, d.description, d.created_at].map(esc).join(','))
+                                                ].join('\n');
+                                                const blob = new Blob([rows], { type: 'text/csv;charset=utf-8;' });
+                                                const url = URL.createObjectURL(blob);
+                                                const a = document.createElement('a');
+                                                a.href = url; a.download = `disputes-${new Date().toISOString().slice(0,10)}.csv`;
+                                                a.click(); URL.revokeObjectURL(url);
+                                                addToast('Disputes exported', 'success');
+                                            }} className="text-[10px] font-bold uppercase tracking-wider rounded-xl">Export CSV</Button>
                                         </div>
                                     </div>
 

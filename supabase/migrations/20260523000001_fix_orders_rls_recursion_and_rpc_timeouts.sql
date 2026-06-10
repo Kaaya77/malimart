@@ -84,8 +84,6 @@ CREATE INDEX IF NOT EXISTS idx_orders_status_created
   ON public.orders (status, created_at DESC)
   WHERE deleted_at IS NULL;
 
-ALTER TABLE public.order_items ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'pending';
-
 CREATE INDEX IF NOT EXISTS idx_order_items_seller_status
   ON public.order_items (seller_id, status)
   WHERE deleted_at IS NULL;

@@ -214,7 +214,7 @@ export const Skeleton = ({ className = '' }: any) => (
 export const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, confirmText = "Confirm", cancelText = "Cancel", isDestructive = false }: any) => {
  if (!isOpen) return null;
  return (
- <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+ <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
  <div className="bg-background w-full max-w-md p-8 rounded-3xl shadow-2xl border border-foreground/8 animate-in zoom-in-95 duration-200">
  <h3 className="text-2xl font-black text-foreground/60 mb-4 tracking-tight">{title}</h3>
  <p className="text-sm font-medium text-foreground/55 mb-8">{message}</p>
@@ -302,7 +302,18 @@ export const ImageDropzone = ({ currentImage, onImageSelected }: any) => (
  </div>
 );
 
-export const Modal = ({ isOpen, title, onClose, children }: any) => {
+export const Modal = ({ isOpen, title, onClose, children, size = 'md' }: any) => {
+ // Body scroll lock + ESC to close — applies to every Modal user app-wide
+ React.useEffect(() => {
+   if (!isOpen) return;
+   const prev = document.body.style.overflow;
+   document.body.style.overflow = 'hidden';
+   const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose?.(); };
+   window.addEventListener('keydown', onEsc);
+   return () => { document.body.style.overflow = prev; window.removeEventListener('keydown', onEsc); };
+ }, [isOpen, onClose]);
+
+ const maxW = size === 'lg' ? 'max-w-4xl' : size === 'sm' ? 'max-w-md' : 'max-w-2xl';
  return (
  <AnimatePresence>
  {isOpen && (
@@ -310,19 +321,23 @@ export const Modal = ({ isOpen, title, onClose, children }: any) => {
  initial={{ opacity: 0 }}
  animate={{ opacity: 1 }}
  exit={{ opacity: 0 }}
- className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+ onClick={onClose}
+ className="fixed inset-0 z-[300] flex items-end md:items-center justify-center md:p-4 bg-black/50 backdrop-blur-sm"
  >
  <motion.div
- initial={{ opacity: 0, y: 20, scale: 0.95 }}
+ initial={{ opacity: 0, y: 40, scale: 0.98 }}
  animate={{ opacity: 1, y: 0, scale: 1 }}
- exit={{ opacity: 0, y: 20, scale: 0.95 }}
+ exit={{ opacity: 0, y: 40, scale: 0.98 }}
  transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
- className="max-w-2xl w-full"
+ onClick={(e: any) => e.stopPropagation()}
+ className={`${maxW} w-full`}
  >
- <div className="p-6 md:p-8 space-y-6 bg-background rounded-3xl shadow-2xl max-h-[90dvh] overflow-y-auto">
+ <div className="modal-scroll p-6 md:p-8 space-y-6 bg-background rounded-t-3xl md:rounded-3xl shadow-2xl max-h-[92dvh] md:max-h-[90dvh] overflow-y-auto" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
+ {/* Mobile drag-handle affordance */}
+ <div className="md:hidden w-10 h-1 rounded-full bg-foreground/15 mx-auto -mt-2" />
  <div className="flex justify-between items-center border-b border-foreground/8 pb-6">
  <h3 className="text-2xl font-black tracking-tight text-foreground">{title}</h3>
- <button onClick={onClose} className="p-2 hover:bg-foreground/[0.05] dark:hover:bg-foreground/[0.05] rounded-full transition-colors"><X className="w-6 h-6 stroke-[2] text-foreground/60" /></button>
+ <button onClick={onClose} aria-label="Close" className="p-2 hover:bg-foreground/[0.05] dark:hover:bg-foreground/[0.05] rounded-full transition-colors"><X className="w-6 h-6 stroke-[2] text-foreground/60" /></button>
  </div>
  <div className="text-foreground/60 ">
  {children}
@@ -454,7 +469,7 @@ export const UserProfileModal = ({ isOpen, onClose, user }: { isOpen: boolean, o
 
  <div className="flex flex-col items-center text-center space-y-6">
  <div className="w-24 h-24 bg-foreground/[0.05] dark:bg-foreground/[0.05] rounded-full flex items-center justify-center font-black text-3xl overflow-hidden shadow-sm">
- {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" loading="lazy" decoding="async" /> : user.name?.slice(0, 1).toUpperCase()}
+ {user.avatar ? <img src={user.avatar} alt={`${user.name || "User"} avatar`} className="w-full h-full object-cover" loading="lazy" decoding="async" /> : user.name?.slice(0, 1).toUpperCase()}
  </div>
 
  <div className="space-y-2">
@@ -581,7 +596,7 @@ export const ModernFollowCard = ({ vendor, onUnfollow, onViewStore }: { vendor: 
  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
  <div className="absolute bottom-4 left-6 flex items-center gap-4">
  <div className="w-16 h-16 rounded-2xl bg-white p-1 shadow-lg overflow-hidden border-2 border-white">
- <img src={vendor.logo_url || `https://ui-avatars.com/api/?name=${vendor.store_name}`} className="w-full h-full object-cover rounded-xl" loading="lazy" decoding="async" />
+ <img src={vendor.logo_url || `https://ui-avatars.com/api/?name=${vendor.store_name}`} alt={`${vendor.store_name} logo`} className="w-full h-full object-cover rounded-xl" loading="lazy" decoding="async" />
  </div>
  <div className="text-white">
  <h3 className="font-black text-lg leading-tight flex items-center gap-2">

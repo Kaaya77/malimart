@@ -119,7 +119,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [payload, setPayload] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setInterval>>();
+  const timerRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
 
   const fetchStats = useCallback(async (silent = false) => {
     if (!silent) setLoading(true); else setRefreshing(true);

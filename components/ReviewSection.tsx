@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Star, ThumbsUp, Loader2, User, Camera, X, ChevronDown, ChevronUp, Edit2, Trash2, Flag, MessageSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../services/supabaseClient';
+import { compressImage, IMMUTABLE_CACHE } from '../services/imageCompression';
 import { useAppState } from '../context/AppContext';
 import { Textarea, useToast } from './UI';
 // Security helpers (inline if module not found)
@@ -125,7 +126,7 @@ export const ReviewSection: React.FC<ReviewSectionProps> = ({ productId }) => {
     setUploading(true);
     try {
       const path = `reviews/${productId}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-      const { error } = await supabase.storage.from('mali-mart-uploads').upload(path, file, { upsert: false });
+      const { error } = await supabase.storage.from('mali-mart-uploads').upload(path, await compressImage(file), { upsert: false, cacheControl: IMMUTABLE_CACHE });
       if (error) throw error;
       const { data: pub } = supabase.storage.from('mali-mart-uploads').getPublicUrl(path);
       if (pub?.publicUrl) setForm(p => ({ ...p, images: [...p.images, pub.publicUrl] }));

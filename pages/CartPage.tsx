@@ -391,7 +391,7 @@ export const CartPage = () => {
  const stock = variant?.stock ?? item.stock ?? 0;
  const isStockLow = stock > 0 && stock < 5;
  const variantLabel = variant ? Object.values(variant.attributes ?? {}).join(' / ') : null;
- const image = variant?.image_url || item.images?.[0] || 'https://via.placeholder.com/300';
+ const image = variant?.image_url || item.images?.[0] || 'data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 600 800%27%3E%3Crect width=%27600%27 height=%27800%27 fill=%27%23f1f0ec%27/%3E%3Cg fill=%27%23c8c5bc%27%3E%3Ccircle cx=%27300%27 cy=%27340%27 r=%2770%27/%3E%3Cpath d=%27M170 560 q60 -110 130 -40 q40 -70 130 30 l0 50 l-260 0 z%27/%3E%3C/g%3E%3Ctext x=%27300%27 y=%27660%27 font-family=%27sans-serif%27 font-size=%2728%27 fill=%27%23a8a59c%27 text-anchor=%27middle%27%3ENo image%3C/text%3E%3C/svg%3E';
 
  // Safe unique key — fixes duplicate key error
  const itemKey = variant?.id 

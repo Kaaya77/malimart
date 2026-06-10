@@ -21,12 +21,14 @@ export const NotFound = () => {
  </div>
 
  {/* Text Content */}
- <h1 className="text-4xl font-black font-display text-foreground mb-3 tracking-tight uppercase">
- Off the Map
+ <h1 className="text-4xl font-black font-display text-foreground mb-2 tracking-tight uppercase">
+ Umepotea kidogo!
  </h1>
- <p className="text-slate-500 dark:text-foreground/40 text-sm font-medium leading-relaxed mb-10">
- We couldn't find the page you're looking for. It might have been moved, sold out, or never existed in our index.
+ <p className="text-foreground/60 text-base font-bold mb-1">You've wandered off the map.</p>
+ <p className="text-foreground/40 text-sm font-medium leading-relaxed mb-8">
+ This page moved, sold out, or maybe never existed. Even the best guides lose the trail sometimes — pole sana.
  </p>
+ <div className="kitenge-strip w-28 mx-auto mb-10" aria-hidden="true" />
 
  {/* Actions */}
  <div className="space-y-3">
@@ -58,9 +60,9 @@ export const NotFound = () => {
 
  {/* Footer decoration */}
  <div className="mt-12 flex justify-center gap-2 opacity-30">
- <div className="w-1 h-1 bg-slate-400 rounded-full"></div>
- <div className="w-1 h-1 bg-slate-400 rounded-full"></div>
- <div className="w-1 h-1 bg-slate-400 rounded-full"></div>
+ <div className="w-1 h-1 bg-foreground/40 rounded-full"></div>
+ <div className="w-1 h-1 bg-foreground/40 rounded-full"></div>
+ <div className="w-1 h-1 bg-foreground/40 rounded-full"></div>
  </div>
  </div>
  </div>

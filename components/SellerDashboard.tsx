@@ -10,6 +10,7 @@
  * Design:   Dark glass morphism, editorial grid, animated counters, sparklines
  */
 
+import { maliGreeting, KitengeStrip } from './MaliSoul';
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -29,8 +30,8 @@ const AnimCounter = ({ value, prefix = '', suffix = '', decimals = 0, duration =
   value: number; prefix?: string; suffix?: string; decimals?: number; duration?: number;
 }) => {
   const [display, setDisplay] = useState(0);
-  const rafRef = useRef<number>();
-  const startRef = useRef<number>();
+  const rafRef = useRef<number | undefined>(undefined);
+  const startRef = useRef<number | undefined>(undefined);
   const fromRef = useRef(0);
 
   useEffect(() => {
@@ -547,6 +548,13 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({
 
   return (
     <div className="space-y-5">
+      {/* Time-aware Swahili greeting */}
+      <div>
+        <h2 className="text-xl font-black tracking-tight text-foreground">
+          {maliGreeting(sellerName?.split(' ')[0])}
+        </h2>
+        <KitengeStrip className="w-16 mt-2" />
+      </div>
       {/* Alert banners */}
       <AlertBanner
         lowStock={full?.lowStockCount ?? lowStockCount}

@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { Badge, Button, Input, Textarea, useToast, GraphicalTag } from './UI';
 import { supabase } from '../services/supabaseClient';
+import { compressImage, IMMUTABLE_CACHE } from '../services/imageCompression';
 import { withCache, invalidate } from '../services/queryCache';
 import { useAppState } from '../context/AppContext';
 import { formatTZS } from '../constants';
@@ -115,7 +116,7 @@ export const BuyerReturns: React.FC<BuyerReturnsProps> = ({ userId, onContactSel
  const urls: string[] = [];
  for (const file of Array.from(files).slice(0, 3)) {
  const name = `returns/${userId}/${Date.now()}-${file.name}`;
- const { error } = await supabase.storage.from('mali-mart-uploads').upload(name, file);
+ const { error } = await supabase.storage.from('mali-mart-uploads').upload(name, await compressImage(file), { cacheControl: IMMUTABLE_CACHE });
  if (!error) {
  const { data: pub } = supabase.storage.from('mali-mart-uploads').getPublicUrl(name);
  if (pub?.publicUrl) urls.push(pub.publicUrl);
@@ -136,17 +137,19 @@ export const BuyerReturns: React.FC<BuyerReturnsProps> = ({ userId, onContactSel
  const order = orders.find(o => o.id === form.orderId);
  if (!order) return;
 
+ const sellerIdForDispute = order.items?.[0]?.seller_id;
+ if (!sellerIdForDispute) return addToast('Could not identify the seller for this order', 'error');
+
  setSubmitting(true);
  try {
  const { error } = await supabase.from('disputes').insert({
  order_id: form.orderId,
  buyer_id: userId,
- seller_id: order.items?.[0]?.seller_id || order.items?.[0]?.seller_id,
+ seller_id: sellerIdForDispute,
  reason: form.reason,
  description: form.description,
  evidence_urls: form.images,
  status: 'open',
- type: 'return',
  created_at: new Date().toISOString(),
  });
  if (error) throw error;
@@ -341,7 +344,7 @@ export const BuyerReturns: React.FC<BuyerReturnsProps> = ({ userId, onContactSel
  <div className="flex gap-3 flex-wrap">
  {form.images.map((img, i) => (
  <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden">
- <img src={img} className="w-full h-full object-cover" loading="lazy" decoding="async"/>
+ <img src={img} alt="Return evidence photo" className="w-full h-full object-cover" loading="lazy" decoding="async"/>
  <button onClick={() => setForm(p=>({...p,images:p.images.filter((_,idx)=>idx!==i)}))}
  className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 flex items-center justify-center">
  <X className="w-3 h-3 text-white stroke-[3]"/>

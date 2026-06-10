@@ -19,7 +19,6 @@
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
     "lucide-react": "^0.561.0",
-    "p-retry": "^6.2.1",
     "papaparse": "^5.5.3",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
@@ -46,6 +45,6 @@
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",
     "vite": "^6.4.1",
-    "vite-plugin-pwa": "^0.21.1"
+    "vite-plugin-pwa": "^1.2.0"
   }
 }

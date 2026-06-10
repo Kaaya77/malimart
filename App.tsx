@@ -25,7 +25,7 @@ const LoginPage = lazy(() => import('./pages/AuthPage').then(m => ({ default: m.
 const StorePage = lazy(() => import('./pages/StorePage').then(m => ({ default: m.StorePage })));
 const ShopPage = lazy(() => import('./pages/ShopPage').then(m => ({ default: m.ShopPage })));
 const ProductPage = lazy(() => import('./pages/ProductPage').then(m => ({ default: m.ProductPage })));
-const ResetPasswordPage = lazy(() => import('./ResetPasswordPage').then(m => ({ default: m.ResetPasswordPage })));
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage').then(m => ({ default: m.ResetPasswordPage })));
 const NotFound = lazy(() => import('./components/NotFound').then(m => ({ default: m.NotFound })));
 const NotificationsPage = lazy(() => import('./pages/NotificationsPage').then(m => ({ default: m.NotificationsPage })));
 const OrderConfirmationPage = lazy(() => import('./pages/OrderConfirmationPage').then(m => ({ default: m.OrderConfirmationPage })));
@@ -230,7 +230,7 @@ const AppContent = () => {
                 <Loader2 className="w-10 h-10 animate-spin text-foreground" />
               </div>
             }>
-              <Routes location={location}>
+            <Routes location={location}>
               <Route path="/" element={<HomePage />} />
               <Route path="/shop" element={<ShopPage />} />
               <Route path="/product/:id" element={<ProductPage />} />

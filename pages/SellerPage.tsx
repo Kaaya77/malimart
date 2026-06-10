@@ -206,7 +206,7 @@ const MobileMore = ({ tab, setTab, tabs }: any) => {
         {open && (
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm" onClick={() => setOpen(false)} />
+              className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" onClick={() => setOpen(false)} />
             <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 28, stiffness: 300 }}
               className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-foreground/10 rounded-t-3xl pb-[env(safe-area-inset-bottom)]">

@@ -14,6 +14,7 @@ import { Button, Input, Label, Textarea, ImageDropzone, Switch, useToast, Badge,
 import { Product, ProductVariant } from '../types';
 import * as aiService from '../services/geminiService';
 import { supabase } from '../services/supabaseClient';
+import { compressImage, extFor, IMMUTABLE_CACHE } from '../services/imageCompression';
 import { CURRENCY, CATEGORY_HIERARCHY, formatTZS } from '../constants';
 
 interface ProductFormProps {
@@ -32,72 +33,8 @@ const PRESET_ATTRIBUTES: Record<string, string[]> = {
 };
 
 // --- PREVIEW COMPONENT ---
-const PhonePreview = ({ data, variant, activeImage }: { data: Partial<Product>, variant?: ProductVariant | null, activeImage: string }) => {
- const salePrice = !variant && data.sale_price && data.sale_price > 0 ? data.sale_price : null;
- const finalPrice = variant ? (variant.sale_price || variant.base_price) : (salePrice || data.price || 0);
- const discount = salePrice && data.price ? Math.round(((data.price - salePrice) / data.price) * 100) : 0;
+import { PhonePreview } from './product-form/PhonePreview';
 
- return (
- <div className="w-[280px] h-[560px] xl:w-[300px] xl:h-[600px] bg-foreground border-8 border-foreground dark:border-background shadow-2xl relative overflow-hidden flex flex-col pointer-events-none select-none mx-auto transform transition-all duration-300 origin-center scale-90 md:scale-100">
- {/* Dynamic Island */}
- <div className="absolute top-0 left-0 right-0 h-6 z-30 flex justify-center pt-2">
- <div className="w-20 h-5 bg-black rounded-none"></div>
- </div>
- 
- {/* Content */}
- <div className="flex-1 bg-background dark:bg-background overflow-hidden flex flex-col relative">
- <div className="h-[60%] relative bg-foreground/[0.05] group">
- <img 
- src={activeImage || 'https://via.placeholder.com/300x400?text=Preview'} 
- className="w-full h-full object-cover" 
- alt="Preview" loading="lazy" decoding="async" 
- />
- <div className="absolute top-8 left-4 flex flex-col gap-2 z-10">
- {discount > 0 && !variant && <span className="bg-primary text-background dark:bg-background dark:text-foreground text-[8px] px-2 py-1 uppercase tracking-[0.2em]">{discount}% OFF</span>}
- {data.is_boosted && <span className="bg-primary text-background dark:bg-background dark:text-foreground text-[8px] px-2 py-1 uppercase tracking-[0.2em] flex items-center gap-1"><Zap className="w-2 h-2 fill-current"/> Boosted</span>}
- </div>
- </div>
- 
- <div className="flex-1 p-5 bg-background dark:bg-background relative z-10 flex flex-col border-t border-foreground/10">
- <div className="flex items-center justify-between mb-2">
- <div className="flex items-center gap-1.5 text-foreground opacity-60">
- {data.brand ? (
- <span className="text-[9px] uppercase tracking-[0.2em]">{data.brand}</span>
- ) : (
- <div className="flex items-center gap-1">
- <Store className="w-3 h-3 stroke-[1]" />
- <span className="text-[9px] uppercase tracking-[0.2em]">My Store</span>
- </div>
- )}
- </div>
- </div>
- <h3 className="font-serif text-lg text-foreground leading-snug mb-4 line-clamp-2">{data.name || 'Product Title'}</h3>
- <div className="mt-auto">
- {salePrice && !variant && (
- <span className="text-[10px] text-foreground opacity-40 line-through mb-0.5 block">
- {(data.price || 0).toLocaleString()} {CURRENCY}
- </span>
- )}
- <div className="flex justify-between items-end">
- <div className="flex items-baseline gap-1">
- <span className="text-2xl font-serif text-foreground">{(finalPrice || 0).toLocaleString()}</span>
- <span className="text-[9px] uppercase tracking-[0.2em] text-foreground opacity-60">{CURRENCY}</span>
- </div>
- {variant && (
- <div className="px-2 py-1 border border-foreground/10 text-[8px] uppercase tracking-[0.2em] text-foreground">
- {Object.values(variant.attributes).join('/')}
- </div>
- )}
- </div>
- </div>
- <div className="w-full h-12 bg-primary text-background dark:bg-background dark:text-foreground flex items-center justify-center text-[10px] uppercase tracking-[0.2em] mt-4 transition-opacity hover:opacity-90">
- Add To Bag
- </div>
- </div>
- </div>
- </div>
- );
-};
 
 export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProps) => {
  const { user } = useAppState();
@@ -223,17 +160,17 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
  if (typeof fileOrUrl === 'string') {
  if (!fileOrUrl.startsWith('data:')) return fileOrUrl;
  const res = await fetch(fileOrUrl);
- const blob = await res.blob();
- const fileExt = blob.type.split('/')[1] || 'png';
- const fileName = `${Math.random()}.${fileExt}`;
- const { error: uploadError } = await supabase.storage.from('mali-mart-uploads').upload(fileName, blob);
+ const raw = await res.blob();
+ const blob = await compressImage(raw);
+ const fileName = `${Math.random()}.${extFor(blob)}`;
+ const { error: uploadError } = await supabase.storage.from('mali-mart-uploads').upload(fileName, blob, { cacheControl: IMMUTABLE_CACHE, contentType: blob.type });
  if (uploadError) throw uploadError;
  const { data: publicUrlData } = supabase.storage.from('mali-mart-uploads').getPublicUrl(fileName);
  return publicUrlData.publicUrl;
  } else {
- const fileExt = fileOrUrl.name.split('.').pop();
- const fileName = `${Math.random()}.${fileExt}`;
- const { error: uploadError } = await supabase.storage.from('mali-mart-uploads').upload(fileName, fileOrUrl);
+ const blob = await compressImage(fileOrUrl);
+ const fileName = `${Math.random()}.${extFor(blob, fileOrUrl.name.split('.').pop() || 'webp')}`;
+ const { error: uploadError } = await supabase.storage.from('mali-mart-uploads').upload(fileName, blob, { cacheControl: IMMUTABLE_CACHE, contentType: blob.type });
  if (uploadError) throw uploadError;
  const { data: publicUrlData } = supabase.storage.from('mali-mart-uploads').getPublicUrl(fileName);
  return publicUrlData.publicUrl;
@@ -979,7 +916,7 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
  <tr key={i} className="group hover:bg-foreground/[0.04] transition-colors" onMouseEnter={() => setHoveredVariant(v)} onMouseLeave={() => setHoveredVariant(null)}>
  <td className="p-4 text-center">
  <div className="relative w-12 h-12 mx-auto bg-foreground/[0.05] overflow-hidden shadow-inner group-hover:ring-1 ring-foreground dark:ring-background transition-all">
- {v.image_url ? <img src={v.image_url} className="w-full h-full object-cover" loading="lazy" decoding="async" /> : <div className="w-full h-full flex items-center justify-center opacity-40"><ImageIcon className="w-5 h-5"/></div>}
+ {v.image_url ? <img src={v.image_url} alt={`${Object.values(v.attributes || {}).join(" ") || "Variant"} image`} className="w-full h-full object-cover" loading="lazy" decoding="async" /> : <div className="w-full h-full flex items-center justify-center opacity-40"><ImageIcon className="w-5 h-5"/></div>}
  <div className="absolute inset-0 bg-primary/40 opacity-0 group-hover:opacity-100 flex flex-wrap items-center justify-center gap-1 transition-opacity p-1">
  <button onClick={() => document.getElementById(`var-img-${i}`)?.click()} className="p-1 bg-background text-foreground hover:opacity-80 rounded-sm"><Upload className="w-3 h-3"/></button>
  <button onClick={() => handleRefurbishVariant(i)} className="p-1 bg-primary text-background dark:bg-background dark:text-foreground hover:opacity-80 rounded-sm" disabled={refurbishingIdx === i}>{refurbishingIdx === i ? <Loader2 className="w-3 h-3 animate-spin"/> : <Sparkles className="w-3 h-3"/>}</button>

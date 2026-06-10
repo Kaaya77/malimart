@@ -48,6 +48,14 @@ export const ProductCardImage: React.FC<ProductCardImageProps> = ({
           exit={{ opacity: 0 }}
           transition={{ duration: 0.25 }}
           onLoad={() => setImgLoaded(true)}
+          onError={(e) => {
+            setImgLoaded(true);
+            const img = e.currentTarget;
+            if (!img.dataset.fellBack) {
+              img.dataset.fellBack = '1';
+              img.src = "data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 600 800%27%3E%3Crect width=%27600%27 height=%27800%27 fill=%27%23f1f0ec%27/%3E%3Cg fill=%27%23c8c5bc%27%3E%3Ccircle cx=%27300%27 cy=%27340%27 r=%2770%27/%3E%3Cpath d=%27M170 560 q60 -110 130 -40 q40 -70 130 30 l0 50 l-260 0 z%27/%3E%3C/g%3E%3C/svg%3E";
+            }
+          }}
           loading="lazy"
           decoding="async"
           className={`w-full h-full object-cover transition-transform duration-700 ease-out
