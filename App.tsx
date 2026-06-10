@@ -25,6 +25,7 @@ const LoginPage = lazy(() => import('./pages/AuthPage').then(m => ({ default: m.
 const StorePage = lazy(() => import('./pages/StorePage').then(m => ({ default: m.StorePage })));
 const ShopPage = lazy(() => import('./pages/ShopPage').then(m => ({ default: m.ShopPage })));
 const ProductPage = lazy(() => import('./pages/ProductPage').then(m => ({ default: m.ProductPage })));
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage').then(m => ({ default: m.ResetPasswordPage })));
 const NotFound = lazy(() => import('./components/NotFound').then(m => ({ default: m.NotFound })));
 const NotificationsPage = lazy(() => import('./pages/NotificationsPage').then(m => ({ default: m.NotificationsPage })));
 const OrderConfirmationPage = lazy(() => import('./pages/OrderConfirmationPage').then(m => ({ default: m.OrderConfirmationPage })));
@@ -250,6 +251,7 @@ const AppContent = () => {
               <Route path="/privacy" element={<StaticPage />} />
               <Route path="/terms" element={<StaticPage />} />
               <Route path="/contact" element={<StaticPage />} />
+              <Route path="/auth/reset" element={<ResetPasswordPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </motion.div>

@@ -1,0 +1,317 @@
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import {
+  Search, Filter, Plus, Zap, Trash2,
+  CheckSquare, Square, Copy, Package, X,
+  Download, ArrowUpDown, History, Layers,
+  DollarSign, BarChart3, AlertCircle, Clock,
+  Percent, Upload, ChevronDown, ChevronUp,
+  RefreshCw, Edit2, ToggleLeft, ToggleRight,
+  Minus, TrendingUp, TrendingDown, Loader2,
+  GripVertical, MoreHorizontal, Star, Eye,
+  Check, AlertTriangle, ArrowUpRight, Wand2, Share2
+} from 'lucide-react';
+import { useToast } from '../UI';
+import { Product } from '../../types';
+import { formatTZS, CURRENCY } from '../../constants';
+import { supabase } from '../../services/supabaseClient';
+import { withCache, invalidate, TTL } from '../../services/queryCache';
+import { STATUS_CFG, REASON_LABELS, timeAgo } from './config';
+import type { InventoryProduct, InventoryMovement } from './config';
+
+import { MovementHistory } from './MovementHistory';
+
+export const InventoryRow = ({
+  product, isSelected, onSelect, onEdit, onArchive,
+  onToggleStatus, onToggleBoost, onDuplicate, onStockAdjust,
+  onDragStart, onDragOver, onDrop, onCreatePromo, onAutoDiscount,
+  updating,
+}: {
+  product: InventoryProduct;
+  isSelected: boolean;
+  onSelect: () => void;
+  onEdit: (p: InventoryProduct) => void;
+  onArchive: (id: string) => void;
+  onToggleStatus: (p: InventoryProduct) => void;
+  onToggleBoost: (p: InventoryProduct) => void;
+  onDuplicate: (p: InventoryProduct) => void;
+  onStockAdjust: (p: InventoryProduct) => void;
+  onDragStart: (e: React.DragEvent, id: string) => void;
+  onDragOver: (e: React.DragEvent) => void;
+  onDrop: (e: React.DragEvent, targetId: string) => void;
+  onCreatePromo: (p: InventoryProduct) => void;
+  onAutoDiscount: (p: InventoryProduct) => void;
+  updating: boolean;
+}) => {
+  const [showHistory, setShowHistory] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const { addToast } = useToast();
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const cfg = STATUS_CFG[product.status] || STATUS_CFG.draft;
+  const variants = (product as any).variants || [];
+  const hasVariants = variants.length > 0;
+  const displayPrice = product.sale_price && product.sale_price < product.price
+    ? product.sale_price : product.price;
+  const margin = product.cost_price && displayPrice
+    ? ((displayPrice - product.cost_price) / displayPrice * 100)
+    : 0;
+  const stockPct = Math.min(100, Math.max(0, (product.stock / Math.max(product.stock, 50)) * 100));
+
+  // Close menu on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+    };
+    if (menuOpen) document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [menuOpen]);
+
+  const handleCopySku = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (product.sku) {
+      navigator.clipboard.writeText(product.sku);
+      addToast('SKU copied', 'success');
+    }
+  };
+
+  const handleShare = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const url = `${window.location.origin}/product/${product.id}`;
+    if (navigator.share) {
+      navigator.share({ title: product.name, url });
+    } else {
+      navigator.clipboard.writeText(url);
+      addToast('Product link copied', 'success');
+    }
+  };
+
+  return (
+    <div
+      draggable
+      onDragStart={e => onDragStart(e, product.id)}
+      onDragOver={onDragOver}
+      onDrop={e => onDrop(e, product.id)}
+      className={`group relative border-b border-foreground/5 last:border-0 transition-colors ${
+        isSelected ? 'bg-emerald-50/40 dark:bg-emerald-900/10' : 'hover:bg-foreground/[0.02]'
+      } ${updating ? 'opacity-60 pointer-events-none' : ''}`}
+    >
+      {/* Mobile layout */}
+      <div className="flex md:hidden items-center gap-3 p-3.5">
+        <div className="w-12 h-12 rounded-xl overflow-hidden bg-foreground/[0.05] flex-shrink-0 cursor-pointer" onClick={() => onEdit(product)}>
+          {product.images?.[0]
+            ? <img src={product.images[0]} className="w-full h-full object-cover" alt="" loading="lazy" />
+            : <Package className="w-5 h-5 text-foreground/20 m-auto mt-3.5" />
+          }
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-foreground truncate">{product.name}</p>
+          <div className="flex items-center gap-2 mt-0.5">
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.color}`}>{cfg.label}</span>
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+              product.stock === 0 ? 'bg-red-50 text-red-600' :
+              product.is_low_stock ? 'bg-amber-50 text-amber-600' :
+              'bg-emerald-50 text-emerald-600'
+            }`}>
+              {product.stock === 0 ? 'Out of stock' : `${product.stock} left`}
+            </span>
+          </div>
+        </div>
+        <div className="flex gap-1 flex-shrink-0">
+          <button onClick={() => onStockAdjust(product)}
+            className="w-9 h-9 rounded-xl bg-foreground/[0.05] flex items-center justify-center text-foreground/50 active:scale-90">
+            <BarChart3 className="w-4 h-4" />
+          </button>
+          <button onClick={() => onEdit(product)}
+            className="w-9 h-9 rounded-xl bg-foreground/[0.05] flex items-center justify-center text-foreground/50 active:scale-90">
+            <Edit2 className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Desktop layout */}
+      <div className="hidden md:grid items-center p-4 gap-4" style={{ gridTemplateColumns: '28px 28px 56px 1fr 140px 180px 110px 120px' }}>
+
+        {/* Drag handle */}
+        <div className="cursor-grab text-foreground/20 hover:text-foreground/60 transition-colors active:cursor-grabbing flex justify-center">
+          <GripVertical className="w-4 h-4" />
+        </div>
+
+        {/* Checkbox */}
+        <button onClick={e => { e.stopPropagation(); onSelect(); }}
+          className="text-foreground/30 hover:text-foreground/70 transition-colors flex justify-center">
+          {isSelected ? <CheckSquare className="w-4 h-4 text-emerald-600" /> : <Square className="w-4 h-4" />}
+        </button>
+
+        {/* Thumbnail */}
+        <div className="relative w-12 h-14 rounded-lg overflow-hidden bg-foreground/[0.05] cursor-pointer flex-shrink-0" onClick={() => onEdit(product)}>
+          {product.images?.[0]
+            ? <img src={product.images[0]} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" alt="" />
+            : <Package className="w-5 h-5 text-foreground/20 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+          }
+          {product.is_boosted && (
+            <div className="absolute top-0.5 right-0.5 w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center">
+              <Zap className="w-2.5 h-2.5 text-white fill-white" />
+            </div>
+          )}
+        </div>
+
+        {/* Product info */}
+        <div className="min-w-0 pl-1">
+          <div className="flex items-center gap-2 mb-1">
+            <p className="text-sm font-semibold text-foreground truncate cursor-pointer hover:text-emerald-600 transition-colors"
+              onClick={() => onEdit(product)}>
+              {product.name}
+            </p>
+            <span className={`flex-shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full ${cfg.bg} ${cfg.color}`}>
+              {cfg.label}
+            </span>
+          </div>
+          <div className="flex items-center gap-3">
+            {product.sku && (
+              <button onClick={handleCopySku}
+                className="text-[10px] font-mono text-foreground/35 hover:text-foreground/70 transition-colors flex items-center gap-1 group/sku">
+                {product.sku}
+                <Copy className="w-3 h-3 opacity-0 group-hover/sku:opacity-100 transition-opacity" />
+              </button>
+            )}
+            {hasVariants && (
+              <span className="text-[10px] text-foreground/35 flex items-center gap-0.5">
+                <Layers className="w-3 h-3" />{variants.length}
+              </span>
+            )}
+            {(product as any).units_sold_30d > 0 && (
+              <span className="text-[10px] text-foreground/35 flex items-center gap-0.5">
+                <TrendingUp className="w-3 h-3 text-emerald-500" />
+                {(product as any).units_sold_30d} sold/30d
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Price + margin */}
+        <div className="text-right">
+          <p className="text-sm font-bold text-foreground">{formatTZS(displayPrice)}</p>
+          {product.sale_price && product.sale_price < product.price && (
+            <p className="text-[10px] text-foreground/30 line-through">{formatTZS(product.price)}</p>
+          )}
+          {margin > 0 && (
+            <span className="text-[10px] text-foreground/40">{margin.toFixed(0)}% margin</span>
+          )}
+        </div>
+
+        {/* Stock bar + adjust */}
+        <div className="flex items-center gap-2">
+          <div className="flex-1">
+            <div className="flex justify-between items-center mb-1">
+              <span className={`text-[10px] font-bold ${
+                product.stock === 0 ? 'text-red-500' :
+                product.is_low_stock ? 'text-amber-500' :
+                'text-foreground/40'
+              }`}>
+                {product.stock === 0 ? '⚠ Out of stock' : product.is_low_stock ? '↓ Low stock' : 'In stock'}
+              </span>
+              <span className="text-xs font-black text-foreground">{product.stock}</span>
+            </div>
+            <div className="h-1 bg-foreground/[0.06] rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-700 ${
+                  product.stock === 0 ? 'bg-red-400' :
+                  product.is_low_stock ? 'bg-amber-400' :
+                  'bg-emerald-500'
+                }`}
+                style={{ width: `${stockPct}%` }}
+              />
+            </div>
+          </div>
+          <button
+            onClick={e => { e.stopPropagation(); onStockAdjust(product); }}
+            className="w-7 h-7 rounded-lg bg-foreground/[0.05] flex items-center justify-center hover:bg-foreground/[0.10] transition-colors text-foreground/40 flex-shrink-0"
+            title="Adjust stock"
+          >
+            <BarChart3 className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* Toggle status */}
+        <div className="flex justify-center">
+          <button
+            onClick={e => { e.stopPropagation(); onToggleStatus(product); }}
+            className={`h-7 px-3 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 ${
+              product.status === 'active'
+                ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/20'
+                : 'bg-foreground/[0.05] text-foreground/40 hover:bg-foreground/10'
+            }`}
+            title={product.status === 'active' ? 'Set to Draft' : 'Set to Active'}
+          >
+            {product.status === 'active'
+              ? <><ToggleRight className="w-3.5 h-3.5" />Live</>
+              : <><ToggleLeft className="w-3.5 h-3.5" />{cfg.label}</>
+            }
+          </button>
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button onClick={e => { e.stopPropagation(); onToggleBoost(product); }}
+            title={product.is_boosted ? 'Remove boost' : 'Boost listing'}
+            className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${
+              product.is_boosted ? 'bg-emerald-100 text-emerald-600' : 'bg-foreground/[0.05] text-foreground/40 hover:bg-foreground/10'
+            }`}>
+            <Zap className={`w-3.5 h-3.5 ${product.is_boosted ? 'fill-current' : ''}`} />
+          </button>
+          <button onClick={e => { e.stopPropagation(); setShowHistory(!showHistory); }}
+            title="Stock history"
+            className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${
+              showHistory ? 'bg-foreground/10 text-foreground' : 'bg-foreground/[0.05] text-foreground/40 hover:bg-foreground/10'
+            }`}>
+            <History className="w-3.5 h-3.5" />
+          </button>
+          <div ref={menuRef} className="relative">
+            <button
+              onClick={e => { e.stopPropagation(); setMenuOpen(!menuOpen); }}
+              className="w-7 h-7 rounded-lg bg-foreground/[0.05] flex items-center justify-center text-foreground/40 hover:bg-foreground/10 transition-colors"
+            >
+              <MoreHorizontal className="w-3.5 h-3.5" />
+            </button>
+            {menuOpen && (
+              <div className="absolute right-0 top-full mt-1 w-44 bg-background border border-foreground/8 rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                <button onClick={() => { onEdit(product); setMenuOpen(false); }}
+                  className="w-full text-left px-4 py-2.5 text-xs font-semibold text-foreground hover:bg-foreground/[0.04] flex items-center gap-2.5 transition-colors">
+                  <Edit2 className="w-3.5 h-3.5 text-foreground/40" />Edit Product
+                </button>
+                <button onClick={() => { onDuplicate(product); setMenuOpen(false); }}
+                  className="w-full text-left px-4 py-2.5 text-xs font-semibold text-foreground hover:bg-foreground/[0.04] flex items-center gap-2.5 transition-colors">
+                  <Copy className="w-3.5 h-3.5 text-foreground/40" />Duplicate
+                </button>
+                <button onClick={() => { onCreatePromo(product); setMenuOpen(false); }}
+                  className="w-full text-left px-4 py-2.5 text-xs font-semibold text-foreground hover:bg-foreground/[0.04] flex items-center gap-2.5 transition-colors">
+                  <Percent className="w-3.5 h-3.5 text-foreground/40" />Create Promo
+                </button>
+                <button onClick={() => { onAutoDiscount(product); setMenuOpen(false); }}
+                  className="w-full text-left px-4 py-2.5 text-xs font-semibold text-foreground hover:bg-foreground/[0.04] flex items-center gap-2.5 transition-colors">
+                  <Clock className="w-3.5 h-3.5 text-foreground/40" />Auto-Discount
+                </button>
+                <button onClick={handleShare}
+                  className="w-full text-left px-4 py-2.5 text-xs font-semibold text-foreground hover:bg-foreground/[0.04] flex items-center gap-2.5 transition-colors">
+                  <Share2 className="w-3.5 h-3.5 text-foreground/40" />Share
+                </button>
+                <div className="h-px bg-foreground/8 mx-2" />
+                <button onClick={() => { onArchive(product.id); setMenuOpen(false); }}
+                  className="w-full text-left px-4 py-2.5 text-xs font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 flex items-center gap-2.5 transition-colors">
+                  <Trash2 className="w-3.5 h-3.5" />Archive
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Movement history panel */}
+      {showHistory && (
+        <MovementHistory movements={product.recent_movements || []} />
+      )}
+    </div>
+  );
+};
+
+// ── Stat Cards ────────────────────────────────────────────────────────────────

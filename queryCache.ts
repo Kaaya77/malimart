@@ -1,0 +1,107 @@
+/**
+ * queryCache.ts — stale-while-revalidate in-memory cache
+ *
+ * Cuts repeated Supabase egress by serving cached data instantly and only
+ * hitting the network after the TTL expires. Works entirely in-memory so
+ * it resets on page refresh (intentional — no stale data across sessions).
+ *
+ * TTLs chosen to balance freshness vs egress savings:
+ *  - products/categories/trust_badges: 5 min  (slow-changing public data)
+ *  - offers/social_posts:              2 min  (moderate change rate)
+ *  - seller dashboard:                 3 min  (already snapshot-backed in DB)
+ *  - user-specific data (orders etc):  30 sec (needs to be fresh)
+ */
+
+interface CacheEntry<T> {
+    data: T;
+    fetchedAt: number;
+    ttl: number; // ms
+}
+
+const store = new Map<string, CacheEntry<any>>();
+
+export const TTL = {
+    PUBLIC_PRODUCTS:   5 * 60 * 1000,   // 5 min
+    CATEGORIES:        5 * 60 * 1000,
+    TRUST_BADGES:      5 * 60 * 1000,
+    OFFERS:            2 * 60 * 1000,   // 2 min
+    SOCIAL_POSTS:      2 * 60 * 1000,
+    HERO:              3 * 60 * 1000,
+    TICKER:            1 * 60 * 1000,   // 1 min
+    SELLER_DASHBOARD:  3 * 60 * 1000,
+    USER_DATA:         30 * 1000,       // 30 sec
+    VENDOR_PROFILES:   5 * 60 * 1000,
+} as const;
+
+/** Returns cached data if fresh, null if stale/missing */
+export function getCached<T>(key: string): T | null {
+    const entry = store.get(key);
+    if (!entry) return null;
+    if (Date.now() - entry.fetchedAt > entry.ttl) return null;
+    return entry.data as T;
+}
+
+/** Returns cached data even if stale (for stale-while-revalidate pattern) */
+export function getStale<T>(key: string): T | null {
+    const entry = store.get(key);
+    return entry ? (entry.data as T) : null;
+}
+
+/** Returns true if the cache entry is stale (needs revalidation) */
+export function isStale(key: string): boolean {
+    const entry = store.get(key);
+    if (!entry) return true;
+    return Date.now() - entry.fetchedAt > entry.ttl;
+}
+
+/** Stores data in the cache */
+export function setCached<T>(key: string, data: T, ttl: number): void {
+    store.set(key, { data, fetchedAt: Date.now(), ttl });
+}
+
+/** Invalidates a cache entry (e.g. after a mutation) */
+export function invalidate(key: string): void {
+    store.delete(key);
+}
+
+/** Invalidates all entries matching a prefix */
+export function invalidatePrefix(prefix: string): void {
+    for (const key of store.keys()) {
+        if (key.startsWith(prefix)) store.delete(key);
+    }
+}
+
+/**
+ * withCache — wraps any async fetcher with stale-while-revalidate logic.
+ *
+ * 1. If fresh cache exists → return it immediately, no network call.
+ * 2. If stale cache exists → return stale data immediately AND kick off
+ *    background revalidation (fire-and-forget).
+ * 3. If no cache → await the fetch, cache result, return it.
+ */
+export async function withCache<T>(
+    key: string,
+    ttl: number,
+    fetcher: () => Promise<T | null>,
+    onBackground?: (data: T) => void  // called when background refresh completes
+): Promise<T | null> {
+    const fresh = getCached<T>(key);
+    if (fresh !== null) return fresh;
+
+    const stale = getStale<T>(key);
+    if (stale !== null) {
+        // Serve stale immediately, revalidate in background
+        fetcher().then(data => {
+            if (data !== null) {
+                setCached(key, data, ttl);
+                onBackground?.(data);
+            }
+        }).catch(() => {/* silent — stale data still served */});
+        return stale;
+    }
+
+    // No cache at all — must await
+    const data = await fetcher();
+    if (data !== null) setCached(key, data, ttl);
+    return data;
+}

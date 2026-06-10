@@ -30,6 +30,18 @@ export default defineConfig(({ mode }) => {
           skipWaiting: true,
           clientsClaim: true,
           cleanupOutdatedCaches: true,
+          // EGRESS/PERF: don't force every new visitor to download heavy
+          // feature chunks upfront. pdf-gen (594KB), charts (365KB),
+          // seller/admin features and AI chunks load on demand from the
+          // CDN only when actually used. Cuts SW install payload ~60%.
+          globIgnores: [
+            '**/pdf-gen-*.js',
+            '**/charts-*.js',
+            '**/ai-sdk-*.js',
+            '**/ai-chat-*.js',
+            '**/seller-features-*.js',
+            '**/admin-features-*.js',
+          ],
           // Cache strategies per asset type
           runtimeCaching: [
             {
