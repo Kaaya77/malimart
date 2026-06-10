@@ -81,7 +81,7 @@ export const QuickProductForm = ({ onClose, onSuccess }: QuickProductFormProps) 
  };
 
  return (
- <div className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm flex items-end md:items-center justify-center">
+ <div className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm flex items-end md:items-center justify-center">
  <div className="w-full max-w-md bg-background rounded-t-3xl md:rounded-3xl p-6 relative shadow-2xl border-t border-foreground/8 md:border max-h-[90dvh] overflow-y-auto" style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))' }}>
  <div className="flex items-center justify-between mb-5">
  <h2 className="text-xl font-bold text-foreground">Quick Add Product</h2>

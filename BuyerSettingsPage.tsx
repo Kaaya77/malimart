@@ -928,7 +928,7 @@ export const BuyerSettingsPage = () => {
       </div>
 
       {editingAddress && (
-        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in">
+        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
             <Card className="max-w-md w-full shadow-2xl border-none">
                 <CardHeader>
                     <CardTitle>Edit Address</CardTitle>
