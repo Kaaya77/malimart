@@ -259,6 +259,7 @@ const AppContent = () => {
               <Route path="/auth/reset" element={<ResetPasswordPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </Suspense>
           </motion.div>
         </AnimatePresence>
       </main>
