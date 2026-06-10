@@ -324,7 +324,7 @@ export const AdminMessages = ({ initialSelectedUser }: { initialSelectedUser?: {
  className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center font-sans font-bold text-lg shrink-0 overflow-hidden text-primary cursor-pointer border border-primary/20"
  onClick={(e) => { e.stopPropagation(); fetchUserProfile(u.id); }}
  >
- {u.avatar ? <img src={u.avatar} className="w-full h-full object-cover" loading="lazy" decoding="async"/> : u.name.slice(0,1).toUpperCase()}
+ {u.avatar ? <img src={u.avatar} alt={`${u.name} avatar`} className="w-full h-full object-cover" loading="lazy" decoding="async"/> : u.name.slice(0,1).toUpperCase()}
  </div>
  <div className="flex-1 min-w-0">
  <div className="flex justify-between items-baseline mb-1">
@@ -364,7 +364,7 @@ export const AdminMessages = ({ initialSelectedUser }: { initialSelectedUser?: {
  <button onClick={() => setSelectedChatUser(null)} className="md:hidden p-2 rounded-full border border-foreground/10 text-foreground hover:bg-foreground/5"><ChevronLeft className="w-5 h-5 stroke-[2]" /></button>
  <div className="flex items-center gap-4 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => fetchUserProfile(selectedChatUser)}>
  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center font-sans font-bold text-lg shrink-0 overflow-hidden text-primary border border-primary/20">
- {activeUserData?.avatar ? <img src={activeUserData.avatar} className="w-full h-full object-cover" loading="lazy" decoding="async"/> : activeUserData?.name.slice(0,1).toUpperCase()}
+ {activeUserData?.avatar ? <img src={activeUserData.avatar} alt={`${activeUserData?.name || 'User'} avatar`} className="w-full h-full object-cover" loading="lazy" decoding="async"/> : activeUserData?.name.slice(0,1).toUpperCase()}
  </div>
  <div className="flex flex-col">
  <p className="font-sans font-black text-xl text-foreground leading-none">{activeUserData?.name}</p>
