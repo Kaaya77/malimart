@@ -548,3 +548,8 @@ html, body {
   50%      { transform: rotate(3deg); }
 }
 .mali-sway { animation: mali-sway 3.2s ease-in-out infinite; transform-origin: bottom center; }
+
+/* Brand-colored text selection — a one-line signature most apps forget */
+::selection {
+  background: rgba(5, 150, 105, 0.25);
+}
