@@ -10,7 +10,13 @@ export default defineConfig(({ mode }) => {
   const pick = (k: string) =>
     env[k] || env['VITE_' + k] || process.env[k] || process.env['VITE_' + k] || '';
 
-  const GEMINI_API_KEY   = pick('GEMINI_API_KEY')   || 'AIzaSyCeVnbXNAuL8UiwIGWfYU4P-KUoWieKm64';
+  // SECURITY: GEMINI_API_KEY must come from env (Vercel → Settings → Environment
+  // Variables). The previous hardcoded fallback was committed to a public repo
+  // and must be treated as compromised — rotate it in Google AI Studio.
+  const GEMINI_API_KEY   = pick('GEMINI_API_KEY');
+  // The Supabase URL + anon key are public-by-design (shipped to every browser,
+  // protected by Row Level Security). Fallbacks kept so deploys keep working
+  // until the env vars are configured in Vercel — then these can be removed too.
   const SUPABASE_URL     = pick('SUPABASE_URL')     || 'https://ubpapxdmqlepynonhaeo.supabase.co';
   const SUPABASE_ANON_KEY = pick('SUPABASE_ANON_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVicGFweGRtcWxlcHlub25oYWVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU0ODU2NTQsImV4cCI6MjA4MTA2MTY1NH0.kjkY_jrvek-7pp2KWQytVzxxK9LL2SL1sPhsMLnGBSY';
 
@@ -38,9 +44,10 @@ export default defineConfig(({ mode }) => {
             '**/pdf-gen-*.js',
             '**/charts-*.js',
             '**/ai-sdk-*.js',
-            '**/ai-chat-*.js',
-            '**/seller-features-*.js',
-            '**/admin-features-*.js',
+            '**/AIChatAssistant-*.js',
+            '**/SellerPage-*.js',
+            '**/AdminPage-*.js',
+            '**/ProductEditPage-*.js',
           ],
           // Cache strategies per asset type
           runtimeCaching: [
@@ -115,6 +122,13 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: 'dist',
       sourcemap: false,
+      // Don't emit <link rel="modulepreload"> for heavy on-demand chunks —
+      // they'd force every first-time visitor to download ~1.7MB they may
+      // never use. Mirrors the service-worker globIgnores above.
+      modulePreload: {
+        resolveDependencies: (_url: string, deps: string[]) =>
+          deps.filter(d => !/(pdf-gen|charts|ai-sdk|AIChatAssistant|SellerPage|AdminPage|ProductEditPage)/.test(d)),
+      },
       // Target modern browsers — smaller output, no legacy polyfills
       target: 'es2020',
       // Minify with esbuild (10x faster than terser, nearly same size)
@@ -126,18 +140,37 @@ export default defineConfig(({ mode }) => {
         output: {
           // Granular manual chunks — keep initial load tiny
           manualChunks(id) {
+            // Vite's runtime helpers are virtual modules — without a pin,
+            // Rollup may host them inside ANY chunk. (__vitePreload landed
+            // inside pdf-gen, statically chaining 594KB to the entry.)
+            if (id.includes('vite/preload-helper') || id.includes('vite/modulepreload-polyfill') || id.includes('commonjsHelpers')) return 'react-core';
+
+            // Tiny shared utils used across many chunks — pin them to the core
+            // chunk so they never get trapped inside a heavy lazy chunk
+            // (clsx living inside `charts` was forcing the entry to import
+            // the whole 365KB chart bundle at startup).
+            if (/node_modules[\\/](clsx|use-sync-external-store|tslib|scheduler)[\\/]/.test(id)) return 'react-core';
+
             // Core React runtime — always needed
             if (id.includes('react-dom') || id.includes('react-router')) return 'react-core';
             if (id.includes('node_modules/react/')) return 'react-core';
 
-            // Heavy chart library — lazy loaded
-            if (id.includes('recharts') || id.includes('d3-')) return 'charts';
+            // Heavy chart library + its exclusive dependency family — lazy loaded.
+            // node_modules only: app files must never be captured here.
+            if (id.includes('node_modules') && (
+              id.includes('recharts') ||
+              /[\\/]d3-[a-z-]+[\\/]/.test(id) ||
+              /node_modules[\\/](react-redux|redux|redux-thunk|@reduxjs|immer|reselect|decimal\.js-light|es-toolkit|internmap|victory)/.test(id)
+            )) return 'charts';
 
             // PDF generation — only loaded when user downloads receipt
-            if (id.includes('jspdf') || id.includes('html2canvas')) return 'pdf-gen';
+            if (id.includes('node_modules') && (id.includes('jspdf') || id.includes('html2canvas'))) return 'pdf-gen';
 
-            // Gemini AI — only loaded when AI chat opens
-            if (id.includes('@google/genai') || id.includes('gemini')) return 'ai-sdk';
+            // Gemini AI SDK — only the npm package. (Matching the substring
+            // 'gemini' also captured services/geminiService.ts, statically
+            // chaining this 275KB chunk to the entry. App files stay with
+            // their lazy importers.)
+            if (id.includes('@google/genai')) return 'ai-sdk';
 
             // Supabase — deferred after auth check
             if (id.includes('@supabase/')) return 'supabase';
@@ -151,30 +184,12 @@ export default defineConfig(({ mode }) => {
             // DOMPurify — security, small
             if (id.includes('dompurify') || id.includes('purify')) return 'security-libs';
 
-            // Seller-only features — heavy, only sellers visit
-            if (
-              id.includes('SellerPage') ||
-              id.includes('SellerInventory') ||
-              id.includes('SellerAnalytics') ||
-              id.includes('AdvancedAnalytics') ||
-              id.includes('ProductForm') ||
-              id.includes('BulkEditModal') ||
-              id.includes('CSVImport') ||
-              id.includes('AutoDiscountModal')
-            ) return 'seller-features';
-
-            // Admin-only features
-            if (
-              id.includes('AdminPage') ||
-              id.includes('AdminAIHero') ||
-              id.includes('AdminGrowth') ||
-              id.includes('AdminModeration') ||
-              id.includes('AdminVendorVerification') ||
-              id.includes('SecurityMonitor')
-            ) return 'admin-features';
-
-            // AI chat — large, optional
-            if (id.includes('AIChatAssistant')) return 'ai-chat';
+            // NOTE: app files (Seller*, Admin*, AIChatAssistant, …) are NOT
+            // manually grouped. Rollup already creates a chunk per lazy route
+            // (SellerPage-*, AdminPage-*, AIChatAssistant-*). Forcing app
+            // files into named chunks let Rollup host SHARED modules (the
+            // supabase client, AppContext, UI kit) inside `seller-features`,
+            // which made the entry statically depend on the whole 375KB chunk.
           },
         },
       },

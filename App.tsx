@@ -1,7 +1,7 @@
 import { useWebVitals } from './src/hooks/usePerformance';
 import { detectAnomaly, getCsrfToken } from './src/security';
 import React, { ReactNode, useEffect, useState, PropsWithChildren, Suspense, lazy } from 'react';
-import { MemoryRouter as Router, Routes, Route, Navigate, useLocation, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, Link } from 'react-router-dom';
 import { 
   Twitter, Github, Youtube, Figma, MapPin, Phone, Mail, Loader2, 
   ArrowUpRight, ArrowRight, Instagram, Linkedin, ShieldCheck, Globe, Zap,
@@ -13,7 +13,6 @@ import { SocketProvider } from './src/context/SocketContext';
 import { ToastProvider, ErrorBoundary, Button, Input } from './components/UI';
 import { Navbar, MobileBottomNav } from './components/Navbar';
 import { Footer } from './components/Footer';
-import { AIChatAssistant } from './components/AIChatAssistant';
 import { Magnetic } from './components/Effects';
 
 // Lazy Page Imports
@@ -38,6 +37,30 @@ const CategoriesPage = lazy(() => import('./pages/CategoriesPage').then(m => ({ 
 const MessagesPage = lazy(() => import('./pages/MessagesPage').then(m => ({ default: m.MessagesPage })));
 const AdminPage = lazy(() => import('./pages/AdminPage').then(m => ({ default: m.AdminPage })));
 const StaticPage = lazy(() => import('./pages/StaticPage').then(m => ({ default: m.StaticPage })));
+
+// AI chat loads lazily AFTER the page is idle — keeps @google/genai (~330KB)
+// out of the critical path. The FAB appears within a couple of seconds.
+const AIChatAssistant = lazy(() => import('./components/AIChatAssistant').then(m => ({ default: m.AIChatAssistant })));
+
+const DeferredAIChat = () => {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const start = () => setReady(true);
+    const w = window as any;
+    if (typeof w.requestIdleCallback === 'function') {
+      const id = w.requestIdleCallback(start, { timeout: 4000 });
+      return () => w.cancelIdleCallback?.(id);
+    }
+    const t = setTimeout(start, 2500);
+    return () => clearTimeout(t);
+  }, []);
+  if (!ready) return null;
+  return (
+    <Suspense fallback={null}>
+      <AIChatAssistant />
+    </Suspense>
+  );
+};
 
 // --- SCROLL TO TOP COMPONENT ---
 const ScrollToTop = () => {
@@ -213,7 +236,7 @@ const AppContent = () => {
       <ScrollProgress />
       <Navbar />
       <MobileBottomNav />
-      <AIChatAssistant />
+      <DeferredAIChat />
       <BackToTop />
       
       <main className="flex-1 relative">
