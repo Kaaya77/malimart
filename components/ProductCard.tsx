@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Product } from '../types';
-import { useAppState } from '../context/AppContext';
+import { useCart, useCatalog } from '../context/AppContext';
 import { useToast } from './UI';
 import { ProductCardImage } from './product-card/ProductCardImage';
 import { ProductCardContent } from './product-card/ProductCardContent';
@@ -39,11 +39,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
  layout = 'grid',
  index = 0,
 }) => {
- const { addToCart } = useAppState();
+ const { addToCart } = useCart();
  const navigate = useNavigate();
  const { addToast } = useToast();
 
- const { isInWishlist } = useAppState();
+ const { isInWishlist } = useCatalog();
  const isLiked = isInWishlist(product.id);
 
  const [isHovered, setIsHovered] = useState(false);

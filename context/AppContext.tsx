@@ -101,6 +101,41 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+// ============================================================
+// Slice types — AppContextType is the union of all four, so the
+// legacy merged context stays type-identical.
+// ============================================================
+type AuthSlice = Pick<AppContextType,
+    'user' | 'setUser' | 'isLoading' | 'isDark' | 'vendorProfile' | 'addresses' | 'walletTransactions' |
+    'activityLogs' | 'paymentMethods' | 'connectedAccounts' | 'loginHistory' | 'staffAccounts' |
+    'shippingZones' | 'blockedUsers' | 'toggleTheme' | 'blockUser' | 'unblockUser' | 'logout' |
+    'updateUserProfile' | 'deleteAccount' | 'addAddress' | 'deleteAddress' | 'updateAddress' |
+    'fetchVendorProfile' | 'updateVendorProfile' | 'logActivity'>;
+
+type CatalogSlice = Pick<AppContextType,
+    'products' | 'categories' | 'offers' | 'trustBadges' | 'socialPosts' | 'followers' |
+    'recentlyViewed' | 'wishlist' | 'toggleWishlist' | 'isInWishlist' | 'followSeller' |
+    'unfollowSeller' | 'isFollowing' | 'refreshProducts' | 'addToRecentlyViewed' | 'addReview' |
+    'fetchReviews' | 'getActiveOfferForProduct' | 'interactWithPost' | 'refreshWishlist'>;
+
+type CartSlice = Pick<AppContextType,
+    'cart' | 'isCartOpen' | 'orders' | 'payments' | 'shipments' | 'buyerReturns' |
+    'addToCart' | 'removeFromCart' | 'updateQuantity' | 'clearCart' | 'openCart' | 'closeCart' |
+    'placeOrder' | 'updateOrderStatus' | 'cancelOrder' | 'deleteOrder' | 'requestReturn' |
+    'addOrderNote' | 'fetchOrderDetails' | 'refreshCart' | 'refreshBuyerReturns'>;
+
+type CommsSlice = Pick<AppContextType,
+    'notifications' | 'unreadMessages' | 'preloadedMessages' | 'sellerInventory' | 'sellerOrders' |
+    'sellerOffers' | 'sellerStats' | 'notify' | 'fetchMessages' | 'markMessagesAsRead' |
+    'sendMessage' | 'deleteMessage' | 'softDeleteMessage' | 'reportUser' | 'addReaction' |
+    'removeReaction' | 'markNotificationRead' | 'markAllNotificationsRead' | 'dismissNotification' |
+    'refreshNotifications' | 'refreshSellerData'>;
+
+const AuthContext = createContext<AuthSlice | undefined>(undefined);
+const CatalogContext = createContext<CatalogSlice | undefined>(undefined);
+const CartContext = createContext<CartSlice | undefined>(undefined);
+const CommsContext = createContext<CommsSlice | undefined>(undefined);
+
 export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -1424,60 +1459,107 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         if (profile) await applyDashboardRpc(user.email, { ...user, ...profile });
     }, [user, applyDashboardRpc]);
 
-    const value: AppContextType = useMemo(() => ({
-        user, setUser, isLoading, products, categories, cart, wishlist, orders, notifications, unreadMessages, addresses, walletTransactions, activityLogs, offers, payments, shipments, trustBadges, socialPosts, followers, isDark, vendorProfile, paymentMethods, connectedAccounts, loginHistory, staffAccounts, shippingZones, isCartOpen, blockedUsers, recentlyViewed, sellerInventory, sellerOrders, sellerOffers, sellerStats, buyerReturns, preloadedMessages,
-        toggleTheme,
-        blockUser,
-        unblockUser,
-        logout,
-        notify,
-        addToCart, removeFromCart, updateQuantity, clearCart,
-        openCart, closeCart,
-        toggleWishlist, isInWishlist: (pid: string) => wishlist.some(p => p.id === pid),
-        followSeller, unfollowSeller, isFollowing,
-        refreshProducts: async () => { invalidatePrefix('public:'); await fetchPublicData(); },
-        refreshSellerData: async () => { if (user) await fetchSellerData(user.id, true); },
-        refreshBuyerReturns: async () => { if (user) await fetchBuyerReturns(user.id, true); }, 
-        refreshNotifications,
-        refreshWishlist,
-        refreshCart,
-        placeOrder,
-        updateOrderStatus,
-        cancelOrder,
-        deleteOrder,
-        fetchVendorProfile, addAddress, 
-        deleteAddress,
-        updateAddress,
-        updateUserProfile,
-        deleteAccount,
-        fetchMessages, markMessagesAsRead, sendMessage, deleteMessage,
-        softDeleteMessage,
-        reportUser,
-        addReaction,
-        removeReaction,
-        markNotificationRead,
-        markAllNotificationsRead,
-        dismissNotification,
-        getActiveOfferForProduct,
-        logActivity,
-        requestReturn,
-        addOrderNote,
-        fetchOrderDetails,
-        interactWithPost,
-        updateVendorProfile,
-        addToRecentlyViewed,
-        addReview,
-        fetchReviews
-    }), [
-        user, isLoading, products, categories, cart, wishlist, orders, notifications, unreadMessages, addresses, walletTransactions, activityLogs, offers, payments, shipments, trustBadges, socialPosts, followers, isDark, vendorProfile, paymentMethods, connectedAccounts, loginHistory, staffAccounts, shippingZones, isCartOpen, blockedUsers, recentlyViewed,
-        toggleTheme, blockUser, unblockUser, logout, notify, addToCart, removeFromCart, updateQuantity, clearCart, openCart, closeCart, toggleWishlist, followSeller, unfollowSeller, isFollowing, fetchPublicData, refreshNotifications, refreshWishlist, refreshCart, placeOrder, updateOrderStatus, cancelOrder, deleteOrder, fetchVendorProfile, addAddress, deleteAddress, updateAddress, updateUserProfile, deleteAccount, fetchMessages, markMessagesAsRead, sendMessage, deleteMessage, softDeleteMessage, reportUser, addReaction, removeReaction, markNotificationRead, markAllNotificationsRead, dismissNotification, getActiveOfferForProduct, logActivity, requestReturn, addOrderNote, fetchOrderDetails, interactWithPost, updateVendorProfile, addToRecentlyViewed, addReview, fetchReviews, fetchSellerData, fetchBuyerReturns, sellerInventory, sellerOrders, sellerOffers, sellerStats, buyerReturns, preloadedMessages
-    ]);
+    // Stable wrappers for previously-inline functions
+    const isInWishlist = useCallback((pid: string) => wishlist.some(p => p.id === pid), [wishlist]);
+    const refreshProducts = useCallback(async () => { invalidatePrefix('public:'); await fetchPublicData(); }, [fetchPublicData]);
+    const refreshSellerData = useCallback(async () => { if (user) await fetchSellerData(user.id, true); }, [user, fetchSellerData]);
+    const refreshBuyerReturns = useCallback(async () => { if (user) await fetchBuyerReturns(user.id, true); }, [user, fetchBuyerReturns]);
 
-    return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+    // ============================================================
+    // SLICED CONTEXTS — each memoized independently so consumers
+    // only re-render when their slice changes. useAppState() still
+    // works (merges all slices) for backward compatibility.
+    // ============================================================
+
+    const authValue: AuthSlice = useMemo(() => ({
+        user, setUser, isLoading, isDark, vendorProfile, addresses, walletTransactions, activityLogs,
+        paymentMethods, connectedAccounts, loginHistory, staffAccounts, shippingZones, blockedUsers,
+        toggleTheme, blockUser, unblockUser, logout, updateUserProfile, deleteAccount,
+        addAddress, deleteAddress, updateAddress, fetchVendorProfile, updateVendorProfile, logActivity,
+    }), [user, isLoading, isDark, vendorProfile, addresses, walletTransactions, activityLogs,
+        paymentMethods, connectedAccounts, loginHistory, staffAccounts, shippingZones, blockedUsers,
+        toggleTheme, blockUser, unblockUser, logout, updateUserProfile, deleteAccount,
+        addAddress, deleteAddress, updateAddress, fetchVendorProfile, updateVendorProfile, logActivity]);
+
+    const catalogValue: CatalogSlice = useMemo(() => ({
+        products, categories, offers, trustBadges, socialPosts, followers, recentlyViewed, wishlist,
+        toggleWishlist, isInWishlist, followSeller, unfollowSeller, isFollowing, refreshProducts,
+        addToRecentlyViewed, addReview, fetchReviews, getActiveOfferForProduct, interactWithPost, refreshWishlist,
+    }), [products, categories, offers, trustBadges, socialPosts, followers, recentlyViewed, wishlist,
+        toggleWishlist, isInWishlist, followSeller, unfollowSeller, isFollowing, refreshProducts,
+        addToRecentlyViewed, addReview, fetchReviews, getActiveOfferForProduct, interactWithPost, refreshWishlist]);
+
+    const cartValue: CartSlice = useMemo(() => ({
+        cart, isCartOpen, orders, payments, shipments, buyerReturns,
+        addToCart, removeFromCart, updateQuantity, clearCart, openCart, closeCart,
+        placeOrder, updateOrderStatus, cancelOrder, deleteOrder,
+        requestReturn, addOrderNote, fetchOrderDetails, refreshCart, refreshBuyerReturns,
+    }), [cart, isCartOpen, orders, payments, shipments, buyerReturns,
+        addToCart, removeFromCart, updateQuantity, clearCart, openCart, closeCart,
+        placeOrder, updateOrderStatus, cancelOrder, deleteOrder,
+        requestReturn, addOrderNote, fetchOrderDetails, refreshCart, refreshBuyerReturns]);
+
+    const commsValue: CommsSlice = useMemo(() => ({
+        notifications, unreadMessages, preloadedMessages,
+        sellerInventory, sellerOrders, sellerOffers, sellerStats,
+        notify, fetchMessages, markMessagesAsRead, sendMessage, deleteMessage, softDeleteMessage,
+        reportUser, addReaction, removeReaction,
+        markNotificationRead, markAllNotificationsRead, dismissNotification,
+        refreshNotifications, refreshSellerData,
+    }), [notifications, unreadMessages, preloadedMessages,
+        sellerInventory, sellerOrders, sellerOffers, sellerStats,
+        notify, fetchMessages, markMessagesAsRead, sendMessage, deleteMessage, softDeleteMessage,
+        reportUser, addReaction, removeReaction,
+        markNotificationRead, markAllNotificationsRead, dismissNotification,
+        refreshNotifications, refreshSellerData]);
+
+    // Legacy merged value — changes when any slice changes (same behavior
+    // as before the split). Existing useAppState() consumers keep working;
+    // migrate hot components to the slice hooks for re-render wins.
+    const value: AppContextType = useMemo(() => ({
+        ...authValue, ...catalogValue, ...cartValue, ...commsValue,
+    }), [authValue, catalogValue, cartValue, commsValue]);
+
+    return (
+        <AuthContext.Provider value={authValue}>
+            <CatalogContext.Provider value={catalogValue}>
+                <CartContext.Provider value={cartValue}>
+                    <CommsContext.Provider value={commsValue}>
+                        <AppContext.Provider value={value}>{children}</AppContext.Provider>
+                    </CommsContext.Provider>
+                </CartContext.Provider>
+            </CatalogContext.Provider>
+        </AuthContext.Provider>
+    );
 };
 
 export const useAppState = () => {
     const context = useContext(AppContext);
     if (!context) throw new Error("useAppState must be used within AppStateProvider");
     return context;
+};
+
+// ============================================================
+// Focused hooks — subscribe only to one slice. Prefer these in
+// components: they avoid re-renders from unrelated state.
+// ============================================================
+export const useAuth = () => {
+    const ctx = useContext(AuthContext);
+    if (!ctx) throw new Error("useAuth must be used within AppStateProvider");
+    return ctx;
+};
+export const useCatalog = () => {
+    const ctx = useContext(CatalogContext);
+    if (!ctx) throw new Error("useCatalog must be used within AppStateProvider");
+    return ctx;
+};
+export const useCart = () => {
+    const ctx = useContext(CartContext);
+    if (!ctx) throw new Error("useCart must be used within AppStateProvider");
+    return ctx;
+};
+export const useComms = () => {
+    const ctx = useContext(CommsContext);
+    if (!ctx) throw new Error("useComms must be used within AppStateProvider");
+    return ctx;
 };

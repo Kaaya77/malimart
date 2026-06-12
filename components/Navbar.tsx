@@ -9,7 +9,7 @@ import {
  ChevronRight, Info, ArrowRight, Zap,
  Package, Settings, ShieldAlert
 } from 'lucide-react';
-import { useAppState } from '../context/AppContext';
+import { useAuth, useCart, useComms, useCatalog } from '../context/AppContext';
 import { supabase } from '../services/supabaseClient';
 import { SearchModal } from './SearchModal';
 import { UserMenu } from './UserMenu';
@@ -265,7 +265,10 @@ const MobileDrawer = ({ open, onClose, user, logout, isDark, toggleDark, notific
 
 // ─── Main Navbar ─────────────────────────────────────────────────────────────
 export const Navbar = () => {
- const { cart, user, setUser, notifications, unreadMessages, categories } = useAppState();
+ const { user, setUser } = useAuth();
+ const { cart } = useCart();
+ const { notifications, unreadMessages } = useComms();
+ const { categories } = useCatalog();
  const navigate = useNavigate();
  const location = useLocation();
  const { isDark, toggle: toggleDark } = useDarkMode();
@@ -420,7 +423,9 @@ export const Navbar = () => {
 
 // ─── Mobile bottom nav ────────────────────────────────────────────────────────
 export const MobileBottomNav = () => {
- const { user, cart, notifications } = useAppState();
+ const { user } = useAuth();
+ const { cart } = useCart();
+ const { notifications } = useComms();
  const navigate = useNavigate();
  const location = useLocation();
  const cartCount = cart.reduce((a,i)=>a+(i.quantity||1),0);

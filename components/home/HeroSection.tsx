@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { ArrowRight, ShoppingBag, Star, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useAppState } from '../../context/AppContext';
+import { useCatalog } from '../../context/AppContext';
 import { Product } from '../../types';
 import { CURRENCY } from '../../constants';
 
@@ -164,7 +164,7 @@ export const HeroSection = ({
   greeting,
 }: HeroSectionProps) => {
   const navigate = useNavigate();
-  const { products } = useAppState();
+  const { products } = useCatalog();
   const [activeIdx, setActiveIdx] = useState(0);
   const dragStartX = useRef(0);
 
