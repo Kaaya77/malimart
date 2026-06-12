@@ -21,6 +21,18 @@ import { AdminVendorVerification } from '../components/AdminVendorVerification';
 import { AdminMessages } from '../components/AdminMessages';
 import { AdminAIHero } from '../components/AdminAIHero';
 import { analyzeDispute } from '../services/geminiService';
+import { AdminCtx } from './admin/context';
+import { OverviewTab } from './admin/OverviewTab';
+import { UsersTab } from './admin/UsersTab';
+import { ProductsTab } from './admin/ProductsTab';
+import { VendorsTab } from './admin/VendorsTab';
+import { DisputesTab } from './admin/DisputesTab';
+import { PayoutsTab } from './admin/PayoutsTab';
+import { SettingsTab } from './admin/SettingsTab';
+import { ModerationTab } from './admin/ModerationTab';
+import { GrowthTab } from './admin/GrowthTab';
+import { MessagesTab } from './admin/MessagesTab';
+
 
 // Revenue data loaded from DB via fetchAdminData
 
@@ -316,8 +328,12 @@ export const AdminPage = () => {
     if (user.role !== 'admin') {
         return <Navigate to="/" replace />;
     }
+  const __ctx = { addToast, confirmDeleteUser, disputes, fetchAdminData, filteredProducts, filteredUsers, handleAnalyzeDispute, handleApprovePayout, handleMessageUser, handleResolveDispute, handleSaveSettings, handleToggleProductStatus, handleToggleUserBan, name, payouts, platformSettings, productSearch, products, selectedMessageUser, setActiveTab, setPlatformSettings, setProductSearch, setUserSearch, stats, status, userSearch, vendorsList };
+
 
     return (
+  <AdminCtx.Provider value={__ctx}>
+
         <div className="min-h-screen bg-background dark:bg-background font-sans pb-20 pt-28 px-4 md:px-8 selection:bg-primary selection:text-white dark:selection:bg-white dark:selection:text-black">
             <div className="container mx-auto max-w-7xl">
                 <motion.div 
@@ -410,560 +426,29 @@ export const AdminPage = () => {
                     >
                         
                         {/* OVERVIEW TAB */}
-                        {activeTab === 'overview' && (
-                            <AdminDashboard
-                                initialStats={stats}
-                                onGoUsers={()=>setActiveTab('users')}
-                                onGoVendors={()=>setActiveTab('vendors')}
-                                onGoProducts={()=>setActiveTab('products')}
-                                onGoDisputes={()=>setActiveTab('disputes')}
-                                onGoPayouts={()=>setActiveTab('payouts')}
-                                onGoGrowth={()=>setActiveTab('growth')}
-                            />
-                        )}
+                        {activeTab === 'overview' && <OverviewTab />}
 
                          {/* USERS TAB */}
-                        {activeTab === 'users' && (
-                            <motion.div 
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.5 }}
-                                className="bg-card rounded-3xl border border-border overflow-hidden shadow-sm"
-                            >
-                                <div className="p-8 border-b border-border flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                                    <h3 className="font-sans font-bold text-lg tracking-tight">User Directory</h3>
-                                    <div className="relative w-full md:w-72">
-                                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground stroke-2" />
-                                        <input 
-                                            type="text" 
-                                            placeholder="SEARCH USERS..." 
-                                            value={userSearch}
-                                            onChange={(e) => setUserSearch(e.target.value)}
-                                            className="w-full bg-muted/30 border-none rounded-2xl py-3 pl-12 pr-4 text-xs font-bold uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground" 
-                                        />
-                                    </div>
-                                </div>
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-left">
-                                        <thead className="bg-muted/50 text-[10px] uppercase font-bold tracking-wider text-muted-foreground border-b border-border">
-                                            <tr>
-                                                <th className="p-6 font-sans">User</th>
-                                                <th className="p-6 font-sans">Role</th>
-                                                <th className="p-6 font-sans">Joined</th>
-                                                <th className="p-6 font-sans text-right">Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-border">
-                                            {filteredUsers.map((u, index) => (
-                                                <motion.tr 
-                                                    key={u.id} 
-                                                    initial={{ opacity: 0, y: 10 }}
-                                                    animate={{ opacity: 1, y: 0 }}
-                                                    transition={{ delay: index * 0.05 }}
-                                                    className="hover:bg-muted/30 transition-colors"
-                                                >
-                                                    <td className="p-6">
-                                                        <p className="font-sans font-bold text-sm text-foreground">{u.full_name || 'Unknown'}</p>
-                                                        <p className="text-xs text-muted-foreground mt-1">{u.email}</p>
-                                                    </td>
-                                                    <td className="p-6 flex items-center gap-2">
-                                                        <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-wider rounded-full shadow-sm">
-                                                            {u.role}
-                                                        </Badge>
-                                                        {u.is_banned && (
-                                                            <Badge variant="destructive" className="text-[10px] font-bold uppercase tracking-wider rounded-full shadow-sm">
-                                                                Banned
-                                                            </Badge>
-                                                        )}
-                                                    </td>
-                                                    <td className="p-6 text-xs font-medium text-muted-foreground">{new Date(u.created_at).toLocaleDateString()}</td>
-                                                    <td className="p-6 text-right flex justify-end gap-2">
-                                                        {u.role !== 'admin' && (
-                                                            <div className="flex gap-2">
-                                                                <Button 
-                                                                    variant="outline"
-                                                                    size="icon"
-                                                                    className="h-8 w-8 rounded-xl bg-card border-border shadow-sm hover:shadow-md transition-all"
-                                                                    onClick={() => handleMessageUser(u.id, u.full_name)}
-                                                                    title="Message User"
-                                                                >
-                                                                    <MessageSquare className="w-4 h-4 text-foreground/70" />
-                                                                </Button>
-                                                                
-                                                                <Button 
-                                                                    variant="outline"
-                                                                    size="icon"
-                                                                    className="h-8 w-8 rounded-xl bg-card border-border shadow-sm hover:shadow-md transition-all"
-                                                                    onClick={() => {
-                                                                        const newRole = u.role === 'seller' ? 'buyer' : 'seller';
-                                                                        supabase.from('profiles').update({ role: newRole }).eq('id', u.id).then(() => {
-                                                                            addToast(`User ${newRole === 'seller' ? 'promoted to seller' : 'demoted to buyer'}`, "success");
-                                                                            fetchAdminData();
-                                                                        });
-                                                                    }}
-                                                                    title={u.role === 'seller' ? 'Demote to Buyer' : 'Promote to Seller'}
-                                                                >
-                                                                    {u.role === 'seller' ? <ArrowDownCircle className="w-4 h-4 text-foreground/70" /> : <ArrowUpCircle className="w-4 h-4 text-foreground/70" />}
-                                                                </Button>
-
-                                                                <Button 
-                                                                    variant={u.is_banned ? "default" : "outline"}
-                                                                    size="icon"
-                                                                    className={`h-8 w-8 rounded-xl shadow-sm hover:shadow-md transition-all ${u.is_banned ? 'bg-primary text-white' : 'bg-card border-border'}`}
-                                                                    onClick={() => handleToggleUserBan(u.id, u.is_banned)}
-                                                                    title={u.is_banned ? 'Unban User' : 'Ban User'}
-                                                                >
-                                                                    {u.is_banned ? <Unlock className="w-4 h-4"/> : <Lock className="w-4 h-4 text-foreground/70"/>}
-                                                                </Button>
-
-                                                                <Button 
-                                                                    variant="outline"
-                                                                    size="icon"
-                                                                    className="h-8 w-8 rounded-xl bg-card border-destructive/20 text-destructive hover:bg-destructive hover:text-destructive-foreground shadow-sm hover:shadow-md transition-all"
-                                                                    onClick={() => confirmDeleteUser(u.id)}
-                                                                    title="Delete User"
-                                                                >
-                                                                    <Trash2 className="w-4 h-4" />
-                                                                </Button>
-                                                            </div>
-                                                        )}
-                                                    </td>
-                                                </motion.tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </motion.div>
-                        )}
+                        {activeTab === 'users' && <UsersTab />}
 
                         {/* PRODUCTS TAB */}
-                        {activeTab === 'products' && (
-                            <motion.div 
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.5 }}
-                                className="bg-card rounded-3xl border border-border overflow-hidden shadow-sm"
-                            >
-                                <div className="p-8 border-b border-border flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                                    <h3 className="font-sans font-bold text-lg tracking-tight">Product Moderation</h3>
-                                    <div className="relative w-full md:w-72">
-                                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground stroke-2" />
-                                        <input 
-                                            type="text" 
-                                            placeholder="SEARCH PRODUCTS..." 
-                                            value={productSearch}
-                                            onChange={(e) => setProductSearch(e.target.value)}
-                                            className="w-full bg-muted/30 border-none rounded-2xl py-3 pl-12 pr-4 text-xs font-bold uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground" 
-                                        />
-                                    </div>
-                                </div>
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-left">
-                                        <thead className="bg-muted/50 text-[10px] uppercase font-bold tracking-wider text-muted-foreground border-b border-border">
-                                            <tr>
-                                                <th className="p-6 font-sans">Product</th>
-                                                <th className="p-6 font-sans">Seller</th>
-                                                <th className="p-6 font-sans">Price</th>
-                                                <th className="p-6 font-sans">Status</th>
-                                                <th className="p-6 font-sans text-right">Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-border">
-                                            {filteredProducts.map((p, index) => (
-                                                <motion.tr 
-                                                    key={p.id} 
-                                                    initial={{ opacity: 0, y: 10 }}
-                                                    animate={{ opacity: 1, y: 0 }}
-                                                    transition={{ delay: index * 0.05 }}
-                                                    className="hover:bg-muted/30 transition-colors"
-                                                >
-                                                    <td className="p-6">
-                                                        <div className="flex items-center gap-4">
-                                                            <div className="w-12 h-16 bg-muted/50 rounded-xl overflow-hidden border border-border shadow-sm flex items-center justify-center">
-                                                                {p.images && p.images[0] ? (
-                                                                    <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover" />
-                                                                ) : (
-                                                                    <Package className="w-5 h-5 text-muted-foreground stroke-2" />
-                                                                )}
-                                                            </div>
-                                                            <div>
-                                                                <p className="font-sans font-bold text-sm text-foreground line-clamp-1">{p.name}</p>
-                                                                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mt-1">{p.category}</p>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td className="p-6 text-xs font-bold text-foreground">{p.profiles?.full_name || 'Unknown'}</td>
-                                                    <td className="p-6 font-mono font-medium text-foreground">{formatTZS(p.price)}</td>
-                                                    <td className="p-6">
-                                                        <Badge variant={p.status === 'active' ? 'secondary' : 'outline'} className="text-[10px] font-bold uppercase tracking-wider rounded-full shadow-sm">
-                                                            {p.status}
-                                                        </Badge>
-                                                    </td>
-                                                    <td className="p-6 text-right flex justify-end gap-2">
-                                                        <Button 
-                                                            variant="outline"
-                                                            size="icon"
-                                                            className="h-8 w-8 rounded-xl bg-card border-border shadow-sm hover:shadow-md transition-all"
-                                                            onClick={() => handleMessageUser(p.seller_id, p.profiles?.full_name || 'Seller', { type: 'support', label: p.name, id: p.id })}
-                                                            title="Message Seller"
-                                                        >
-                                                            <MessageSquare className="w-4 h-4 text-foreground/70" />
-                                                        </Button>
-                                                        <Button 
-                                                            variant={p.status === 'active' ? 'outline' : 'default'}
-                                                            size="sm"
-                                                            className={`h-8 px-4 text-[10px] font-bold uppercase tracking-wider rounded-xl shadow-sm hover:shadow-md transition-all ${p.status === 'active' ? 'border-destructive/20 text-destructive hover:bg-destructive hover:text-destructive-foreground' : ''}`}
-                                                            onClick={() => handleToggleProductStatus(p.id, p.status)}
-                                                        >
-                                                            {p.status === 'active' ? 'Take Down' : 'Restore'}
-                                                        </Button>
-                                                    </td>
-                                                </motion.tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </motion.div>
-                        )}
+                        {activeTab === 'products' && <ProductsTab />}
 
                         {/* VENDORS TAB */}
-                        {activeTab === 'vendors' && (
-                            <motion.div 
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.5 }}
-                                className="space-y-6"
-                            >
-                                {vendorsList.length === 0 ? (
-                                    <div className="text-center p-12 bg-card rounded-3xl border border-border shadow-sm">
-                                        <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-6">
-                                            <ShieldCheck className="w-8 h-8 text-muted-foreground stroke-2" />
-                                        </div>
-                                        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">No vendors found</p>
-                                    </div>
-                                ) : vendorsList.map(vendor => (
-                                    <AdminVendorVerification key={vendor.seller_id} vendor={vendor} onUpdate={fetchAdminData} onMessage={handleMessageUser} />
-                                ))}
-                            </motion.div>
-                        )}
+                        {activeTab === 'vendors' && <VendorsTab />}
 
                         {/* DISPUTES TAB */}
-                        {activeTab === 'disputes' && (
-                            <motion.div 
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.5 }}
-                                className="space-y-12"
-                            >
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    <PremiumStatCard 
-                                        title="Active Disputes" 
-                                        value={disputes.length} 
-                                        icon={AlertTriangle} 
-                                        color="text-rose-600"
-                                        trend={{ value: "Action Required", positive: false }}
-                                    />
-                                    <PremiumStatCard 
-                                        title="Avg. Resolution" 
-                                        value="2.4 Days" 
-                                        icon={Activity} 
-                                        color="text-blue-600"
-                                    />
-                                    <PremiumStatCard 
-                                        title="Resolved (MTD)" 
-                                        value="142" 
-                                        icon={CheckCircle2} 
-                                        color="text-emerald-600"
-                                    />
-                                </div>
-
-                                <div className="space-y-8">
-                                    <div className="flex items-center justify-between pb-6">
-                                        <h3 className="font-sans font-bold text-2xl tracking-tight">Pending Resolutions</h3>
-                                        <div className="flex gap-2">
-                                            <Button variant="outline" size="sm" onClick={() => {
-                                                if (!disputes.length) { addToast('No disputes to export', 'info'); return; }
-                                                const esc = (v: any) => `"${String(v ?? '').replace(/"/g, '""')}"`;
-                                                const rows = [
-                                                    ['ID', 'Order ID', 'Buyer ID', 'Seller ID', 'Reason', 'Status', 'Description', 'Created At'].join(','),
-                                                    ...disputes.map(d => [d.id, d.order_id, d.buyer_id, d.seller_id, d.reason, d.status, d.description, d.created_at].map(esc).join(','))
-                                                ].join('\n');
-                                                const blob = new Blob([rows], { type: 'text/csv;charset=utf-8;' });
-                                                const url = URL.createObjectURL(blob);
-                                                const a = document.createElement('a');
-                                                a.href = url; a.download = `disputes-${new Date().toISOString().slice(0,10)}.csv`;
-                                                a.click(); URL.revokeObjectURL(url);
-                                                addToast('Disputes exported', 'success');
-                                            }} className="text-[10px] font-bold uppercase tracking-wider rounded-xl">Export CSV</Button>
-                                        </div>
-                                    </div>
-
-                                    {disputes.length === 0 ? (
-                                        <div className="text-center p-12 bg-card rounded-3xl border border-border shadow-sm">
-                                            <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-6">
-                                                <CheckCircle2 className="w-8 h-8 text-muted-foreground stroke-2" />
-                                            </div>
-                                            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">All clear. No active disputes.</p>
-                                        </div>
-                                    ) : (
-                                        <div className="grid grid-cols-1 gap-6">
-                                            {disputes.map(dispute => (
-                                                <div key={dispute.id} className="group relative bg-card rounded-3xl border border-border p-8 overflow-hidden transition-all shadow-sm hover:shadow-md">
-                                                    
-                                                    <div className="relative z-10 flex flex-col lg:flex-row justify-between gap-8">
-                                                        <div className="flex-1 space-y-6">
-                                                            <div className="flex flex-wrap items-center gap-3">
-                                                                <Badge variant="secondary" className="px-3 py-1 font-bold text-xs rounded-full shadow-sm">
-                                                                    Order #{dispute.order_id.slice(0,8)}
-                                                                </Badge>
-                                                                <Badge variant="destructive" className="px-3 py-1 font-bold text-[10px] uppercase tracking-wider rounded-full shadow-sm bg-destructive/10 text-destructive hover:bg-destructive/20 border-none">
-                                                                    High Priority
-                                                                </Badge>
-                                                            </div>
-
-                                                            <div className="space-y-2">
-                                                                <h4 className="text-2xl font-sans font-bold tracking-tight text-foreground">
-                                                                    {dispute.reason.replace(/_/g, ' ')}
-                                                                </h4>
-                                                                <div className="flex items-center gap-3 text-xs font-medium text-muted-foreground">
-                                                                    <span className="flex items-center gap-1.5"><Users className="w-4 h-4" /> Buyer: <span className="text-foreground">{dispute.profiles?.full_name}</span></span>
-                                                                    <span>â¢</span>
-                                                                    <span>Opened {new Date(dispute.created_at).toLocaleDateString()}</span>
-                                                                </div>
-                                                            </div>
-
-                                                            <div className="p-6 bg-muted/30 rounded-2xl border border-border text-sm text-foreground/80 leading-relaxed font-medium">
-                                                                "{dispute.description}"
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="lg:w-80 space-y-6">
-                                                            <div className="p-6 bg-muted/30 rounded-2xl border border-border">
-                                                                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Disputed Value</p>
-                                                                <p className="text-3xl font-mono font-bold text-destructive tracking-tight">{formatTZS(dispute.orders?.total)}</p>
-                                                            </div>
-
-                                                            <div className="grid grid-cols-2 gap-3">
-                                                                <Button 
-                                                                    variant="outline"
-                                                                    className="h-12 w-full rounded-xl text-[10px] font-bold uppercase tracking-wider"
-                                                                    onClick={() => handleAnalyzeDispute(dispute)}
-                                                                >
-                                                                    <Sparkles className="w-4 h-4 mr-2" /> AI Analyze
-                                                                </Button>
-                                                                <Button 
-                                                                    variant="outline"
-                                                                    className="h-12 w-full rounded-xl text-[10px] font-bold uppercase tracking-wider"
-                                                                    onClick={() => handleMessageUser(dispute.buyer_id, dispute.profiles?.full_name, { type: 'return', id: dispute.id, label: `Order #${dispute.order_id.slice(0,8)}` })}
-                                                                >
-                                                                    <MessageSquare className="w-4 h-4 mr-2" /> Message
-                                                                </Button>
-                                                                <Button 
-                                                                    variant="default"
-                                                                    className="col-span-2 h-12 w-full rounded-xl text-[10px] font-bold uppercase tracking-wider bg-emerald-600 hover:bg-emerald-700"
-                                                                    onClick={() => handleResolveDispute(dispute.id, dispute.order_id, 'release_funds')}
-                                                                >
-                                                                    Rule for Seller
-                                                                </Button>
-                                                                <Button 
-                                                                    variant="outline"
-                                                                    className="col-span-2 h-12 w-full rounded-xl text-[10px] font-bold uppercase tracking-wider border-destructive/20 text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                                                                    onClick={() => handleResolveDispute(dispute.id, dispute.order_id, 'refund_buyer')}
-                                                                >
-                                                                    Rule for Buyer (Refund)
-                                                                </Button>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            </motion.div>
-                        )}
+                        {activeTab === 'disputes' && <DisputesTab />}
 
                         {/* PAYOUTS TAB */}
-                        {activeTab === 'payouts' && (
-                            <motion.div 
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.5 }}
-                                className="space-y-6"
-                            >
-                                {payouts.length === 0 ? (
-                                    <div className="text-center p-12 bg-card rounded-3xl border border-border shadow-sm">
-                                        <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-6">
-                                            <DollarSign className="w-8 h-8 text-muted-foreground stroke-2" />
-                                        </div>
-                                        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">No pending payouts</p>
-                                    </div>
-                                ) : payouts.map(payout => (
-                                    <div key={payout.id} className="p-6 bg-card rounded-3xl border border-border shadow-sm flex flex-col md:flex-row justify-between items-center gap-6 transition-all hover:shadow-md">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center">
-                                                <DollarSign className="w-6 h-6 stroke-2" />
-                                            </div>
-                                            <div>
-                                                <p className="font-sans font-bold text-xl text-foreground tracking-tight">{formatTZS(payout.net_payout)}</p>
-                                                <p className="text-xs text-muted-foreground mt-1 font-medium">Requested by: <span className="text-foreground">{payout.profiles?.full_name}</span></p>
-                                            </div>
-                                        </div>
-                                        <Button 
-                                            variant="default"
-                                            className="w-full md:w-auto h-12 px-8 rounded-xl font-bold uppercase tracking-wider text-[10px] shadow-sm hover:shadow-md transition-all"
-                                            onClick={() => handleApprovePayout(payout.id)}
-                                        >
-                                            <CheckCircle2 className="w-4 h-4 mr-2" /> Mark as Paid
-                                        </Button>
-                                    </div>
-                                ))}
-                            </motion.div>
-                        )}
+                        {activeTab === 'payouts' && <PayoutsTab />}
 
                         {/* SETTINGS TAB */}
-                        {activeTab === 'settings' && (
-                            <motion.div 
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.5 }}
-                                className="space-y-8"
-                            >
-                                <div className="p-8 bg-card rounded-3xl border border-border shadow-sm">
-                                    <h3 className="font-sans font-bold text-2xl tracking-tight mb-8">Platform Configuration</h3>
-                                    
-                                    <div className="space-y-4">
-                                        <div className="flex items-center justify-between p-6 bg-muted/30 rounded-2xl border border-border">
-                                            <div>
-                                                <p className="font-sans font-bold text-base text-foreground">Maintenance Mode</p>
-                                                <p className="text-xs font-medium text-muted-foreground mt-1">Disable access for non-admin users</p>
-                                            </div>
-                                            <Switch 
-                                                checked={platformSettings.maintenanceMode} 
-                                                onCheckedChange={(c) => setPlatformSettings({...platformSettings, maintenanceMode: c})} 
-                                            />
-                                        </div>
+                        {activeTab === 'settings' && <SettingsTab />}
 
-                                        <div className="flex items-center justify-between p-6 bg-muted/30 rounded-2xl border border-border">
-                                            <div>
-                                                <p className="font-sans font-bold text-base text-foreground">Allow New Signups</p>
-                                                <p className="text-xs font-medium text-muted-foreground mt-1">Open registration for new buyers and sellers</p>
-                                            </div>
-                                            <Switch 
-                                                checked={platformSettings.newSignups} 
-                                                onCheckedChange={(c) => setPlatformSettings({...platformSettings, newSignups: c})} 
-                                            />
-                                        </div>
-
-                                        <div className="flex items-center justify-between p-6 bg-muted/30 rounded-2xl border border-border">
-                                            <div>
-                                                <p className="font-sans font-bold text-base text-foreground">Auto-Approve Vendors</p>
-                                                <p className="text-xs font-medium text-muted-foreground mt-1">Bypass manual verification for new stores</p>
-                                            </div>
-                                            <Switch 
-                                                checked={platformSettings.autoApproveVendors} 
-                                                onCheckedChange={(c) => setPlatformSettings({...platformSettings, autoApproveVendors: c})} 
-                                            />
-                                        </div>
-
-                                        <div className="flex items-center justify-between p-6 bg-muted/30 rounded-2xl border border-border">
-                                            <div>
-                                                <p className="font-sans font-bold text-base text-foreground">Require Vendor Verification</p>
-                                                <p className="text-xs font-medium text-muted-foreground mt-1">Mandatory KYC for new sellers</p>
-                                            </div>
-                                            <Switch 
-                                                checked={platformSettings.requireVendorVerification} 
-                                                onCheckedChange={(c) => setPlatformSettings({...platformSettings, requireVendorVerification: c})} 
-                                            />
-                                        </div>
-
-                                        <div className="flex items-center justify-between p-6 bg-muted/30 rounded-2xl border border-border">
-                                            <div>
-                                                <p className="font-sans font-bold text-base text-foreground">Enable Loyalty Program</p>
-                                                <p className="text-xs font-medium text-muted-foreground mt-1">Allow buyers to earn points</p>
-                                            </div>
-                                            <Switch 
-                                                checked={platformSettings.enableLoyaltyProgram} 
-                                                onCheckedChange={(c) => setPlatformSettings({...platformSettings, enableLoyaltyProgram: c})} 
-                                            />
-                                        </div>
-
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div className="p-6 bg-muted/30 rounded-2xl border border-border">
-                                                <label className="block font-sans font-bold text-sm text-foreground mb-1">Global Commission Rate (%)</label>
-                                                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-4">The percentage taken from every successful sale.</p>
-                                                <Input 
-                                                    type="number" 
-                                                    value={platformSettings.globalCommission} 
-                                                    onChange={(e: any) => setPlatformSettings({...platformSettings, globalCommission: Number(e.target.value)})}
-                                                    className="w-full bg-background border-border text-foreground rounded-xl focus-visible:ring-1 focus-visible:ring-primary shadow-sm"
-                                                />
-                                            </div>
-                                            <div className="p-6 bg-muted/30 rounded-2xl border border-border">
-                                                <label className="block font-sans font-bold text-sm text-foreground mb-1">Audit Log Retention (Days)</label>
-                                                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-4">How long to keep system activity logs.</p>
-                                                <Input 
-                                                    type="number" 
-                                                    value={platformSettings.auditRetentionDays} 
-                                                    onChange={(e: any) => setPlatformSettings({...platformSettings, auditRetentionDays: Number(e.target.value)})}
-                                                    className="w-full bg-background border-border text-foreground rounded-xl focus-visible:ring-1 focus-visible:ring-primary shadow-sm"
-                                                />
-                                            </div>
-                                            <div className="p-6 bg-muted/30 rounded-2xl border border-border">
-                                                <label className="block font-sans font-bold text-sm text-foreground mb-1">Max Products Per Vendor</label>
-                                                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-4">Limit the number of active products.</p>
-                                                <Input 
-                                                    type="number" 
-                                                    value={platformSettings.maxProductsPerVendor} 
-                                                    onChange={(e: any) => setPlatformSettings({...platformSettings, maxProductsPerVendor: Number(e.target.value)})}
-                                                    className="w-full bg-background border-border text-foreground rounded-xl focus-visible:ring-1 focus-visible:ring-primary shadow-sm"
-                                                />
-                                            </div>
-                                            <div className="p-6 bg-muted/30 rounded-2xl border border-border">
-                                                <label className="block font-sans font-bold text-sm text-foreground mb-1">Default Currency</label>
-                                                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-4">Base currency for the platform.</p>
-                                                <select 
-                                                    className="w-full h-10 bg-background border border-border rounded-xl px-3 text-sm font-medium text-foreground outline-none focus:ring-1 focus:ring-primary transition-colors shadow-sm"
-                                                    value={platformSettings.defaultCurrency}
-                                                    onChange={(e) => setPlatformSettings({...platformSettings, defaultCurrency: e.target.value})}
-                                                >
-                                                    <option value="TZS" className="bg-background">TZS</option>
-                                                    <option value="USD" className="bg-background">USD</option>
-                                                    <option value="KES" className="bg-background">KES</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="mt-8 flex justify-end">
-                                        <Button 
-                                            variant="default"
-                                            size="lg"
-                                            onClick={handleSaveSettings} 
-                                            className="h-12 px-8 rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-sm"
-                                        >
-                                            Save Configuration
-                                        </Button>
-                                    </div>
-                                </div>
-                            </motion.div>
-                        )}
-
-                        {activeTab === 'moderation' && (
-                            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-                                <AdminModeration />
-                            </motion.div>
-                        )}
-                        {activeTab === 'growth' && (
-                            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-                                <AdminGrowth />
-                            </motion.div>
-                        )}
-                        {activeTab === 'messages' && (
-                            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-                                <AdminMessages initialSelectedUser={selectedMessageUser} />
-                            </motion.div>
-                        )}
+                        {activeTab === 'moderation' && <ModerationTab />}
+                        {activeTab === 'growth' && <GrowthTab />}
+                        {activeTab === 'messages' && <MessagesTab />}
                         {activeTab === 'ai-hero' && (
                             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
                                 <AdminAIHero />
@@ -987,5 +472,6 @@ export const AdminPage = () => {
                 isDestructive={true}
             />
         </div>
+  </AdminCtx.Provider>
     );
 };
