@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { GoogleGenAI, LiveServerMessage, Modality } from '@google/genai';
 import { getAI, getLiveAI } from '../services/aiClient';
+import { MODELS } from '../services/aiModels';
 import { Button, Input, Card, Badge, useToast } from './UI';
 import { useAppState } from '../context/AppContext';
 import { CURRENCY } from '../constants';
@@ -285,7 +286,7 @@ export const AIChatAssistant = () => {
  // 3. Connect to Gemini Live
  const ai = await getLiveAI();
  const sessionPromise = ai.live.connect({
- model: 'gemini-2.5-flash-native-audio-preview-12-2025',
+ model: MODELS.LIVE_AUDIO,
  config: {
  responseModalities: [Modality.AUDIO],
  speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Zephyr' } } },
@@ -379,7 +380,7 @@ export const AIChatAssistant = () => {
  }));
 
  const chat = ai.chats.create({
- model: 'gemini-2.0-flash',
+ model: MODELS.SMART,
  history: history,
  config: { 
  systemInstruction: getSystemInstruction(),
@@ -430,7 +431,7 @@ export const AIChatAssistant = () => {
  try {
  const ai = getAI();
  const response = await ai.models.generateContent({
- model: 'gemini-2.0-flash',
+ model: MODELS.SMART,
  contents: `Refine this shopping query to be more specific and professional for a shopping assistant: "${input}". Return ONLY the refined query.`,
  });
  const refined = response.text?.trim() || input;

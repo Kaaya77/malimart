@@ -1,7 +1,8 @@
 
-// @model-version: gemini-2.0-flash — updated from gemini-3-flash-preview
+// @model-version: managed in ./aiModels.ts (gemini-2.0-flash shut down 2026-06-01)
 import { GoogleGenAI, Type } from "@google/genai";
 import { getAI, proxiedMediaUrl } from './aiClient';
+import { MODELS, safeJson } from './aiModels';
 import { Product } from '../types';
 
 /**
@@ -15,15 +16,9 @@ const withRetry = async <T>(fn: () => Promise<T>, maxRetries = 2): Promise<T> =>
         } catch (e: any) {
             lastError = e;
             const errorMsg = e?.message || "";
-            
-            // Critical: Handle API Key issues per guidelines
-            if (errorMsg.includes("Requested entity was not found") || errorMsg.includes("API key not valid")) {
-                console.warn("MaliMart AI: API Key invalid or project not found. Prompting re-selection.");
-                if (typeof window !== 'undefined' && (window as any).aistudio) {
-                    await (window as any).aistudio.openSelectKey();
-                    // Retry immediately with the new key (handled by next loop iteration implicitly if we don't throw)
-                    continue; 
-                }
+            // Model-retired / bad-key errors are permanent; don't retry.
+            if (errorMsg.includes('Requested entity was not found') || errorMsg.includes('API key not valid') || errorMsg.includes('is not found for API version')) {
+                throw e;
             }
 
             // Don't retry if it's a 4xx error that isn't a rate limit
@@ -48,7 +43,7 @@ export const generateWelcomeGreeting = async (name?: string): Promise<string> =>
         const namePart = name ? ` ${name}` : "";
         
         const response = await ai.models.generateContent({
-            model: 'gemini-2.0-flash',
+            model: MODELS.FAST,
             contents: `Generate a concise, punchy greeting (max 5 words) for a ${period} in English. 
             Format: "Greeting - Subtitle". 
             Example: "Good Morning${namePart} - Welcome to MaliMart". 
@@ -62,7 +57,7 @@ export const generateProductDescription = async (productName: string, category: 
   return withRetry(async () => {
     const ai = getAI();
     const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash',
+      model: MODELS.FAST,
       contents: `Write a compelling, short e-commerce product description for a product named "${productName}" in the category "${category}". 
       Highlight these features: ${keywords}. 
       Tone: Professional, inviting, and high-end. Max 80 words. Use English exclusively.`,
@@ -83,7 +78,7 @@ export const analyzeProductImage = async (imageBase64: string): Promise<{ name: 
         const cleanBase64 = imageBase64.split(',')[1] || imageBase64;
         
         const response = await ai.models.generateContent({
-            model: 'gemini-2.0-flash',
+            model: MODELS.FAST,
             contents: {
                 parts: [
                     { inlineData: { mimeType: 'image/jpeg', data: cleanBase64 } },
@@ -112,7 +107,7 @@ export const suggestAttributes = async (name: string, category: string, descript
     return withRetry(async () => {
         const ai = getAI();
         const response = await ai.models.generateContent({
-            model: 'gemini-2.0-flash',
+            model: MODELS.FAST,
             contents: `Suggest 2-3 appropriate product attributes (like Color, Size, Material) for a "${name}" in "${category}". 
             Description: "${description}".
             Return JSON array of objects with 'name' and 'values' (array of strings). 
@@ -140,7 +135,7 @@ export const generateSmartSKU = async (name: string, category: string): Promise<
     return withRetry(async () => {
         const ai = getAI();
         const response = await ai.models.generateContent({
-            model: 'gemini-2.0-flash',
+            model: MODELS.FAST,
             contents: `Generate a professional, short SKU (Stock Keeping Unit) code for "${name}" in category "${category}". 
             Format: Uppercase, alphanumeric, 8-12 characters. Example: SHIRT-BLU-01. Return ONLY the string.`,
         });
@@ -168,7 +163,7 @@ export const generateProductListing = async (name: string, imageBase64?: string)
         });
 
         const response = await ai.models.generateContent({
-            model: 'gemini-2.0-flash',
+            model: MODELS.FAST,
             contents: { parts },
             config: {
                 responseMimeType: "application/json",
@@ -195,7 +190,7 @@ export const translateToSwahili = async (text: string): Promise<string> => {
     return withRetry(async () => {
         const ai = getAI();
         const response = await ai.models.generateContent({
-            model: 'gemini-2.0-flash',
+            model: MODELS.FAST,
             contents: `Translate the following product description to professional, appealing Swahili suitable for a Tanzanian marketplace. Keep the tone engaging. Input: "${text}"`,
         });
         return response.text || text;
@@ -206,7 +201,7 @@ export const enhanceDescription = async (text: string): Promise<string> => {
     return withRetry(async () => {
         const ai = getAI();
         const response = await ai.models.generateContent({
-            model: 'gemini-2.0-flash',
+            model: MODELS.FAST,
             contents: `Rewrite the following product description to make it more compelling, premium, and SEO-optimized. Focus on sensory details, craftsmanship, and benefits. Keep it under 100 words. Input: "${text}"`,
         });
         return response.text || text;
@@ -217,7 +212,7 @@ export const moderateContent = async (name: string, description: string): Promis
     return withRetry(async () => {
         const ai = getAI();
         const response = await ai.models.generateContent({
-            model: 'gemini-2.0-flash',
+            model: MODELS.FAST,
             contents: `Analyze the following product name and description for any policy violations. Policies include: no hate speech, no illegal items, no explicit content, no misleading claims.
             Name: "${name}"
             Description: "${description}"
@@ -245,7 +240,7 @@ export const generateSocialCaption = async (imageBase64: string): Promise<string
         const ai = getAI();
         const cleanBase64 = imageBase64.split(',')[1] || imageBase64;
         const response = await ai.models.generateContent({
-            model: 'gemini-2.0-flash',
+            model: MODELS.FAST,
             contents: {
                 parts: [
                     { inlineData: { mimeType: 'image/jpeg', data: cleanBase64 } },
@@ -261,7 +256,7 @@ export const generateSocialPost = async (product: Product): Promise<string> => {
     return withRetry(async () => {
         const ai = getAI();
         const response = await ai.models.generateContent({
-            model: 'gemini-2.0-flash',
+            model: MODELS.FAST,
             contents: `Generate a compelling, high-converting social media post for this product:
             Name: ${product.name}
             Price: ${product.price}
@@ -282,7 +277,7 @@ export const mapCSVColumnsToSchema = async (csvHeaders: string[]): Promise<Recor
     return withRetry(async () => {
         const ai = getAI();
         const response = await ai.models.generateContent({
-            model: 'gemini-2.0-flash',
+            model: MODELS.FAST,
             contents: `Map these CSV headers to our database schema.
             CSV Headers: ${JSON.stringify(csvHeaders)}
             Database Schema: { name: string, price: number, stock: number, category: string }
@@ -300,7 +295,7 @@ export const suggestProductPrice = async (productName: string, category: string)
     return withRetry(async () => {
         const ai = getAI();
         const response = await ai.models.generateContent({
-            model: 'gemini-2.0-flash',
+            model: MODELS.FAST,
             contents: `Suggest a competitive premium price in Tanzanian Shillings (TZS) for this product: "${productName}" in category "${category}". Return ONLY the number. Example: 45000`,
         });
         const num = parseInt(response.text?.replace(/[^0-9]/g, '') || "0");
@@ -312,7 +307,7 @@ export const generateTags = async (name: string, description: string): Promise<s
     return withRetry(async () => {
         const ai = getAI();
         const response = await ai.models.generateContent({
-            model: 'gemini-2.0-flash',
+            model: MODELS.FAST,
             contents: `Generate 8 relevant SEO tags for a product named "${name}". Description: "${description}". Return ONLY a comma-separated list of tags. Example: "shoes, leather, mens fashion, summer, durable"`,
         });
         return (response.text || "").split(',').map(s => s.trim()).filter(s => s.length > 0);
@@ -323,7 +318,7 @@ export const generateProductImage = async (prompt: string): Promise<string | nul
   return withRetry(async () => {
     const ai = getAI();
     const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash',
+      model: MODELS.IMAGE,
       contents: {
           parts: [{ text: `High-end professional e-commerce product photography of ${prompt}. Studio lighting, clean minimal background, 8k resolution, photorealistic, center aligned, premium commercial quality.` }]
       },
@@ -368,7 +363,7 @@ export const refineProductImage = async (imageInput: string, instruction: string
         }
 
         const response = await ai.models.generateContent({
-            model: 'gemini-2.0-flash',
+            model: MODELS.IMAGE,
             contents: {
                 parts: [
                     { inlineData: { mimeType: mimeType, data: cleanBase64 } },
@@ -390,18 +385,11 @@ export const refineProductImage = async (imageInput: string, instruction: string
 };
 
 export const generateMarketingVideo = async (productName: string, description: string): Promise<string | null> => {
-    // Check if key is selected for Veo
-    if (typeof window !== 'undefined' && (window as any).aistudio) {
-        const hasKey = await (window as any).aistudio.hasSelectedApiKey();
-        if (!hasKey) {
-            await (window as any).aistudio.openSelectKey();
-        }
-    }
 
     return withRetry(async () => {
         const ai = getAI();
         let operation = await ai.models.generateVideos({
-            model: 'veo-3.1-fast-generate-preview',
+            model: MODELS.VIDEO,
             prompt: `Cinematic commercial for ${productName}. ${description}. Professional lighting, 4k, smooth camera movement, highly detailed.`,
             config: {
                 numberOfVideos: 1,
@@ -430,7 +418,7 @@ export const generateRecipesFromCart = async (ingredients: string[]): Promise<an
   return withRetry(async () => {
     const ai = getAI();
     const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash',
+      model: MODELS.SMART,
       contents: `Suggest 3 authentic recipes using: ${ingredients.join(', ')}. Return JSON. Use English for all text.`,
       config: {
         responseMimeType: "application/json",
@@ -458,7 +446,7 @@ export const analyzeImageForSearch = async (imageBase64: string): Promise<string
         const ai = getAI();
         const cleanBase64 = imageBase64.split(',')[1] || imageBase64;
         const response = await ai.models.generateContent({
-            model: 'gemini-2.0-flash',
+            model: MODELS.FAST,
             contents: {
                 parts: [
                     { inlineData: { mimeType: 'image/jpeg', data: cleanBase64 } },
@@ -477,7 +465,7 @@ export const identifyTrendingProduct = async (products: Product[]): Promise<{ id
     if (candidates.length === 0) return null;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
+      model: MODELS.SMART,
       contents: `Pick the most appealing product for a flash sale: ${JSON.stringify(candidates.map(p => ({id: p.id, name: p.name})))}. Return JSON: { "id": "uuid", "reason": "short pitch in English" }`,
       config: {
         responseMimeType: "application/json",
@@ -496,7 +484,7 @@ export const getAssistantResponse = async (query: string): Promise<string> => {
     return withRetry(async () => {
         const ai = getAI();
         const response = await ai.models.generateContent({
-            model: 'gemini-2.0-flash',
+            model: MODELS.SMART,
             contents: query,
             config: {
                 systemInstruction: "You are MaliMart AI, a helpful shopping assistant. Communicate clearly in English.",
@@ -510,7 +498,7 @@ export const generateRecipeCardImage = async (title: string): Promise<string | n
     return withRetry(async () => {
         const ai = getAI();
         const response = await ai.models.generateContent({
-            model: 'gemini-2.0-flash',
+            model: MODELS.IMAGE,
             contents: {
                 parts: [{ text: `Gourmet dish: ${title}, top-down photography, vibrant colors, fresh ingredients, 4k` }]
             },
@@ -529,7 +517,7 @@ export const generateSellerReplies = async (context: string): Promise<string[]> 
     return withRetry(async () => {
         const ai = getAI();
         const response = await ai.models.generateContent({
-            model: 'gemini-2.0-flash',
+            model: MODELS.IMAGE,
             contents: `You are a professional seller on MaliMart. Generate 3 short, polite, and distinct quick-reply options for this customer message: "${context}". Keep them under 10 words. Return JSON array of strings.`,
             config: {
                 responseMimeType: "application/json",
@@ -547,7 +535,7 @@ export const analyzeConversation = async (messages: string[]): Promise<{ sentime
     return withRetry(async () => {
         const ai = getAI();
         const response = await ai.models.generateContent({
-            model: 'gemini-2.0-flash',
+            model: MODELS.SMART,
             contents: `Analyze this buyer-seller conversation from the seller's perspective. 
             History: ${JSON.stringify(messages.slice(-5))}
             
@@ -577,7 +565,7 @@ export const analyzeDispute = async (reason: string, description: string): Promi
     return withRetry(async () => {
         const ai = getAI();
         const response = await ai.models.generateContent({
-            model: 'gemini-2.0-flash',
+            model: MODELS.SMART,
             contents: `Analyze this e-commerce dispute.
             Reason: ${reason}
             Description: ${description}
@@ -608,7 +596,7 @@ export const refineMessage = async (draft: string, tone: 'professional' | 'persu
     return withRetry(async () => {
         const ai = getAI();
         const response = await ai.models.generateContent({
-            model: 'gemini-2.0-flash',
+            model: MODELS.FAST,
             contents: `Rewrite the following draft message for a seller to a buyer. 
             Draft: "${draft}"
             Tone: ${tone}
