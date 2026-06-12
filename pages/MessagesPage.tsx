@@ -34,9 +34,9 @@ export const MessagesPage = () => {
     <div className="min-h-screen bg-background font-sans" style={{ paddingTop: 'max(72px, env(safe-area-inset-top) + 56px)' }}>
       <div className="max-w-6xl mx-auto px-4 pb-8 pt-6 md:pt-8">
         <div className="mb-6">
-          <h1 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-foreground">Messages</h1>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-foreground/40 mt-0.5">
-            {user.role === 'seller' ? 'Communicate with your buyers' : 'Chat with sellers about products and orders'}
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">Messages</h1>
+          <p className="text-sm text-foreground/45 mt-1">
+            {user.role === 'seller' ? 'Conversations with your buyers' : user.role === 'admin' ? 'Conversations across the marketplace' : 'Conversations with sellers about products and orders'}
           </p>
         </div>
         <motion.div

@@ -13,6 +13,7 @@ import { Product, Order } from '../types';
 import { formatTZS } from '../constants';
 import * as aiService from '../services/geminiService';
 import { MessageContainer, SidebarContainer, ChatAreaContainer, DetailsAreaContainer } from './MessageShared';
+import { ConversationListItem, ChatEmptyState } from './messaging/ConversationKit';
 
 const isSameDay = (d1: Date, d2: Date) => d1.getFullYear() === d2.getFullYear() && d1.getMonth() === d2.getMonth() && d1.getDate() === d2.getDate();
 const formatDateLabel = (date: Date) => {
@@ -321,55 +322,49 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
  return (
  <MessageContainer>
  <SidebarContainer isVisible={!!selectedChatUser}>
- <div className="p-6 border-b border-foreground/10 flex flex-col gap-4">
- <h3 className="font-serif text-xl text-foreground flex items-center gap-3">
- Inbox <span className="text-[10px] uppercase tracking-[0.2em] font-sans bg-foreground/[0.05] dark:bg-background/5 px-2 py-1 border border-foreground/10 text-foreground/60">{users.length}</span>
- </h3>
- <div className="relative">
- <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40 stroke-[1]" />
- <Input 
- placeholder="Search..." 
- value={searchTerm}
- onChange={(e: any) => setSearchTerm(e.target.value)}
- className="h-10 pl-9 text-[11px] rounded-2xl bg-transparent border-foreground/20 text-foreground focus:border-foreground transition-colors"
- />
- </div>
- <button 
+ <div className="p-4 border-b border-foreground/8 flex flex-col gap-3">
+ <div className="flex items-center justify-between">
+ <h3 className="font-bold text-sm text-foreground">Inbox <span className="text-foreground/40 font-normal">({users.length})</span></h3>
+ <button
  onClick={() => setFilterUnread(!filterUnread)}
- className={`py-2 text-[10px] uppercase tracking-[0.2em] transition-all border ${filterUnread ? 'bg-primary text-background dark:bg-background dark:text-foreground border-foreground dark:border-background' : 'bg-transparent text-foreground/60 border-foreground/20 hover:border-foreground hover:text-foreground'}`}
+ className={`h-7 px-2.5 rounded-full text-[10px] font-bold transition-colors ${filterUnread ? 'bg-foreground text-background' : 'bg-foreground/[0.05] text-foreground/50 hover:text-foreground'}`}
  >
  Unread
  </button>
  </div>
- 
- <div className="flex-1 overflow-y-auto p-4 space-y-2 no-scrollbar">
- {users.map(u => (
- <button 
- key={u.id} 
- onClick={() => setSelectedChatUser(u.id)} 
- className={`w-full text-left p-4 transition-all duration-300 group relative border-l-2 ${selectedChatUser === u.id ? 'bg-foreground/[0.04] border-l-foreground dark:border-l-background border-y-transparent border-r-transparent' : 'bg-transparent border-transparent hover:bg-foreground/[0.04]'}`}
- >
- <div className="flex items-center gap-4">
- <div className="w-12 h-12 rounded-full bg-foreground/[0.05] dark:bg-background/5 flex items-center justify-center font-serif text-lg shrink-0 overflow-hidden border border-foreground/10">
- {u.avatar ? <img src={u.avatar} alt={`${u.name} avatar`} className="w-full h-full object-cover" loading="lazy" decoding="async"/> : u.name.slice(0,1).toUpperCase()}
- </div>
- <div className="flex-1 min-w-0">
- <div className="flex justify-between items-baseline mb-1">
- <span className={`text-[11px] uppercase tracking-[0.15em] truncate flex items-center gap-2 ${selectedChatUser === u.id ? 'text-foreground' : 'text-foreground/80'}`}>
- {u.name}
- {pinnedUsers.has(u.id) && <Pin className="w-3 h-3 text-foreground fill-current" />}
- </span>
- <span className="text-[9px] font-mono opacity-40">{new Date(u.time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
- </div>
- <p className={`text-[11px] truncate font-serif italic ${u.unread && selectedChatUser !== u.id ? 'text-foreground font-medium' : 'text-foreground/60'}`}>{u.lastMsg}</p>
+ <div className="relative">
+ <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40" />
+ <Input
+ placeholder="Search conversations…"
+ value={searchTerm}
+ onChange={(e: any) => setSearchTerm(e.target.value)}
+ className="h-9 pl-9 text-xs rounded-xl bg-foreground/[0.03] border-transparent"
+ />
  </div>
  </div>
- <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
- <div onClick={(e) => togglePin(e, u.id)} className="p-2 bg-background dark:bg-background border border-foreground/10 hover:border-foreground/30 dark:hover:border-background/30 text-foreground/60 hover:text-foreground cursor-pointer transition-colors">
- <Pin className="w-3 h-3 stroke-[1]" />
+
+ <div className="flex-1 overflow-y-auto p-2 space-y-0.5 no-scrollbar">
+ {users.length === 0 ? (
+ <div className="py-12 px-4 text-center text-foreground/35">
+ <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-20"/>
+ <p className="text-xs font-semibold">{filterUnread ? 'No unread messages' : searchTerm ? 'No matches' : 'No conversations yet'}</p>
  </div>
- </div>
- </button>
+ ) : users.map(u => (
+ <ConversationListItem
+ key={u.id}
+ item={{
+ id: u.id,
+ name: u.name,
+ avatarUrl: u.avatar,
+ lastMessage: u.lastMsg,
+ lastMessageAt: u.time,
+ unreadCount: chats.filter(c => c.sender_id === u.id && c.receiver_id === userId && !c.read).length,
+ }}
+ selected={selectedChatUser === u.id}
+ pinned={pinnedUsers.has(u.id)}
+ onSelect={() => setSelectedChatUser(u.id)}
+ onTogglePin={(e) => togglePin(e, u.id)}
+ />
  ))}
  </div>
  </SidebarContainer>
