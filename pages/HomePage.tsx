@@ -9,6 +9,7 @@ import { FeaturedProducts } from '../components/home/FeaturedProducts';
 import { FeaturedStores } from '../components/home/FeaturedStores';
 import { ProductGridSection } from '../components/home/ProductGridSection';
 import { TrustStrip } from '../components/home/TrustStrip';
+import { ExploreBanner } from '../components/home/ExploreBanner';
 import { StoreModal } from '../components/StoreModal';
 import { HomePageSkeleton } from '../components/skeletons/HomePageSkeleton';
 import { Product, VendorProfile } from '../types';
@@ -61,6 +62,16 @@ const HomePage: React.FC = () => {
       [...products]
         .filter(p => p.status !== 'inactive')
         .sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
+        .slice(0, 8),
+    [products]
+  );
+
+  // Top rated — proven products with at least one review
+  const topRated = useMemo(
+    () =>
+      [...products]
+        .filter(p => p.status !== 'inactive' && (p.rating || 0) >= 4 && (p.review_count || 0) > 0)
+        .sort((a, b) => (b.rating || 0) - (a.rating || 0))
         .slice(0, 8),
     [products]
   );
@@ -127,7 +138,35 @@ const HomePage: React.FC = () => {
         />
       )}
 
-      {/* 7. Trust signals */}
+      {/* 7. Top rated — only when there's real review signal */}
+      {topRated.length >= 4 && (
+        <ProductGridSection
+          title="Top rated"
+          description="Loved by buyers across Tanzania."
+          products={topRated}
+          navigate={navigate}
+          setActiveProduct={(p) => navigate(`/product/${p.id}`)}
+        />
+      )}
+
+      {/* 8. Routes into Explore & Stores */}
+      <ExploreBanner />
+
+      {/* 9. Empty catalog — invite action instead of a blank page */}
+      {products.length === 0 && (
+        <section className="container mx-auto px-4 md:px-8 pb-12">
+          <div className="flex flex-col items-center text-center py-16 border border-dashed border-foreground/15 rounded-3xl">
+            <p className="font-bold text-foreground mb-1">The marketplace is just getting started</p>
+            <p className="text-sm text-foreground/45 mb-5 max-w-sm">New products land daily. Explore categories or become a seller and list yours first.</p>
+            <div className="flex gap-3">
+              <button onClick={() => navigate('/categories')} className="h-11 px-5 rounded-2xl bg-foreground text-background text-sm font-bold active:scale-95 transition-transform">Explore categories</button>
+              <button onClick={() => navigate('/login?mode=signup&role=seller')} className="h-11 px-5 rounded-2xl border border-foreground/15 text-foreground text-sm font-semibold hover:bg-foreground/[0.04] transition-colors">Start selling</button>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* 10. Trust signals */}
       <TrustStrip />
 
       {/* Modals */}

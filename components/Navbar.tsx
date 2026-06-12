@@ -31,26 +31,50 @@ function useDarkMode() {
 }
 
 // ─── Desktop mega menu ────────────────────────────────────────────────────────
-const MegaMenu = ({ isHome, scrolled }: { isHome: boolean; scrolled: boolean }) => {
+// Driven by live DB categories when available; falls back to the static hierarchy.
+const MegaMenu = ({ isHome, scrolled, categories }: { isHome: boolean; scrolled: boolean; categories?: any[] }) => {
  const textColor = (!scrolled && isHome) ? 'text-white' : 'text-foreground';
+ const link = `text-[12px] font-semibold uppercase tracking-widest ${textColor} opacity-75 hover:opacity-100 transition-opacity`;
+
+ // Build columns: top-level DB categories with their children, else static fallback.
+ const columns: Array<{ name: string; subs: string[] }> = React.useMemo(() => {
+ const top = (categories || []).filter((c: any) => !c.parent_id && c.is_active !== false);
+ if (top.length >= 2) {
+ const children = (categories || []).filter((c: any) => c.parent_id);
+ return top.slice(0, 4).map((p: any) => ({
+ name: p.name,
+ subs: children.filter((c: any) => c.parent_id === p.id).slice(0, 5).map((c: any) => c.name),
+ }));
+ }
+ return Object.entries(CATEGORY_HIERARCHY).slice(0, 4).map(([cat, subs]) => ({
+ name: cat,
+ subs: Array.isArray(subs) ? (subs as string[]).slice(0, 5) : [],
+ }));
+ }, [categories]);
+
  return (
  <nav className="hidden md:flex items-center gap-7">
- <Link to="/shop" className={`text-[12px] font-semibold uppercase tracking-widest ${textColor} opacity-75 hover:opacity-100 transition-opacity`}>Shop</Link>
+ <Link to="/shop" className={link}>Shop</Link>
  <div className="relative group">
- <button className={`text-[12px] font-semibold uppercase tracking-widest flex items-center gap-1 ${textColor} opacity-75 hover:opacity-100 transition-opacity`}>
+ <button className={`${link} flex items-center gap-1`} aria-haspopup="true">
  Collections <ChevronRight className="w-3 h-3 rotate-90 group-hover:rotate-[270deg] transition-transform duration-300"/>
  </button>
  {/* Mega dropdown */}
  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-5 w-[720px] bg-background/98 backdrop-blur-2xl rounded-3xl border border-foreground/8 shadow-2xl p-8 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 translate-y-2 group-hover:translate-y-0 z-50">
  <div className="grid grid-cols-4 gap-8">
- {Object.entries(CATEGORY_HIERARCHY).slice(0,4).map(([cat,subs])=>(
- <div key={cat}>
- <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/35 mb-3">{cat}</p>
+ {columns.map(col=>(
+ <div key={col.name}>
+ <Link to={`/shop?category=${encodeURIComponent(col.name)}`}
+ className="block text-[10px] font-black uppercase tracking-[0.2em] text-foreground/35 hover:text-foreground mb-3 transition-colors">{col.name}</Link>
  <div className="space-y-2">
- {Array.isArray(subs) && subs.slice(0,5).map(sub=>(
- <Link key={sub} to={`/shop?category=${encodeURIComponent(cat)}&subcategory=${encodeURIComponent(sub)}`}
+ {col.subs.map(sub=>(
+ <Link key={sub} to={`/shop?category=${encodeURIComponent(col.name)}&subcategory=${encodeURIComponent(sub)}`}
  className="block text-[13px] text-foreground/65 hover:text-foreground transition-colors py-0.5">{sub}</Link>
  ))}
+ {col.subs.length===0 && (
+ <Link to={`/shop?category=${encodeURIComponent(col.name)}`}
+ className="block text-[13px] text-foreground/65 hover:text-foreground transition-colors py-0.5">Browse all</Link>
+ )}
  </div>
  </div>
  ))}
@@ -63,6 +87,7 @@ const MegaMenu = ({ isHome, scrolled }: { isHome: boolean; scrolled: boolean }) 
  </div>
  </div>
  </div>
+ <Link to="/categories" className={link}>Explore</Link>
  </nav>
  );
 };
@@ -317,7 +342,7 @@ export const Navbar = () => {
  </Link>
 
  {/* Desktop nav */}
- <MegaMenu isHome={isHome} scrolled={scrolled}/>
+ <MegaMenu isHome={isHome} scrolled={scrolled} categories={categories}/>
 
  {/* Right cluster */}
  <div className={`flex items-center gap-1 ${isOnDark?'text-white':'text-foreground'}`}>
@@ -337,10 +362,22 @@ export const Navbar = () => {
  <Heart className="w-[18px] h-[18px] stroke-[2]"/>
  </Link>
 
+ {/* Messages (desktop) */}
+ {user && (
+ <Link to="/messages" aria-label={`Messages${unreadMessages?` (${unreadMessages} unread)`:''}`} className={`hidden md:flex relative ${ibtn}`}>
+ <MessageCircle className="w-[18px] h-[18px] stroke-[2]"/>
+ {(unreadMessages||0)>0 && (
+ <span className="absolute top-1.5 right-1.5 min-w-[14px] h-3.5 px-0.5 rounded-full bg-rose-500 text-white text-[8px] font-black flex items-center justify-center">
+ {unreadMessages>9?'9+':unreadMessages}
+ </span>
+ )}
+ </Link>
+ )}
+
  {/* Notifications (desktop) */}
  {user && (
- <Link to="/notifications" aria-label="Notifications" className={`hidden md:flex relative ${ibtn}`}>
- <span className="text-[18px]">🔔</span>
+ <Link to="/notifications" aria-label={`Notifications${unread?` (${unread} unread)`:''}`} className={`hidden md:flex relative ${ibtn}`}>
+ <BellRing className="w-[18px] h-[18px] stroke-[2]"/>
  {unread>0 && (
  <span className="absolute top-1.5 right-1.5 min-w-[14px] h-3.5 px-0.5 rounded-full bg-rose-500 text-white text-[8px] font-black flex items-center justify-center">
  {unread>9?'9+':unread}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAppState } from '../context/AppContext';
 import { supabase } from '../services/supabaseClient';
 import { formatTZS } from '../constants';
@@ -116,7 +116,15 @@ export const CategoriesPage = () => {
   const { categories, products, followSeller, unfollowSeller, isFollowing, user } = useAppState();
   const navigate = useNavigate();
 
-  const [tab, setTab] = useState<ExploreTab>('categories');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlTab = searchParams.get('tab') as ExploreTab | null;
+  const [tab, setTabState] = useState<ExploreTab>(
+    urlTab === 'stores' || urlTab === 'trending' ? urlTab : 'categories'
+  );
+  const setTab = (t: ExploreTab) => {
+    setTabState(t);
+    setSearchParams(t === 'categories' ? {} : { tab: t }, { replace: true });
+  };
   const [vendors, setVendors] = useState<VendorProfile[]>([]);
   const [loadingVendors, setLoadingVendors] = useState(false);
   const [searchQ, setSearchQ] = useState('');
@@ -138,11 +146,32 @@ export const CategoriesPage = () => {
       });
   }, [tab]);
 
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const p of products) {
+      if (p.status === 'inactive' || !p.category) continue;
+      counts[p.category] = (counts[p.category] || 0) + 1;
+    }
+    return counts;
+  }, [products]);
+
   const organizedCategories = useMemo(() => {
     const top = categories.filter(c => !c.parent_id);
     const children = categories.filter(c => c.parent_id);
     return top.map(p => ({ ...p, subcategories: children.filter(c => c.parent_id === p.id) }));
   }, [categories]);
+
+  const visibleCategories = useMemo(() => {
+    const base = organizedCategories.length > 0
+      ? organizedCategories
+      : Object.keys(CATEGORY_IMAGES).map(k => ({ id: k, name: k, subcategories: [] as any[], image_url: CATEGORY_IMAGES[k] }));
+    if (!searchQ.trim()) return base;
+    const q = searchQ.toLowerCase();
+    return base.filter((c: any) =>
+      c.name?.toLowerCase().includes(q) ||
+      c.subcategories?.some((s: any) => s.name?.toLowerCase().includes(q))
+    );
+  }, [organizedCategories, searchQ]);
 
   const trendingProducts = useMemo(() =>
     [...products]
@@ -204,8 +233,22 @@ export const CategoriesPage = () => {
           {/* ── CATEGORIES ──────────────────────────────────────── */}
           {tab === 'categories' && (
             <motion.div key="cats" initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} exit={{opacity:0}} className="space-y-8">
+              {/* Search categories */}
+              <div className="relative max-w-md">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/30 stroke-[2]"/>
+                <input value={searchQ} onChange={e=>setSearchQ(e.target.value)} placeholder="Search categories…"
+                  className="w-full h-11 pl-10 pr-4 rounded-xl bg-foreground/[0.04] text-foreground text-sm placeholder:text-foreground/35 focus:outline-none focus:bg-foreground/[0.07] transition-colors"/>
+              </div>
+
+              {visibleCategories.length === 0 ? (
+                <div className="flex flex-col items-center py-16 border border-dashed border-foreground/15 rounded-3xl text-foreground/35">
+                  <LayoutGrid className="w-10 h-10 mb-3 opacity-20"/>
+                  <p className="font-semibold text-sm">No categories match "{searchQ}"</p>
+                  <button onClick={()=>setSearchQ('')} className="mt-3 text-xs font-bold text-emerald-500">Clear search</button>
+                </div>
+              ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {(organizedCategories.length > 0 ? organizedCategories : Object.keys(CATEGORY_IMAGES).map(k => ({ id: k, name: k, subcategories: [], image_url: CATEGORY_IMAGES[k] }))).map((cat: any, i: number) => (
+                {visibleCategories.map((cat: any, i: number) => (
                   <Link key={cat.id} to={`/shop?category=${encodeURIComponent(cat.name)}`}
                     className="group relative aspect-[4/5] rounded-3xl overflow-hidden bg-foreground/[0.04] block">
                     <img
@@ -216,9 +259,10 @@ export const CategoriesPage = () => {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"/>
                     <div className="absolute inset-x-0 bottom-0 p-4">
                       <h3 className="text-white font-bold text-sm leading-tight">{cat.name}</h3>
-                      {cat.subcategories?.length > 0 && (
-                        <p className="text-white/60 text-[10px] mt-0.5">{cat.subcategories.length} styles</p>
-                      )}
+                      <p className="text-white/60 text-[10px] mt-0.5">
+                        {categoryCounts[cat.name] ? `${categoryCounts[cat.name]} product${categoryCounts[cat.name] === 1 ? '' : 's'}` : 'Browse'}
+                        {cat.subcategories?.length > 0 ? ` · ${cat.subcategories.length} styles` : ''}
+                      </p>
                     </div>
                     <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                       <ArrowRight className="w-3.5 h-3.5 text-white"/>
@@ -226,6 +270,7 @@ export const CategoriesPage = () => {
                   </Link>
                 ))}
               </div>
+              )}
 
               {/* Bottom CTA */}
               <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-foreground/8">

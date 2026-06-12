@@ -19,13 +19,24 @@ const SORT_OPTIONS = [
  { value: 'popular', label: 'Most Popular' },
 ];
 
+const FilterChip: React.FC<{ label: string; onRemove: () => void }> = ({ label, onRemove }) => (
+ <button
+ onClick={onRemove}
+ aria-label={`Remove filter ${label}`}
+ className="flex-shrink-0 flex items-center gap-1.5 h-7 px-3 rounded-full bg-foreground text-background text-[11px] font-semibold active:scale-95 transition-transform"
+ >
+ {label}
+ <X className="w-3 h-3 stroke-[3]" />
+ </button>
+);
+
 export const ShopPage: React.FC = () => {
  const { products, categories, isLoading } = useAppState();
  const navigate = useNavigate();
  const [searchParams, setSearchParams] = useSearchParams();
 
  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || searchParams.get('search') || '');
- const [sortBy, setSortBy] = useState('relevance');
+ const [sortBy, setSortBy] = useState(searchParams.get('sort') || 'relevance');
  const [isFilterOpen, setIsFilterOpen] = useState(false);
  const [activeFilters, setActiveFilters] = useState<any>({
  priceRange: [0, 5000000],
@@ -215,7 +226,15 @@ export const ShopPage: React.FC = () => {
  <ArrowUpDown className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground/40 stroke-[2] pointer-events-none" />
  <select
  value={sortBy}
- onChange={e => setSortBy(e.target.value)}
+ onChange={e => {
+ const v = e.target.value;
+ setSortBy(v);
+ setSearchParams(prev => {
+ const next = new URLSearchParams(prev);
+ if (v === 'relevance') next.delete('sort'); else next.set('sort', v);
+ return next;
+ }, { replace: true });
+ }}
  className="h-11 pl-9 pr-3 rounded-xl bg-foreground/[0.04] border border-foreground/10 text-foreground text-sm font-semibold focus:outline-none appearance-none cursor-pointer hover:bg-foreground/[0.08] transition-colors sm:pr-4"
  aria-label="Sort products"
  >
@@ -226,22 +245,41 @@ export const ShopPage: React.FC = () => {
  </div>
  </div>
 
- {/* Active category pill (mobile) */}
- {activeFilters.categories?.length > 0 && (
- <div className="container mx-auto px-4 pb-2 flex gap-2 overflow-x-auto no-scrollbar">
- {activeFilters.categories.map((cat: string) => (
- <button
- key={cat}
- onClick={() => setActiveFilters((prev: any) => ({
- ...prev,
- categories: prev.categories.filter((c: string) => c !== cat)
- }))}
- className="flex-shrink-0 flex items-center gap-1.5 h-7 px-3 rounded-full bg-foreground text-background text-[11px] font-semibold active:scale-95 transition-transform"
- >
- {cat}
- <X className="w-3 h-3 stroke-[3]" />
- </button>
+ {/* Active filter chips — every active filter, removable, with Clear all */}
+ {(activeFilterCount > 0 || searchQuery.trim()) && (
+ <div className="container mx-auto px-4 md:px-8 pb-2.5 flex items-center gap-2 overflow-x-auto no-scrollbar">
+ {searchQuery.trim() && (
+ <FilterChip label={`"${searchQuery.trim()}"`} onRemove={() => { setSearchQuery(''); setSearchParams(prev => { const n = new URLSearchParams(prev); n.delete('q'); n.delete('search'); return n; }, { replace: true }); }} />
+ )}
+ {activeFilters.categories?.map((cat: string) => (
+ <FilterChip key={cat} label={cat} onRemove={() => setActiveFilters((prev: any) => ({ ...prev, categories: prev.categories.filter((c: string) => c !== cat) }))} />
  ))}
+ {(activeFilters.priceRange?.[0] > 0 || activeFilters.priceRange?.[1] < 5000000) && (
+ <FilterChip label={`TZS ${activeFilters.priceRange[0].toLocaleString()} – ${activeFilters.priceRange[1].toLocaleString()}`}
+ onRemove={() => setActiveFilters((prev: any) => ({ ...prev, priceRange: [0, 5000000] }))} />
+ )}
+ {activeFilters.rating && (
+ <FilterChip label={`${activeFilters.rating}★ & up`} onRemove={() => setActiveFilters((prev: any) => ({ ...prev, rating: null }))} />
+ )}
+ {activeFilters.location?.trim() && (
+ <FilterChip label={activeFilters.location} onRemove={() => setActiveFilters((prev: any) => ({ ...prev, location: '' }))} />
+ )}
+ {activeFilters.verified && (
+ <FilterChip label="Verified sellers" onRemove={() => setActiveFilters((prev: any) => ({ ...prev, verified: false }))} />
+ )}
+ {activeFilters.stock && (
+ <FilterChip label="In stock" onRemove={() => setActiveFilters((prev: any) => ({ ...prev, stock: false }))} />
+ )}
+ <button
+ onClick={() => {
+ setSearchQuery('');
+ setActiveFilters({ priceRange: [0, 5000000], categories: [], materials: [], colors: [], sizes: [], location: '', rating: null, verified: false, stock: false });
+ setSearchParams({}, { replace: true });
+ }}
+ className="flex-shrink-0 h-7 px-3 rounded-full text-[11px] font-semibold text-foreground/50 hover:text-foreground border border-foreground/12 hover:border-foreground/30 transition-colors active:scale-95"
+ >
+ Clear all
+ </button>
  </div>
  )}
  </div>
