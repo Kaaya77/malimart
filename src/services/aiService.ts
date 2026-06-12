@@ -1,6 +1,7 @@
 import { GoogleGenAI, Type } from "@google/genai";
+import { getAI } from '../../services/aiClient';
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const ai = getAI();
 
 export const analyzeContent = async (content: string) => {
     const response = await ai.models.generateContent({
