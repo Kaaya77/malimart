@@ -8,6 +8,10 @@
   "trailingSlash": false,
   "rewrites": [
     {
+      "source": "/api/gemini/:path*",
+      "destination": "/api/gemini?gpath=:path*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
