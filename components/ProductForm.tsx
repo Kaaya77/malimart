@@ -13,6 +13,12 @@ import { useAppState } from '../context/AppContext';
 import { Button, Input, Label, Textarea, ImageDropzone, Switch, useToast, Badge, Card, Skeleton } from './UI';
 import { Product, ProductVariant } from '../types';
 import * as aiService from '../services/geminiService';
+import { PFContext } from './product-form/FormContext';
+import { DetailsStep } from './product-form/DetailsStep';
+import { MediaStep } from './product-form/MediaStep';
+import { LogisticsStep } from './product-form/LogisticsStep';
+import { VariantsStep } from './product-form/VariantsStep';
+import { PreviewStep } from './product-form/PreviewStep';
 import { supabase } from '../services/supabaseClient';
 import { compressImage, extFor, IMMUTABLE_CACHE } from '../services/imageCompression';
 import { CURRENCY, CATEGORY_HIERARCHY, formatTZS } from '../constants';
@@ -23,14 +29,8 @@ interface ProductFormProps {
  onSuccess: () => void;
 }
 
-const PRESET_ATTRIBUTES: Record<string, string[]> = {
- 'Color': ['Black', 'White', 'Red', 'Blue', 'Green', 'Yellow', 'Navy', 'Grey', 'Pink', 'Purple', 'Orange', 'Brown', 'Beige', 'Gold', 'Silver', 'Multi', 'Cream', 'Olive'],
- 'Size': ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL', 'Free Size'],
- 'Shoe Size': ['35', '36', '37', '38', '39', '40', '41', '42', '43', '44', '45', '46'],
- 'Material': ['Cotton', 'Polyester', 'Leather', 'Silk', 'Wool', 'Denim', 'Linen', 'Velvet', 'Satin', 'Nylon', 'Rayon', 'Spandex'],
- 'Style': ['Casual', 'Formal', 'Sport', 'Vintage', 'Modern', 'Bohemian', 'Classic', 'Streetwear'],
- 'Gender': ['Men', 'Women', 'Unisex', 'Kids', 'Girls', 'Boys']
-};
+import { PRESET_ATTRIBUTES } from './product-form/presets';
+export { PRESET_ATTRIBUTES };
 
 // --- PREVIEW COMPONENT ---
 import { PhonePreview } from './product-form/PhonePreview';
@@ -513,7 +513,10 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
  const margin = formData.price && formData.cost_price ? ((formData.price - formData.cost_price) / formData.price) * 100 : 0;
  const profit = (formData.price || 0) - (formData.cost_price || 0);
 
+ const pf = { step, setStep, isQuickMode, setIsQuickMode, isLoading, setIsLoading, visionLoading, setVisionLoading, aiLoading, setAiLoading, refurbishingIdx, setRefurbishingIdx, includeVat, setIncludeVat, showGenImage, setShowGenImage, showRefineImage, setShowRefineImage, genPrompt, setGenPrompt, refinePrompt, setRefinePrompt, hoveredVariant, setHoveredVariant, generatedVideo, setGeneratedVideo, isMagicFilling, setIsMagicFilling, bulkPrice, setBulkPrice, bulkStock, setBulkStock, formData, setFormData, attributes, setAttributes, variants, setVariants, tagInput, setTagInput, handleMagicFill, handleVisionAnalyze, uploadFileOrDataUrl, downloadImage, handleImageUpload, handleVariantImageUpload, handleRefurbishVariant, generateMagicDescription, handleSuggestPrice, handleTranslate, handleEnhanceDescription, handleSuggestAttributes, handleGenerateSKU, handleGenerateImage, handleRefineImage, handleGenerateVideo, toggleVat, generateVariants, handleBulkApply, handleAutoSkuVariants, handleSubmit, margin, profit, initialData, onClose };
+
  return (
+ <PFContext.Provider value={pf}>
  <div className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-xl flex items-center justify-center p-2 md:p-4 animate-in fade-in duration-300">
  <div className="w-full max-w-[95vw] xl:max-w-7xl h-[95vh] md:h-[90vh] bg-background dark:bg-background flex overflow-hidden border border-foreground/10 relative shadow-2xl">
  <button onClick={onClose} className="absolute top-6 right-6 z-50 p-3 bg-transparent hover:opacity-50 transition-opacity text-foreground"><X className="w-6 h-6" /></button>
@@ -573,402 +576,20 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
 
  {/* Step Content */}
  <div className="animate-in slide-in-from-bottom-4 duration-500 min-h-[400px]">
- {step === 'details' && (
- <div className="space-y-10">
- <div className="flex items-center justify-between bg-foreground p-6 text-background dark:text-foreground">
- <div className="flex items-center gap-4">
- <div className="w-10 h-10 border border-background/20 dark:border-foreground/20 flex items-center justify-center">
- <Sparkles className="w-5 h-5" />
- </div>
- <div>
- <p className="text-[10px] uppercase tracking-[0.2em]">AI-Powered Listing</p>
- <p className="text-[9px] opacity-60 uppercase tracking-[0.1em]">Let Gemini analyze your photo and fill the details.</p>
- </div>
- </div>
- <Button 
- variant="ghost" 
- onClick={handleMagicFill} 
- disabled={isMagicFilling || !formData.images?.length}
- className="bg-background/10 dark:bg-foreground/[0.06] hover:bg-background/20 dark:hover:bg-primary/20 text-background dark:text-foreground"
- >
- {isMagicFilling ? <Loader2 className="w-4 h-4 animate-spin" /> : "Magic Fill"}
- </Button>
- </div>
+ {step === 'details' && <DetailsStep />}
 
- <div className="space-y-6">
- <div className="grid md:grid-cols-2 gap-6">
- <div className="col-span-2">
- <Label>Product Name</Label>
- <div className="relative">
- <Input value={formData.name || ''} onChange={(e: any) => setFormData({...formData, name: e.target.value})} placeholder="e.g. Tanzanian Peaberry Coffee" className="h-14 text-lg font-serif pl-5" />
- </div>
- </div>
- <div>
- <Label>Brand Name</Label>
- <Input value={formData.brand || ''} onChange={(e: any) => setFormData({...formData, brand: e.target.value})} placeholder="e.g. MaliMart Coffee Co." className="h-12" />
- </div>
- <div>
- <Label>Category</Label>
- <select value={formData.category || ''} onChange={(e) => setFormData({...formData, category: e.target.value})} className="w-full h-12 bg-foreground/[0.03] border border-foreground/10 px-4 text-sm outline-none text-foreground rounded-none">
- {Object.keys(CATEGORY_HIERARCHY).map(c => <option key={c} value={c}>{c}</option>)}
- </select>
- </div>
- <div><Label>Subcategory</Label><Input value={formData.subcategory || ''} onChange={(e: any) => setFormData({...formData, subcategory: e.target.value})} className="h-12" placeholder="e.g. Beans" /></div>
- <div><Label>Condition</Label><Input value={formData.condition || ''} onChange={(e: any) => setFormData({...formData, condition: e.target.value})} className="h-12" placeholder="e.g. New, Used" /></div>
- <div><Label>Warranty Period</Label><Input value={formData.warranty_period || ''} onChange={(e: any) => setFormData({...formData, warranty_period: e.target.value})} className="h-12" placeholder="e.g. 1 Year" /></div>
- <div className="col-span-2 md:col-span-1">
- <Label>Location</Label>
- <div className="flex gap-2">
- <Input value={formData.location || ''} onChange={(e: any) => setFormData({...formData, location: e.target.value})} className="h-12 flex-1" placeholder="e.g. Dar es Salaam, Arusha" />
- <Button 
- type="button" 
- variant="outline" 
- className="h-12 px-4"
- onClick={() => {
- if (!navigator.geolocation) return addToast("Geolocation not supported", "error");
- navigator.geolocation.getCurrentPosition(
- async (pos) => {
- const { latitude, longitude } = pos.coords;
- setFormData({ ...formData, latitude, longitude });
- try {
- const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
- const data = await res.json();
- if (data.address) {
- const locStr = [data.address.city || data.address.town || data.address.village, data.address.state || data.address.region].filter(Boolean).join(', ');
- if (locStr) setFormData(prev => ({ ...prev, location: locStr, latitude, longitude }));
- }
- } catch (e) {
- }
- addToast("Location updated", "success");
- },
- (err) => addToast(err.message, "error")
- );
- }}
- >
- <MapPin className="w-4 h-4" />
- </Button>
- </div>
- </div>
- 
- <div className="col-span-2">
- <div className="flex justify-between items-center mb-2">
- <Label className="mb-0">Description</Label>
- <button onClick={generateMagicDescription} disabled={aiLoading} className="text-[9px] text-foreground uppercase tracking-[0.2em] hover:opacity-50 transition-opacity flex items-center gap-2">
- <Wand2 className="w-3 h-3" /> Magic Describe
- </button>
- </div>
- <Textarea 
- value={formData.description || ''} 
- onChange={(e: any) => setFormData({...formData, description: e.target.value})} 
- placeholder="Tell the story of your product..."
- className="min-h-[160px] font-serif text-base leading-relaxed"
- />
- <div className="flex justify-end mt-2 gap-4">
- <button onClick={handleEnhanceDescription} disabled={aiLoading} className="text-[9px] text-foreground opacity-40 uppercase tracking-[0.2em] hover:opacity-100 transition-opacity flex items-center gap-2">
- <Sparkles className="w-3 h-3" /> Enhance with AI
- </button>
- <button onClick={handleTranslate} disabled={aiLoading} className="text-[9px] text-foreground opacity-40 uppercase tracking-[0.2em] hover:opacity-100 transition-opacity flex items-center gap-2">
- <Languages className="w-3 h-3" /> Translate to Swahili
- </button>
- </div>
- </div>
+ {step === 'media' && <MediaStep />}
 
- <div className="col-span-2 p-10 bg-foreground/[0.03] border border-foreground/10">
- <div className="flex items-center justify-between mb-8">
- <div className="flex items-center gap-3">
- <DollarSign className="w-5 h-5 opacity-40" />
- <h3 className="text-[10px] uppercase tracking-[0.3em] font-bold">Pricing Strategy</h3>
- </div>
- <button onClick={handleSuggestPrice} disabled={aiLoading} className="text-[9px] text-foreground uppercase tracking-[0.2em] hover:opacity-50 transition-opacity flex items-center gap-2">
- <Sparkles className="w-3 h-3" /> Magic Price
- </button>
- </div>
- 
- <div className="grid md:grid-cols-3 gap-8 mb-10">
- <div className="space-y-3">
- <Label className="text-[9px] uppercase tracking-[0.1em] opacity-60">Selling Price</Label>
- {variants.length > 0 ? (
- <div className="h-14 flex items-center px-5 bg-white dark:bg-black/20 border border-foreground/10 text-xs font-mono text-foreground">
- {formatTZS(Math.min(...variants.map(v => v.base_price || 0)))} - {formatTZS(Math.max(...variants.map(v => v.base_price || 0)))}
- </div>
- ) : (
- <div className="relative">
- <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[10px] opacity-40">TZS</span>
- <Input type="number" value={formData.price || ''} onChange={(e: any) => setFormData({...formData, price: e.target.value === '' ? null : Number(e.target.value)})} className="h-14 pl-12 font-mono bg-white dark:bg-black/20" />
- <button
- type="button"
- onClick={handleSuggestPrice}
- disabled={aiLoading}
- className="absolute right-2 top-1/2 -translate-y-1/2 h-10 px-3 bg-primary text-background dark:bg-background dark:text-foreground text-[9px] uppercase tracking-[0.1em] hover:opacity-90 transition-opacity"
- >
- {aiLoading ? <Loader2 className="w-3 h-3 animate-spin"/> : "AI Suggest"}
- </button>
- </div>
- )}
- </div>
- <div className="space-y-3">
- <Label className="text-[9px] uppercase tracking-[0.1em] opacity-60">Cost Price</Label>
- <div className="relative">
- <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[10px] opacity-40">TZS</span>
- <Input type="number" value={formData.cost_price || ''} onChange={(e: any) => setFormData({...formData, cost_price: e.target.value === '' ? null : Number(e.target.value)})} className="h-14 pl-12 font-mono bg-white dark:bg-black/20" />
- </div>
- </div>
- <div className="space-y-3">
- <Label className="text-[9px] uppercase tracking-[0.1em] opacity-60">Sale Price</Label>
- <div className="relative">
- <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[10px] opacity-40">TZS</span>
- <Input type="number" value={formData.sale_price || ''} onChange={(e: any) => setFormData({...formData, sale_price: e.target.value === '' ? null : Number(e.target.value)})} className="h-14 pl-12 font-mono bg-white dark:bg-black/20 border-dashed" />
- </div>
- </div>
- </div>
+ {step === 'logistics' && <LogisticsStep />}
 
- <div className="space-y-6 pt-8 border-t border-foreground/10">
- <div className="flex items-center justify-between">
- <Label>VAT Status</Label>
- <div className="flex gap-2">
- {[{l: 'Standard (18%)', v: 0.18}, {l: 'Exempt (0%)', v: 0}].map(opt => (
- <button 
- key={opt.v}
- type="button" 
- onClick={() => setFormData({...formData, vat_rate: opt.v})}
- className={`px-4 h-10 text-[9px] uppercase tracking-[0.2em] border transition-all ${formData.vat_rate === opt.v ? 'bg-primary text-background dark:bg-background dark:text-foreground border-transparent' : 'bg-transparent border-foreground/10 text-foreground'}`}
- >
- {opt.l}
- </button>
- ))}
- </div>
- </div>
- {formData.vat_rate === 0.18 && (
- <div className="flex items-center justify-between p-4 border border-foreground/10">
- <Label className="mb-0">Apply 18% VAT Adjustment (Shift to Consumer)</Label>
- <Switch checked={includeVat} onCheckedChange={toggleVat} />
- </div>
- )}
- </div>
- </div>
- </div>
- </div>
- </div>
- )}
+ {step === 'variants' && <VariantsStep />}
 
- {step === 'media' && (
- <div className="space-y-10">
- <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
- <div>
- <h3 className="text-[10px] uppercase tracking-[0.2em]">Visual Assets</h3>
- <p className="text-[10px] text-foreground opacity-60 mt-1">High-quality imagery is the key to conversion.</p>
- </div>
- <div className="flex gap-3">
- <Button variant="outline" size="sm" onClick={() => setShowGenImage(!showGenImage)} className="text-[9px] uppercase tracking-[0.2em] bg-transparent border-foreground/10"><Wand2 className="w-4 h-4 mr-2"/> AI Generate</Button>
- <Button variant="outline" size="sm" onClick={() => setShowRefineImage(!showRefineImage)} className="text-[9px] uppercase tracking-[0.2em] bg-transparent border-foreground/10" disabled={!formData.images?.length}><Sparkles className="w-4 h-4 mr-2"/> AI Refine</Button>
- </div>
- </div>
-
- {showGenImage && (
- <div className="p-8 bg-primary text-background dark:bg-background dark:text-foreground animate-in slide-in-from-top-4">
- <Label className="text-background dark:text-foreground">Image Generation Prompt</Label>
- <div className="flex gap-3">
- <Input 
- value={genPrompt || ''} 
- onChange={(e: any) => setGenPrompt(e.target.value)} 
- placeholder="e.g. A premium leather bag on a minimalist marble background" 
- className="bg-white/10 border-white/20 text-white placeholder:text-white/40 dark:bg-black/10 dark:border-black/20 dark:text-black dark:placeholder:text-black/40"
- />
- <Button onClick={handleGenerateImage} disabled={aiLoading} className="bg-background text-foreground dark:bg-primary">Generate</Button>
- </div>
- </div>
- )}
-
- {showRefineImage && (
- <div className="p-8 bg-primary text-background dark:bg-background dark:text-foreground animate-in slide-in-from-top-4">
- <Label className="text-background dark:text-foreground">Refinement Instruction</Label>
- <div className="flex gap-3">
- <Input 
- value={refinePrompt || ''} 
- onChange={(e: any) => setRefinePrompt(e.target.value)} 
- placeholder="e.g. Change background to a lush tropical garden" 
- className="bg-white/10 border-white/20 text-white placeholder:text-white/40 dark:bg-black/10 dark:border-black/20 dark:text-black dark:placeholder:text-black/40"
- />
- <Button onClick={handleRefineImage} disabled={aiLoading} className="bg-background text-foreground dark:bg-primary">Refine</Button>
- </div>
- </div>
- )}
-
- <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
- <div className="aspect-[4/5]"><ImageDropzone onImageSelected={handleImageUpload} /></div>
- {(formData.images || []).map((img, i) => (
- <div key={i} className="aspect-[4/5] relative group overflow-hidden border border-foreground/10 bg-foreground/[0.05]">
- <img src={img} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="" loading="lazy" decoding="async" />
- <div className="absolute inset-0 bg-primary/60 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center gap-3 flex-wrap p-2">
- <button onClick={() => { const newImgs = [...(formData.images || [])]; newImgs.splice(i, 1); setFormData({...formData, images: newImgs}); }} className="p-3 bg-background text-foreground hover:bg-red-500 hover:text-white transition-all"><Trash2 className="w-5 h-5"/></button>
- {i !== 0 && <button onClick={() => { const newImgs = [...(formData.images || [])]; const temp = newImgs[0]; newImgs[0] = newImgs[i]; newImgs[i] = temp; setFormData({...formData, images: newImgs}); }} className="p-3 bg-background text-foreground hover:bg-primary hover:text-background transition-all"><CheckCircle2 className="w-5 h-5"/></button>}
- <button onClick={() => downloadImage(img, `product-image-${i}.png`)} className="p-3 bg-background text-foreground hover:bg-primary hover:text-background transition-all"><Download className="w-5 h-5"/></button>
- <button onClick={async () => {
- if (confirm("Enhance this photo? This will improve lighting and quality.")) {
- setAiLoading(true);
- try {
- const newImg = await aiService.refineProductImage(img, "Enhance image quality, improve lighting, and make it professional for e-commerce.");
- if (newImg) {
- const url = await uploadFileOrDataUrl(newImg);
- const newImgs = [...(formData.images || [])];
- newImgs[i] = url;
- setFormData({...formData, images: newImgs});
- addToast("Photo enhanced!", "success");
- } else {
- addToast("Enhancement failed", "error");
- }
- } finally { setAiLoading(false); }
- }
- }} className="p-3 bg-background text-foreground hover:bg-primary hover:text-background transition-all"><Sparkles className="w-5 h-5"/></button>
- </div>
- {i === 0 && <div className="absolute top-4 left-4 px-3 py-1.5 bg-primary text-background dark:bg-background dark:text-foreground text-[8px] uppercase tracking-[0.3em] font-bold">Primary</div>}
- </div>
- ))}
- </div>
- </div>
- )}
-
- {step === 'logistics' && (
- <div className="space-y-6">
- <div className="p-6 bg-foreground/[0.02] border border-foreground/8 rounded-2xl">
- <div className="flex items-center gap-2 mb-8"><Box className="w-5 h-5" /><h3 className="text-[10px] uppercase tracking-[0.2em]">Inventory Management</h3></div>
- <div className="grid md:grid-cols-2 gap-10">
- <div><Label>Global Stock</Label><Input type="number" value={Number.isNaN(formData.stock) ? '' : (formData.stock ?? '')} onChange={(e: any) => setFormData({...formData, stock: e.target.value === '' ? null : Number(e.target.value)})} className={`h-12 ${variants.length > 0 ? 'bg-foreground/[0.06] opacity-70' : ''}`} disabled={variants.length > 0} />{variants.length > 0 && <span className="text-[9px] text-foreground opacity-60 uppercase tracking-[0.2em] mt-1 block">Calculated from Variants</span>}</div>
- <div><div className="flex justify-between items-center mb-2"><Label className="mb-0">Product SKU</Label><button onClick={handleGenerateSKU} disabled={aiLoading} className="text-[9px] text-foreground uppercase tracking-[0.2em] hover:opacity-50 transition-opacity">AI Gen</button></div><Input value={formData.sku || ''} onChange={(e: any) => setFormData({...formData, sku: e.target.value.toUpperCase()})} className="h-12 font-mono" /></div>
- </div>
- </div>
- <div className="grid md:grid-cols-2 gap-6">
- <div><Label>Shipment Weight (kg)</Label><Input type="number" value={Number.isNaN(formData.weight) ? '' : (formData.weight ?? '')} onChange={(e: any) => setFormData({...formData, weight: e.target.value === '' ? null : Number(e.target.value)})} className="h-12" /></div>
- <div><Label>Dimensions (L x W x H cm)</Label><div className="flex gap-2"><Input placeholder="L" type="number" value={Number.isNaN(formData.dimensions?.length) ? '' : (formData.dimensions?.length ?? '')} onChange={(e: any) => setFormData({...formData, dimensions: {...formData.dimensions, length: e.target.value === '' ? null : Number(e.target.value)} as any})} className="h-12 text-center" /><Input placeholder="W" type="number" value={Number.isNaN(formData.dimensions?.width) ? '' : (formData.dimensions?.width ?? '')} onChange={(e: any) => setFormData({...formData, dimensions: {...formData.dimensions, width: e.target.value === '' ? null : Number(e.target.value)} as any})} className="h-12 text-center" /><Input placeholder="H" type="number" value={Number.isNaN(formData.dimensions?.height) ? '' : (formData.dimensions?.height ?? '')} onChange={(e: any) => setFormData({...formData, dimensions: {...formData.dimensions, height: e.target.value === '' ? null : Number(e.target.value)} as any})} className="h-12 text-center" /></div></div>
- </div>
- </div>
- )}
-
- {step === 'variants' && (
- <div className="space-y-10">
- {/* Attribute Configuration */}
- <div className="p-6 bg-foreground/[0.02] border border-foreground/8 rounded-2xl">
- <div className="flex justify-between items-center mb-8">
- <div><h3 className="text-[10px] uppercase tracking-[0.2em]">Attributes</h3><p className="text-[10px] text-foreground opacity-60 mt-1">Add properties like size and color.</p></div>
- <div className="flex gap-2">
- <Button size="sm" variant="outline" onClick={handleSuggestAttributes} disabled={aiLoading} className="text-[9px] uppercase tracking-[0.2em] h-9 bg-transparent border-foreground/10"><Wand2 className="w-3 h-3 mr-2"/> AI Suggest</Button>
- <div className="h-9 w-px bg-foreground/[0.06] mx-2" />
- <div className="flex gap-1">
- {['Size', 'Color', 'Material'].map(attr => (
- <button 
- key={attr}
- onClick={() => {
- if (!attributes.find(a => a.name === attr)) {
- setAttributes([...attributes, { name: attr, values: [] }]);
- }
- }}
- className="h-9 px-3 text-[9px] uppercase tracking-widest font-bold border border-foreground/10 rounded-xl hover:bg-foreground/[0.06] transition-colors text-foreground/70 hover:text-foreground active:scale-95"
- >
- + {attr}
- </button>
- ))}
- </div>
- </div>
- </div>
- {attributes.length === 0 ? <div className="text-center py-10 border border-dashed border-foreground/15 rounded-2xl"><Button size="sm" variant="outline" onClick={() => setAttributes([{ name: 'Color', values: [] }])}><Plus className="w-3 h-3 mr-2"/> Add Attribute</Button></div> : attributes.map((attr, idx) => (
- <div key={idx} className="p-5 bg-foreground/[0.02] border border-foreground/8 rounded-2xl relative group mb-3">
- <button onClick={() => setAttributes(attributes.filter((_, i) => i !== idx))} className="absolute top-4 right-4 p-2 opacity-40 hover:opacity-100 transition-opacity"><Trash2 className="w-4 h-4"/></button>
- <div className="grid md:grid-cols-12 gap-8">
- <div className="md:col-span-4"><Label>Attribute Name</Label><select value={Object.keys(PRESET_ATTRIBUTES).includes(attr.name) ? attr.name : (attr.name ? 'Custom' : '')} onChange={e => { const n = [...attributes]; if (e.target.value === 'Custom') n[idx].name = ''; else n[idx].name = e.target.value; setAttributes(n); }} className="w-full h-11 bg-foreground/[0.03] border border-foreground/10 px-4 text-xs outline-none rounded-xl text-foreground">{Object.keys(PRESET_ATTRIBUTES).map(k => <option key={k} value={k}>{k}</option>)}<option value="Custom">Custom</option></select>{!Object.keys(PRESET_ATTRIBUTES).includes(attr.name) && <Input className="mt-2 h-10 text-xs" value={attr.name} onChange={e => { const n = [...attributes]; n[idx].name = e.target.value; setAttributes(n); }} />}</div>
- <div className="md:col-span-8"><Label>Values</Label><div className="flex flex-wrap gap-2 mb-3 p-2 bg-foreground/[0.03] border border-foreground/10 rounded-xl min-h-[44px] items-center">{attr.values.map((val, vIdx) => <Badge key={vIdx} variant="secondary" className="pl-3 pr-1 py-1 font-medium rounded-lg">{val}<button onClick={() => { const n = [...attributes]; n[idx].values = attr.values.filter((_, i) => i !== vIdx); setAttributes(n); }} className="ml-1.5 p-0.5 hover:opacity-50 transition-opacity"><X className="w-3 h-3"/></button></Badge>)}{attr.values.length === 0 && <span className="text-[10px] opacity-40 italic px-2">None added</span>}</div><div className="flex gap-2"><select className="flex-1 h-10 bg-foreground/[0.04] border border-foreground/10 px-3 text-xs rounded-xl text-foreground appearance-none" onChange={(e) => { if (e.target.value && !attr.values.includes(e.target.value)) { const n = [...attributes]; n[idx].values = [...n[idx].values, e.target.value]; setAttributes(n); e.target.value = ""; } }} value=""><option value="" disabled>Select...</option>{(PRESET_ATTRIBUTES[attr.name] || []).map(opt => <option key={opt} value={opt} disabled={attr.values.includes(opt)}>{opt}</option>)}</select><Input placeholder="Or type custom..." className="w-1/2 h-10 text-xs rounded-xl" onKeyDown={(e: any) => { if (e.key === 'Enter') { e.preventDefault(); const val = e.currentTarget.value.trim(); if (val && !attr.values.includes(val)) { const n = [...attributes]; n[idx].values = [...n[idx].values, val]; setAttributes(n); e.currentTarget.value = ''; } } }} /></div></div>
- </div>
- </div>
- ))}
- {attributes.length > 0 && <Button size="sm" variant="outline" onClick={() => setAttributes([...attributes, { name: 'Size', values: [] }])} className="w-full border-dashed mt-4 rounded-xl"><Plus className="w-4 h-4 mr-2"/> Add Attribute Rail</Button>}
- </div>
- <div className="flex justify-end"><Button onClick={generateVariants} disabled={attributes.length === 0 || attributes.some(a => a.values.length === 0)} className="h-12 px-10"><Zap className="w-4 h-4 mr-2" /> Generate Matrix Combos</Button></div>
-
- {/* Variant Breakdown Table */}
- {variants.length > 0 && (
- <div className="animate-in fade-in slide-in-from-bottom-4 space-y-6">
- {/* Separation of Bulk Tools and Header */}
- <div className="flex flex-col md:flex-row justify-between items-center bg-transparent p-4 border border-foreground/10 gap-4">
- <h3 className="text-[10px] uppercase tracking-[0.2em] text-foreground shrink-0">Variant Matrix ({variants.length})</h3>
- <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end">
- <div className="flex items-center gap-2 p-1.5 bg-foreground/[0.03] border border-foreground/10">
- <Input placeholder="Bulk Price.." className="h-9 w-24 text-[10px] bg-transparent border-none" value={bulkPrice} onChange={(e: any) => setBulkPrice(e.target.value)} />
- <Input placeholder="Bulk Stock.." className="h-9 w-24 text-[10px] bg-transparent border-none" value={bulkStock} onChange={(e: any) => setBulkStock(e.target.value)} />
- <button onClick={handleBulkApply} className="h-9 px-4 bg-primary text-background dark:bg-background dark:text-foreground text-[10px] uppercase tracking-[0.2em] hover:opacity-90 transition-opacity">Apply All</button>
- </div>
- <button onClick={handleAutoSkuVariants} className="h-12 px-5 bg-transparent border border-foreground/10 text-foreground text-[10px] uppercase tracking-[0.2em] flex items-center gap-2 hover:bg-foreground/[0.04] transition-colors"><Wand2 className="w-4 h-4"/> Auto-SKU</button>
- </div>
- </div>
- 
- <div className="overflow-hidden border border-foreground/10 shadow-sm">
- <table className="w-full text-left">
- <thead className="bg-primary/5 text-[10px] uppercase tracking-[0.2em] text-foreground opacity-60">
- <tr>
- <th className="p-5 w-20 text-center">Img</th>
- <th className="p-5">Configuration</th>
- <th className="p-5 w-32">Price ({CURRENCY})</th>
- <th className="p-5 w-24">Stock</th>
- <th className="p-5 w-40">SKU Code</th>
- <th className="p-5 w-12"></th>
- </tr>
- </thead>
- <tbody className="divide-y divide-foreground/10 dark:divide-background/10 bg-transparent">
- {variants.map((v, i) => (
- <tr key={i} className="group hover:bg-foreground/[0.04] transition-colors" onMouseEnter={() => setHoveredVariant(v)} onMouseLeave={() => setHoveredVariant(null)}>
- <td className="p-4 text-center">
- <div className="relative w-12 h-12 mx-auto bg-foreground/[0.05] overflow-hidden shadow-inner group-hover:ring-1 ring-foreground dark:ring-background transition-all">
- {v.image_url ? <img src={v.image_url} alt={`${Object.values(v.attributes || {}).join(" ") || "Variant"} image`} className="w-full h-full object-cover" loading="lazy" decoding="async" /> : <div className="w-full h-full flex items-center justify-center opacity-40"><ImageIcon className="w-5 h-5"/></div>}
- <div className="absolute inset-0 bg-primary/40 opacity-0 group-hover:opacity-100 flex flex-wrap items-center justify-center gap-1 transition-opacity p-1">
- <button onClick={() => document.getElementById(`var-img-${i}`)?.click()} className="p-1 bg-background text-foreground hover:opacity-80 rounded-sm"><Upload className="w-3 h-3"/></button>
- <button onClick={() => handleRefurbishVariant(i)} className="p-1 bg-primary text-background dark:bg-background dark:text-foreground hover:opacity-80 rounded-sm" disabled={refurbishingIdx === i}>{refurbishingIdx === i ? <Loader2 className="w-3 h-3 animate-spin"/> : <Sparkles className="w-3 h-3"/>}</button>
- {v.image_url && <button onClick={() => downloadImage(v.image_url!, `variant-${i}.png`)} className="p-1 bg-background text-foreground hover:opacity-80 rounded-sm"><Download className="w-3 h-3"/></button>}
- </div>
- <input type="file" id={`var-img-${i}`} className="hidden" accept="image/*" onChange={(e) => handleVariantImageUpload(i, e)} />
- </div>
- </td>
- <td className="p-4">
- <div className="flex flex-wrap gap-2">
- {Object.entries(v.attributes).map(([key, val]) => (
- <div key={key} className="flex flex-col">
- <span className="text-[7px] uppercase opacity-40 mb-0.5">{key}</span>
- <span className="px-2.5 py-1.5 bg-foreground/[0.05] text-[9px] text-foreground border border-foreground/10 uppercase tracking-[0.2em]">{val}</span>
- </div>
- ))}
- </div>
- </td>
- <td className="p-4"><Input type="number" className="h-10 text-xs bg-transparent border-foreground/10" value={v.base_price || 0} onChange={e => { const n = [...variants]; n[i].base_price = Number(e.target.value); setVariants(n); }} /></td>
- <td className="p-4"><Input type="number" className="h-10 text-xs bg-transparent border-foreground/10 text-center" value={v.stock || 0} onChange={e => { const n = [...variants]; n[i].stock = Number(e.target.value); setVariants(n); }} /></td>
- <td className="p-4"><Input type="text" className="h-10 text-[10px] font-mono font-black bg-foreground/[0.04] border-foreground/10 uppercase" value={v.sku || ''} onChange={e => { const n = [...variants]; n[i].sku = e.target.value.toUpperCase(); setVariants(n); }} /></td>
- <td className="p-4 text-right"><button onClick={() => setVariants(variants.filter((_, idx) => idx !== i))} className="p-2 text-foreground/30 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100"><Trash2 className="w-4 h-4"/></button></td>
- </tr>
- ))}
- </tbody>
- </table>
- </div>
- </div>
- )}
- </div>
- )}
-
- {step === 'preview' && (
- <div className="max-w-md mx-auto animate-in fade-in slide-in-from-bottom-4">
- <h3 className="text-center text-[10px] uppercase tracking-[0.2em] text-foreground opacity-60 mb-12">Real-time Buyer Experience Preview</h3>
- <PhonePreview 
- data={formData} 
- variant={hoveredVariant}
- activeImage={hoveredVariant?.image_url || formData.images?.[0] || ''} 
- />
- <div className="mt-12 text-center">
- <button onClick={handleSubmit} disabled={isLoading} className="w-full h-16 bg-foreground text-background text-[10px] uppercase tracking-[0.15em] font-bold hover:bg-foreground/85 transition-colors flex items-center justify-center gap-2.5 disabled:opacity-40 rounded-b-3xl">
- Publish Store Listing <ArrowRight className="w-4 h-4 ml-3 group-hover:translate-x-1 transition-transform stroke-[1]"/>
- </button>
- <p className="mt-6 text-[9px] text-foreground opacity-40 uppercase tracking-[0.2em]">Listing will be live immediately after verification</p>
- </div>
- </div>
- )}
+ {step === 'preview' && <PreviewStep />}
  </div>
  </div>
  </div>
  </div>
  </div>
+ </PFContext.Provider>
  );
 };
