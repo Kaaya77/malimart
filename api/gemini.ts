@@ -22,7 +22,7 @@ export default async function handler(req: Request): Promise<Response> {
 
   // Copy remaining query params; never trust a client-supplied key
   url.searchParams.forEach((v, k) => {
-    if (k !== 'gpath' && k.toLowerCase() !== 'key') upstreamUrl.searchParams.set(k, v);
+    if (!['gpath', 'path', 'key'].includes(k.toLowerCase()) && !k.startsWith('_vercel')) upstreamUrl.searchParams.set(k, v);
   });
   upstreamUrl.searchParams.set('key', key);
 
