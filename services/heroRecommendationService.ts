@@ -1,7 +1,8 @@
 import { GoogleGenAI, Type } from "@google/genai";
+import { getAI } from './aiClient';
 import { supabase } from './supabaseClient';
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+const ai = getAI();
 
 export const generateHeroRecommendation = async () => {
     // 1. Fetch top selling products

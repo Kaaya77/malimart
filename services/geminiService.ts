@@ -1,6 +1,7 @@
 
 // @model-version: gemini-2.0-flash — updated from gemini-3-flash-preview
 import { GoogleGenAI, Type } from "@google/genai";
+import { getAI, proxiedMediaUrl } from './aiClient';
 import { Product } from '../types';
 
 /**
@@ -41,7 +42,7 @@ const withRetry = async <T>(fn: () => Promise<T>, maxRetries = 2): Promise<T> =>
 
 export const generateWelcomeGreeting = async (name?: string): Promise<string> => {
     return withRetry(async () => {
-        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        const ai = getAI();
         const time = new Date().getHours();
         const period = time < 12 ? 'morning' : time < 17 ? 'afternoon' : 'evening';
         const namePart = name ? ` ${name}` : "";
@@ -59,7 +60,7 @@ export const generateWelcomeGreeting = async (name?: string): Promise<string> =>
 
 export const generateProductDescription = async (productName: string, category: string, keywords: string): Promise<string> => {
   return withRetry(async () => {
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    const ai = getAI();
     const response = await ai.models.generateContent({
       model: 'gemini-2.0-flash',
       contents: `Write a compelling, short e-commerce product description for a product named "${productName}" in the category "${category}". 
@@ -78,7 +79,7 @@ export const generateProductDescription = async (productName: string, category: 
  */
 export const analyzeProductImage = async (imageBase64: string): Promise<{ name: string, category: string, tags: string[], description: string } | null> => {
     return withRetry(async () => {
-        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        const ai = getAI();
         const cleanBase64 = imageBase64.split(',')[1] || imageBase64;
         
         const response = await ai.models.generateContent({
@@ -109,7 +110,7 @@ export const analyzeProductImage = async (imageBase64: string): Promise<{ name: 
 
 export const suggestAttributes = async (name: string, category: string, description: string): Promise<{name: string, values: string[]}[]> => {
     return withRetry(async () => {
-        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        const ai = getAI();
         const response = await ai.models.generateContent({
             model: 'gemini-2.0-flash',
             contents: `Suggest 2-3 appropriate product attributes (like Color, Size, Material) for a "${name}" in "${category}". 
@@ -137,7 +138,7 @@ export const suggestAttributes = async (name: string, category: string, descript
 
 export const generateSmartSKU = async (name: string, category: string): Promise<string> => {
     return withRetry(async () => {
-        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        const ai = getAI();
         const response = await ai.models.generateContent({
             model: 'gemini-2.0-flash',
             contents: `Generate a professional, short SKU (Stock Keeping Unit) code for "${name}" in category "${category}". 
@@ -149,7 +150,7 @@ export const generateSmartSKU = async (name: string, category: string): Promise<
 
 export const generateProductListing = async (name: string, imageBase64?: string): Promise<{ description: string, tags: string[], category?: string, subcategory?: string } | null> => {
     return withRetry(async () => {
-        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        const ai = getAI();
         let parts: any[] = [];
         
         if (imageBase64) {
@@ -192,7 +193,7 @@ export const generateProductListing = async (name: string, imageBase64?: string)
 
 export const translateToSwahili = async (text: string): Promise<string> => {
     return withRetry(async () => {
-        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        const ai = getAI();
         const response = await ai.models.generateContent({
             model: 'gemini-2.0-flash',
             contents: `Translate the following product description to professional, appealing Swahili suitable for a Tanzanian marketplace. Keep the tone engaging. Input: "${text}"`,
@@ -203,7 +204,7 @@ export const translateToSwahili = async (text: string): Promise<string> => {
 
 export const enhanceDescription = async (text: string): Promise<string> => {
     return withRetry(async () => {
-        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        const ai = getAI();
         const response = await ai.models.generateContent({
             model: 'gemini-2.0-flash',
             contents: `Rewrite the following product description to make it more compelling, premium, and SEO-optimized. Focus on sensory details, craftsmanship, and benefits. Keep it under 100 words. Input: "${text}"`,
@@ -214,7 +215,7 @@ export const enhanceDescription = async (text: string): Promise<string> => {
 
 export const moderateContent = async (name: string, description: string): Promise<{ isFlagged: boolean, reason: string }> => {
     return withRetry(async () => {
-        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        const ai = getAI();
         const response = await ai.models.generateContent({
             model: 'gemini-2.0-flash',
             contents: `Analyze the following product name and description for any policy violations. Policies include: no hate speech, no illegal items, no explicit content, no misleading claims.
@@ -241,7 +242,7 @@ export const moderateContent = async (name: string, description: string): Promis
 
 export const generateSocialCaption = async (imageBase64: string): Promise<string> => {
     return withRetry(async () => {
-        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        const ai = getAI();
         const cleanBase64 = imageBase64.split(',')[1] || imageBase64;
         const response = await ai.models.generateContent({
             model: 'gemini-2.0-flash',
@@ -258,7 +259,7 @@ export const generateSocialCaption = async (imageBase64: string): Promise<string
 
 export const generateSocialPost = async (product: Product): Promise<string> => {
     return withRetry(async () => {
-        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        const ai = getAI();
         const response = await ai.models.generateContent({
             model: 'gemini-2.0-flash',
             contents: `Generate a compelling, high-converting social media post for this product:
@@ -279,7 +280,7 @@ export const generateSocialPost = async (product: Product): Promise<string> => {
 
 export const mapCSVColumnsToSchema = async (csvHeaders: string[]): Promise<Record<string, string>> => {
     return withRetry(async () => {
-        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        const ai = getAI();
         const response = await ai.models.generateContent({
             model: 'gemini-2.0-flash',
             contents: `Map these CSV headers to our database schema.
@@ -297,7 +298,7 @@ export const mapCSVColumnsToSchema = async (csvHeaders: string[]): Promise<Recor
 
 export const suggestProductPrice = async (productName: string, category: string): Promise<number> => {
     return withRetry(async () => {
-        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        const ai = getAI();
         const response = await ai.models.generateContent({
             model: 'gemini-2.0-flash',
             contents: `Suggest a competitive premium price in Tanzanian Shillings (TZS) for this product: "${productName}" in category "${category}". Return ONLY the number. Example: 45000`,
@@ -309,7 +310,7 @@ export const suggestProductPrice = async (productName: string, category: string)
 
 export const generateTags = async (name: string, description: string): Promise<string[]> => {
     return withRetry(async () => {
-        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        const ai = getAI();
         const response = await ai.models.generateContent({
             model: 'gemini-2.0-flash',
             contents: `Generate 8 relevant SEO tags for a product named "${name}". Description: "${description}". Return ONLY a comma-separated list of tags. Example: "shoes, leather, mens fashion, summer, durable"`,
@@ -320,7 +321,7 @@ export const generateTags = async (name: string, description: string): Promise<s
 
 export const generateProductImage = async (prompt: string): Promise<string | null> => {
   return withRetry(async () => {
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    const ai = getAI();
     const response = await ai.models.generateContent({
       model: 'gemini-2.0-flash',
       contents: {
@@ -344,7 +345,7 @@ export const generateProductImage = async (prompt: string): Promise<string | nul
 
 export const refineProductImage = async (imageInput: string, instruction: string): Promise<string | null> => {
     return withRetry(async () => {
-        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        const ai = getAI();
         let mimeType = 'image/jpeg';
         let cleanBase64 = imageInput;
 
@@ -398,7 +399,7 @@ export const generateMarketingVideo = async (productName: string, description: s
     }
 
     return withRetry(async () => {
-        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        const ai = getAI();
         let operation = await ai.models.generateVideos({
             model: 'veo-3.1-fast-generate-preview',
             prompt: `Cinematic commercial for ${productName}. ${description}. Professional lighting, 4k, smooth camera movement, highly detailed.`,
@@ -419,7 +420,7 @@ export const generateMarketingVideo = async (productName: string, description: s
         if (!downloadLink) return null;
 
         // Fetch the actual video blob
-        const res = await fetch(`${downloadLink}&key=${process.env.GEMINI_API_KEY}`);
+        const res = await fetch(proxiedMediaUrl(downloadLink));
         const blob = await res.blob();
         return URL.createObjectURL(blob);
     });
@@ -427,7 +428,7 @@ export const generateMarketingVideo = async (productName: string, description: s
 
 export const generateRecipesFromCart = async (ingredients: string[]): Promise<any[]> => {
   return withRetry(async () => {
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    const ai = getAI();
     const response = await ai.models.generateContent({
       model: 'gemini-2.0-flash',
       contents: `Suggest 3 authentic recipes using: ${ingredients.join(', ')}. Return JSON. Use English for all text.`,
@@ -454,7 +455,7 @@ export const generateRecipesFromCart = async (ingredients: string[]): Promise<an
 
 export const analyzeImageForSearch = async (imageBase64: string): Promise<string[]> => {
     return withRetry(async () => {
-        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        const ai = getAI();
         const cleanBase64 = imageBase64.split(',')[1] || imageBase64;
         const response = await ai.models.generateContent({
             model: 'gemini-2.0-flash',
@@ -471,7 +472,7 @@ export const analyzeImageForSearch = async (imageBase64: string): Promise<string
 
 export const identifyTrendingProduct = async (products: Product[]): Promise<{ id: string, reason: string } | null> => {
   return withRetry(async () => {
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    const ai = getAI();
     const candidates = products.filter(p => p.stock > 0).slice(0, 30);
     if (candidates.length === 0) return null;
 
@@ -493,7 +494,7 @@ export const identifyTrendingProduct = async (products: Product[]): Promise<{ id
 
 export const getAssistantResponse = async (query: string): Promise<string> => {
     return withRetry(async () => {
-        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        const ai = getAI();
         const response = await ai.models.generateContent({
             model: 'gemini-2.0-flash',
             contents: query,
@@ -507,7 +508,7 @@ export const getAssistantResponse = async (query: string): Promise<string> => {
 
 export const generateRecipeCardImage = async (title: string): Promise<string | null> => {
     return withRetry(async () => {
-        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        const ai = getAI();
         const response = await ai.models.generateContent({
             model: 'gemini-2.0-flash',
             contents: {
@@ -526,7 +527,7 @@ export const generateRecipeCardImage = async (title: string): Promise<string | n
 
 export const generateSellerReplies = async (context: string): Promise<string[]> => {
     return withRetry(async () => {
-        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        const ai = getAI();
         const response = await ai.models.generateContent({
             model: 'gemini-2.0-flash',
             contents: `You are a professional seller on MaliMart. Generate 3 short, polite, and distinct quick-reply options for this customer message: "${context}". Keep them under 10 words. Return JSON array of strings.`,
@@ -544,7 +545,7 @@ export const generateSellerReplies = async (context: string): Promise<string[]> 
 
 export const analyzeConversation = async (messages: string[]): Promise<{ sentiment: number, intent: string, suggestion: string } | null> => {
     return withRetry(async () => {
-        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        const ai = getAI();
         const response = await ai.models.generateContent({
             model: 'gemini-2.0-flash',
             contents: `Analyze this buyer-seller conversation from the seller's perspective. 
@@ -574,7 +575,7 @@ export const analyzeConversation = async (messages: string[]): Promise<{ sentime
 
 export const analyzeDispute = async (reason: string, description: string): Promise<{ suggestion: string, riskScore: number, recommendedAction: string } | null> => {
     return withRetry(async () => {
-        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        const ai = getAI();
         const response = await ai.models.generateContent({
             model: 'gemini-2.0-flash',
             contents: `Analyze this e-commerce dispute.
@@ -605,7 +606,7 @@ export const analyzeDispute = async (reason: string, description: string): Promi
 
 export const refineMessage = async (draft: string, tone: 'professional' | 'persuasive' | 'friendly' = 'professional'): Promise<string> => {
     return withRetry(async () => {
-        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        const ai = getAI();
         const response = await ai.models.generateContent({
             model: 'gemini-2.0-flash',
             contents: `Rewrite the following draft message for a seller to a buyer. 
