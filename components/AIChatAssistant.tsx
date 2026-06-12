@@ -7,6 +7,7 @@ import {
  TrendingUp, Box, HelpCircle, Trash2
 } from 'lucide-react';
 import { GoogleGenAI, LiveServerMessage, Modality } from '@google/genai';
+import { getAI, getLiveAI } from '../services/aiClient';
 import { Button, Input, Card, Badge, useToast } from './UI';
 import { useAppState } from '../context/AppContext';
 import { CURRENCY } from '../constants';
@@ -251,7 +252,7 @@ export const AIChatAssistant = () => {
  }, []);
 
  const startLiveSession = async () => {
- if (!process.env.GEMINI_API_KEY) return;
+ 
  if (isConnecting || isLive) {
  stopLiveSession();
  return;
@@ -282,7 +283,7 @@ export const AIChatAssistant = () => {
  processorRef.current = processor;
 
  // 3. Connect to Gemini Live
- const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+ const ai = await getLiveAI();
  const sessionPromise = ai.live.connect({
  model: 'gemini-2.5-flash-native-audio-preview-12-2025',
  config: {
@@ -369,7 +370,7 @@ export const AIChatAssistant = () => {
  setIsTyping(true);
 
  try {
- const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+ const ai = getAI();
  const history = messages
  .filter(m => m.type === 'text')
  .map(m => ({
@@ -427,7 +428,7 @@ export const AIChatAssistant = () => {
  
  setIsTyping(true);
  try {
- const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+ const ai = getAI();
  const response = await ai.models.generateContent({
  model: 'gemini-2.0-flash',
  contents: `Refine this shopping query to be more specific and professional for a shopping assistant: "${input}". Return ONLY the refined query.`,
