@@ -13,7 +13,6 @@ export default defineConfig(({ mode }) => {
   // SECURITY: GEMINI_API_KEY must come from env (Vercel → Settings → Environment
   // Variables). The previous hardcoded fallback was committed to a public repo
   // and must be treated as compromised — rotate it in Google AI Studio.
-  const GEMINI_API_KEY   = pick('GEMINI_API_KEY');
   // The Supabase URL + anon key are public-by-design (shipped to every browser,
   // protected by Row Level Security). Fallbacks kept so deploys keep working
   // until the env vars are configured in Vercel — then these can be removed too.
@@ -108,10 +107,7 @@ export default defineConfig(({ mode }) => {
       }),
     ],
 
-    define: {
-      'process.env.API_KEY':         JSON.stringify(GEMINI_API_KEY),
-      'process.env.GEMINI_API_KEY':  JSON.stringify(GEMINI_API_KEY),
-      'process.env.SUPABASE_URL':    JSON.stringify(SUPABASE_URL),
+    define: {      'process.env.SUPABASE_URL':    JSON.stringify(SUPABASE_URL),
       'process.env.SUPABASE_ANON_KEY': JSON.stringify(SUPABASE_ANON_KEY),
     },
 
