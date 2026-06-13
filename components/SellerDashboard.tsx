@@ -520,8 +520,6 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({
     const ch = supabase.channel(`sd-${sellerId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'order_items', filter: `seller_id=eq.${sellerId}` },
         () => { loadSnapshot(); loadFull(true); })
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' },
-        () => { loadSnapshot(); loadFull(true); })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'products', filter: `seller_id=eq.${sellerId}` },
         () => loadFull(true))
       .subscribe();
