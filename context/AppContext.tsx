@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback, useMemo } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { withCache, invalidate, invalidatePrefix, TTL } from '../services/queryCache';
+import { applyTheme } from '../services/theme';
 import { Product, CartItem, User, Order, Notification, VendorProfile, Address, ProductVariant, ChatMessage, Offer, Category, Payment, Shipment, TrustBadge, ReturnRequest, OrderNote, ActivityLog, WalletTransaction, SocialPost, SocialInteraction, Follower, Review } from '../types';
 import { useToast } from '../components/UI';
 
@@ -197,6 +198,11 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     useEffect(() => {
         setIsDark(document.documentElement.classList.contains('dark'));
     }, []);
+    // After applyTheme() runs on login, re-sync the local isDark flag to the
+    // resolved mode (covers theme_mode: 'system' and cross-device changes).
+    useEffect(() => {
+        if (user) setIsDark(document.documentElement.classList.contains('dark'));
+    }, [user]);
 
     const toggleTheme = useCallback(() => {
         const newMode = !isDark;
@@ -229,6 +235,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
                 }
                 if (profile) {
                     setUser({ ...profile, name: profile.full_name || 'User', email: session.user.email } as User);
+                    applyTheme(profile as any); // saved theme_mode/accent/motion/contrast follow the user
                     supabase.from('profiles').update({ last_seen_at: new Date().toISOString() }).eq('id', session.user.id);
                     // 🚀 Single RPC for ALL user data + public data in parallel
                     await Promise.all([
@@ -264,6 +271,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
                 }
                 if (profile) {
                     setUser({ ...profile, name: profile.full_name || 'User', email: session.user.email } as User);
+                    applyTheme(profile as any); // saved theme_mode/accent/motion/contrast follow the user
                     supabase.from('profiles').update({ last_seen_at: new Date().toISOString() }).eq('id', session.user.id);
                     // 🚀 One RPC replaces 10+ sequential queries on every sign-in
                     await applyDashboardRpc(session.user.email || '', profile);

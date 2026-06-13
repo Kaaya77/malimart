@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAppState } from '../context/AppContext';
 import { supabase } from '../services/supabaseClient';
+import { categoryCountsServer, trendingProductsServer } from '../services/exploreService';
 import { formatTZS } from '../constants';
 import { VendorProfile } from '../types';
 import {
@@ -129,6 +130,13 @@ export const CategoriesPage = () => {
   const [loadingVendors, setLoadingVendors] = useState(false);
   const [searchQ, setSearchQ] = useState('');
   const [storeFilter, setStoreFilter] = useState<'all'|'verified'|'new'>('all');
+  // Full-catalog counts/trending from RPCs (fall back to in-memory below).
+  const [serverCounts, setServerCounts] = useState<Record<string, number> | null>(null);
+  const [serverTrending, setServerTrending] = useState<any[] | null>(null);
+  useEffect(() => {
+    categoryCountsServer().then(setServerCounts);
+    trendingProductsServer(12).then(setServerTrending);
+  }, []);
 
   // Load vendors
   useEffect(() => {
@@ -147,13 +155,14 @@ export const CategoriesPage = () => {
   }, [tab]);
 
   const categoryCounts = useMemo(() => {
+    if (serverCounts) return serverCounts; // accurate, whole-catalog
     const counts: Record<string, number> = {};
     for (const p of products) {
       if (p.status === 'inactive' || !p.category) continue;
       counts[p.category] = (counts[p.category] || 0) + 1;
     }
     return counts;
-  }, [products]);
+  }, [products, serverCounts]);
 
   const organizedCategories = useMemo(() => {
     const top = categories.filter(c => !c.parent_id);
@@ -174,11 +183,12 @@ export const CategoriesPage = () => {
   }, [organizedCategories, searchQ]);
 
   const trendingProducts = useMemo(() =>
-    [...products]
-      .filter(p => p.status !== 'inactive')
-      .sort((a, b) => (b.rating || 0) * (b.review_count || 1) - (a.rating || 0) * (a.review_count || 1))
-      .slice(0, 12),
-    [products]
+    (serverTrending && serverTrending.length ? serverTrending :
+      [...products]
+        .filter(p => p.status !== 'inactive')
+        .sort((a, b) => (b.rating || 0) * (b.review_count || 1) - (a.rating || 0) * (a.review_count || 1))
+        .slice(0, 12)),
+    [products, serverTrending]
   );
 
   const filteredVendors = useMemo(() => {
