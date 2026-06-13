@@ -68,11 +68,10 @@ export const BuyerMessages = ({ userId, initialSellerId }: { userId: string, ini
  setChats(msgs.filter(m => !blockedUsers.has(m.sender_id) && !blockedUsers.has(m.receiver_id)));
  };
  load();
- const channel = supabase.channel('messages_channel')
- .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
- if(payload.new.receiver_id === userId || payload.new.sender_id === userId) load();
- })
- .subscribe();
+ const channel = supabase.channel(`msgs-${userId}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `receiver_id=eq.${userId}` }, () => load())
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `sender_id=eq.${userId}` }, () => load())
+      .subscribe();
  return () => { supabase.removeChannel(channel); };
  }, [userId, initialSellerId, user, blockedUsers]);
 
