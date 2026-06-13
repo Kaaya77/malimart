@@ -64,9 +64,11 @@ export const QuickProductForm = ({ onClose, onSuccess }: QuickProductFormProps) 
  addToast(`Product flagged for review: ${moderation.reason}. Saved as draft.`, "warning");
  }
 
- const productPayload = { ...formData, status: finalStatus, seller_id: user.id, updated_at: new Date().toISOString() };
- const { error } = await supabase.from('products').insert(productPayload);
- if (error) throw error;
+ const { error } = await supabase.rpc('save_product', {
+        p_product: { ...formData, status: finalStatus },
+        p_variants: [],
+      });
+      if (error) throw error;
  
  if (!moderation.isFlagged) {
  addToast("Product published successfully!", "success");

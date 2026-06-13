@@ -205,19 +205,15 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
         addToast(`Product flagged for review: ${moderation.reason}. Saved as draft.`, "warning");
       }
 
-      const { is_low_stock: _ilk, is_out_of_stock: _ioos, units_sold_30d: _u, revenue_30d: _r, recent_movements: _rm, profiles: _prof, ...cleanData } = formData as any;
-      const productPayload = { ...cleanData, status: finalStatus, seller_id: user.id, updated_at: new Date().toISOString() };
+      // Single atomic, server-validated write (product + variants) via save_product RPC.
+      // seller_id is enforced server-side; unknown/computed fields are ignored safely.
+      const productPayload: any = { ...formData, status: finalStatus };
       if (!initialData) delete productPayload.id;
-      const { data: prod, error: prodError } = await supabase.from('products').upsert(productPayload).select().single();
+      const { data: prod, error: prodError } = await supabase.rpc('save_product', {
+        p_product: productPayload,
+        p_variants: variants ?? [],
+      });
       if (prodError) throw prodError;
-
-      if (prod) {
-        const { error: varError } = await supabase.rpc('upsert_product_variants', {
-          p_product_id: prod.id,
-          p_variants: JSON.stringify(variants),
-        });
-        if (varError) throw varError;
-      }
 
       if (!moderation.isFlagged) {
         addToast("Product published successfully!", "success");
@@ -484,19 +480,15 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
         addToast(`Product flagged for review: ${moderation.reason}. Saved as draft.`, "warning");
       }
 
-      const { is_low_stock: _ilk, is_out_of_stock: _ioos, units_sold_30d: _u, revenue_30d: _r, recent_movements: _rm, profiles: _prof, ...cleanData } = formData as any;
-      const productPayload = { ...cleanData, status: finalStatus, seller_id: user.id, updated_at: new Date().toISOString() };
+      // Single atomic, server-validated write (product + variants) via save_product RPC.
+      // seller_id is enforced server-side; unknown/computed fields are ignored safely.
+      const productPayload: any = { ...formData, status: finalStatus };
       if (!initialData) delete productPayload.id;
-      const { data: prod, error: prodError } = await supabase.from('products').upsert(productPayload).select().single();
+      const { data: prod, error: prodError } = await supabase.rpc('save_product', {
+        p_product: productPayload,
+        p_variants: variants ?? [],
+      });
       if (prodError) throw prodError;
-
-      if (prod) {
-        const { error: varError } = await supabase.rpc('upsert_product_variants', {
-          p_product_id: prod.id,
-          p_variants: JSON.stringify(variants),
-        });
-        if (varError) throw varError;
-      }
 
       if (!moderation.isFlagged) {
         addToast("Product published successfully!", "success");
