@@ -74,7 +74,7 @@ export const OrderConfirmationPage = () => {
     );
   }
 
-  const addr = confirmedOrder.address as unknown as Address | null;
+  const addr = (confirmedOrder as any).shipping_address as Address | null;
   const userName = user?.user_metadata?.full_name || user?.full_name || user?.name || 'there';
 
   return (
@@ -159,9 +159,9 @@ export const OrderConfirmationPage = () => {
                   <span>{row.label}</span><span className="text-foreground/70">{row.value}</span>
                 </div>
               ))}
-              {(confirmedOrder.discount || 0) > 0 && (
+              {((confirmedOrder as any).discount_amount || 0) > 0 && (
                 <div className="flex justify-between text-[11px] font-black text-emerald-500">
-                  <span>Discount</span><span>-{formatTZS(confirmedOrder.discount)}</span>
+                  <span>Discount</span><span>-{formatTZS((confirmedOrder as any).discount_amount)}</span>
                 </div>
               )}
               <div className="border-t border-foreground/8 pt-3 flex justify-between items-center">
