@@ -16,6 +16,7 @@ import { Magnetic } from '../components/Effects';
 import { CURRENCY, formatTZS } from '../constants';
 import { Product, VendorProfile } from '../types';
 import { supabase } from '../services/supabaseClient';
+import { usePresence } from '../hooks/usePresence';
 
 export const ProductPage = () => {
  const { id } = useParams();
@@ -24,6 +25,18 @@ export const ProductPage = () => {
  const { addToast } = useToast();
  
  const [product, setProduct] = useState<Product | null>(null);
+
+ // Live presence: how many people are viewing this product right now.
+ // Per-product topic keeps the audience naturally small, so it scales fine.
+ const presenceKey = useMemo(
+   () => user?.id || `guest-${Math.random().toString(36).slice(2)}`,
+   [user?.id]
+ );
+ const { count: viewers } = usePresence({
+   topic: product ? `product:${product.id}` : null,
+   key: presenceKey,
+   meta: { role: user?.role || 'guest' },
+ });
  const [vendor, setVendor] = useState<VendorProfile | null>(null);
  const [activeImage, setActiveImage] = useState(0);
  const [qty, setQty] = useState(1);
@@ -261,6 +274,18 @@ export const ProductPage = () => {
  
  <div className="flex flex-wrap items-center gap-4 text-[10px] uppercase tracking-[0.2em] opacity-60 mb-8">
  <span>{product.review_count} Reviews</span>
+ {viewers > 1 && (
+   <>
+     <span className="w-1 h-1 bg-foreground/20 rounded-full"></span>
+     <span className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+       <span className="relative flex h-1.5 w-1.5">
+         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75"></span>
+         <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+       </span>
+       {viewers} viewing now
+     </span>
+   </>
+ )}
  <span className="w-1 h-1 bg-foreground/20 rounded-full"></span>
  <span>SKU: {metrics.sku || 'N/A'}</span>
  {product.location && (
