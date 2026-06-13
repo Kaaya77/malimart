@@ -64,11 +64,10 @@ export const AdminMessages = ({ initialSelectedUser }: { initialSelectedUser?: {
  setChats(msgs);
  };
  load();
- const channel = supabase.channel('messages_channel')
- .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
- if(payload.new.receiver_id === user.id || payload.new.sender_id === user.id) load();
- })
- .subscribe();
+ const channel = supabase.channel(`msgs-${user.id}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `receiver_id=eq.${user.id}` }, () => load())
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `sender_id=eq.${user.id}` }, () => load())
+      .subscribe();
  return () => { supabase.removeChannel(channel); };
  }, [user]);
 
