@@ -94,11 +94,11 @@ export const SellerMessages = ({ userId, selectedChatUser, setSelectedChatUser, 
  };
  // If preloaded, silent background refresh; otherwise show nothing while loading
  load(false);
- const channel = supabase.channel(`msgs-${userId}`)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `receiver_id=eq.${userId}` }, () => load(true))
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `sender_id=eq.${userId}` }, () => load(true))
-      .subscribe();
-
+const channel = supabase.channel(`msgs-${userId}`)
+          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `receiver_id=eq.${userId}` }, () => load(true))
+          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `sender_id=eq.${userId}` }, () => load(true))
+          .subscribe();
+  
  // Typing indicator channel
  const typingChannel = supabase.channel(`typing:${userId}`)
  .on('broadcast', { event: 'typing' }, ({ payload }) => {
