@@ -68,6 +68,7 @@ const channel = supabase.channel(`msgs-${user.id}`)
           .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `receiver_id=eq.${user.id}` }, () => load())
           .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `sender_id=eq.${user.id}` }, () => load())
           .subscribe();
+        return () => { supabase.removeChannel(channel); };
  }, [user]);
 
  const activeChats = useMemo(() => {
