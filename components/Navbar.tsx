@@ -13,6 +13,7 @@ import { useAuth, useCart, useComms, useCatalog } from '../context/AppContext';
 import { supabase } from '../services/supabaseClient';
 import { SearchModal } from './SearchModal';
 import { UserMenu } from './UserMenu';
+import { NotificationsPanel } from './NotificationsPanel';
 import { CATEGORY_HIERARCHY } from '../constants';
 
 function useDarkMode() {
@@ -301,6 +302,7 @@ export const Navbar = () => {
  const [scrolled, setScrolled] = useState(false);
  const [menuOpen, setMenuOpen] = useState(false);
  const [searchOpen, setSearchOpen] = useState(false);
+ const [notifOpen, setNotifOpen] = useState(false);
  const [searchQuery, setSearchQuery] = useState('');
  const searchRef = useRef<HTMLInputElement>(null);
 
@@ -316,6 +318,12 @@ export const Navbar = () => {
  },[]);
 
  const handleLogout = async ()=>{ await supabase.auth.signOut(); setUser(null); navigate('/'); };
+ // Persist theme to the profile so it follows the user across devices.
+ const toggleTheme = () => {
+   const next = isDark ? 'light' : 'dark';
+   toggleDark();
+   if (user) supabase.rpc('update_my_settings', { p: { theme_mode: next } }).then(()=>{}, ()=>{});
+ };
  const handleSearchSubmit = (e: React.FormEvent)=>{ e.preventDefault(); navigate(`/shop?q=${encodeURIComponent(searchQuery)}`); setSearchOpen(false); };
 
  const accountPath = user
@@ -353,7 +361,7 @@ export const Navbar = () => {
  </button>
 
  {/* Dark mode */}
- <button onClick={toggleDark} aria-label="Toggle theme" className={ibtn}>
+ <button onClick={toggleTheme} aria-label="Toggle theme" className={ibtn}>
  {isDark?<Sun className="w-[18px] h-[18px] stroke-[2]"/>:<Moon className="w-[18px] h-[18px] stroke-[2]"/>}
  </button>
 
@@ -374,16 +382,26 @@ export const Navbar = () => {
  </Link>
  )}
 
- {/* Notifications (desktop) */}
+ {/* Notifications (desktop) — inline popover, no page navigation */}
  {user && (
- <Link to="/notifications" aria-label={`Notifications${unread?` (${unread} unread)`:''}`} className={`hidden md:flex relative ${ibtn}`}>
+ <div className="hidden md:block relative">
+ <button onClick={()=>setNotifOpen(o=>!o)} aria-label={`Notifications${unread?` (${unread} unread)`:''}`} aria-expanded={notifOpen} className={`relative ${ibtn}`}>
  <BellRing className="w-[18px] h-[18px] stroke-[2]"/>
  {unread>0 && (
  <span className="absolute top-1.5 right-1.5 min-w-[14px] h-3.5 px-0.5 rounded-full bg-rose-500 text-white text-[8px] font-black flex items-center justify-center">
  {unread>9?'9+':unread}
  </span>
  )}
- </Link>
+ </button>
+ {notifOpen && (
+ <>
+ <div className="fixed inset-0 z-40" onClick={()=>setNotifOpen(false)}/>
+ <div className="absolute top-full right-0 mt-3 z-50 text-foreground">
+ <NotificationsPanel onClose={()=>setNotifOpen(false)}/>
+ </div>
+ </>
+ )}
+ </div>
  )}
 
  {/* Cart */}
@@ -447,7 +465,7 @@ export const Navbar = () => {
  user={user}
  logout={handleLogout}
  isDark={isDark}
- toggleDark={toggleDark}
+ toggleDark={toggleTheme}
  notifications={notifications||[]}
  unreadMessages={unreadMessages||0}
  />

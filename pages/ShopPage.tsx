@@ -8,6 +8,7 @@ import { ProductCard } from '../components/ProductCard';
 import { FilterSidebar } from '../components/FilterSidebar';
 import { Product } from '../types';
 import { searchProductsServer } from '../services/searchService';
+import { shopProductsServer } from '../services/shopService';
 import { MaliEmptyState } from '../components/MaliSoul';
 
 const SORT_OPTIONS = [
@@ -75,21 +76,36 @@ export const ShopPage: React.FC = () => {
  // Falls back silently to client filtering if the RPC isn't available.
  const debouncedQuery = useDebounce(searchQuery, 350);
  const [serverResults, setServerResults] = useState<Product[] | null>(null);
+ const [serverTotal, setServerTotal] = useState<number | null>(null);
  useEffect(() => {
    let cancelled = false;
-   if (debouncedQuery.trim().length < 2) { setServerResults(null); return; }
-   searchProductsServer(debouncedQuery).then(res => {
-     if (!cancelled) setServerResults(res);
+   // Server-side filtering over the FULL catalog (shop_products RPC).
+   shopProductsServer({
+     query: debouncedQuery,
+     category: activeFilters.categories?.[0],
+     minPrice: activeFilters.priceRange?.[0],
+     maxPrice: activeFilters.priceRange?.[1],
+     minRating: activeFilters.rating,
+     verified: activeFilters.verified,
+     inStock: activeFilters.stock,
+     region: activeFilters.location,
+     sort: sortBy,
+     limit: 48,
+   }).then(res => {
+     if (cancelled) return;
+     if (res) { setServerResults(res.products); setServerTotal(res.totalCount); return; }
+     setServerTotal(null);
+     // Fallback chain: legacy FTS RPC, then pure client filtering.
+     if (debouncedQuery.trim().length < 2) { setServerResults(null); return; }
+     searchProductsServer(debouncedQuery).then(r2 => { if (!cancelled) setServerResults(r2); });
    });
    return () => { cancelled = true; };
- }, [debouncedQuery]);
+ }, [debouncedQuery, activeFilters, sortBy]);
 
  const filteredProducts = useMemo(() => {
  // Base list: server search results when available (full catalog),
  // otherwise the in-memory products from context.
- const source = (searchQuery.trim().length >= 2 && serverResults?.length)
-   ? serverResults
-   : products;
+ const source = serverResults ?? products;
  let list = source.filter(p => p.status !== 'inactive');
 
  // Search query (client fallback / refinement when server results unavailable)
