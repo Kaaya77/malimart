@@ -293,73 +293,44 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         return () => { authListener.subscription.unsubscribe(); };
     }, []);
 
-    useEffect(() => {
+ useEffect(() => {
         if (!user) return;
 
-        // Profile subscription to update user state
-        const profileChannel = supabase.channel(`profiles:${user.id}`)
-            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${user.id}` }, async (payload) => {
+        // ── ONE channel per user (was 6) ─────────────────────────────────────
+        // Supabase allows many postgres_changes listeners on a single channel.
+        // Collapsing 6 → 1 cuts realtime connections (and their egress/overhead)
+        // by 6× per signed-in user. Every binding below is unchanged in behavior.
+        let channel = supabase
+            .channel(`user:${user.id}`)
+            // Profile — keeps user state in sync; also how an unban propagates live
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${user.id}` }, async () => {
                 const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-                if (profile) {
-                    setUser({ ...user, ...profile, name: profile.full_name || 'User' } as User);
-                }
-            })
-            .subscribe();
+                if (profile) setUser({ ...user, ...profile, name: profile.full_name || 'User' } as User);
+            });
 
-        if (user.is_banned) {
-            return () => {
-                supabase.removeChannel(profileChannel);
-            };
+        // Banned users only need the profile subscription (to detect an unban).
+        if (!user.is_banned) {
+            channel = channel
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` }, (payload) => {
+                    const newNotif = payload.new as Notification;
+                    setNotifications(prev => [newNotif, ...prev.filter(n => n.id !== newNotif.id)]);
+                    addToast(newNotif.title || 'New Notification', 'info');
+                })
+                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` }, (payload) => {
+                    setNotifications(prev => prev.map(n => n.id === payload.new.id ? payload.new as Notification : n));
+                })
+                .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` }, (payload) => {
+                    setNotifications(prev => prev.filter(n => n.id !== payload.old.id));
+                })
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'orders', filter: `user_id=eq.${user.id}` }, () => fetchAndSetOrders(user.id))
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'wishlist_items', filter: `user_id=eq.${user.id}` }, () => fetchAndSetWishlist(user.id))
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'carts', filter: `user_id=eq.${user.id}` }, () => fetchAndSetCart(user.id))
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'messages', filter: `receiver_id=eq.${user.id}` }, () => fetchUnreadMessagesCount(user.id));
         }
 
-        // Notifications
-        const notificationsChannel = supabase.channel(`notifications:${user.id}`)
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` }, (payload) => {
-                const newNotif = payload.new as Notification;
-                setNotifications(prev => [newNotif, ...prev.filter(n => n.id !== newNotif.id)]);
-                addToast(newNotif.title || 'New Notification', 'info');
-            })
-            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` }, (payload) => {
-                setNotifications(prev => prev.map(n => n.id === payload.new.id ? payload.new as Notification : n));
-            })
-            .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` }, (payload) => {
-                setNotifications(prev => prev.filter(n => n.id !== payload.old.id));
-            })
-            .subscribe();
+        channel.subscribe();
 
-        // Orders — listen on both orders AND order_items so status changes propagate
-        const ordersChannel = supabase.channel(`orders:${user.id}`)
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'orders', filter: `user_id=eq.${user.id}` }, 
-                () => fetchAndSetOrders(user.id)
-            )
-            .subscribe();
-
-        // Wishlist — fixed: table name was 'wishlist' (doesn't exist), correct name is 'wishlist_items'
-        const wishlistChannel = supabase.channel(`wishlist:${user.id}`)
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'wishlist_items', filter: `user_id=eq.${user.id}` }, 
-                () => fetchAndSetWishlist(user.id)
-            ).subscribe();
-        
-        // Cart — fixed: now filters by the user's own cart_id to avoid receiving all users' cart events
-        const cartChannel = supabase.channel(`cart:${user.id}`)
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'carts', filter: `user_id=eq.${user.id}` }, 
-                () => fetchAndSetCart(user.id)
-            ).subscribe();
-
-        // Messages
-        const messagesChannel = supabase.channel(`messages:${user.id}`)
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'messages', filter: `receiver_id=eq.${user.id}` }, 
-                () => fetchUnreadMessagesCount(user.id)
-            ).subscribe();
-
-        return () => {
-            supabase.removeChannel(profileChannel);
-            supabase.removeChannel(notificationsChannel);
-            supabase.removeChannel(ordersChannel);
-            supabase.removeChannel(wishlistChannel);
-            supabase.removeChannel(cartChannel);
-            supabase.removeChannel(messagesChannel);
-        };
+        return () => { supabase.removeChannel(channel); };
     }, [user]);
 
     // ─── ONE-SHOT DASHBOARD HYDRATION ────────────────────────────────────────
