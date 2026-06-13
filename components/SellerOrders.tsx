@@ -493,7 +493,6 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: {
     fetchOrders();
     const ch = supabase.channel(`seller-orders-${sellerId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'order_items', filter: `seller_id=eq.${sellerId}` }, () => fetchOrders(true))
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, () => fetchOrders(true))
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [sellerId]);
