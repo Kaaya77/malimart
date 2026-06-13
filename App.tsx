@@ -9,7 +9,6 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AppStateProvider, useAppState } from './context/AppContext';
-import { SocketProvider } from './src/context/SocketContext';
 import { ToastProvider, ErrorBoundary, Button, Input } from './components/UI';
 import { Navbar, MobileBottomNav } from './components/Navbar';
 import { Footer } from './components/Footer';
@@ -296,14 +295,12 @@ const App = () => {
   return (
     <ToastProvider>
       <AppStateProvider>
-        <SocketProvider>
           <Router>
             <ScrollToTop />
             <ErrorBoundary>
               <AppContent />
             </ErrorBoundary>
           </Router>
-        </SocketProvider>
       </AppStateProvider>
     </ToastProvider>
   );
