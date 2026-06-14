@@ -510,13 +510,13 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
  return (
  <PFContext.Provider value={pf}>
  <div className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-xl flex items-center justify-center p-2 md:p-4 animate-in fade-in duration-300">
- <div className="w-full max-w-[95vw] xl:max-w-7xl h-[95vh] md:h-[90vh] bg-background dark:bg-background flex overflow-hidden border border-foreground/10 relative shadow-2xl">
+ <div className="w-full max-w-[95vw] xl:max-w-7xl h-[95dvh] md:h-[90dvh] bg-background dark:bg-background flex flex-col lg:flex-row overflow-hidden border border-foreground/10 relative shadow-2xl">
  <button onClick={onClose} className="absolute top-6 right-6 z-50 p-3 bg-transparent hover:opacity-50 transition-opacity text-foreground"><X className="w-6 h-6" /></button>
 
- {/* Left Rail */}
- <div className="w-20 lg:w-72 border-r border-foreground/8 flex flex-col justify-between py-8 shrink-0 bg-foreground/[0.02]">
- <div className="px-3 lg:px-10">
- <div className="w-14 h-14 bg-foreground text-background flex items-center justify-center font-serif text-2xl mb-12 mx-auto lg:mx-0 rounded-2xl">M</div>
+ {/* Left Rail — hidden on mobile, shown on lg */}
+ <div className="hidden lg:flex w-72 border-r border-foreground/8 flex-col justify-between py-8 shrink-0 bg-foreground/[0.02]">
+ <div className="px-10">
+ <div className="w-14 h-14 bg-foreground text-background flex items-center justify-center font-serif text-2xl mb-12 rounded-2xl">M</div>
  <nav className="space-y-3">
  {[
  { id: 'details', label: 'Essentials', icon: Package },
@@ -525,32 +525,50 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
  { id: 'variants', label: 'Matrix', icon: LayoutGrid },
  { id: 'preview', label: 'Preview', icon: Smartphone }
  ].map((s) => (
- <button key={s.id} onClick={() => setStep(s.id as any)} className={`w-full flex items-center justify-center lg:justify-start gap-4 p-4 lg:px-6 transition-all group relative ${step === s.id ? 'bg-foreground/[0.06] text-foreground font-semibold' : 'opacity-40 hover:opacity-100 text-foreground'}`}>
- <s.icon className={`w-5 h-5 ${step === s.id ? 'text-foreground' : 'group-hover:text-foreground'}`} />
- <span className="hidden lg:block text-[10px] uppercase tracking-[0.2em]">{s.label}</span>
- {step === s.id && <div className="absolute left-0 top-0 bottom-0 w-1 bg-foreground hidden lg:block"></div>}
+ <button key={s.id} onClick={() => setStep(s.id as any)} className={`w-full flex items-center justify-start gap-4 p-4 px-6 transition-all group relative ${step === s.id ? 'bg-foreground/[0.06] text-foreground font-semibold' : 'opacity-40 hover:opacity-100 text-foreground'}`}>
+ <s.icon className={`w-5 h-5 flex-shrink-0 ${step === s.id ? 'text-foreground' : 'group-hover:text-foreground'}`} />
+ <span className="text-[10px] uppercase tracking-[0.2em]">{s.label}</span>
+ {step === s.id && <div className="absolute left-0 top-0 bottom-0 w-1 bg-foreground"></div>}
  </button>
  ))}
  </nav>
  </div>
- <div className="px-6 lg:px-10 hidden lg:block">
+ <div className="px-10">
  <div className="p-6 bg-foreground text-background dark:text-foreground relative overflow-hidden shadow-2xl">
  <div className="relative z-10">
  <p className="text-[10px] uppercase tracking-[0.2em] opacity-60 mb-2">Estimated Margin</p>
  <div className="flex items-baseline gap-2">
- <span className="text-4xl font-serif">{margin.toFixed(0)}%</span>
- <span className="text-[11px] opacity-60 font-serif">/ unit</span>
+ <span className="text-3xl font-serif">{margin.toFixed(0)}%</span>
+ <span className="text-[10px] opacity-60 font-serif">/ unit</span>
  </div>
- <div className="mt-4 text-[11px] font-mono bg-black/10 dark:bg-white/10 p-2 border border-background/10 dark:border-foreground/10">Profit: {profit.toLocaleString()} {CURRENCY}</div>
+ <div className="mt-4 text-[10px] font-mono bg-black/10 dark:bg-white/10 p-2 border border-background/10 dark:border-foreground/10">Profit: {profit.toLocaleString()} {CURRENCY}</div>
  </div>
  <div className="absolute bottom-0 right-0 w-24 h-20 opacity-10"><BarChart4 className="w-full h-full" /></div>
  </div>
  </div>
  </div>
 
+ {/* Mobile Steps Nav */}
+ <div className="lg:hidden border-b border-foreground/8 bg-foreground/[0.02] overflow-x-auto no-scrollbar">
+ <nav className="flex gap-2 px-4 py-3">
+ {[
+ { id: 'details', label: 'Details', icon: Package },
+ { id: 'media', label: 'Media', icon: ImageIcon },
+ { id: 'logistics', label: 'Shipping', icon: Truck },
+ { id: 'variants', label: 'Options', icon: LayoutGrid },
+ { id: 'preview', label: 'Preview', icon: Smartphone }
+ ].map((s) => (
+ <button key={s.id} onClick={() => setStep(s.id as any)} className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-[9px] uppercase tracking-[0.15em] flex-shrink-0 transition-all ${step === s.id ? 'bg-foreground text-background font-bold' : 'bg-foreground/[0.06] text-foreground opacity-60 hover:opacity-100'}`}>
+ <s.icon className="w-4 h-4" />
+ <span className="hidden xs:inline">{s.label}</span>
+ </button>
+ ))}
+ </nav>
+ </div>
+
  {/* Form Main Area */}
  <div className="flex-1 overflow-y-auto no-scrollbar bg-background dark:bg-background">
- <div className="max-w-5xl mx-auto p-10 md:p-20 space-y-16">
+ <div className="max-w-5xl mx-auto p-4 sm:p-6 md:p-8 lg:p-20 space-y-8 md:space-y-16">
  {/* Header */}
  <div className="flex justify-between items-end border-b border-foreground/10 pb-10">
  <div>

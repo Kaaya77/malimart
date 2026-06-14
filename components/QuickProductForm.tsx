@@ -40,7 +40,8 @@ export const QuickProductForm = ({ onClose, onSuccess }: QuickProductFormProps) 
  const { data: publicUrlData } = supabase.storage.from('mali-mart-uploads').getPublicUrl(fileName);
  url = publicUrlData.publicUrl;
  }
- setFormData({ ...formData, images: [url] });
+ // Allow multiple images, but first one is primary
+ setFormData({ ...formData, images: [...(formData.images || []), url] });
  } catch (e: any) {
  addToast(`Failed to upload image: ${e.message}`, "error");
  } finally {
@@ -90,12 +91,19 @@ export const QuickProductForm = ({ onClose, onSuccess }: QuickProductFormProps) 
  <button onClick={onClose} className="w-9 h-9 rounded-full bg-foreground/[0.06] flex items-center justify-center hover:bg-foreground/[0.1] transition-colors"><X className="w-4 h-4" /></button>
  </div>
  <div className="space-y-4">
- <div className="aspect-[4/5] mb-4">
- {formData.images?.[0] ? (
- <img src={formData.images[0]} className="w-full h-full object-cover" alt="Product" loading="lazy" decoding="async" />
- ) : (
+ <div className="grid grid-cols-2 gap-3 mb-4">
+ {(formData.images || []).map((img, i) => (
+ <div key={i} className="aspect-[4/5] relative group overflow-hidden border border-foreground/10 bg-foreground/[0.05] rounded-2xl">
+ <img src={img} className="w-full h-full object-cover" alt="Product" loading="lazy" decoding="async" />
+ <div className="absolute inset-0 bg-primary/60 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
+ <button onClick={() => { const newImgs = [...(formData.images || [])]; newImgs.splice(i, 1); setFormData({...formData, images: newImgs}); }} className="p-3 bg-background text-red-500 hover:bg-red-500 hover:text-white transition-all rounded-full"><X className="w-5 h-5"/></button>
+ </div>
+ {i === 0 && <div className="absolute top-2 left-2 px-2 py-1 bg-primary text-background text-[8px] uppercase tracking-[0.2em] font-bold rounded-lg">Primary</div>}
+ </div>
+ ))}
+ <div className="aspect-[4/5]">
  <ImageDropzone onImageSelected={handleImageUpload} />
- )}
+ </div>
  </div>
  <Input value={formData.name || ''} onChange={(e: any) => setFormData({...formData, name: e.target.value})} placeholder="Product Name" />
  <Input type="number" value={formData.price || ''} onChange={(e: any) => setFormData({...formData, price: Number(e.target.value)})} placeholder={`Price (${CURRENCY})`} />
