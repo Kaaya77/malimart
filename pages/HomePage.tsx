@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppState } from '../context/AppContext';
 import { useHomePageData } from '../hooks/useHomePageData';
@@ -31,7 +32,7 @@ const SEARCH_PLACEHOLDERS = [
 ];
 
 const HomePage: React.FC = () => {
-  const { products = [], isLoading, recentlyViewed = [] } = useAppState();
+  const { products = [], isLoading, catalogError, refreshProducts, recentlyViewed = [] } = useAppState();
   const navigate = useNavigate();
   const homeData = useHomePageData();
 
@@ -80,6 +81,18 @@ const HomePage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {catalogError && products.length === 0 && (
+        <div className="flex flex-col items-center justify-center gap-4 py-20 px-6 text-center">
+          <AlertTriangle className="w-10 h-10 text-amber-500" />
+          <p className="text-foreground/70 text-sm font-medium max-w-xs">{catalogError}</p>
+          <button
+            onClick={refreshProducts}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-foreground text-background text-xs font-bold uppercase tracking-widest hover:opacity-80 active:scale-95 transition-all"
+          >
+            <RefreshCw className="w-3.5 h-3.5" /> Retry
+          </button>
+        </div>
+      )}
       {/* 1. Hero — real featured products */}
       <HeroSection
         heroRecommendation={homeData.heroRecommendation}

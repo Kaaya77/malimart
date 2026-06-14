@@ -54,6 +54,7 @@ interface AppContextType {
     followSeller: (sellerId: string) => Promise<void>;
     unfollowSeller: (sellerId: string) => Promise<void>;
     isFollowing: (sellerId: string) => boolean;
+    catalogError: string | null;
     refreshProducts: () => Promise<void>;
     refreshNotifications: () => Promise<void>;
     refreshWishlist: () => Promise<void>;
@@ -116,7 +117,7 @@ type AuthSlice = Pick<AppContextType,
 
 type CatalogSlice = Pick<AppContextType,
     'products' | 'categories' | 'offers' | 'trustBadges' | 'socialPosts' | 'followers' |
-    'recentlyViewed' | 'wishlist' | 'toggleWishlist' | 'isInWishlist' | 'followSeller' |
+    'recentlyViewed' | 'wishlist' | 'catalogError' | 'toggleWishlist' | 'isInWishlist' | 'followSeller' |
     'unfollowSeller' | 'isFollowing' | 'refreshProducts' | 'addToRecentlyViewed' | 'addReview' |
     'fetchReviews' | 'getActiveOfferForProduct' | 'interactWithPost' | 'refreshWishlist'>;
 
@@ -160,6 +161,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     const [addresses, setAddresses] = useState<Address[]>([]);
     const [walletTransactions, setWalletTransactions] = useState<WalletTransaction[]>([]);
     const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
+    const [catalogError, setCatalogError] = useState<string | null>(null);
     const [offers, setOffers] = useState<Offer[]>([]);
     const [payments, setPayments] = useState<Payment[]>([]);
     const [shipments, setShipments] = useState<Shipment[]>([]);
@@ -457,7 +459,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
                     if (error) { console.error('Error fetching products:', error); return null; }
                     return data;
                 },
-                (data) => setProducts(data as any)
+                (data) => { setProducts(data as any); setCatalogError(null); }
             ),
         ]);
 
@@ -465,7 +467,12 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         if (offers_)  setOffers(offers_ as Offer[]);
         if (badges)   setTrustBadges(badges);
         if (posts)    setSocialPosts(posts as any);
-        if (products_ && Array.isArray(products_)) setProducts(products_ as any);
+        if (products_ && Array.isArray(products_)) {
+            setProducts(products_ as any);
+            setCatalogError(null);
+        } else if (products_ === null) {
+            setCatalogError('Could not load products. Check your connection and try again.');
+        }
     }, []);
 
 
@@ -1464,9 +1471,11 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
 
     const catalogValue: CatalogSlice = useMemo(() => ({
         products, categories, offers, trustBadges, socialPosts, followers, recentlyViewed, wishlist,
+        catalogError,
         toggleWishlist, isInWishlist, followSeller, unfollowSeller, isFollowing, refreshProducts,
         addToRecentlyViewed, addReview, fetchReviews, getActiveOfferForProduct, interactWithPost, refreshWishlist,
     }), [products, categories, offers, trustBadges, socialPosts, followers, recentlyViewed, wishlist,
+        catalogError,
         toggleWishlist, isInWishlist, followSeller, unfollowSeller, isFollowing, refreshProducts,
         addToRecentlyViewed, addReview, fetchReviews, getActiveOfferForProduct, interactWithPost, refreshWishlist]);
 

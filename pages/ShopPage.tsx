@@ -1,7 +1,7 @@
 import { useDebounce } from '../src/hooks/useDebounce';
 import React, { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Search, SlidersHorizontal, X, ArrowUpDown, Loader2 } from 'lucide-react';
+import { Search, SlidersHorizontal, X, ArrowUpDown, Loader2, AlertTriangle, RefreshCw } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppState } from '../context/AppContext';
 import { ProductCard } from '../components/ProductCard';
@@ -32,7 +32,7 @@ const FilterChip: React.FC<{ label: string; onRemove: () => void }> = ({ label, 
 );
 
 export const ShopPage: React.FC = () => {
- const { products, categories, isLoading } = useAppState();
+ const { products, categories, isLoading, catalogError, refreshProducts } = useAppState();
  const navigate = useNavigate();
  const [searchParams, setSearchParams] = useSearchParams();
 
@@ -325,6 +325,19 @@ export const ShopPage: React.FC = () => {
  </div>
  ) : filteredProducts.length === 0 ? (
  <div className="py-16 text-center">
+ {catalogError && products.length === 0 ? (
+ <div className="flex flex-col items-center gap-4">
+ <AlertTriangle className="w-10 h-10 text-amber-500" />
+ <p className="text-foreground/70 text-sm font-medium max-w-xs">{catalogError}</p>
+ <button
+ onClick={refreshProducts}
+ className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-foreground text-background text-xs font-bold uppercase tracking-widest hover:opacity-80 active:scale-95 transition-all"
+ >
+ <RefreshCw className="w-3.5 h-3.5" /> Retry
+ </button>
+ </div>
+ ) : (
+ <>
  <MaliEmptyState kind="search" />
  <div className="-mt-6">
  <button
@@ -338,6 +351,8 @@ export const ShopPage: React.FC = () => {
  Clear all filters
  </button>
  </div>
+ </>
+ )}
  </div>
  ) : (
  <motion.div
