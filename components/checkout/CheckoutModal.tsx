@@ -60,7 +60,7 @@ export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, on
       const ids = Array.from(new Set(cart.map(i => i.seller_id)));
       if (!ids.length) { setAreVendorsLoaded(true); return; }
       try {
-        const { data } = await supabase.from('vendor_profiles').select('*').in('seller_id', ids);
+        const { data } = await supabase.from('public_vendor_profiles').select('seller_id, store_name, logo_url, region, is_verified, delivery_fee, return_policy, shipping_policy, vacation_mode').in('seller_id', ids);
         if (data) setSellerDetails(data as VendorProfile[]);
       } catch (e) { console.error(e); }
       finally { setAreVendorsLoaded(true); }

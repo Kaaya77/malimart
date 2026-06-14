@@ -67,7 +67,7 @@ export const ProductPage = () => {
 
  useEffect(() => {
  if (product?.seller_id) {
- supabase.from('vendor_profiles').select('*').eq('seller_id', product.seller_id).single()
+ supabase.from('public_vendor_profiles').select('seller_id, store_name, description, logo_url, banner_url, region, district, is_verified, trust_score, total_sales, verification_level, rating, delivery_fee, return_policy, shipping_policy, processing_time, warranty, vacation_mode, opening_hours, instagram_url, facebook_url, website_url, social_links').eq('seller_id', product.seller_id).single()
  .then(({ data }) => {
  if (data) setVendor(data as VendorProfile);
  });

@@ -161,12 +161,16 @@ CREATE POLICY "notifications_update_own" ON notifications
   FOR UPDATE USING (user_id = auth.uid());
 
 -- ─── vendor_profiles ─────────────────────────────────────────
-DROP POLICY IF EXISTS "vendor_profiles_select_public" ON vendor_profiles;
-DROP POLICY IF EXISTS "vendor_profiles_update_seller" ON vendor_profiles;
-DROP POLICY IF EXISTS "vendor_profiles_admin"         ON vendor_profiles;
+DROP POLICY IF EXISTS "vendor_profiles_select_public"       ON vendor_profiles;
+DROP POLICY IF EXISTS "vendor_profiles_select"              ON vendor_profiles;
+DROP POLICY IF EXISTS "vendor_profiles_select_own_or_admin" ON vendor_profiles;
+DROP POLICY IF EXISTS "vendor_profiles_update_seller"       ON vendor_profiles;
+DROP POLICY IF EXISTS "vendor_profiles_admin"               ON vendor_profiles;
 
-CREATE POLICY "vendor_profiles_select_public" ON vendor_profiles
-  FOR SELECT USING (true);
+-- Only the owning seller or an admin may read the full row (bank details, TINs, etc).
+-- Public storefront code must use the public_vendor_profiles view instead.
+CREATE POLICY "vendor_profiles_select_own_or_admin" ON vendor_profiles
+  FOR SELECT USING (seller_id = auth.uid() OR is_admin());
 
 CREATE POLICY "vendor_profiles_update_seller" ON vendor_profiles
   FOR UPDATE USING (seller_id = auth.uid())
@@ -187,6 +191,24 @@ CREATE POLICY "vendor_profiles_insert" ON vendor_profiles
 
 CREATE POLICY "vendor_profiles_admin" ON vendor_profiles
   FOR ALL USING (is_admin());
+
+-- Safe public view — exposes only storefront-appropriate columns to anon/authenticated.
+-- Does NOT include: account_number, bank_name, bank_account_name, tin_number,
+-- business_reg_no, vrn, mobile_number, lipa_*, contact_phone, contact_email,
+-- address, payment_methods, payout_schedule.
+CREATE OR REPLACE VIEW public.public_vendor_profiles
+  WITH (security_invoker = true)
+AS
+SELECT
+  seller_id, store_name, description, logo_url, banner_url, region, district,
+  is_verified, trust_score, total_sales, verification_level, avg_response_minutes,
+  delivery_fee, return_policy, shipping_policy, processing_time, warranty,
+  auto_reply_message, instagram_url, facebook_url, website_url, custom_domain,
+  social_links, opening_hours, currency, language, tags, vacation_mode,
+  rating, store_policy
+FROM vendor_profiles;
+
+GRANT SELECT ON public.public_vendor_profiles TO anon, authenticated;
 
 -- ─── disputes ────────────────────────────────────────────────
 DROP POLICY IF EXISTS "disputes_participants" ON disputes;

@@ -38,8 +38,8 @@ export const useHomePageData = () => {
                     (async () => {
                         for (let attempt = 0; attempt <= 2; attempt++) {
                             const { data: d, error } = await supabase
-                                .from('vendor_profiles')
-                                .select('*')
+                                .from('public_vendor_profiles')
+                                .select('seller_id, store_name, description, logo_url, banner_url, region, is_verified, trust_score, total_sales, verification_level, rating, delivery_fee')
                                 .eq('is_verified', true)
                                 .limit(6);
                             if (!error) return d;
@@ -107,7 +107,7 @@ export const useHomePageData = () => {
                     let vendorMap: Record<string, any> = {};
                     if (sellerIds.length > 0) {
                         const { data: vendors } = await supabase
-                            .from('vendor_profiles')
+                            .from('public_vendor_profiles')
                             .select('seller_id, store_name, is_verified, logo_url, region')
                             .in('seller_id', sellerIds);
                         (vendors || []).forEach((v: any) => { vendorMap[v.seller_id] = v; });
