@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(xargs grep -l \"dashboard\\\\|Dashboard\")"
+      "Bash(xargs grep -l \"dashboard\\\\|Dashboard\")",
+      "Bash(grep -rn \"\\\\/messages\\\\|\\\\/chat\\\\|\\\\/inbox\\\\|\\\\/conversation\" . --include=\"*.tsx\" --include=\"*.ts\")"
     ]
   }
 }
