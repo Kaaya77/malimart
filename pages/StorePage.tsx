@@ -5,7 +5,7 @@ import {
   Store, MapPin, Star, BadgeCheck, MessageSquare, Share2,
   Search, Globe, Truck, ShieldCheck, Loader2, ArrowRight,
   Instagram, Twitter, Facebook, Info, Calendar, Package,
-  Heart, Filter, LayoutGrid, Tag, Phone, TrendingUp, Clock
+  Heart, Filter, LayoutGrid, Tag, Phone, TrendingUp, Clock, Eye
 } from 'lucide-react';
 import { useAppState } from '../context/AppContext';
 import { supabase } from '../services/supabaseClient';
@@ -14,6 +14,7 @@ import { ProductCard } from '../components/ProductCard';
 import { ReviewSection } from '../components/ReviewSection';
 import { useToast } from '../components/UI';
 import { formatTZS } from '../constants';
+import { usePresence } from '../hooks/usePresence';
 
 type Tab = 'collection' | 'about' | 'reviews';
 type SortKey = 'popular' | 'newest' | 'price_asc' | 'price_desc' | 'rating';
@@ -31,6 +32,15 @@ export const StorePage: React.FC = () => {
   const navigate  = useNavigate();
   const { addToast } = useToast();
   const { fetchVendorProfile, products, followSeller, unfollowSeller, isFollowing, user } = useAppState();
+
+  // Live storefront presence: who's viewing this store right now + seller online.
+  const presenceKey = useMemo(() => user?.id || `guest-${Math.random().toString(36).slice(2)}`, [user?.id]);
+  const { count: storeViewers, others: storePresence } = usePresence({
+    topic: id ? `store:${id}` : null,
+    key: presenceKey,
+    meta: { role: user?.role || 'guest' },
+  });
+  const sellerOnline = storePresence.some((p: any) => p?.role === 'seller');
 
   const [vendor, setVendor]     = useState<VendorProfile | null>(null);
   const [loading, setLoading]   = useState(true);
@@ -151,6 +161,15 @@ export const StorePage: React.FC = () => {
                     <BadgeCheck className="w-3.5 h-3.5"/> Verified
                   </div>
                 )}
+                {sellerOnline && (
+                  <div className="flex items-center gap-1.5 bg-emerald-500/10 text-emerald-600 text-[10px] font-bold px-2.5 py-1 rounded-full">
+                    <span className="relative flex h-2 w-2">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75"></span>
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+                    </span>
+                    Online now
+                  </div>
+                )}
               </div>
 
               {/* Meta row */}
@@ -168,6 +187,11 @@ export const StorePage: React.FC = () => {
                 {vendor.total_sales != null && (
                   <span className="flex items-center gap-1.5 text-xs text-foreground/45">
                     <Package className="w-3.5 h-3.5 stroke-[2]"/> {vendor.total_sales.toLocaleString()} sales
+                  </span>
+                )}
+                {storeViewers > 1 && (
+                  <span className="flex items-center gap-1.5 text-xs text-emerald-600">
+                    <Eye className="w-3.5 h-3.5 stroke-[2]"/> {storeViewers} viewing now
                   </span>
                 )}
               </div>
