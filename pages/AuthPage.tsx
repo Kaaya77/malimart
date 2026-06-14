@@ -258,22 +258,23 @@ export const LoginPage = () => {
  </motion.div>
  )}
 
- <motion.div 
+ <motion.div
  variants={{
  hidden: { opacity: 0, x: -20 },
  visible: { opacity: 1, x: 0 }
  }}
  className="space-y-2"
  >
- <Label>Email Address</Label>
+ <Label htmlFor="auth-email">Email Address</Label>
  <div className="relative group">
  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground/40 group-focus-within:text-brand-500 transition-colors"/>
- <Input 
- name="email" 
- type="email" 
- placeholder="name@example.com" 
- value={formData.email} 
- onChange={handleInputChange} 
+ <Input
+ id="auth-email"
+ name="email"
+ type="email"
+ placeholder="name@example.com"
+ value={formData.email}
+ onChange={handleInputChange}
  className="pl-12 h-16 bg-foreground/[0.06] border border-foreground/[0.12] focus:border-foreground/30 focus:bg-foreground/[0.09] font-bold text-lg"
  />
  </div>
@@ -288,20 +289,21 @@ export const LoginPage = () => {
  className="space-y-2"
  >
  <div className="flex justify-between items-center">
- <Label>Password</Label>
+ <Label htmlFor="auth-password">Password</Label>
  {mode === 'login' && <button type="button" onClick={() => setMode('forgot')} className="text-[10px] font-bold uppercase tracking-widest text-brand-600 hover:text-brand-700">Forgot?</button>}
  </div>
  <div className="relative group">
  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground/40 group-focus-within:text-brand-500 transition-colors"/>
- <Input 
- name="password" 
- type={showPassword ? "text" : "password"} 
- placeholder="••••••••" 
- value={formData.password} 
- onChange={handleInputChange} 
+ <Input
+ id="auth-password"
+ name="password"
+ type={showPassword ? "text" : "password"}
+ placeholder="••••••••"
+ value={formData.password}
+ onChange={handleInputChange}
  className="pl-12 pr-12 h-16 bg-foreground/[0.06] border border-foreground/[0.12] focus:border-foreground/30 focus:bg-foreground/[0.09] font-bold text-lg"
  />
- <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-foreground/40 hover:text-foreground/65">
+ <button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Hide password' : 'Show password'} className="absolute right-4 top-1/2 -translate-y-1/2 text-foreground/40 hover:text-foreground/65">
  {showPassword ? <EyeOff className="w-5 h-5"/> : <Eye className="w-5 h-5"/>}
  </button>
  </div>

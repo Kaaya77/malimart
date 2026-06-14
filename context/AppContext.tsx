@@ -229,9 +229,10 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
 
     useEffect(() => {
         const init = async () => {
+            initRunningRef.current = true;
             setIsLoading(true);
             // Guarantee isLoading is cleared even if a Supabase call hangs forever
-            const loadingTimer = setTimeout(() => setIsLoading(false), 12_000);
+            const loadingTimer = setTimeout(() => { initRunningRef.current = false; setIsLoading(false); }, 12_000);
             try {
             const { data: { session } } = await supabase.auth.getSession();
             if (session?.user) {
@@ -270,6 +271,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
                 console.error('[init] Uncaught error:', e);
             } finally {
                 clearTimeout(loadingTimer);
+                initRunningRef.current = false;
                 setIsLoading(false);
             }
         };
@@ -301,6 +303,10 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
                     }
                 }
             } else if (event === 'SIGNED_OUT') {
+                // Skip SIGNED_OUT while init() is resolving — a Supabase token refresh
+                // can fire SIGNED_OUT then SIGNED_IN in quick succession; acting on the
+                // intermediate SIGNED_OUT would bounce an authenticated user to /login.
+                if (initRunningRef.current) return;
                 setUser(null);
                 setCart([]);
                 setWishlist([]);
@@ -359,6 +365,9 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     // admin stats (admins). Called on init and every sign-in.
     // Ref to fetchUserData — prevents TDZ when applyDashboardRpc is minified
     const fetchUserDataRef = React.useRef<any>(null);
+    // Guards onAuthStateChange: while init() is in flight, ignore SIGNED_OUT
+    // events so a mid-load token refresh doesn't bounce authenticated users to /login.
+    const initRunningRef = React.useRef(true);
 
         const applyDashboardRpc = useCallback(async (email: string, profile: any) => {
         try {

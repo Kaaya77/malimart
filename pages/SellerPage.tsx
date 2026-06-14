@@ -285,6 +285,10 @@ export const SellerPage = () => {
   if (!user || user.role !== 'seller') return null;
 
   const storeName = contextVendor?.store_name || user.name;
+  // Prefer a clean first name for the greeting (display_name → first word of full name → fallback to store handle)
+  const displayFirstName = (user as any).display_name?.split(' ')[0]
+    || user.name?.split(' ')[0]?.replace(/_/g, ' ')
+    || storeName.split(' ')[0];
   const storeHref = `/store/${user.id}`;
 
   return (
@@ -360,7 +364,7 @@ export const SellerPage = () => {
                 {tab === 'dashboard' && (
                   <SellerDashboard
                     sellerId={user.id}
-                    sellerName={storeName}
+                    sellerName={displayFirstName}
                     vendorLogoUrl={contextVendor?.logo_url}
                     lowStockCount={lowStock}
                     onGoOrders={() => setTab('orders')}

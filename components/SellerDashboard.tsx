@@ -94,6 +94,7 @@ interface KpiProps {
   label: string;
   value: number;
   format?: 'currency' | 'number' | 'percent';
+  decimals?: number;
   trend?: number; // % change
   icon: React.ElementType;
   accent: string;
@@ -102,12 +103,12 @@ interface KpiProps {
   onClick?: () => void;
 }
 
-const KpiCard = ({ label, value, format = 'number', trend, icon: Icon, accent, sparkData, loading, onClick }: KpiProps) => {
+const KpiCard = ({ label, value, format = 'number', decimals, trend, icon: Icon, accent, sparkData, loading, onClick }: KpiProps) => {
   const formatted = format === 'currency'
     ? formatTZS(value)
     : format === 'percent'
     ? `${value.toFixed(1)}%`
-    : value.toLocaleString();
+    : decimals !== undefined ? value.toFixed(decimals) : value.toLocaleString();
 
   const trendPos = (trend ?? 0) >= 0;
   const sparkColor = trendPos ? '#10b981' : '#f43f5e';
@@ -159,8 +160,22 @@ const KpiCard = ({ label, value, format = 'number', trend, icon: Icon, accent, s
   );
 };
 
+// Fill a sparse date series so the x-axis is always continuous (no jumped gaps)
+function fillDateGaps(data: { date: string; revenue: number }[], days = 30): { date: string; revenue: number }[] {
+  const byDate: Record<string, number> = {};
+  for (const d of data) byDate[d.date.slice(0, 10)] = d.revenue;
+  const result: { date: string; revenue: number }[] = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const dt = new Date(Date.now() - i * 86_400_000);
+    const key = dt.toISOString().slice(0, 10);
+    result.push({ date: key, revenue: byDate[key] ?? 0 });
+  }
+  return result;
+}
+
 // ─── Revenue Chart ────────────────────────────────────────────────────────
 const RevenueChart = ({ data, loading }: { data: { date: string; revenue: number }[]; loading: boolean }) => {
+  data = React.useMemo(() => fillDateGaps(data), [data]);
   const fmt = (v: number) => v >= 1_000_000 ? `${(v/1_000_000).toFixed(1)}M` : v >= 1000 ? `${(v/1000).toFixed(0)}K` : String(v);
 
   if (loading) return (
@@ -414,10 +429,10 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({
         </h2>
         <KitengeStrip className="w-16 mt-2" />
       </div>
-      {/* Alert banners */}
+      {/* Alert banners — use live pendingOrders.length as the single source of truth */}
       <AlertBanner
         lowStock={full?.lowStockCount ?? lowStockCount}
-        pending={pending}
+        pending={pendingOrders.length}
         onGoOrders={onGoOrders}
         onGoInventory={onGoInventory}
       />
@@ -451,11 +466,11 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({
         />
         <KpiCard
           label="Pending Orders"
-          value={pending}
+          value={pendingOrders.length}
           icon={Clock}
-          accent={pending > 0 ? '#f59e0b' : '#94a3b8'}
+          accent={pendingOrders.length > 0 ? '#f59e0b' : '#94a3b8'}
           loading={kpiLoading}
-          onClick={pending > 0 ? onGoOrders : undefined}
+          onClick={pendingOrders.length > 0 ? onGoOrders : undefined}
         />
       </div>
 
@@ -486,13 +501,27 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({
             icon={RefreshCw}
             accent="#10b981"
           />
-          <KpiCard
-            label="Avg. Rating"
-            value={full.avgRating}
-            format="percent"
-            icon={Star}
-            accent="#f59e0b"
-          />
+          {full.avgRating > 0 ? (
+            <KpiCard
+              label="Avg. Rating"
+              value={full.avgRating}
+              format="number"
+              decimals={1}
+              icon={Star}
+              accent="#f59e0b"
+            />
+          ) : (
+            <div className="relative overflow-hidden rounded-2xl border border-foreground/[0.08] bg-foreground/[0.02] p-5">
+              <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full blur-2xl opacity-20" style={{ background: '#f59e0b' }} />
+              <div className="flex items-start justify-between mb-3">
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: '#f59e0b20' }}>
+                  <Star className="w-4 h-4" style={{ color: '#f59e0b' }} strokeWidth={2} />
+                </div>
+              </div>
+              <p className="text-sm font-bold text-foreground/40 mt-1">No ratings yet</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-foreground/30 mt-1">Avg. Rating</p>
+            </div>
+          )}
         </motion.div>
       )}
 
