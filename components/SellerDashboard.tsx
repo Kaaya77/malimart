@@ -12,18 +12,20 @@
 
 import { maliGreeting, KitengeStrip } from './MaliSoul';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { useSellerSnapshot, useSellerFullStats, useSellerDashboardRealtime } from '../hooks/useSellerDashboard';
+import { useSellerSnapshot, useSellerFullStats, useSellerDashboardRealtime, useSellerPendingOrders } from '../hooks/useSellerDashboard';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   TrendingUp, TrendingDown, Package, ShoppingBag, Clock,
   Wallet, BarChart3, Users, Zap, AlertTriangle, ArrowRight,
-  RefreshCw, Star, Eye, Target, Activity
+  RefreshCw, Star, Eye, Target, Activity, CheckCircle2, X,
+  RotateCcw, Tag, MessageSquare
 } from 'lucide-react';
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis,
   Tooltip, ResponsiveContainer, Cell, PieChart, Pie
 } from 'recharts';
 import { formatTZS } from '../constants';
+import { Sk as _Sk } from './DashboardShell';
 
 // ─── Animated Counter ──────────────────────────────────────────────────────
 const AnimCounter = ({ value, prefix = '', suffix = '', decimals = 0, duration = 800 }: {
@@ -85,10 +87,7 @@ const Sparkline = ({ data, color = '#10b981', positive = true }: {
   );
 };
 
-// ─── Skeleton ──────────────────────────────────────────────────────────────
-const Sk = ({ w = 'w-full', h = 'h-4', r = 'rounded-lg' }: { w?: string; h?: string; r?: string }) => (
-  <div className={`${w} ${h} ${r} bg-foreground/[0.06] animate-pulse`} />
-);
+const Sk = _Sk;
 
 // ─── KPI Card ──────────────────────────────────────────────────────────────
 interface KpiProps {
@@ -368,14 +367,23 @@ interface SellerDashboardProps {
   lowStockCount: number;
   onGoOrders: () => void;
   onGoInventory: () => void;
+  onGoReturns?: () => void;
+  onGoMessages?: () => void;
+  onGoPromotions?: () => void;
+  onConfirmOrder?: (orderId: string) => void;
+  onCancelOrder?: (orderId: string, reason: string) => void;
 }
 
 export const SellerDashboard: React.FC<SellerDashboardProps> = ({
   sellerId, sellerName, vendorLogoUrl, lowStockCount, onGoOrders, onGoInventory,
+  onGoReturns, onGoMessages, onGoPromotions, onConfirmOrder, onCancelOrder,
 }) => {
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
   // ── TanStack Query hooks — fetch, cache, and deduplicate automatically ────
   const { data: snap, isLoading: snapLoading } = useSellerSnapshot(sellerId);
   const { data: full, isLoading: fullLoading, isFetching: refreshing, refetch: refetchFull } = useSellerFullStats(sellerId);
+  const { data: pendingOrders = [], refetch: refetchPending } = useSellerPendingOrders(sellerId);
   useSellerDashboardRealtime(sellerId);  // invalidates cache on realtime events
 
   // ── Derive display values (snapshot first, full when ready) ──────────────
@@ -603,16 +611,84 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({
         </motion.div>
       </div>
 
+      {/* ── Pending Orders Action Panel ──────────────────────────────── */}
+      {pendingOrders.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.38 }}
+          className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.03] p-5"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+              <h3 className="text-sm font-bold text-foreground">Orders Awaiting Action</h3>
+            </div>
+            <button onClick={onGoOrders}
+              className="text-[10px] font-bold text-foreground/40 hover:text-foreground flex items-center gap-1 transition-colors">
+              View all <ArrowRight className="w-3 h-3" />
+            </button>
+          </div>
+          <div className="space-y-2">
+            {pendingOrders.slice(0, 3).map((order: any) => (
+              <div key={order.id} className="flex items-center gap-3 p-3 rounded-xl bg-background/60 border border-foreground/[0.06]">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold text-foreground">#{order.id?.slice(0,8).toUpperCase()}</p>
+                  <p className="text-[10px] text-foreground/40">
+                    {order.buyer_name || 'Customer'} · {formatTZS(Number(order.total))}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {onConfirmOrder && (
+                    <button
+                      onClick={async () => {
+                        setConfirmingId(order.id);
+                        await onConfirmOrder(order.id);
+                        refetchPending();
+                        setConfirmingId(null);
+                      }}
+                      disabled={confirmingId === order.id}
+                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-600 text-white text-[10px] font-bold hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+                    >
+                      <CheckCircle2 className="w-3 h-3" />
+                      {confirmingId === order.id ? '…' : 'Confirm'}
+                    </button>
+                  )}
+                  {onCancelOrder && (
+                    <button
+                      onClick={async () => {
+                        setCancellingId(order.id);
+                        await onCancelOrder(order.id, 'Seller cancelled');
+                        refetchPending();
+                        setCancellingId(null);
+                      }}
+                      disabled={cancellingId === order.id}
+                      title="Cancel order"
+                      className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-red-500/10 text-red-500 text-[10px] font-bold hover:bg-red-500/20 disabled:opacity-50 transition-colors"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      )}
+
       {/* ── Quick Actions ────────────────────────────────────────────── */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="grid grid-cols-2 sm:grid-cols-4 gap-3"
+        className="grid grid-cols-3 sm:grid-cols-5 gap-3"
       >
         {[
-          { label: 'Add Product', icon: Package, color: 'text-emerald-600 bg-emerald-500/10', action: onGoInventory },
-          { label: 'View Orders', icon: ShoppingBag, color: 'text-blue-600 bg-blue-500/10', action: onGoOrders },
+          { label: 'Add Product', icon: Package,      color: 'text-emerald-600 bg-emerald-500/10', action: onGoInventory },
+          { label: 'Orders',      icon: ShoppingBag,  color: 'text-blue-600 bg-blue-500/10',       action: onGoOrders },
+          { label: 'Messages',    icon: MessageSquare,color: 'text-violet-600 bg-violet-500/10',   action: onGoMessages || onGoOrders },
+          { label: 'Returns',     icon: RotateCcw,    color: 'text-orange-600 bg-orange-500/10',   action: onGoReturns || onGoOrders },
+          { label: 'Promotions',  icon: Tag,          color: 'text-pink-600 bg-pink-500/10',       action: onGoPromotions || onGoOrders },
         ].map(({ label, icon: Icon, color, action }) => (
           <button key={label} onClick={action}
             className="flex flex-col items-center gap-2.5 p-4 rounded-2xl bg-foreground/[0.02] border border-foreground/[0.08] hover:bg-foreground/[0.05] hover:border-foreground/15 transition-all active:scale-[0.97]">

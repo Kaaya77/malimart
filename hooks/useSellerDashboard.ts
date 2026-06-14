@@ -53,6 +53,32 @@ export function useSellerFullStats(sellerId: string | undefined) {
     });
 }
 
+/** Lightweight fetch of pending orders for inline dashboard actions */
+export function useSellerPendingOrders(sellerId: string | undefined) {
+    return useQuery({
+        queryKey:  ['seller', 'pending-orders', sellerId],
+        queryFn:   async () => {
+            const { data, error } = await supabase
+                .from('orders')
+                .select('id, total, created_at, status, profiles:buyer_id(display_name, full_name)')
+                .eq('seller_id', sellerId!)
+                .in('status', ['pending', 'processing', 'confirmed'])
+                .order('created_at', { ascending: true })
+                .limit(5);
+            if (error) throw error;
+            return (data ?? []).map((o: any) => ({
+                id: o.id,
+                total: o.total,
+                status: o.status,
+                created_at: o.created_at,
+                buyer_name: o.profiles?.display_name || o.profiles?.full_name || 'Customer',
+            }));
+        },
+        enabled:   !!sellerId,
+        staleTime: 20_000,
+    });
+}
+
 /**
  * Wires up Supabase Realtime to invalidate the TanStack Query cache
  * whenever this seller's order_items or products change.

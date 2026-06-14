@@ -200,7 +200,7 @@ const TABS = [
 ];
 
 export const BuyerPage = () => {
- const { user, orders, cancelOrder, deleteOrder, addToCart, fetchVendorProfile, wishlist, followers, unfollowSeller } = useAppState();
+ const { user, orders, cancelOrder, deleteOrder, addToCart, fetchVendorProfile, wishlist, toggleWishlist, followers, unfollowSeller } = useAppState();
  const [searchParams, setSearchParams] = useSearchParams();
  const navigate = useNavigate();
  const [tab, setTab] = useState<string>((searchParams.get('tab'))||'dashboard');
@@ -277,6 +277,11 @@ export const BuyerPage = () => {
             onGoOrders={()=>setTab('orders')}
             onGoWishlist={()=>setTab('wishlist')}
             onGoOffers={()=>setTab('offers')}
+            onCancelOrder={(id, reason) => cancelOrder(id, reason)}
+            onRemoveWishlist={(productId) => {
+              const product = wishlist.find(p => p.id === productId);
+              if (product) toggleWishlist(product);
+            }}
           />
         )}
 

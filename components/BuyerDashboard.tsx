@@ -7,26 +7,23 @@
  * Design: clean, personal, warm — focused on the buyer's journey
  */
 
-import React, { useMemo } from 'react';
-import { motion } from 'framer-motion';
+import React, { useMemo, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { maliGreeting, KitengeStrip } from './MaliSoul';
 import {
   ShoppingBag, DollarSign, Star, Wallet,
   TrendingUp, TrendingDown, Heart, ArrowRight,
   Package, Clock, CheckCircle2, XCircle, Truck,
-  Tag, RefreshCw
+  Tag, RefreshCw, Trash2, AlertTriangle, X
 } from 'lucide-react';
 import {
-  AreaChart, Area, BarChart, Bar, XAxis, YAxis,
-  Tooltip, ResponsiveContainer, PieChart, Pie, Cell
+  AreaChart, Area, XAxis, YAxis,
+  Tooltip, ResponsiveContainer,
 } from 'recharts';
 import { formatTZS } from '../constants';
 import { Order, Product } from '../types';
-
-// ─── Skeleton ──────────────────────────────────────────────────────────────
-const Sk = ({ w = 'w-full', h = 'h-4', r = 'rounded-lg' }: { w?: string; h?: string; r?: string }) => (
-  <div className={`${w} ${h} ${r} bg-foreground/[0.06] animate-pulse`} />
-);
+import { Sk } from './DashboardShell';
+import { CancelOrderModal } from './CancelOrderModal';
 
 // ─── KPI Card ──────────────────────────────────────────────────────────────
 const KpiCard = ({ label, value, icon: Icon, accent, trend, sub }: {
@@ -77,11 +74,15 @@ interface BuyerDashboardProps {
   onGoOrders: () => void;
   onGoWishlist: () => void;
   onGoOffers: () => void;
+  onCancelOrder?: (id: string, reason: string) => void;
+  onRemoveWishlist?: (productId: string) => void;
 }
 
 export const BuyerDashboard: React.FC<BuyerDashboardProps> = ({
   orders, wishlist, user, onGoOrders, onGoWishlist, onGoOffers,
+  onCancelOrder, onRemoveWishlist,
 }) => {
+  const [cancelTarget, setCancelTarget] = useState<Order | null>(null);
   // ── All stats derived from context data — zero fetches ──────────────────
   const stats = useMemo(() => {
     const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -361,6 +362,7 @@ export const BuyerDashboard: React.FC<BuyerDashboardProps> = ({
             <div className="flex flex-col items-center justify-center py-8 text-foreground/25">
               <ShoppingBag className="w-8 h-8 mb-2 opacity-30" />
               <p className="text-xs font-semibold uppercase tracking-widest">No orders yet</p>
+              <button onClick={onGoOrders} className="mt-3 text-[10px] font-bold text-blue-500 hover:underline">Browse products</button>
             </div>
           ) : (
             <div className="space-y-3">
@@ -369,8 +371,9 @@ export const BuyerDashboard: React.FC<BuyerDashboardProps> = ({
                 const Icon = cfg.icon;
                 const firstItem = order.items?.[0];
                 const img = (firstItem?.products || firstItem?.product)?.images?.[0];
+                const cancellable = ['pending', 'processing', 'confirmed'].includes(order.status);
                 return (
-                  <div key={order.id} className="flex items-center gap-3 p-3 rounded-xl bg-foreground/[0.02] border border-foreground/[0.06] hover:border-foreground/15 transition-colors">
+                  <div key={order.id} className="flex items-center gap-3 p-3 rounded-xl bg-foreground/[0.02] border border-foreground/[0.06] hover:border-foreground/15 transition-colors group">
                     <div className="w-10 h-10 rounded-xl overflow-hidden bg-foreground/[0.06] shrink-0">
                       {img
                         ? <img src={img} className="w-full h-full object-cover" alt="" loading="lazy" />
@@ -385,13 +388,24 @@ export const BuyerDashboard: React.FC<BuyerDashboardProps> = ({
                         {new Date(order.created_at).toLocaleDateString('en-TZ', { day: 'numeric', month: 'short' })}
                       </p>
                     </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-xs font-bold text-foreground">{formatTZS(Number(order.total))}</p>
-                      <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full mt-0.5"
-                        style={{ background: `${cfg.color}15`, color: cfg.color }}>
-                        <Icon className="w-2.5 h-2.5" />
-                        {cfg.label}
-                      </span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <div className="text-right">
+                        <p className="text-xs font-bold text-foreground">{formatTZS(Number(order.total))}</p>
+                        <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full mt-0.5"
+                          style={{ background: `${cfg.color}15`, color: cfg.color }}>
+                          <Icon className="w-2.5 h-2.5" />
+                          {cfg.label}
+                        </span>
+                      </div>
+                      {cancellable && onCancelOrder && (
+                        <button
+                          onClick={() => setCancelTarget(order)}
+                          title="Cancel order"
+                          className="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-lg bg-red-500/10 flex items-center justify-center text-red-500 hover:bg-red-500/20 transition-all shrink-0"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
@@ -453,6 +467,55 @@ export const BuyerDashboard: React.FC<BuyerDashboardProps> = ({
         </motion.div>
       </div>
 
+      {/* Wishlist Preview */}
+      {wishlist.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+          className="rounded-2xl border border-foreground/[0.08] bg-foreground/[0.02] p-5"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-sm font-bold text-foreground">Wishlist</h3>
+              <p className="text-[10px] text-foreground/40 uppercase tracking-wider mt-0.5">{wishlist.length} saved item{wishlist.length !== 1 ? 's' : ''}</p>
+            </div>
+            <button onClick={onGoWishlist}
+              className="text-[10px] font-bold text-foreground/40 hover:text-foreground flex items-center gap-1 transition-colors">
+              View all <ArrowRight className="w-3 h-3" />
+            </button>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            {wishlist.slice(0, 4).map((product: any) => {
+              const img = product.images?.[0];
+              return (
+                <div key={product.id} className="relative group rounded-xl overflow-hidden border border-foreground/[0.06] bg-foreground/[0.02]">
+                  <div className="aspect-square bg-foreground/[0.04]">
+                    {img
+                      ? <img src={img} alt={product.name} className="w-full h-full object-cover" loading="lazy" />
+                      : <div className="w-full h-full flex items-center justify-center"><Heart className="w-6 h-6 text-foreground/10" /></div>
+                    }
+                  </div>
+                  <div className="p-2">
+                    <p className="text-[10px] font-semibold text-foreground truncate">{product.name}</p>
+                    <p className="text-[10px] font-bold text-emerald-600">{formatTZS(Number(product.price))}</p>
+                  </div>
+                  {onRemoveWishlist && (
+                    <button
+                      onClick={() => onRemoveWishlist(product.id)}
+                      title="Remove from wishlist"
+                      className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 w-6 h-6 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center text-red-500 hover:bg-red-500 hover:text-white transition-all shadow-sm"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </motion.div>
+      )}
+
       {/* Quick Actions */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
@@ -474,6 +537,19 @@ export const BuyerDashboard: React.FC<BuyerDashboardProps> = ({
           </button>
         ))}
       </motion.div>
+
+      {/* Cancel Order Modal */}
+      {cancelTarget && onCancelOrder && (
+        <CancelOrderModal
+          isOpen={!!cancelTarget}
+          role="buyer"
+          onClose={() => setCancelTarget(null)}
+          onConfirm={(reason) => {
+            onCancelOrder(cancelTarget.id, reason);
+            setCancelTarget(null);
+          }}
+        />
+      )}
     </div>
   );
 };

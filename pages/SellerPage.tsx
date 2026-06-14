@@ -16,6 +16,7 @@ import { SellerOrders } from '../components/SellerOrders';
 import { MessagingHub } from '../components/messaging/MessagingHub';
 import { SellerSettingsPage } from './SellerSettingsPage';
 import { SellerReturns } from '../components/SellerReturns';
+import { supabase } from '../services/supabaseClient';
 
 // ─── Tab definitions ─────────────────────────────────────────────────────────
 const TABS = [
@@ -364,6 +365,15 @@ export const SellerPage = () => {
                     lowStockCount={lowStock}
                     onGoOrders={() => setTab('orders')}
                     onGoInventory={() => setTab('products')}
+                    onGoReturns={() => setTab('returns')}
+                    onGoMessages={() => setTab('messages')}
+                    onGoPromotions={() => setTab('offers')}
+                    onConfirmOrder={async (orderId) => {
+                      await supabase.rpc('update_order_status_rbac', { p_order_id: orderId, p_new_status: 'processing', p_cancel_reason: null });
+                    }}
+                    onCancelOrder={async (orderId, reason) => {
+                      await supabase.rpc('update_order_status_rbac', { p_order_id: orderId, p_new_status: 'cancelled', p_cancel_reason: reason });
+                    }}
                   />
                 )}
 

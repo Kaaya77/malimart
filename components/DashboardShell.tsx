@@ -16,6 +16,11 @@
 import React from 'react';
 import { ChevronLeft, RefreshCw, Search, Loader2 } from 'lucide-react';
 
+// ── Sk — reusable pulse skeleton block ───────────────────────────────────────
+export const Sk = ({ w = 'w-full', h = 'h-4', r = 'rounded-lg' }: { w?: string; h?: string; r?: string }) => (
+  <div className={`${w} ${h} ${r} bg-foreground/[0.06] animate-pulse`} />
+);
+
 // ── SectionHeader ────────────────────────────────────────────────────────────
 export const SectionHeader = ({
   title, description, action, actionLabel, actionIcon: ActionIcon, actionLoading
