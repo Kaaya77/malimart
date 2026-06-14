@@ -284,23 +284,46 @@ export const ThemeToggle = () => {
  );
 };
 
-export const ImageDropzone = ({ currentImage, onImageSelected }: any) => (
- <div className="relative w-full h-full border-2 border-dashed border-foreground/15 rounded-3xl flex flex-col items-center justify-center bg-foreground/[0.02] hover:bg-foreground/[0.05] transition-all cursor-pointer overflow-hidden group" onClick={() => document.getElementById('img-upload')?.click()}>
+export const ImageDropzone = ({ currentImage, onImageSelected }: any) => {
+ const inputRef = React.useRef<HTMLInputElement>(null);
+ const handleDrop = (e: React.DragEvent) => {
+   e.preventDefault();
+   const file = e.dataTransfer.files?.[0];
+   if (file && file.type.startsWith('image/')) onImageSelected(file);
+ };
+ return (
+ <div
+   className="relative w-full h-full border-2 border-dashed border-foreground/15 flex flex-col items-center justify-center bg-foreground/[0.02] hover:bg-foreground/[0.05] transition-all cursor-pointer overflow-hidden group"
+   onClick={() => inputRef.current?.click()}
+   onDragOver={(e) => e.preventDefault()}
+   onDrop={handleDrop}
+ >
  {currentImage ? (
  <img src={currentImage} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Upload" loading="lazy" decoding="async" />
  ) : (
- <div className="text-center p-6">
- <div className="w-12 h-12 bg-foreground/[0.06] rounded-2xl flex items-center justify-center mx-auto mb-4"><X className="w-5 h-5 text-foreground/60 rotate-45 stroke-[2]" /></div>
- <p className="text-xs font-bold text-foreground/60">Upload Photo</p>
+ <div className="text-center p-6 pointer-events-none">
+ <div className="w-12 h-12 bg-foreground/[0.06] flex items-center justify-center mx-auto mb-4">
+   <X className="w-5 h-5 text-foreground/60 rotate-45 stroke-[2]" />
+ </div>
+ <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-foreground/50">Upload</p>
+ <p className="text-[9px] text-foreground/30 mt-1">or drag & drop</p>
  </div>
  )}
- <input id="img-upload" type="file" className="hidden" accept="image/*" onChange={(e) => {
- if (e.target.files?.[0]) {
- onImageSelected(e.target.files[0]);
- }
- }} />
+ <input
+   ref={inputRef}
+   type="file"
+   className="hidden"
+   accept="image/*"
+   onChange={(e) => {
+     if (e.target.files?.[0]) {
+       onImageSelected(e.target.files[0]);
+       e.target.value = '';
+     }
+   }}
+ />
  </div>
-);
+ );
+};
 
 export const Modal = ({ isOpen, title, onClose, children, size = 'md' }: any) => {
  // Body scroll lock + ESC to close — applies to every Modal user app-wide

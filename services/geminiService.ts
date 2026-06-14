@@ -322,7 +322,7 @@ export const generateProductImage = async (prompt: string): Promise<string | nul
       contents: {
           parts: [{ text: `High-end professional e-commerce product photography of ${prompt}. Studio lighting, clean minimal background, 8k resolution, photorealistic, center aligned, premium commercial quality.` }]
       },
-      config: { imageConfig: { aspectRatio: '1:1' } }
+      config: { responseModalities: ['IMAGE', 'TEXT'] }
     });
 
     const parts = response.candidates?.[0]?.content?.parts;
@@ -369,7 +369,8 @@ export const refineProductImage = async (imageInput: string, instruction: string
                     { inlineData: { mimeType: mimeType, data: cleanBase64 } },
                     { text: `Edit this image to improve its e-commerce appeal. specifically: ${instruction}. Keep it high resolution and photorealistic.` }
                 ]
-            }
+            },
+            config: { responseModalities: ['IMAGE', 'TEXT'] }
         });
 
         const parts = response.candidates?.[0]?.content?.parts;
@@ -517,7 +518,7 @@ export const generateSellerReplies = async (context: string): Promise<string[]> 
     return withRetry(async () => {
         const ai = getAI();
         const response = await ai.models.generateContent({
-            model: MODELS.IMAGE,
+            model: MODELS.FAST,
             contents: `You are a professional seller on MaliMart. Generate 3 short, polite, and distinct quick-reply options for this customer message: "${context}". Keep them under 10 words. Return JSON array of strings.`,
             config: {
                 responseMimeType: "application/json",

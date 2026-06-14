@@ -195,33 +195,16 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
  };
 
  const handleImageUpload = async (fileOrUrl: File | string) => {
+    const MAX_IMAGES = 8;
+    if ((formData.images?.length ?? 0) >= MAX_IMAGES) {
+      return addToast(`Maximum ${MAX_IMAGES} images allowed`, "error");
+    }
     setIsLoading(true);
     try {
-      const moderation = await aiService.moderateContent(formData.name, formData.description || '');
-      let finalStatus = formData.status || 'active';
-
-      if (moderation.isFlagged) {
-        finalStatus = 'draft';
-        addToast(`Product flagged for review: ${moderation.reason}. Saved as draft.`, "warning");
-      }
-
-      // Single atomic, server-validated write (product + variants) via save_product RPC.
-      // seller_id is enforced server-side; unknown/computed fields are ignored safely.
-      const productPayload: any = { ...formData, status: finalStatus };
-      if (!initialData) delete productPayload.id;
-      const { data: prod, error: prodError } = await supabase.rpc('save_product', {
-        p_product: productPayload,
-        p_variants: variants ?? [],
-      });
-      if (prodError) throw prodError;
-
-      if (!moderation.isFlagged) {
-        addToast("Product published successfully!", "success");
-      }
-      onSuccess();
-      onClose();
+      const url = await uploadFileOrDataUrl(fileOrUrl);
+      setFormData(prev => ({ ...prev, images: [...(prev.images || []), url] }));
     } catch (e: any) {
-      addToast(e.message || "Failed to save", "error");
+      addToast(e.message || "Failed to upload image", "error");
     } finally {
       setIsLoading(false);
     }
@@ -337,16 +320,21 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
 
  const handleGenerateImage = async () => {
  if (!genPrompt) return addToast("Describe the image first", "warning");
+ if ((formData.images?.length ?? 0) >= 8) return addToast("Maximum 8 images allowed", "error");
  setAiLoading(true);
  try {
  const img = await aiService.generateProductImage(genPrompt);
  if (img) {
- handleImageUpload(img);
- setShowGenImage(false);
- addToast("Image Generated!", "success");
+   const url = await uploadFileOrDataUrl(img);
+   setFormData(prev => ({ ...prev, images: [...(prev.images || []), url] }));
+   setShowGenImage(false);
+   setGenPrompt('');
+   addToast("Image Generated!", "success");
  } else {
- addToast("Generation failed", "error");
+ addToast("Generation failed — try a more descriptive prompt", "error");
  }
+ } catch (e: any) {
+   addToast(e.message || "Image generation failed", "error");
  } finally { setAiLoading(false); }
  };
 
