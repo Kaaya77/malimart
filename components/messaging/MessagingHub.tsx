@@ -8,14 +8,14 @@ import { AdminMessages } from '../AdminMessages';
 export const MessagingHub = (props: any) => {
   // SellerMessages expects a `setSelectedChatUser` callback prop
   if (props && typeof props.setSelectedChatUser !== 'undefined') {
-    return <SellerMessages {...props} />;
+    return <SellerMessages {...(props as any)} />;
   }
 
   // BuyerMessages expects `initialSellerId` or a `userId` to operate
   if (props && (typeof props.initialSellerId !== 'undefined' || typeof props.userId !== 'undefined')) {
-    return <BuyerMessages {...props} />;
+    return <BuyerMessages {...(props as any)} />;
   }
 
   // Fallback to admin surface
-  return <AdminMessages {...props} />;
+  return <AdminMessages {...(props as any)} />;
 };
