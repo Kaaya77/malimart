@@ -15,7 +15,7 @@ import { formatTZS, CURRENCY } from '../constants';
 import { VendorProfile, Order, Offer, Product } from '../types';
 import { BuyerOrders } from '../components/BuyerOrders';
 import { BuyerDashboard } from '../components/BuyerDashboard';
-import { BuyerMessages } from '../components/BuyerMessages';
+import { MessagingHub } from '../components/messaging/MessagingHub';
 import { ProductCard } from '../components/ProductCard';
 import { BuyerSettingsPage } from './BuyerSettingsPage';
 import { BuyerReturns } from '../components/BuyerReturns';
@@ -314,7 +314,7 @@ export const BuyerPage = () => {
  )}
 
  {tab==='inbox' && (
- <BuyerMessages userId={user.id} initialSellerId={searchParams.get('sellerId')}/>
+ <MessagingHub userId={user.id} initialSellerId={searchParams.get('sellerId')} />
  )}
 
  {tab==='offers' && <BuyerOffers/>}

@@ -13,7 +13,7 @@ import { SellerDashboard } from '../components/SellerDashboard';
 import { SellerInventory } from '../components/SellerInventory';
 import { SellerOffers } from '../components/SellerOffers';
 import { SellerOrders } from '../components/SellerOrders';
-import { SellerMessages } from '../components/SellerMessages';
+import { MessagingHub } from '../components/messaging/MessagingHub';
 import { SellerSettingsPage } from './SellerSettingsPage';
 import { SellerReturns } from '../components/SellerReturns';
 
@@ -377,7 +377,7 @@ export const SellerPage = () => {
                 )}
 
                 {tab === 'messages' && (
-                  <SellerMessages userId={user.id} selectedChatUser={selectedChatUser}
+                  <MessagingHub userId={user.id} selectedChatUser={selectedChatUser}
                     setSelectedChatUser={setSelectedChatUser} products={products}
                     initialProductId={selectedProductId} initialOrderId={selectedOrderId}
                     initialChatUser={selectedChatUser} />
