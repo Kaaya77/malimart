@@ -152,7 +152,9 @@ export const OrderConfirmationPage = () => {
             <div className="p-5 space-y-3">
               {[
                 { label: 'Subtotal', value: formatTZS(confirmedOrder.subtotal || 0) },
-                { label: 'VAT', value: formatTZS(confirmedOrder.vat || 0) },
+                ...(((confirmedOrder as any).vat_amount || 0) > 0
+                  ? [{ label: 'VAT', value: formatTZS((confirmedOrder as any).vat_amount) }]
+                  : []),
                 { label: 'Delivery', value: formatTZS(confirmedOrder.delivery_fee || 0) },
               ].map(row => (
                 <div key={row.label} className="flex justify-between text-[11px] font-bold text-foreground/50">
