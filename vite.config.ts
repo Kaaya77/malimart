@@ -30,10 +30,19 @@ export default defineConfig(({ mode }) => {
       }),
       tailwindcss(),
       VitePWA({
-        registerType: 'autoUpdate',
+        // 'prompt' means the new SW waits for all tabs to close before activating.
+        // 'autoUpdate' + skipWaiting was causing stale-chunk 404s on refresh
+        // (new SW activated mid-page, cleaned old chunks, lazy imports broke).
+        registerType: 'prompt',
         workbox: {
-          skipWaiting: true,
-          clientsClaim: true,
+          // Do NOT skipWaiting or clientsClaim — let the new SW wait until
+          // all existing tabs are closed before it takes over. This prevents
+          // the race where skipWaiting activates a new SW while the page still
+          // holds references to old chunk hashes that cleanupOutdatedCaches just
+          // deleted, causing silent module-load failures that look like a full
+          // Supabase disconnect until a hard reset.
+          skipWaiting: false,
+          clientsClaim: false,
           cleanupOutdatedCaches: true,
           // EGRESS/PERF: don't force every new visitor to download heavy
           // feature chunks upfront. pdf-gen (594KB), charts (365KB),

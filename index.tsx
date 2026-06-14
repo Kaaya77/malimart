@@ -31,29 +31,23 @@ if (SENTRY_DSN) {
   }).catch(() => { /* monitoring is optional — never block the app */ });
 }
 
-// Register service worker with auto-reload on new deployment
-// skipWaiting + clientsClaim in vite.config means the new SW installs immediately.
-// onNeedRefresh fires when a new version is detected — we reload to activate it.
-// Unregister any stale SW from previous builds before registering the new one
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then(regs => {
-    regs.forEach(reg => {
-      // Only unregister if it's pointing at an old sw.js
-      if (reg.active?.scriptURL && !reg.active.scriptURL.includes('/sw.js')) {
-        reg.unregister();
-      }
-    });
-  });
-}
-
+// Service worker update strategy:
+// registerType:'prompt' + skipWaiting:false means new SWs WAIT until we tell
+// them to activate. When onNeedRefresh fires the new SW is sitting in "waiting"
+// state — the old SW (and its cached chunks) is still fully in control.
+// updateSW(true) sends SKIP_WAITING, activates the new SW, then reloads.
+// This eliminates the race where skipWaiting:true would activate a new SW
+// mid-page-load, clean up old chunk hashes, and leave lazy imports broken
+// until a hard reset.
 const updateSW = registerSW({
   onNeedRefresh() {
-    updateSW(true); // true = force reload, clears stale cache and loads new bundle
+    // Safe to reload now: new SW is waiting with full new cache ready.
+    updateSW(true);
   },
   onOfflineReady() {},
-  onRegisteredSW(swScriptUrl, registration) {
-    // Poll for updates every 60 seconds while the tab is open
-    registration && setInterval(() => registration.update(), 60_000);
+  onRegisteredSW(_url, registration) {
+    // Check for updates every 5 minutes while the tab is open.
+    registration && setInterval(() => registration.update(), 5 * 60_000);
   },
 });
 
