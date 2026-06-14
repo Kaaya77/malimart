@@ -220,7 +220,20 @@ export const BuyerPage = () => {
  setSearchParams(p); setTab('inbox');
  };
 
- if (!user) return null;
+ if (!user) return (
+  <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-6 px-4 pb-20 pt-24">
+    <div className="text-center space-y-2">
+      <p className="text-2xl font-bold text-foreground">Sign in to continue</p>
+      <p className="text-foreground/50 text-sm">Your wishlist, orders, and account details are waiting for you.</p>
+    </div>
+    <button
+      onClick={() => navigate('/auth')}
+      className="px-8 py-3 rounded-2xl bg-foreground text-background text-sm font-semibold active:scale-95 transition-transform"
+    >
+      Sign In
+    </button>
+  </div>
+ );
 
  return (
  <div className="min-h-screen bg-background font-sans pb-[calc(5rem+env(safe-area-inset-bottom))] pt-20 md:pt-24">

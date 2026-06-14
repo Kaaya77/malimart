@@ -228,6 +228,9 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     useEffect(() => {
         const init = async () => {
             setIsLoading(true);
+            // Guarantee isLoading is cleared even if a Supabase call hangs forever
+            const loadingTimer = setTimeout(() => setIsLoading(false), 12_000);
+            try {
             const { data: { session } } = await supabase.auth.getSession();
             if (session?.user) {
                 // Ensure profile row exists
@@ -261,7 +264,12 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
             } else {
                 try { await fetchPublicData(); } catch(e) { console.error('fetchPublicData:', e); }
             }
-            setIsLoading(false);
+            } catch (e) {
+                console.error('[init] Uncaught error:', e);
+            } finally {
+                clearTimeout(loadingTimer);
+                setIsLoading(false);
+            }
         };
         init();
 
