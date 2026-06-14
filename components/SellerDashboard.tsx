@@ -387,10 +387,12 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({
   useSellerDashboardRealtime(sellerId);  // invalidates cache on realtime events
 
   // ── Derive display values (snapshot first, full when ready) ──────────────
-  const revenue = full?.revenue ?? snap?.total_revenue ?? 0;
-  const pending = full?.pending ?? snap?.pending_orders ?? 0;
-  const listings = full?.listings ?? snap?.active_products ?? 0;
-  const aov = full?.aov ?? 0;
+  // snap is a raw JSONB object from get_seller_snapshot; cast to any for nested access.
+  const s = snap as any;
+  const revenue = full?.revenue ?? s?.revenue ?? 0;
+  const pending = full?.pending ?? s?.pending ?? 0;
+  const listings = full?.listings ?? s?.products?.active_products ?? 0;
+  const aov = full?.aov ?? s?.aov ?? 0;
   const revTrend = full?.revTrend7 ?? 0;
   const kpiLoading = snapLoading && fullLoading;
 

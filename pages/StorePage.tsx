@@ -31,7 +31,7 @@ export const StorePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate  = useNavigate();
   const { addToast } = useToast();
-  const { fetchVendorProfile, products, followSeller, unfollowSeller, isFollowing, user } = useAppState();
+  const { fetchVendorProfile, followSeller, unfollowSeller, isFollowing, user } = useAppState();
 
   // Live storefront presence: who's viewing this store right now + seller online.
   const presenceKey = useMemo(() => user?.id || `guest-${Math.random().toString(36).slice(2)}`, [user?.id]);
@@ -42,27 +42,43 @@ export const StorePage: React.FC = () => {
   });
   const sellerOnline = storePresence.some((p: any) => p?.role === 'seller');
 
-  const [vendor, setVendor]     = useState<VendorProfile | null>(null);
-  const [loading, setLoading]   = useState(true);
-  const [tab, setTab]           = useState<Tab>('collection');
-  const [search, setSearch]     = useState('');
-  const [sortKey, setSortKey]   = useState<SortKey>('popular');
-  const [showSort, setShowSort] = useState(false);
-  const [msgOpen, setMsgOpen]   = useState(false);
+  const [vendor, setVendor]           = useState<VendorProfile | null>(null);
+  const [loading, setLoading]         = useState(true);
+  const [allStoreProducts, setAllStoreProducts] = useState<Product[]>([]);
+  const [tab, setTab]                 = useState<Tab>('collection');
+  const [search, setSearch]           = useState('');
+  const [sortKey, setSortKey]         = useState<SortKey>('popular');
+  const [showSort, setShowSort]       = useState(false);
+  const [msgOpen, setMsgOpen]         = useState(false);
   const [reviewProduct, setReviewProduct] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
     setLoading(true);
-    fetchVendorProfile(id).then(v => { setVendor(v); setLoading(false); });
+    // Fetch vendor profile and store products in parallel.
+    // Don't rely on the global 60-product context cache — it may not include
+    // this seller's products at all, leaving the storefront permanently empty.
+    Promise.all([
+      fetchVendorProfile(id).catch(() => null),
+      supabase
+        .from('products')
+        .select('id,seller_id,name,description,price,sale_price,images,category,tags,rating,review_count,stock,status,is_verified,is_boosted,created_at,updated_at,region')
+        .eq('seller_id', id)
+        .eq('status', 'active')
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false })
+        .then(({ data }) => data ?? [])
+        .catch(() => [] as Product[]),
+    ]).then(([v, prods]) => {
+      setVendor(v);
+      setAllStoreProducts(prods as Product[]);
+      setLoading(false);
+    });
   }, [id]);
 
   const storeProducts = useMemo(() => {
-    if (!id) return [];
-    let list = products.filter(p =>
-      p.seller_id === id &&
-      p.status === 'active' &&
-      (!search || p.name.toLowerCase().includes(search.toLowerCase()) || p.category?.toLowerCase().includes(search.toLowerCase()))
+    let list = allStoreProducts.filter(p =>
+      !search || p.name.toLowerCase().includes(search.toLowerCase()) || p.category?.toLowerCase().includes(search.toLowerCase())
     );
     switch (sortKey) {
       case 'newest':     return list.sort((a,b) => new Date(b.created_at||0).getTime() - new Date(a.created_at||0).getTime());
@@ -71,7 +87,7 @@ export const StorePage: React.FC = () => {
       case 'rating':     return list.sort((a,b) => (b.rating||0) - (a.rating||0));
       default:           return list.sort((a,b) => (b.review_count||0) - (a.review_count||0));
     }
-  }, [products, id, search, sortKey]);
+  }, [allStoreProducts, search, sortKey]);
 
   // Use the first active product as the "store review" product ID
   const storeReviewProductId = useMemo(() =>

@@ -75,6 +75,13 @@ export const SellerMessages = ({
   const [chats, setChats] = useState<any[]>(
     preloadedMessages?.filter(m => !blockedUsers.has(m.sender_id) && !blockedUsers.has(m.receiver_id)) || []
   );
+
+  // Keep chats in sync if preloadedMessages arrive after mount (context hydrates async).
+  useEffect(() => {
+    if (preloadedMessages?.length && chats.length === 0) {
+      setChats(preloadedMessages.filter(m => !blockedUsers.has(m.sender_id) && !blockedUsers.has(m.receiver_id)));
+    }
+  }, [preloadedMessages]);
   const [newMsg, setNewMsg] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterUnread, setFilterUnread] = useState(false);
