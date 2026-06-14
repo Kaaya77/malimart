@@ -94,7 +94,9 @@ export const LoginPage = () => {
  }
 
  addToast("Welcome back to MaliMart", 'success');
- navigate(redirectPath);
+ // Don't navigate here — AppContext.onAuthStateChange is async. The useEffect
+ // watching  below fires once context sets user, then navigates. Calling
+ // navigate() here hits RouteGuard before user is set, causing a redirect loop.
  } else if (mode === 'signup') {
  if (!formData.name.trim()) throw new Error("Name is required.");
  if (security.strength < 2) throw new Error("Please use a stronger password.");
