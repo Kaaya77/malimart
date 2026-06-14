@@ -23,105 +23,85 @@ export const useHomePageData = () => {
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
-                // Shops
-                let shopsData = null;
-                let retryCount = 0;
-                while (retryCount <= 2) {
-                    try {
-                        const { data: d, error } = await supabase
-                            .from('vendor_profiles')
-                            .select('*')
-                            .eq('is_verified', true)
-                            .limit(6);
-                        if (error) throw error;
-                        shopsData = d;
-                        break;
-                    } catch (e) {
-                        retryCount++;
-                        if (retryCount > 2) break;
-                        await new Promise(r => setTimeout(r, 1000 * retryCount));
-                    }
-                }
-
-                // User count + avatars
-                const { count: uCount } = await supabase
-                    .from('profiles')
-                    .select('*', { count: 'exact', head: true });
-
-                const { data: rUsers } = await supabase
-                    .from('profiles')
-                    .select('avatar_url')
-                    .not('avatar_url', 'is', null)
-                    .limit(3);
-
-                // Categories with counts
-                const { data: cats } = await supabase
-                    .from('categories')
-                    .select('name, icon_url')
-                    .eq('is_active', true)
-                    .limit(6);
-
-                let catsWithCounts: any[] = [];
-                if (cats && cats.length > 0) {
-                    catsWithCounts = await Promise.all(cats.map(async (c) => {
-                        const { count } = await supabase
-                            .from('products')
-                            .select('*', { count: 'exact', head: true })
-                            .eq('category', c.name)
-                            .eq('status', 'active');
-                        return { name: c.name, icon: c.icon_url || '✨', count: count || 0 };
-                    }));
-                }
-
-                // Ticker + weekly order count — single SECURITY DEFINER RPC avoids RLS issues
-                const { data: tickerData } = await supabase.rpc('get_ticker_data');
-                const newTickerItems: string[] = [];
-                if (tickerData?.recent_sales) {
-                    tickerData.recent_sales.forEach((item: any) => {
-                        if (item.product_name) {
-                            newTickerItems.push(`Someone in ${item.region || 'Tanzania'} just bought ${item.product_name}`);
+                // All independent queries fire in parallel — was sequential, ~8-12 round trips
+                const [
+                    shopsResult,
+                    uCountResult,
+                    rUsersResult,
+                    catsResult,
+                    catCountsResult,
+                    tickerResult,
+                    settingsResult,
+                    recommendationsResult,
+                ] = await Promise.allSettled([
+                    // 1. Top shops (with retry)
+                    (async () => {
+                        for (let attempt = 0; attempt <= 2; attempt++) {
+                            const { data: d, error } = await supabase
+                                .from('vendor_profiles')
+                                .select('*')
+                                .eq('is_verified', true)
+                                .limit(6);
+                            if (!error) return d;
+                            if (attempt < 2) await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
                         }
-                    });
-                }
-                if (tickerData?.recent_vendors) {
-                    tickerData.recent_vendors.forEach((vendor: any) => {
-                        newTickerItems.push(`New artisan '${vendor.store_name}' from ${vendor.region || 'Tanzania'} just joined`);
-                    });
-                }
-                const wCount = tickerData?.weekly_order_count || 0;
+                        return null;
+                    })(),
+                    // 2. User count
+                    supabase.from('profiles').select('*', { count: 'exact', head: true }),
+                    // 3. Recent avatars
+                    supabase.from('profiles').select('avatar_url').not('avatar_url', 'is', null).limit(3),
+                    // 4. Active categories
+                    supabase.from('categories').select('name, icon_url').eq('is_active', true).limit(6),
+                    // 5. Product counts per category — single RPC replaces N per-category queries
+                    supabase.rpc('category_product_counts'),
+                    // 6. Ticker data
+                    supabase.rpc('get_ticker_data'),
+                    // 7. Hero settings
+                    supabase.from('platform_settings')
+                        .select('hero_badge_text, hero_headline, hero_subheadline')
+                        .eq('id', 1)
+                        .maybeSingle(),
+                    // 8. Hero recommendations + products (vendor enrichment is a second parallel query below)
+                    supabase.from('hero_recommendations')
+                        .select(`*, products(id, name, description, price, base_price, sale_price, images, category, stock, rating, review_count, is_boosted, status, seller_id)`)
+                        .eq('status', 'approved')
+                        .order('approved_at', { ascending: false })
+                        .limit(4),
+                ]);
 
-                // Hero settings
-                const { data: settings } = await supabase
-                    .from('platform_settings')
-                    .select('hero_badge_text, hero_headline, hero_subheadline')
-                    .eq('id', 1)
-                    .maybeSingle();
+                const shopsData = shopsResult.status === 'fulfilled' ? shopsResult.value : null;
+                const uCount = uCountResult.status === 'fulfilled' ? (uCountResult.value as any).count : 0;
+                const rUsers = rUsersResult.status === 'fulfilled' ? (rUsersResult.value as any).data : [];
+                const cats: any[] = catsResult.status === 'fulfilled' ? (catsResult.value as any).data ?? [] : [];
+                const catCounts: any[] = catCountsResult.status === 'fulfilled' ? (catCountsResult.value as any).data ?? [] : [];
+                const tickerData = tickerResult.status === 'fulfilled' ? (tickerResult.value as any).data : null;
+                const settings = settingsResult.status === 'fulfilled' ? (settingsResult.value as any).data : null;
+                const recommendations: any[] = recommendationsResult.status === 'fulfilled' ? (recommendationsResult.value as any).data ?? [] : [];
 
-                // FIX 3: Hero recommendations — join products then vendor_profiles separately
-                // PostgREST cannot traverse hero_recommendations → products → vendor_profiles
-                // in a single query because vendor_profiles FK is on products.seller_id,
-                // not on hero_recommendations. Fetch products first, then enrich.
-                const { data: recommendations } = await supabase
-                    .from('hero_recommendations')
-                    .select(`
-                        *,
-                        products (
-                            id, name, description, price, base_price, sale_price,
-                            images, category, stock, rating, review_count,
-                            is_boosted, status, seller_id
-                        )
-                    `)
-                    .eq('status', 'approved')
-                    .order('approved_at', { ascending: false })
-                    .limit(4);
+                // Merge category counts from RPC (one query, not N)
+                const countMap: Record<string, number> = {};
+                catCounts.forEach((r: any) => { countMap[r.category] = Number(r.product_count); });
+                const catsWithCounts = cats.map((c: any) => ({
+                    name: c.name,
+                    icon: c.icon_url || '✨',
+                    count: countMap[c.name] ?? 0,
+                }));
 
-                // Enrich with vendor info in a second query (avoids the invalid nested join)
+                // Ticker items
+                const newTickerItems: string[] = [];
+                tickerData?.recent_sales?.forEach((item: any) => {
+                    if (item.product_name) newTickerItems.push(`Someone in ${item.region || 'Tanzania'} just bought ${item.product_name}`);
+                });
+                tickerData?.recent_vendors?.forEach((vendor: any) => {
+                    newTickerItems.push(`New artisan '${vendor.store_name}' from ${vendor.region || 'Tanzania'} just joined`);
+                });
+
+                // Hero vendor enrichment — fetch all needed vendors in one batched query
                 let heroFeaturedProducts: any[] = [];
-                if (recommendations && recommendations.length > 0) {
+                if (recommendations.length > 0) {
                     const sellerIds = [...new Set(
-                        recommendations
-                            .filter((r: any) => r.products?.seller_id)
-                            .map((r: any) => r.products.seller_id)
+                        recommendations.filter((r: any) => r.products?.seller_id).map((r: any) => r.products.seller_id)
                     )];
 
                     let vendorMap: Record<string, any> = {};
@@ -157,17 +137,17 @@ export const useHomePageData = () => {
                         });
                 }
 
-                const firstRec = recommendations && recommendations.length > 0
+                const firstRec = recommendations.length > 0
                     ? { ...recommendations[0], products: heroFeaturedProducts[0] || null }
                     : null;
 
                 setData({
                     topShops: shopsData || [],
                     userCount: uCount || 0,
-                    recentUserAvatars: rUsers?.map(u => u.avatar_url).filter(Boolean) as string[] || [],
+                    recentUserAvatars: rUsers?.map((u: any) => u.avatar_url).filter(Boolean) as string[] || [],
                     trendingCategories: catsWithCounts,
                     tickerItems: newTickerItems,
-                    weeklyOrderCount: wCount || 0,
+                    weeklyOrderCount: tickerData?.weekly_order_count || 0,
                     heroSettings: {
                         badgeText: settings?.hero_badge_text || 'Limited Time: 20% Off Artisan Collections',
                         headline: settings?.hero_headline || 'Discover Authentic Local Craftsmanship',

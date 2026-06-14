@@ -710,36 +710,14 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
             });
 
             if (user) {
-                // Sync to DB
-                let { data: cartData } = await supabase.from('carts').select('id').eq('user_id', user.id).single();
-                if (!cartData) {
-                    const { data: newCart, error: cartError } = await supabase.from('carts').insert({ user_id: user.id }).select().single();
-                    if (cartError) throw cartError;
-                    cartData = newCart;
-                }
-
-                if (cartData) {
-                    const { data: existingItem } = await supabase.from('cart_items')
-                        .select('id, quantity')
-                        .eq('cart_id', cartData.id)
-                        .eq('product_id', product.id)
-                        .eq('variant_id', variant?.id || null)
-                        .maybeSingle();
-
-                    if (existingItem) {
-                        const { error } = await supabase.from('cart_items').update({ quantity: existingItem.quantity + quantity }).eq('id', existingItem.id);
-                        if (error) throw error;
-                    } else {
-                        const { error } = await supabase.from('cart_items').insert({
-                            cart_id: cartData.id,
-                            product_id: product.id,
-                            variant_id: variant?.id,
-                            quantity: quantity,
-                            price_at_add: (variant?.sale_price || variant?.base_price) || product.price
-                        });
-                        if (error) throw error;
-                    }
-                }
+                // Single RPC: get-or-create cart + upsert item atomically (was 4 round trips)
+                const { error: rpcError } = await supabase.rpc('upsert_cart_item', {
+                    p_product_id: product.id,
+                    p_variant_id: variant?.id ?? null,
+                    p_quantity:   quantity,
+                    p_price:      (variant?.sale_price || variant?.base_price) ?? product.price,
+                });
+                if (rpcError) throw rpcError;
                 await logActivity('add_to_cart', `Added ${product.name} to cart`, { product_id: product.id });
                 await notify('Cart Updated', `Added ${product.name} to your cart`, 'success', '/cart');
             }
