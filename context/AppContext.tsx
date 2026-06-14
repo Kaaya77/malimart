@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useState, ReactNode, useCa
 import { supabase } from '../services/supabaseClient';
 import { withCache, invalidate, invalidatePrefix, TTL } from '../services/queryCache';
 import { applyTheme } from '../services/theme';
+import { usePresence } from '../hooks/usePresence';
 import { Product, CartItem, User, Order, Notification, VendorProfile, Address, ProductVariant, ChatMessage, Offer, Category, Payment, Shipment, TrustBadge, ReturnRequest, OrderNote, ActivityLog, WalletTransaction, SocialPost, SocialInteraction, Follower, Review } from '../types';
 import { useToast } from '../components/UI';
 
@@ -140,6 +141,14 @@ const CommsContext = createContext<CommsSlice | undefined>(undefined);
 export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+
+    // Seller presence beacon — while a seller's app is open, broadcast presence on
+    // their store topic so buyers see a live "online" badge on the storefront.
+    usePresence({
+        topic: user?.role === 'seller' && user?.id ? `store:${user.id}` : null,
+        key: user?.id || 'anon',
+        meta: { role: 'seller' },
+    });
     const [products, setProducts] = useState<Product[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [cart, setCart] = useState<CartItem[]>([]);
