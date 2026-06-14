@@ -11,6 +11,7 @@ import { Button, Input, Badge, useToast, Card, Label, Skeleton } from '../compon
 import { CURRENCY, formatTZS, getEffectiveUnitPrice, calculateVatIncluded, normalizeVatRate } from '../constants';
 import { Product, Offer, Address, CartItem } from '../types';
 import { supabase } from '../services/supabaseClient';
+import { useCartTotals } from '../hooks/useCartTotals';
 
 export const CartPage = () => {
  const { 
@@ -88,7 +89,7 @@ export const CartPage = () => {
  return sum + (price * item.quantity);
  }, 0);
  
- const totalVAT = cart.reduce((sum, item) => {
+ const localVAT = cart.reduce((sum, item) => {
  const price = getEffectiveUnitPrice(item);
  const vatRate = normalizeVatRate(item.selectedVariant?.vat_rate ?? item.vat_rate ?? 0.18);
  return sum + (calculateVatIncluded(price, vatRate) * item.quantity);
@@ -212,11 +213,25 @@ export const CartPage = () => {
 
  const couponDiscountOnSubtotal = (appliedCoupon && appliedCoupon.campaign_type !== 'shipping') ? discountAmount : 0;
  const shippingFee = (appliedCoupon && appliedCoupon.campaign_type === 'shipping') ? 0 : Number(deliveryFeeTotal);
- const total = Math.max(0, subtotal + shippingFee - autoApplyDiscount - couponDiscountOnSubtotal);
+ const localTotal = Math.max(0, subtotal + shippingFee - autoApplyDiscount - couponDiscountOnSubtotal);
  const totalDiscountAmount = (() => {
  const val = autoApplyDiscount + couponDiscountOnSubtotal + (Number(deliveryFeeTotal) - shippingFee);
  return val;
  })();
+
+ // Authoritative VAT-inclusive figures from the server (same calc the order uses).
+ // Falls back to the local estimate only while the request is in flight.
+ const cartTotalsItems = useMemo(
+   () => cart.map((i: any) => ({ product_id: i.id, variant_id: i.variant_id || null, quantity: i.quantity })),
+   [cart]
+ );
+ const { totals: srvTotals, loading: totalsLoading } = useCartTotals({
+   items: cartTotalsItems,
+   deliveryFee: Number(deliveryFeeTotal),
+   discount: totalDiscountAmount,
+ });
+ const totalVAT = totalsLoading ? localVAT : srvTotals.vat_amount;
+ const total = totalsLoading ? localTotal : srvTotals.total;
 
  // ───────────────────────────────────────────────
  // Group items by seller
@@ -545,7 +560,7 @@ export const CartPage = () => {
  <span className="text-foreground">{formatTZS(subtotal)}</span>
  </div>
  <div className="flex justify-between text-xs font-bold text-foreground/50 uppercase tracking-wide">
- <span className="flex items-center gap-1">VAT Included <Info className="w-3 h-3"/></span>
+ <span className="flex items-center gap-1">VAT <Info className="w-3 h-3"/></span>
  <span className="text-foreground">{formatTZS(Math.round(totalVAT))}</span>
  </div>
  <div className="flex justify-between text-xs font-bold text-foreground/50 uppercase tracking-wide">
