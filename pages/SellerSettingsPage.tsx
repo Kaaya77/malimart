@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useAppState } from '../context/AppContext';
 import { Button, Input, Card, CardHeader, CardContent, CardTitle, CardDescription, Textarea, useToast, Badge, Switch } from '../components/UI';
-import { Store, DollarSign, Truck, Loader2, Wallet, ArrowUpRight, Clock, CheckCircle2, XCircle, Briefcase, Settings, PlusCircle, Trash2, Globe, MapPin, Info, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { Store, DollarSign, Truck, Loader2, Wallet, ArrowUpRight, Clock, CheckCircle2, XCircle, Briefcase, Settings, PlusCircle, Trash2, Globe, MapPin, Info, ShieldCheck, AlertTriangle, ChevronLeft } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 import { CURRENCY, TANZANIA_REGIONS, TANZANIA_DISTRICTS, MOBILE_MONEY_PROVIDERS, BANK_PROVIDERS, SOCIAL_PLATFORMS, isValidTIN, isValidVRN, isValidTanzanianPhone, resolveShippingFee } from '../constants';
 import { SellerSettingsCtx } from './seller-settings/context';
@@ -12,7 +12,7 @@ import { DeliveryTab } from './seller-settings/DeliveryTab';
 import { PreferencesTab } from './seller-settings/PreferencesTab';
 
 
-export const SellerSettingsPage = () => {
+export const SellerSettingsPage = ({ onBack }: { onBack?: () => void } = {}) => {
  const { user, vendorProfile, updateVendorProfile, walletTransactions } = useAppState();
  const { addToast } = useToast();
  
@@ -195,9 +195,20 @@ export const SellerSettingsPage = () => {
   <SellerSettingsCtx.Provider value={__ctx}>
 
  <div className="max-w-6xl mx-auto pb-12 animate-in fade-in">
- <div className="mb-5">
- <h1 className="text-xl font-black text-foreground tracking-tight">Store Settings</h1>
- <p className="text-xs text-foreground/40 mt-0.5">Manage your store profile, payments, and operations.</p>
+ <div className="mb-5 flex items-center gap-3">
+   {onBack && (
+     <button
+       onClick={onBack}
+       className="flex items-center justify-center w-8 h-8 rounded-xl bg-foreground/[0.05] hover:bg-foreground/10 text-foreground/50 hover:text-foreground transition-all shrink-0"
+       aria-label="Back to dashboard"
+     >
+       <ChevronLeft className="w-4 h-4" />
+     </button>
+   )}
+   <div>
+     <h1 className="text-xl font-black text-foreground tracking-tight">Store Settings</h1>
+     <p className="text-xs text-foreground/40 mt-0.5">Manage your store profile, payments, and operations.</p>
+   </div>
  </div>
 
  <div className="flex flex-col md:flex-row gap-8">

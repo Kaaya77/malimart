@@ -105,6 +105,16 @@ export const SellerMessages = ({
   const [isUploading, setIsUploading] = useState(false);
   const [chatMenuOpen, setChatMenuOpen] = useState(false);
 
+  const [initialUserProfile, setInitialUserProfile] = useState<{ name: string; avatar: string | null } | null>(null);
+
+  useEffect(() => {
+    if (!initialChatUser) return;
+    supabase.from('profiles').select('full_name, avatar_url').eq('id', initialChatUser).single()
+      .then(({ data }) => {
+        if (data) setInitialUserProfile({ name: data.full_name || 'Buyer', avatar: data.avatar_url ?? null });
+      });
+  }, [initialChatUser]);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -155,7 +165,14 @@ export const SellerMessages = ({
       }
     });
     if (initialChatUser && !map.has(initialChatUser)) {
-      map.set(initialChatUser, { id: initialChatUser, name: 'Admin/User', avatar: null, lastMsg: 'Start a conversation...', time: new Date().toISOString(), unread: false });
+      map.set(initialChatUser, {
+        id: initialChatUser,
+        name: initialUserProfile?.name || 'Buyer',
+        avatar: initialUserProfile?.avatar || null,
+        lastMsg: 'New conversation',
+        time: new Date().toISOString(),
+        unread: false,
+      });
     }
     let result = Array.from(map.values());
     if (searchTerm) result = result.filter((u: any) => u.name.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -165,7 +182,7 @@ export const SellerMessages = ({
       if (!pinnedUsers.has(a.id) && pinnedUsers.has(b.id)) return 1;
       return new Date(b.time).getTime() - new Date(a.time).getTime();
     });
-  }, [chats, userId, searchTerm, filterUnread, pinnedUsers, initialChatUser]);
+  }, [chats, userId, searchTerm, filterUnread, pinnedUsers, initialChatUser, initialUserProfile]);
 
   const activeChats = useMemo(() => {
     if (!selectedChatUser) return [];
@@ -344,9 +361,15 @@ export const SellerMessages = ({
                 </div>
                 <div className="min-w-0">
                   <p className="font-bold text-[13px] text-foreground truncate">
-                    {activeUser?.name || 'User'}
+                    {activeUser?.name || 'Buyer'}
                   </p>
-                  <p className="text-[10px] text-foreground/40">Buyer</p>
+                  {initialOrderId && selectedChatUser === initialChatUser ? (
+                    <p className="text-[10px] text-brand-500 font-semibold flex items-center gap-1">
+                      <Truck className="w-2.5 h-2.5" /> Re: Order #{initialOrderId.slice(0, 8).toUpperCase()}
+                    </p>
+                  ) : (
+                    <p className="text-[10px] text-foreground/40">Buyer</p>
+                  )}
                 </div>
               </div>
               <div className="relative" onClick={(e) => e.stopPropagation()}>

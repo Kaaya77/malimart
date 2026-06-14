@@ -406,7 +406,7 @@ export const SellerPage = () => {
                     onContactBuyer={(buyerId, productId, orderId) => switchToMessages(buyerId, productId, orderId)} />
                 )}
 
-                {tab === 'settings' && <SellerSettingsPage />}
+                {tab === 'settings' && <SellerSettingsPage onBack={() => setTab('dashboard')} />}
 
               </motion.div>
             </AnimatePresence>

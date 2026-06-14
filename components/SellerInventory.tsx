@@ -14,7 +14,7 @@
  *   inventory movement history from inventory_logs
  */
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Search, Filter, Plus, Zap, Trash2,
@@ -343,10 +343,15 @@ export const SellerInventory = ({
     setSelectedIds(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
   };
   const toggleSelectAll = () => {
-    setSelectedIds(prev => prev.size === products.length ? new Set() : new Set(products.map(p => p.id)));
+    setSelectedIds(prev => prev.size === displayedProducts.length ? new Set() : new Set(displayedProducts.map(p => p.id)));
   };
 
   // ── Render ────────────────────────────────────────────────────────────────
+  // Category is a client-side display filter (RPC doesn't support p_category yet)
+  const displayedProducts = useMemo(
+    () => category === 'All' ? products : products.filter(p => p.category === category),
+    [products, category]
+  );
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
   return (
@@ -439,22 +444,24 @@ export const SellerInventory = ({
         </button>
 
         {/* Actions */}
-        <button onClick={() => navigate('/seller/products/new')}
-          className="h-10 px-5 rounded-xl bg-emerald-600 text-white text-sm font-black hover:bg-emerald-700 active:scale-95 transition-all flex items-center gap-2 flex-shrink-0">
-          <Plus className="w-4 h-4" /> Add
-        </button>
-        <button onClick={() => setIsQuickFormOpen(true)}
-          className="h-10 px-4 rounded-xl border border-foreground/12 bg-foreground/[0.04] text-sm font-semibold text-foreground/60 hover:bg-foreground/[0.07] transition-all flex items-center gap-2 flex-shrink-0">
-          <Zap className="w-4 h-4" />
-        </button>
-        <button onClick={handleExportCSV}
-          className="h-10 px-4 rounded-xl border border-foreground/12 bg-foreground/[0.04] text-sm font-semibold text-foreground/60 hover:bg-foreground/[0.07] transition-all flex items-center gap-2 flex-shrink-0">
-          <Download className="w-4 h-4" />
-        </button>
-        <button onClick={() => setIsCSVImportOpen(true)}
-          className="h-10 px-4 rounded-xl border border-foreground/12 bg-foreground/[0.04] text-sm font-semibold text-foreground/60 hover:bg-foreground/[0.07] transition-all flex items-center gap-2 flex-shrink-0">
-          <Upload className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <button onClick={() => navigate('/seller/products/new')}
+            className="h-10 px-5 rounded-xl bg-emerald-600 text-white text-sm font-black hover:bg-emerald-700 active:scale-95 transition-all flex items-center gap-2">
+            <Plus className="w-4 h-4" /> New Product
+          </button>
+          <button onClick={() => setIsQuickFormOpen(true)} title="Quick add"
+            className="h-10 px-3.5 rounded-xl border border-foreground/12 bg-foreground/[0.04] text-sm font-semibold text-foreground/60 hover:bg-foreground/[0.07] hover:text-foreground transition-all flex items-center gap-1.5">
+            <Zap className="w-4 h-4" /><span className="hidden sm:inline text-xs">Quick</span>
+          </button>
+          <button onClick={handleExportCSV} title="Export CSV"
+            className="h-10 px-3.5 rounded-xl border border-foreground/12 bg-foreground/[0.04] text-sm font-semibold text-foreground/60 hover:bg-foreground/[0.07] hover:text-foreground transition-all flex items-center gap-1.5">
+            <Download className="w-4 h-4" /><span className="hidden sm:inline text-xs">Export</span>
+          </button>
+          <button onClick={() => setIsCSVImportOpen(true)} title="Import CSV"
+            className="h-10 px-3.5 rounded-xl border border-foreground/12 bg-foreground/[0.04] text-sm font-semibold text-foreground/60 hover:bg-foreground/[0.07] hover:text-foreground transition-all flex items-center gap-1.5">
+            <Upload className="w-4 h-4" /><span className="hidden sm:inline text-xs">Import</span>
+          </button>
+        </div>
       </div>
 
       {/* Bulk action bar */}
@@ -482,7 +489,7 @@ export const SellerInventory = ({
         <div className="hidden md:grid items-center px-4 py-3 border-b border-foreground/8 bg-foreground/[0.02] text-[9px] font-black uppercase tracking-widest text-foreground/40"
           style={{ gridTemplateColumns: '28px 28px 56px 1fr 140px 180px 110px 120px' }}>
           <button onClick={toggleSelectAll} className="flex justify-center">
-            {selectedIds.size === products.length && products.length > 0
+            {selectedIds.size === displayedProducts.length && displayedProducts.length > 0
               ? <CheckSquare className="w-3.5 h-3.5 text-emerald-600" />
               : <Square className="w-3.5 h-3.5" />
             }
@@ -519,9 +526,9 @@ export const SellerInventory = ({
                 <Package className="w-7 h-7 text-foreground/20" />
               </div>
               <p className="text-sm font-bold text-foreground/30">
-                {debouncedSearch ? 'No products match your search' : lowStockOnly ? 'No low-stock products' : 'No products yet'}
+                {debouncedSearch ? 'No products match your search' : lowStockOnly ? 'No low-stock products' : category !== 'All' ? `No products in ${category}` : 'No products yet'}
               </p>
-              {!debouncedSearch && !lowStockOnly && (
+              {!debouncedSearch && !lowStockOnly && category === 'All' && (
                 <button onClick={() => navigate('/seller/products/new')}
                   className="mt-2 h-10 px-6 rounded-xl bg-emerald-600 text-white text-sm font-black hover:bg-emerald-700 transition-colors">
                   Add your first product
@@ -529,7 +536,7 @@ export const SellerInventory = ({
               )}
             </div>
           ) : (
-            products.map(p => (
+            displayedProducts.map(p => (
               <InventoryRow
                 key={p.id}
                 product={p}
