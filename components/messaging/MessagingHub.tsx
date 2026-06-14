@@ -1,3 +1,4 @@
+import React from 'react';
 import { SellerMessages } from '../SellerMessages';
 import { BuyerMessages } from '../BuyerMessages';
 import { AdminMessages } from '../AdminMessages';
@@ -6,16 +7,11 @@ import { AdminMessages } from '../AdminMessages';
 // Use `any` here intentionally to avoid fragile prop-union inference
 // across three large component prop types.
 export const MessagingHub = (props: any) => {
-  // SellerMessages expects a `setSelectedChatUser` callback prop
-  if (props && typeof props.setSelectedChatUser !== 'undefined') {
-    return <SellerMessages {...(props as any)} />;
-  }
+  const Comp: any = (props && typeof props.setSelectedChatUser !== 'undefined')
+    ? SellerMessages
+    : (props && (typeof props.initialSellerId !== 'undefined' || typeof props.userId !== 'undefined'))
+      ? BuyerMessages
+      : AdminMessages;
 
-  // BuyerMessages expects `initialSellerId` or a `userId` to operate
-  if (props && (typeof props.initialSellerId !== 'undefined' || typeof props.userId !== 'undefined')) {
-    return <BuyerMessages {...(props as any)} />;
-  }
-
-  // Fallback to admin surface
-  return <AdminMessages {...(props as any)} />;
+  return React.createElement(Comp, props as any);
 };
