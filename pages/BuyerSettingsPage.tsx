@@ -13,10 +13,16 @@ import { SecurityTab } from './buyer-settings/SecurityTab';
 
 
 export const BuyerSettingsPage = () => {
-  const { user, addresses, addAddress, updateAddress, deleteAddress, updateUserProfile, walletTransactions, paymentMethods, connectedAccounts, loginHistory } = useAppState();
+  const { user, addresses, addAddress, updateAddress, deleteAddress, updateUserProfile, walletTransactions, paymentMethods, connectedAccounts } = useAppState();
   const { addToast } = useToast();
-  
+
   const [activeTab, setActiveTab] = useState('profile');
+  const [loginHistory, setLoginHistory] = useState<any[]>([]);
+  useEffect(() => {
+    if (!user) return;
+    supabase.from('login_history').select('*').eq('user_id', user.id).order('login_time', { ascending: false }).limit(10)
+      .then(({ data }) => { if (data) setLoginHistory(data); });
+  }, [user?.id]);
 
   const [profileData, setProfileData] = useState({ 
     full_name: user?.full_name || user?.name || '', 

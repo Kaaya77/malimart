@@ -29,7 +29,7 @@ interface ProductCardProps {
  * The guard checks `ontouchstart in window` (primary) and
  * `navigator.maxTouchPoints > 0` (covers pointer-capable touch devices).
  */
-export const ProductCard: React.FC<ProductCardProps> = ({
+const ProductCardInner: React.FC<ProductCardProps> = ({
  product,
  onClick,
  onQuickView,
@@ -163,3 +163,5 @@ export const ProductCard: React.FC<ProductCardProps> = ({
  </motion.article>
  );
 };
+
+export const ProductCard = React.memo(ProductCardInner);

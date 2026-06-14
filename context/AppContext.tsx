@@ -161,6 +161,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     const [addresses, setAddresses] = useState<Address[]>([]);
     const [walletTransactions, setWalletTransactions] = useState<WalletTransaction[]>([]);
     const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
+    const cartIdRef = React.useRef<string | null>(null);
     const [catalogError, setCatalogError] = useState<string | null>(null);
     const [offers, setOffers] = useState<Offer[]>([]);
     const [payments, setPayments] = useState<Payment[]>([]);
@@ -509,15 +510,20 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     }, []);
 
     const fetchAndSetCart = useCallback(async (userId: string) => {
-        const { data: cartData } = await supabase.from('carts').select('*, items:cart_items(*, product:products(*, variants:product_variants(*)))').eq('user_id', userId).single();
-        if (cartData && cartData.items) {
-            const dbCart = cartData.items.map((item: any) => ({
-                ...item.products,
-                quantity: item.quantity,
-                selectedVariant: item.products.variants?.find((v: any) => v.id === item.variant_id),
-                variant_id: item.variant_id
-            }));
-            setCart(dbCart);
+        const { data: cartData } = await supabase.from('carts').select('id, items:cart_items(*, product:products(id, name, price, images, stock, seller_id, variants:product_variants(*)))').eq('user_id', userId).single();
+        if (cartData) {
+            cartIdRef.current = cartData.id;
+            if (cartData.items) {
+                const dbCart = cartData.items.map((item: any) => ({
+                    ...item.product,
+                    quantity: item.quantity,
+                    selectedVariant: item.product?.variants?.find((v: any) => v.id === item.variant_id),
+                    variant_id: item.variant_id
+                }));
+                setCart(dbCart);
+            } else {
+                setCart([]);
+            }
         } else {
             setCart([]);
         }
@@ -639,28 +645,24 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     }, []);
 
         const fetchUserData = useCallback(async (userId: string, userRole?: string, isBanned?: boolean) => {
-        const [addrsRes, notifsRes, walletRes, logsRes, paymentsRes, shipmentsRes, payMethodsRes, connAccountsRes, loginHistRes, blockedRes] = await Promise.all([
+        const [addrsRes, notifsRes, walletRes, paymentsRes, shipmentsRes, payMethodsRes, connAccountsRes, blockedRes] = await Promise.all([
             supabase.from('addresses').select('*').eq('user_id', userId).is('deleted_at', null),
             isBanned ? { data: [] } : supabase.from('notifications').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
             supabase.from('wallet_transactions').select('*').eq('profile_id', userId).order('created_at', { ascending: false }).limit(20),
-            supabase.from('activity_logs').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(20),
             supabase.from('payments').select('*, order:orders!inner(id, status, total, created_at)').eq('orders.user_id', userId).limit(20),
             supabase.from('shipments').select('*, order:orders!inner(id, status, total, created_at)').eq('orders.user_id', userId).limit(20),
             supabase.from('payment_methods').select('*').eq('user_id', userId),
             supabase.from('connected_accounts').select('*').eq('user_id', userId),
-            supabase.from('login_history').select('*').eq('user_id', userId).order('login_time', { ascending: false }).limit(10),
             supabase.from('blocked_users').select('blocked_id').eq('blocker_id', userId)
         ]);
 
         if (addrsRes.data) setAddresses(addrsRes.data);
         if (notifsRes.data) setNotifications(notifsRes.data);
         if (walletRes.data) setWalletTransactions(walletRes.data);
-        if (logsRes.data) setActivityLogs(logsRes.data);
         if (paymentsRes.data) setPayments(paymentsRes.data as any);
         if (shipmentsRes.data) setShipments(shipmentsRes.data as any);
         if (payMethodsRes.data) setPaymentMethods(payMethodsRes.data);
         if (connAccountsRes.data) setConnectedAccounts(connAccountsRes.data);
-        if (loginHistRes.data) setLoginHistory(loginHistRes.data);
         if (blockedRes.data) setBlockedUsers(new Set(blockedRes.data.map((b: any) => b.blocked_id)));
 
         if (userRole === 'seller') {
@@ -704,15 +706,15 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
 
     const logActivity = useCallback(async (action: string, details?: string, metadata: any = {}) => {
         if (!user) return;
-        await supabase.from('activity_logs').insert({
+        const { data: inserted } = await supabase.from('activity_logs').insert({
             user_id: user.id,
             action_type: action,
             details,
             metadata
-        });
-        // Refresh logs
-        const { data } = await supabase.from('activity_logs').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(20);
-        if (data) setActivityLogs(data);
+        }).select().single();
+        if (inserted) {
+            setActivityLogs(prev => [inserted, ...prev].slice(0, 20));
+        }
     }, [user]);
 
     const logout = useCallback(async () => {
@@ -760,14 +762,10 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
             });
             
             if (user) {
-                const { data: cartData, error: cartError } = await supabase.from('carts').select('id').eq('user_id', user.id).single();
-                if (cartError) {
-                    console.error('Error fetching cart:', cartError);
-                    throw cartError;
-                }
-                if (cartData) {
+                const cartId = cartIdRef.current;
+                if (cartId) {
                     let query = supabase.from('cart_items').delete()
-                        .eq('cart_id', cartData.id)
+                        .eq('cart_id', cartId)
                         .eq('product_id', productId);
                     
                     if (variantId) {
@@ -801,11 +799,11 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
             }));
 
             if (user) {
-                const { data: cartData } = await supabase.from('carts').select('id').eq('user_id', user.id).single();
-                if (cartData) {
+                const cartId = cartIdRef.current;
+                if (cartId) {
                     let query = supabase.from('cart_items')
                         .select('id, quantity')
-                        .eq('cart_id', cartData.id)
+                        .eq('cart_id', cartId)
                         .eq('product_id', productId);
                     
                     if (variantId) {
