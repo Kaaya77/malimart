@@ -9,7 +9,8 @@
  * Snapshot auto-invalidates via DB triggers on orders/products/profiles/disputes.
  */
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React from 'react';
+import { useAdminDashboard, useAdminDashboardRealtime } from '../hooks/useAdminDashboard';
 import { motion } from 'framer-motion';
 import {
   Users, Store, Package, ShoppingBag, DollarSign,
@@ -18,7 +19,6 @@ import {
   Shield, Zap, Activity
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { supabase } from '../services/supabaseClient';
 import { formatTZS } from '../constants';
 
 const Sk = ({ w = 'w-full', h = 'h-4', r = 'rounded-lg' }: { w?: string; h?: string; r?: string }) => (
@@ -116,31 +116,9 @@ interface AdminDashboardProps {
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   initialStats, onGoUsers, onGoVendors, onGoProducts, onGoDisputes, onGoPayouts, onGoGrowth,
 }) => {
-  const [payload, setPayload] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
-
-  const fetchStats = useCallback(async (silent = false) => {
-    if (!silent) setLoading(true); else setRefreshing(true);
-    try {
-      // Single snapshot RPC — replaces get_admin_stats + raw orders scan
-      const { data, error } = await supabase.rpc('get_admin_dashboard_fast', { p_days: 30 });
-      if (error) throw error;
-      setPayload(data);
-    } catch (e) {
-      console.error('[AdminDashboard]', e);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchStats();
-    timerRef.current = setInterval(() => fetchStats(true), 60_000); // 60s — snapshot TTL is 2min
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [fetchStats]);
+  // TanStack Query: fetch + cache + deduplication handled automatically
+  const { data: payload, isLoading: loading, isFetching: refreshing, refetch } = useAdminDashboard(30);
+  useAdminDashboardRealtime(); // invalidates cache on realtime events
 
   // Merge live payload with initial fallback props
   const s = payload ? {
@@ -241,7 +219,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <h3 className="text-sm font-bold text-foreground">Platform Revenue (30d)</h3>
               <p className="text-[10px] text-foreground/40 uppercase tracking-wider mt-0.5">Daily GMV — all confirmed orders</p>
             </div>
-            <button onClick={() => fetchStats(true)} disabled={refreshing}
+            <button onClick={() => refetch()} disabled={refreshing}
               className="w-7 h-7 rounded-lg bg-foreground/[0.05] flex items-center justify-center hover:bg-foreground/10 transition-colors">
               <RefreshCw className={`w-3 h-3 text-foreground/50 ${refreshing ? 'animate-spin' : ''}`} />
             </button>

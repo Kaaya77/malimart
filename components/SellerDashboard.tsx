@@ -11,7 +11,8 @@
  */
 
 import { maliGreeting, KitengeStrip } from './MaliSoul';
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useSellerSnapshot, useSellerFullStats, useSellerDashboardRealtime } from '../hooks/useSellerDashboard';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   TrendingUp, TrendingDown, Package, ShoppingBag, Clock,
@@ -22,7 +23,6 @@ import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis,
   Tooltip, ResponsiveContainer, Cell, PieChart, Pie
 } from 'recharts';
-import { supabase } from '../services/supabaseClient';
 import { formatTZS } from '../constants';
 
 // ─── Animated Counter ──────────────────────────────────────────────────────
@@ -373,159 +373,10 @@ interface SellerDashboardProps {
 export const SellerDashboard: React.FC<SellerDashboardProps> = ({
   sellerId, sellerName, vendorLogoUrl, lowStockCount, onGoOrders, onGoInventory,
 }) => {
-  // ── State ────────────────────────────────────────────────────────────────
-  const [snap, setSnap] = useState<any>(null);
-  const [full, setFull] = useState<any>(null);
-  const [snapLoading, setSnapLoading] = useState(true);
-  const [fullLoading, setFullLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const prevRevRef = useRef(0);
-
-  // ── Phase 1: Snapshot (instant) ──────────────────────────────────────────
-  const loadSnapshot = useCallback(async () => {
-    if (!sellerId) return;
-    try {
-      const { data } = await supabase.rpc('get_seller_snapshot', { p_seller_id: sellerId });
-      if (data) {
-        setSnap(data);
-        prevRevRef.current = Number(data.total_revenue) || 0;
-      }
-    } catch (e) {
-      // silent — full RPC will cover it
-    } finally {
-      setSnapLoading(false);
-    }
-  }, [sellerId]);
-
-  // ── Phase 2: Full stats (background) ─────────────────────────────────────
-  const loadFull = useCallback(async (silent = false) => {
-    if (!sellerId) return;
-    if (!silent) setFullLoading(true);
-    else setRefreshing(true);
-    try {
-      const [ordersRes, productsRes] = await Promise.all([
-        supabase.rpc('get_seller_orders', { p_seller_id: sellerId, p_limit: 500, p_offset: 0 }),
-        supabase.from('products')
-          .select('id, name, price, stock, low_stock_threshold, status, created_at, rating')
-          .eq('seller_id', sellerId)
-          .is('deleted_at', null)
-          .eq('status', 'active'),
-      ]);
-
-      const rows = (ordersRes.data || []) as any[];
-      const products = (productsRes.data || []) as any[];
-
-      // Aggregate orders
-      const orderMap = new Map<string, any>();
-      rows.forEach(r => {
-        if (!orderMap.has(r.order_id)) {
-          orderMap.set(r.order_id, {
-            id: r.order_id, status: r.order_status,
-            total: Number(r.total) || 0,
-            created_at: r.order_created_at,
-            buyer_id: r.buyer_id, buyer_name: r.buyer_name,
-          });
-        }
-      });
-      const orders = Array.from(orderMap.values());
-
-      const excluded = new Set(['cancelled', 'refunded', 'failed']);
-      let revenue = 0, pending = 0, aov = 0, totalOrders = 0;
-      const productSales: Record<string, number> = {};
-      const productRevenue: Record<string, number> = {};
-      const customerOrders: Record<string, { count: number; name: string }> = {};
-      const statusDist: Record<string, number> = {};
-      const thirtyAgo = new Date(Date.now() - 30 * 86400000);
-      const sevenAgo = new Date(Date.now() - 7 * 86400000);
-      const prevSevenAgo = new Date(Date.now() - 14 * 86400000);
-      const dailyRevenue: Record<string, number> = {};
-      let rev7 = 0, revPrev7 = 0;
-
-      orders.forEach(o => {
-        statusDist[o.status] = (statusDist[o.status] || 0) + 1;
-        if (o.status === 'pending') pending++;
-        if (!excluded.has(o.status)) {
-          revenue += o.total;
-          totalOrders++;
-          const d = new Date(o.created_at);
-          const key = d.toISOString().split('T')[0];
-          if (d >= thirtyAgo) {
-            dailyRevenue[key] = (dailyRevenue[key] || 0) + o.total;
-          }
-          if (d >= sevenAgo) rev7 += o.total;
-          if (d >= prevSevenAgo && d < sevenAgo) revPrev7 += o.total;
-          if (!customerOrders[o.buyer_id]) {
-            customerOrders[o.buyer_id] = { count: 0, name: o.buyer_name };
-          }
-          customerOrders[o.buyer_id].count++;
-        }
-      });
-
-      rows.forEach(r => {
-        if (!excluded.has(r.order_status)) {
-          productSales[r.product_id] = (productSales[r.product_id] || 0) + Number(r.quantity);
-          productRevenue[r.product_id] = (productRevenue[r.product_id] || 0) + (Number(r.unit_price) * Number(r.quantity));
-        }
-      });
-
-      aov = totalOrders > 0 ? revenue / totalOrders : 0;
-      const revTrend7 = revPrev7 > 0 ? ((rev7 - revPrev7) / revPrev7) * 100 : 0;
-
-      const productNames = new Map(rows.map(r => [r.product_id, r.product_name]));
-      const topProducts = Object.entries(productSales)
-        .sort(([, a], [, b]) => b - a).slice(0, 5)
-        .map(([id, count]) => ({ name: productNames.get(id) || 'Unknown', count, revenue: productRevenue[id] || 0 }));
-
-      const topCustomers = Object.entries(customerOrders)
-        .sort(([, a], [, b]) => b.count - a.count).slice(0, 5)
-        .map(([id, { count, name }]) => ({ id, name, count }));
-
-      const revenueTrend = Object.entries(dailyRevenue)
-        .sort(([a], [b]) => a.localeCompare(b))
-        .map(([date, revenue]) => ({ date, revenue }));
-
-      const returningCustomers = Object.values(customerOrders).filter(c => c.count > 1).length;
-      const totalCustomers = Object.keys(customerOrders).length;
-      const retentionRate = totalCustomers > 0 ? (returningCustomers / totalCustomers) * 100 : 0;
-
-      const lowStockCount = products.filter(p =>
-        typeof p.stock === 'number' && p.stock > 0 && p.stock <= (p.low_stock_threshold ?? 5)
-      ).length;
-      const avgRating = products.length > 0
-        ? products.reduce((s, p) => s + (p.rating || 0), 0) / products.length
-        : 0;
-
-      setFull({
-        revenue, pending, aov, totalOrders, revTrend7,
-        topProducts, topCustomers, revenueTrend,
-        statusDist, retentionRate, totalCustomers,
-        lowStockCount, avgRating,
-        listings: products.length,
-        rev7,
-      });
-    } catch (err: any) {
-      console.error('[SellerDashboard]', err.message);
-    } finally {
-      setFullLoading(false);
-      setRefreshing(false);
-    }
-  }, [sellerId]);
-
-  // ── Realtime subscription ─────────────────────────────────────────────────
-  useEffect(() => {
-    if (!sellerId) return;
-    loadSnapshot();
-    loadFull();
-
-    const ch = supabase.channel(`sd-${sellerId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'order_items', filter: `seller_id=eq.${sellerId}` },
-        () => { loadSnapshot(); loadFull(true); })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'products', filter: `seller_id=eq.${sellerId}` },
-        () => loadFull(true))
-      .subscribe();
-
-    return () => { supabase.removeChannel(ch); };
-  }, [sellerId]);
+  // ── TanStack Query hooks — fetch, cache, and deduplicate automatically ────
+  const { data: snap, isLoading: snapLoading } = useSellerSnapshot(sellerId);
+  const { data: full, isLoading: fullLoading, isFetching: refreshing, refetch: refetchFull } = useSellerFullStats(sellerId);
+  useSellerDashboardRealtime(sellerId);  // invalidates cache on realtime events
 
   // ── Derive display values (snapshot first, full when ready) ──────────────
   const revenue = full?.revenue ?? snap?.total_revenue ?? 0;
@@ -656,7 +507,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({
                 </span>
               )}
               <button
-                onClick={() => loadFull(true)}
+                onClick={() => refetchFull()}
                 disabled={refreshing}
                 className="w-7 h-7 rounded-lg bg-foreground/[0.05] flex items-center justify-center hover:bg-foreground/10 transition-colors"
               >

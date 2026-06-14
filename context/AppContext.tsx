@@ -1201,23 +1201,25 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         setBlockedUsers(prev => { const next = new Set(prev); next.delete(userId); return next; });
     }, [user]);
 
-    const updateOrderStatus = useCallback(async (id: string, status: string, reason?: string) => { 
+    const updateOrderStatus = useCallback(async (id: string, status: string, reason?: string) => {
+        // Optimistic update — reflect change immediately before server confirms
+        const previous = orders;
+        setOrders(prev => prev.map(o => o.id === id ? { ...o, status: status as import('../types').OrderStatus } : o));
+
         const { error } = await supabase.rpc('update_order_status_rbac', { p_order_id: id, p_new_status: status, p_cancel_reason: reason || null });
         if (error) {
+            setOrders(previous); // rollback
             console.error('Status update failed', error);
             throw error;
         }
-        // cancel_reason passed via p_cancel_reason param in RPC — no direct PATCH needed
         if (user) await logActivity('update_order_status', `Order ${id} status changed to ${status}`, { order_id: id, status, reason });
-        
+
         // Send notification to buyer
         const { data: order } = await supabase.from('orders').select('user_id').eq('id', id).single();
         if (order) {
-            let message = `Your order #${id.slice(0,8)} is now ${status}`;
-            if (status === 'cancelled' && reason) {
-                message = `Your order #${id.slice(0,8)} was cancelled by the seller. Reason: ${reason}`;
-            }
-            
+            const message = status === 'cancelled' && reason
+                ? `Your order #${id.slice(0, 8)} was cancelled by the seller. Reason: ${reason}`
+                : `Your order #${id.slice(0, 8)} is now ${status}`;
             await supabase.from('notifications').insert({
                 user_id: order.user_id,
                 type: 'order',
@@ -1227,11 +1229,16 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
                 created_at: new Date().toISOString()
             });
         }
-    }, [user, logActivity]);
+    }, [user, orders, logActivity]);
 
-    const cancelOrder = useCallback(async (id: string, reason: string) => { 
+    const cancelOrder = useCallback(async (id: string, reason: string) => {
+        // Optimistic update
+        const previous = orders;
+        setOrders(prev => prev.map(o => o.id === id ? { ...o, status: 'cancelled' as import('../types').OrderStatus } : o));
+
         const { error } = await supabase.rpc('update_order_status_rbac', { p_order_id: id, p_new_status: 'cancelled', p_cancel_reason: reason });
         if (error) {
+            setOrders(previous); // rollback
             console.error('Cancel order failed', error);
             addToast("Failed to cancel order", "error");
             throw error;
@@ -1259,8 +1266,8 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         }
 
         addToast("Order cancelled successfully", "success");
-        fetchUserData(user?.id!); 
-    }, [user, logActivity, addToast, fetchUserData]);
+        fetchUserData(user?.id!);
+    }, [user, orders, logActivity, addToast, fetchUserData]);
 
     const deleteOrder = useCallback(async (id: string) => { 
         await supabase.from('orders').update({ deleted_at: new Date().toISOString() }).eq('id', id); 

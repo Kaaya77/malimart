@@ -1,7 +1,19 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from './App';
 import './src/index.css';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime:          60_000,   // treat data as fresh for 1 min by default
+      gcTime:             5 * 60_000, // keep unused cache for 5 min
+      retry:              1,
+      refetchOnWindowFocus: false,  // avoid surprise refetches when switching tabs
+    },
+  },
+});
 import { registerSW } from 'virtual:pwa-register';
 
 // Error monitoring — only loads if VITE_SENTRY_DSN is set in Vercel env vars.
@@ -53,6 +65,8 @@ if (!rootElement) {
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <App />
+    <QueryClientProvider client={queryClient}>
+      <App />
+    </QueryClientProvider>
   </React.StrictMode>
 );

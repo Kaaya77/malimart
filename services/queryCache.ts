@@ -20,6 +20,10 @@ interface CacheEntry<T> {
 
 const store = new Map<string, CacheEntry<any>>();
 
+// Tracks in-flight fetches so concurrent callers for the same key
+// share one network request instead of firing duplicates.
+const inflight = new Map<string, Promise<any>>();
+
 export const TTL = {
     PUBLIC_PRODUCTS:   5 * 60 * 1000,   // 5 min
     CATEGORIES:        5 * 60 * 1000,
@@ -90,18 +94,25 @@ export async function withCache<T>(
 
     const stale = getStale<T>(key);
     if (stale !== null) {
-        // Serve stale immediately, revalidate in background
-        fetcher().then(data => {
-            if (data !== null) {
-                setCached(key, data, ttl);
-                onBackground?.(data);
-            }
-        }).catch(() => {/* silent — stale data still served */});
+        // Serve stale immediately, revalidate in background — deduplicated
+        if (!inflight.has(key)) {
+            const bg = fetcher().then(data => {
+                if (data !== null) { setCached(key, data, ttl); onBackground?.(data); }
+            }).catch(() => {/* silent — stale data still served */})
+              .finally(() => inflight.delete(key));
+            inflight.set(key, bg);
+        }
         return stale;
     }
 
-    // No cache at all — must await
-    const data = await fetcher();
-    if (data !== null) setCached(key, data, ttl);
-    return data;
+    // No cache at all — deduplicate concurrent cold misses
+    if (inflight.has(key)) return inflight.get(key) as Promise<T | null>;
+
+    const promise = fetcher().then(data => {
+        if (data !== null) setCached(key, data, ttl);
+        return data;
+    }).finally(() => inflight.delete(key));
+
+    inflight.set(key, promise);
+    return promise;
 }
