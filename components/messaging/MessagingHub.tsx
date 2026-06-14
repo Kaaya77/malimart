@@ -1,21 +1,17 @@
-import type { ComponentProps } from 'react';
+import React from 'react';
 import { SellerMessages } from '../SellerMessages';
 import { BuyerMessages } from '../BuyerMessages';
 import { AdminMessages } from '../AdminMessages';
 
-export type MessagingHubProps =
-  | ComponentProps<typeof SellerMessages>
-  | ComponentProps<typeof BuyerMessages>
-  | ComponentProps<typeof AdminMessages>;
+// Lightweight runtime router for the three messaging surfaces.
+// Use `any` here intentionally to avoid fragile prop-union inference
+// across three large component prop types.
+export const MessagingHub = (props: any) => {
+  const Comp: any = (props && typeof props.setSelectedChatUser !== 'undefined')
+    ? SellerMessages
+    : (props && (typeof props.initialSellerId !== 'undefined' || typeof props.userId !== 'undefined'))
+      ? BuyerMessages
+      : AdminMessages;
 
-export const MessagingHub = (props: MessagingHubProps) => {
-  if ('setSelectedChatUser' in props) {
-    return <SellerMessages {...props} />;
-  }
-
-  if ('initialSellerId' in props) {
-    return <BuyerMessages {...props} />;
-  }
-
-  return <AdminMessages {...props} />;
+  return React.createElement(Comp, props as any);
 };
