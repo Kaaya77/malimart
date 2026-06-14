@@ -71,15 +71,16 @@ export default defineConfig(({ mode }) => {
               },
             },
             {
-              // Supabase API — network-first (always fresh data)
+              // Supabase auth + RPC — always hit the network, no timeout, no cache.
+              // Auth token refresh and POST RPCs cannot be meaningfully cached (the
+              // Cache Storage API only caches GET responses). A short networkTimeout
+              // was silently killing product-load and auth-rehydration on slow
+              // connections because the SW error propagated back to the Supabase
+              // client as a network failure. NetworkOnly removes the SW entirely
+              // from this path — the app's own queryCache handles stale-while-
+              // revalidate for reads, and auth is already persisted in localStorage.
               urlPattern: /^https:\/\/.*\.supabase\.co\/(rest|auth|realtime)\//,
-              handler: 'NetworkFirst',
-              options: {
-                cacheName: 'supabase-api',
-                networkTimeoutSeconds: 4,
-                expiration: { maxEntries: 50, maxAgeSeconds: 5 * 60 },
-                cacheableResponse: { statuses: [0, 200] },
-              },
+              handler: 'NetworkOnly',
             },
             {
               // Google Fonts

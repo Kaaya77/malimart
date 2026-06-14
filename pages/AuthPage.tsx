@@ -154,7 +154,7 @@ export const LoginPage = () => {
  <p className="text-4xl font-display font-medium leading-tight mb-6">"{q.text}"</p>
  <div className="flex items-center gap-3">
  <div className="h-0.5 w-8 bg-brand-500"></div>
- <span className="text-xs font-bold uppercase tracking-widest text-foreground/40">{q.author}</span>
+ <span className="text-xs font-bold uppercase tracking-widest text-white/40">{q.author}</span>
  </div>
  </div>
  ))}
@@ -168,7 +168,7 @@ export const LoginPage = () => {
  </div>
 
  {/* Footer Info */}
- <div className="relative z-10 flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-foreground/55">
+ <div className="relative z-10 flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-white/55">
  <span className="flex items-center gap-2"><Globe className="w-4 h-4"/> Tanzania's Marketplace</span>
  <span>© {new Date().getFullYear()}</span>
  </div>
@@ -250,7 +250,7 @@ export const LoginPage = () => {
  placeholder="e.g. Juma Hamisi" 
  value={formData.name} 
  onChange={handleInputChange} 
- className="pl-12 h-16 bg-foreground/[0.04] border-transparent focus:border-foreground/20 focus:bg-foreground/[0.06] font-bold text-lg"
+ className="pl-12 h-16 bg-foreground/[0.06] border border-foreground/[0.12] focus:border-foreground/30 focus:bg-foreground/[0.09] font-bold text-lg"
  />
  </div>
  </motion.div>
@@ -272,7 +272,7 @@ export const LoginPage = () => {
  placeholder="name@example.com" 
  value={formData.email} 
  onChange={handleInputChange} 
- className="pl-12 h-16 bg-foreground/[0.04] border-transparent focus:border-foreground/20 focus:bg-foreground/[0.06] font-bold text-lg"
+ className="pl-12 h-16 bg-foreground/[0.06] border border-foreground/[0.12] focus:border-foreground/30 focus:bg-foreground/[0.09] font-bold text-lg"
  />
  </div>
  </motion.div>
@@ -297,7 +297,7 @@ export const LoginPage = () => {
  placeholder="••••••••" 
  value={formData.password} 
  onChange={handleInputChange} 
- className="pl-12 pr-12 h-16 bg-foreground/[0.04] border-transparent focus:border-foreground/20 focus:bg-foreground/[0.06] font-bold text-lg"
+ className="pl-12 pr-12 h-16 bg-foreground/[0.06] border border-foreground/[0.12] focus:border-foreground/30 focus:bg-foreground/[0.09] font-bold text-lg"
  />
  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-foreground/40 hover:text-foreground/65">
  {showPassword ? <EyeOff className="w-5 h-5"/> : <Eye className="w-5 h-5"/>}
