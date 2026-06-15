@@ -3,7 +3,7 @@ import {
   Zap, Truck, Repeat, Percent, Tag, Copy,
   CheckCircle2, Trash2, Edit2, Power, PowerOff, Ticket,
   Plus, X, ChevronDown, ArrowRight, Sparkles, Calendar,
-  Target, Settings2, ChevronLeft
+  Target, Settings2, ChevronLeft, MoreVertical
 } from 'lucide-react';
 import { Button, Input, Badge, useToast, Label, Switch } from '../UI';
 import { supabase } from '../../services/supabaseClient';
@@ -13,7 +13,18 @@ import { formatTZS, CURRENCY } from '../../constants';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const OfferCard = ({ offer, onEdit, onDelete, onToggle, addToast }: any) => {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = React.useRef<HTMLDivElement>(null);
   const isActive = offer.status === 'active';
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [menuOpen]);
   const GRADIENT: Record<string, string> = {
     flash: 'from-amber-400/20 to-red-500/20',
     shipping: 'from-emerald-400/20 to-teal-500/20',
@@ -62,6 +73,46 @@ export const OfferCard = ({ offer, onEdit, onDelete, onToggle, addToast }: any) 
             {!isActive && (
               <span className="h-5 px-2 rounded-full bg-foreground/[0.06] text-foreground/35 text-[8px] font-black uppercase tracking-widest flex items-center">Off</span>
             )}
+            {/* 3-dot menu — always visible on mobile */}
+            <div className="relative md:hidden" ref={menuRef}>
+              <button
+                onClick={() => setMenuOpen(v => !v)}
+                className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-foreground/[0.06] transition-colors text-foreground/40"
+              >
+                <MoreVertical className="w-4 h-4" />
+              </button>
+              <AnimatePresence>
+                {menuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                    transition={{ duration: 0.12 }}
+                    className="absolute right-0 top-8 z-50 w-40 rounded-xl border border-foreground/10 bg-background shadow-xl overflow-hidden"
+                  >
+                    <button
+                      onClick={() => { onToggle(offer); setMenuOpen(false); }}
+                      className={`w-full flex items-center gap-2 px-4 py-2.5 text-[10px] font-bold uppercase tracking-wide transition-colors ${isActive ? 'text-foreground/60 hover:bg-foreground/[0.05]' : 'text-emerald-600 hover:bg-emerald-500/10'}`}
+                    >
+                      {isActive ? <PowerOff className="w-3.5 h-3.5" /> : <Power className="w-3.5 h-3.5" />}
+                      {isActive ? 'Disable' : 'Enable'}
+                    </button>
+                    <button
+                      onClick={() => { onEdit(offer); setMenuOpen(false); }}
+                      className="w-full flex items-center gap-2 px-4 py-2.5 text-[10px] font-bold uppercase tracking-wide text-foreground/60 hover:bg-foreground/[0.05] transition-colors"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" /> Edit
+                    </button>
+                    <button
+                      onClick={() => { onDelete(offer.id); setMenuOpen(false); }}
+                      className="w-full flex items-center gap-2 px-4 py-2.5 text-[10px] font-bold uppercase tracking-wide text-red-500 hover:bg-red-500/5 transition-colors"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" /> Delete
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
 
@@ -98,8 +149,8 @@ export const OfferCard = ({ offer, onEdit, onDelete, onToggle, addToast }: any) 
         )}
       </div>
 
-      {/* Hover actions */}
-      <div className="flex items-center gap-1 px-5 pb-4 opacity-0 group-hover:opacity-100 transition-opacity">
+      {/* Action bar — always visible on mobile, hover-revealed on desktop */}
+      <div className="flex items-center gap-1 px-5 pb-4 md:opacity-0 md:group-hover:opacity-100 md:transition-opacity">
         <button onClick={() => onToggle(offer)}
           className={`flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-[9px] font-black uppercase tracking-wide transition-colors ${
             isActive ? 'text-foreground/40 hover:bg-foreground/[0.05]' : 'text-emerald-600 hover:bg-emerald-500/10'
