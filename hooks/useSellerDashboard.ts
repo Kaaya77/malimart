@@ -79,6 +79,39 @@ export function useSellerPendingOrders(sellerId: string | undefined) {
     });
 }
 
+/** Today vs yesterday stats for the top-of-dashboard strip */
+export function useSellerTodayStats(sellerId: string | undefined) {
+    return useQuery({
+        queryKey: ['seller', 'today', sellerId],
+        queryFn: async () => {
+            const todayStart = new Date();
+            todayStart.setHours(0, 0, 0, 0);
+            const yesterdayStart = new Date(todayStart);
+            yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+
+            const { data, error } = await supabase
+                .from('orders')
+                .select('total, created_at')
+                .eq('seller_id', sellerId!)
+                .gte('created_at', yesterdayStart.toISOString())
+                .not('status', 'in', '(cancelled,refunded)');
+            if (error) throw error;
+
+            const today = (data ?? []).filter(o => new Date(o.created_at) >= todayStart);
+            const yesterday = (data ?? []).filter(o => new Date(o.created_at) < todayStart);
+            return {
+                todayOrders:      today.length,
+                todayRevenue:     today.reduce((s, o) => s + Number(o.total), 0),
+                yesterdayOrders:  yesterday.length,
+                yesterdayRevenue: yesterday.reduce((s, o) => s + Number(o.total), 0),
+            };
+        },
+        enabled: !!sellerId,
+        staleTime: 60_000,
+        refetchInterval: 5 * 60_000,
+    });
+}
+
 /**
  * Wires up Supabase Realtime to invalidate the TanStack Query cache
  * whenever this seller's order_items or products change.

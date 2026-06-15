@@ -12,7 +12,7 @@
 
 import { maliGreeting, KitengeStrip } from './MaliSoul';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { useSellerSnapshot, useSellerFullStats, useSellerDashboardRealtime, useSellerPendingOrders } from '../hooks/useSellerDashboard';
+import { useSellerSnapshot, useSellerFullStats, useSellerDashboardRealtime, useSellerPendingOrders, useSellerTodayStats } from '../hooks/useSellerDashboard';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   TrendingUp, TrendingDown, Package, ShoppingBag, Clock,
@@ -395,10 +395,12 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({
 }) => {
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [chartPeriod, setChartPeriod] = useState<7 | 14 | 30>(30);
   // ── TanStack Query hooks — fetch, cache, and deduplicate automatically ────
   const { data: snap, isLoading: snapLoading } = useSellerSnapshot(sellerId);
   const { data: full, isLoading: fullLoading, isFetching: refreshing, refetch: refetchFull } = useSellerFullStats(sellerId);
   const { data: pendingOrders = [], refetch: refetchPending } = useSellerPendingOrders(sellerId);
+  const { data: today } = useSellerTodayStats(sellerId);
   useSellerDashboardRealtime(sellerId);  // invalidates cache on realtime events
 
   // ── Derive display values (snapshot first, full when ready) ──────────────
@@ -429,6 +431,44 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({
         </h2>
         <KitengeStrip className="w-16 mt-2" />
       </div>
+      {/* Today's snapshot strip */}
+      {today && (
+        <motion.div
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="grid grid-cols-2 gap-3"
+        >
+          {[
+            {
+              label: "Today's Revenue",
+              value: formatTZS(today.todayRevenue),
+              delta: today.yesterdayRevenue > 0 ? ((today.todayRevenue - today.yesterdayRevenue) / today.yesterdayRevenue) * 100 : null,
+              color: '#10b981',
+            },
+            {
+              label: "Today's Orders",
+              value: today.todayOrders.toString(),
+              delta: today.yesterdayOrders > 0 ? ((today.todayOrders - today.yesterdayOrders) / today.yesterdayOrders) * 100 : null,
+              color: '#3b82f6',
+            },
+          ].map(({ label, value, delta, color }) => (
+            <div key={label} className="relative overflow-hidden rounded-2xl border border-foreground/[0.08] bg-foreground/[0.02] px-5 py-3.5 flex items-center justify-between">
+              <div className="absolute -top-4 -right-4 w-16 h-16 rounded-full blur-2xl opacity-20" style={{ background: color }} />
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-foreground/40 mb-0.5">{label}</p>
+                <p className="text-xl font-black text-foreground tabular-nums">{value}</p>
+              </div>
+              {delta !== null && (
+                <span className={`flex items-center gap-0.5 text-[11px] font-bold px-2 py-1 rounded-lg ${delta >= 0 ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-500'}`}>
+                  {delta >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                  {Math.abs(delta).toFixed(0)}% vs yesterday
+                </span>
+              )}
+            </div>
+          ))}
+        </motion.div>
+      )}
+
       {/* Alert banners — authoritative count from RPC, same source as donut */}
       <AlertBanner
         lowStock={full?.lowStockCount ?? lowStockCount}
@@ -537,24 +577,32 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-sm font-bold text-foreground">Revenue Trend</h3>
-              <p className="text-[10px] text-foreground/40 uppercase tracking-wider mt-0.5">Last 30 days</p>
+              <p className="text-[10px] text-foreground/40 uppercase tracking-wider mt-0.5">
+                {full?.rev7 !== undefined ? `7d: ${formatTZS(full.rev7)}` : 'Loading…'}
+              </p>
             </div>
             <div className="flex items-center gap-2">
-              {full?.rev7 !== undefined && (
-                <span className="text-xs font-bold text-foreground/60">
-                  7d: <span className="text-foreground">{formatTZS(full.rev7)}</span>
-                </span>
-              )}
-              <button
-                onClick={() => refetchFull()}
-                disabled={refreshing}
-                className="w-7 h-7 rounded-lg bg-foreground/[0.05] flex items-center justify-center hover:bg-foreground/10 transition-colors"
-              >
+              {/* Period tabs */}
+              <div className="flex items-center gap-0.5 p-0.5 rounded-lg bg-foreground/[0.04] border border-foreground/8">
+                {([7, 14, 30] as const).map(d => (
+                  <button key={d} onClick={() => setChartPeriod(d)}
+                    className={`px-2.5 py-1 rounded-md text-[10px] font-bold transition-all ${
+                      chartPeriod === d ? 'bg-background shadow-sm text-foreground' : 'text-foreground/40 hover:text-foreground/70'
+                    }`}>
+                    {d}d
+                  </button>
+                ))}
+              </div>
+              <button onClick={() => refetchFull()} disabled={refreshing}
+                className="w-7 h-7 rounded-lg bg-foreground/[0.05] flex items-center justify-center hover:bg-foreground/10 transition-colors">
                 <RefreshCw className={`w-3 h-3 text-foreground/50 ${refreshing ? 'animate-spin' : ''}`} />
               </button>
             </div>
           </div>
-          <RevenueChart data={full?.revenueTrend ?? []} loading={fullLoading} />
+          <RevenueChart
+            data={(full?.revenueTrend ?? []).slice(-chartPeriod)}
+            loading={fullLoading}
+          />
         </motion.div>
 
         {/* Order Status Donut */}

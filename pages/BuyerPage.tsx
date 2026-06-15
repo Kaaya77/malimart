@@ -296,6 +296,11 @@ export const BuyerPage = () => {
               const product = wishlist.find(p => p.id === productId);
               if (product) toggleWishlist(product);
             }}
+            onAddToCart={(product) => addToCart(product)}
+            onReorder={(o) => {
+              o.items?.forEach((i: any) => { if (i.products) addToCart(i.products, undefined, i.quantity); });
+              navigate('/cart');
+            }}
           />
         )}
 

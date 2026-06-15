@@ -10,13 +10,13 @@
  */
 
 import React from 'react';
-import { useAdminDashboard, useAdminDashboardRealtime } from '../hooks/useAdminDashboard';
+import { useAdminDashboard, useAdminDashboardRealtime, useAdminTopSellers } from '../hooks/useAdminDashboard';
 import { motion } from 'framer-motion';
 import {
   Users, Store, Package, ShoppingBag, DollarSign,
   AlertTriangle, TrendingUp, TrendingDown, RefreshCw,
   CheckCircle2, UserPlus, ArrowRight, BarChart3,
-  Shield, Zap, Activity
+  Shield, Zap, Activity, BadgeCheck
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { formatTZS } from '../constants';
@@ -118,6 +118,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 }) => {
   // TanStack Query: fetch + cache + deduplication handled automatically
   const { data: payload, isLoading: loading, isFetching: refreshing, refetch } = useAdminDashboard(30);
+  const { data: topSellers = [] } = useAdminTopSellers(30, 5);
   useAdminDashboardRealtime(); // invalidates cache on realtime events
 
   // Merge live payload with initial fallback props
@@ -263,6 +264,64 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           )}
         </motion.div>
       </div>
+
+      {/* Top Sellers Leaderboard */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }}
+        className="rounded-2xl border border-foreground/[0.08] bg-foreground/[0.02] p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-sm font-bold text-foreground">Top Sellers</h3>
+            <p className="text-[10px] text-foreground/40 uppercase tracking-wider mt-0.5">By GMV — last 30 days</p>
+          </div>
+          <button onClick={onGoVendors}
+            className="text-[10px] font-bold text-foreground/40 hover:text-foreground flex items-center gap-1 transition-colors">
+            View all <ArrowRight className="w-3 h-3" />
+          </button>
+        </div>
+        {!topSellers.length ? (
+          <div className="flex flex-col items-center justify-center py-8 text-foreground/25">
+            <Store className="w-8 h-8 mb-2 opacity-30" />
+            <p className="text-xs font-semibold uppercase tracking-widest">No seller data yet</p>
+          </div>
+        ) : (
+          <div className="space-y-2.5">
+            {topSellers.map((seller, i) => {
+              const RANK_COLORS = ['#f59e0b', '#94a3b8', '#cd7f32', '#6b7280', '#6b7280'];
+              const color = RANK_COLORS[i] ?? '#6b7280';
+              const maxGmv = topSellers[0]?.gmv ?? 1;
+              return (
+                <div key={seller.seller_id} className="flex items-center gap-3">
+                  <span className="w-5 h-5 rounded-md flex items-center justify-center text-[9px] font-black shrink-0"
+                    style={{ background: `${color}25`, color }}>
+                    {i + 1}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="text-xs font-semibold text-foreground truncate">{seller.store_name}</span>
+                        {seller.is_verified && (
+                          <BadgeCheck className="w-3 h-3 text-blue-500 shrink-0" />
+                        )}
+                      </div>
+                      <div className="text-right shrink-0 ml-2">
+                        <span className="text-[10px] font-bold text-foreground">{formatTZS(seller.gmv)}</span>
+                        <span className="text-[9px] text-foreground/35 ml-1">· {seller.order_count} orders</span>
+                      </div>
+                    </div>
+                    <div className="h-1 bg-foreground/[0.06] rounded-full overflow-hidden">
+                      <motion.div className="h-full rounded-full" style={{ background: color }}
+                        initial={{ width: 0 }}
+                        animate={{ width: `${(seller.gmv / maxGmv) * 100}%` }}
+                        transition={{ duration: 0.8, delay: 0.3 + i * 0.08 }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </motion.div>
 
       {/* Quick Actions */}
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}

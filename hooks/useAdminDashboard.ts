@@ -17,6 +17,19 @@ export function useAdminDashboard(days = 30) {
     });
 }
 
+/** Top sellers by GMV over the last N days */
+export function useAdminTopSellers(days = 30, limit = 5) {
+    return useQuery({
+        queryKey: ['admin', 'top-sellers', days, limit],
+        queryFn: async () => {
+            const { data, error } = await supabase.rpc('get_admin_top_sellers', { p_limit: limit, p_days: days });
+            if (error) throw error;
+            return (data as any[] ?? []) as { store_name: string; seller_id: string; is_verified: boolean; order_count: number; gmv: number }[];
+        },
+        staleTime: 5 * 60_000,
+    });
+}
+
 /**
  * Invalidates the admin dashboard cache when platform-level tables change.
  * Replaces the 60s polling interval with event-driven invalidation.
