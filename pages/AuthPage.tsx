@@ -24,8 +24,13 @@ export const LoginPage = () => {
  const { addToast } = useToast();
  const { user } = useAppState();
  
- const [mode, setMode] = useState<'login' | 'signup' | 'forgot'>('login');
- const [role, setRole] = useState<'buyer' | 'seller'>('buyer');
+ const [mode, setMode] = useState<'login' | 'signup' | 'forgot'>(() => {
+   const m = searchParams.get('mode');
+   return m === 'signup' || m === 'forgot' ? m : 'login';
+ });
+ const [role, setRole] = useState<'buyer' | 'seller'>(() => {
+   return searchParams.get('role') === 'seller' ? 'seller' : 'buyer';
+ });
  const [formData, setFormData] = useState({ email: '', password: '', name: '' });
  const [loading, setLoading] = useState(false);
  const [error, setError] = useState('');

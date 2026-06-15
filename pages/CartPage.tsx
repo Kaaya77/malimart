@@ -219,8 +219,9 @@ export const CartPage = () => {
  return val;
  })();
 
- // Authoritative VAT-inclusive figures from the server (same calc the order uses).
- // Falls back to the local estimate only while the request is in flight.
+ // Server RPC gives authoritative VAT (per-product vat_rate), but doesn't know
+ // about client-side campaign discounts applied in calculateItemPrice. Use the
+ // server VAT amount only; keep the client-computed total to avoid overcharging.
  const cartTotalsItems = useMemo(
    () => cart.map((i: any) => ({ product_id: i.id, variant_id: i.variant_id || null, quantity: i.quantity })),
    [cart]
@@ -231,7 +232,7 @@ export const CartPage = () => {
    discount: totalDiscountAmount,
  });
  const totalVAT = totalsLoading ? localVAT : srvTotals.vat_amount;
- const total = totalsLoading ? localTotal : srvTotals.total;
+ const total = localTotal;
 
  // ───────────────────────────────────────────────
  // Group items by seller
@@ -343,7 +344,7 @@ export const CartPage = () => {
  <div className="flex justify-between items-end pb-6 border-b border-foreground/8">
  <div>
  <h1 className="text-3xl md:text-4xl font-black text-foreground font-display uppercase tracking-tight">Shopping Bag</h1>
- <p className="text-foreground/50 text-sm font-bold mt-1 uppercase tracking-wider">{cart.length} Products selected</p>
+ <p className="text-foreground/50 text-sm font-bold mt-1 uppercase tracking-wider">{cart.length} {cart.length === 1 ? 'Product' : 'Products'} selected</p>
  </div>
  </div>
 
@@ -595,7 +596,7 @@ export const CartPage = () => {
  <span className="font-black text-3xl md:text-5xl tracking-tighter text-foreground block leading-[0.9] font-display">
  {formatTZS(Math.round(total))}
  </span>
- <span className="text-[9px] font-bold text-foreground/40 uppercase tracking-widest">Inclusive of all taxes</span>
+ {totalVAT > 0 && <span className="text-[9px] font-bold text-foreground/40 uppercase tracking-widest">Inclusive of all taxes</span>}
  </div>
  </div>
  </div>

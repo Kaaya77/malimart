@@ -134,16 +134,34 @@ export const ProductPage = () => {
 
  const metrics = useMemo(() => {
  if (!product) return null;
- const basePrice = selectedVariant ? (selectedVariant.sale_price || selectedVariant.base_price) : product.price;
+ const rawPrice = selectedVariant ? (selectedVariant.sale_price || selectedVariant.base_price) : product.price;
  const currentStock = selectedVariant ? selectedVariant.stock : product.stock;
- 
+
+ // Apply auto-apply campaign discount (same logic as useProductPricing / ProductCard)
+ const activeOffer = getActiveOfferForProduct(product.id);
+ let price = rawPrice;
+ if (activeOffer && activeOffer.is_auto_apply && activeOffer.campaign_type !== 'bogo') {
+   if (activeOffer.type === 'percentage') {
+     price = rawPrice - (rawPrice * activeOffer.value / 100);
+   } else if (activeOffer.type === 'fixed') {
+     price = Math.max(0, rawPrice - activeOffer.value);
+   }
+ }
+
+ // originalPrice for strikethrough: use variant base_price or product.base_price if higher
+ const comparePrice = selectedVariant
+   ? selectedVariant.base_price
+   : (product.base_price ?? product.price);
+ const originalPrice = comparePrice > price ? comparePrice : null;
+
  return {
- price: basePrice,
- stock: currentStock,
- isOut: currentStock <= 0,
- sku: selectedVariant ? selectedVariant.sku : product.sku
+   price,
+   originalPrice,
+   stock: currentStock,
+   isOut: currentStock <= 0,
+   sku: selectedVariant ? selectedVariant.sku : product.sku
  };
- }, [product, selectedVariant]);
+ }, [product, selectedVariant, getActiveOfferForProduct]);
 
  const handleAdd = () => {
  if (!product || !metrics || isAdding) return;
@@ -320,9 +338,9 @@ export const ProductPage = () => {
  <span className="font-serif text-4xl">
  {formatTZS(metrics.price)}
  </span>
- {product.price > metrics.price && (
+ {metrics.originalPrice && (
  <span className="text-xl opacity-40 line-through">
- {formatTZS(product.price)}
+ {formatTZS(metrics.originalPrice)}
  </span>
  )}
  </div>

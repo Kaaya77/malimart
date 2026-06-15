@@ -411,6 +411,8 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
                     quantity: ci.quantity,
                     variant_id: ci.variant_id,
                     cart_item_id: ci.cart_item_id,
+                    price_at_add: ci.price_at_add,
+                    selectedVariant: ci.product?.variants?.find((v: any) => v.id === ci.variant_id),
                 }));
                 setCart(cartItems);
             }
@@ -522,7 +524,8 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
                     ...item.product,
                     quantity: item.quantity,
                     selectedVariant: item.product?.variants?.find((v: any) => v.id === item.variant_id),
-                    variant_id: item.variant_id
+                    variant_id: item.variant_id,
+                    price_at_add: item.price_at_add,
                 }));
                 setCart(dbCart);
             } else {

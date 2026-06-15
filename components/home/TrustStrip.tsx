@@ -6,7 +6,7 @@ import { Truck, ShieldCheck, RotateCcw, Wallet } from 'lucide-react';
  * TrustStrip — 4 buyer guarantee cards. Real copy, no stats, no fluff.
  */
 const ITEMS = [
-  { icon: Truck, label: 'Nationwide delivery', sub: 'Across all 27 regions' },
+  { icon: Truck, label: 'Nationwide delivery', sub: 'Across all 31 regions' },
   { icon: ShieldCheck, label: 'Buyer protection', sub: 'Refund if not as described' },
   { icon: RotateCcw, label: 'Easy returns', sub: '7-day return window' },
   { icon: Wallet, label: 'Mobile money', sub: 'M-Pesa, Tigo Pesa, Airtel' },
