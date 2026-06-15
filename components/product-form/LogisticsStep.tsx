@@ -13,6 +13,11 @@ export const LogisticsStep = () => {
  <div className="grid md:grid-cols-2 gap-10">
  <div><Label>Global Stock</Label><Input type="number" value={Number.isNaN(formData.stock) ? '' : (formData.stock ?? '')} onChange={(e: any) => setFormData({...formData, stock: e.target.value === '' ? null : Number(e.target.value)})} className={`h-12 ${variants.length > 0 ? 'bg-foreground/[0.06] opacity-70' : ''}`} disabled={variants.length > 0} />{variants.length > 0 && <span className="text-[9px] text-foreground opacity-60 uppercase tracking-[0.2em] mt-1 block">Calculated from Variants</span>}</div>
  <div><div className="flex justify-between items-center mb-2"><Label className="mb-0">Product SKU</Label><button onClick={handleGenerateSKU} disabled={aiLoading} className="text-[9px] text-foreground uppercase tracking-[0.2em] hover:opacity-50 transition-opacity">AI Gen</button></div><Input value={formData.sku || ''} onChange={(e: any) => setFormData({...formData, sku: e.target.value.toUpperCase()})} className="h-12 font-mono" /></div>
+ <div>
+   <Label>Low Stock Alert Threshold</Label>
+   <Input type="number" min={0} value={Number.isNaN(formData.low_stock_threshold) ? '' : (formData.low_stock_threshold ?? '')} onChange={(e: any) => setFormData({...formData, low_stock_threshold: e.target.value === '' ? null : Number(e.target.value)})} className="h-12" placeholder="e.g. 5" />
+   <span className="text-[9px] text-foreground opacity-50 uppercase tracking-[0.1em] mt-1 block">Alert shows when stock falls below this number</span>
+ </div>
  </div>
  </div>
  <div className="grid md:grid-cols-2 gap-6">

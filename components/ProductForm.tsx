@@ -27,6 +27,7 @@ interface ProductFormProps {
  initialData?: Product | null;
  onClose: () => void;
  onSuccess: () => void;
+ mode?: 'modal' | 'page';
 }
 
 import { PRESET_ATTRIBUTES } from './product-form/presets';
@@ -36,7 +37,7 @@ export { PRESET_ATTRIBUTES };
 import { PhonePreview } from './product-form/PhonePreview';
 
 
-export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProps) => {
+export const ProductForm = ({ initialData, onClose, onSuccess, mode = 'modal' }: ProductFormProps) => {
  const { user } = useAppState();
  const { addToast } = useToast();
  const [step, setStep] = useState<'details' | 'media' | 'logistics' | 'variants' | 'preview'>('details');
@@ -495,34 +496,93 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
  const margin = formData.price && formData.cost_price ? ((formData.price - formData.cost_price) / formData.price) * 100 : 0;
  const profit = (formData.price || 0) - (formData.cost_price || 0);
 
- const pf = { step, setStep, isQuickMode, setIsQuickMode, isLoading, setIsLoading, visionLoading, setVisionLoading, aiLoading, setAiLoading, refurbishingIdx, setRefurbishingIdx, includeVat, setIncludeVat, showGenImage, setShowGenImage, showRefineImage, setShowRefineImage, genPrompt, setGenPrompt, refinePrompt, setRefinePrompt, hoveredVariant, setHoveredVariant, generatedVideo, setGeneratedVideo, isMagicFilling, setIsMagicFilling, bulkPrice, setBulkPrice, bulkStock, setBulkStock, formData, setFormData, attributes, setAttributes, variants, setVariants, tagInput, setTagInput, handleMagicFill, handleVisionAnalyze, uploadFileOrDataUrl, downloadImage, handleImageUpload, handleVariantImageUpload, handleRefurbishVariant, generateMagicDescription, handleSuggestPrice, handleTranslate, handleEnhanceDescription, handleSuggestAttributes, handleGenerateSKU, handleGenerateImage, handleRefineImage, handleGenerateVideo, toggleVat, generateVariants, handleBulkApply, handleAutoSkuVariants, handleSubmit, margin, profit, initialData, onClose };
+ // ── Step completion ────────────────────────────────────────────────────────
+ const stepComplete = useMemo(() => ({
+   details:   !!(formData.name?.trim() && formData.price && formData.category),
+   media:     (formData.images?.length ?? 0) > 0,
+   logistics: !!(formData.sku?.trim() || (formData.stock !== undefined && formData.stock >= 0)),
+   variants:  true,
+   preview:   true,
+ }), [formData, variants]);
 
- return (
- <PFContext.Provider value={pf}>
- <div className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-xl flex items-center justify-center p-2 md:p-4 animate-in fade-in duration-300">
- <div className="w-full max-w-[95vw] xl:max-w-7xl h-[95dvh] md:h-[90dvh] bg-background dark:bg-background flex flex-col lg:flex-row overflow-hidden border border-foreground/10 relative shadow-2xl">
- <button onClick={onClose} className="absolute top-6 right-6 z-50 p-3 bg-transparent hover:opacity-50 transition-opacity text-foreground"><X className="w-6 h-6" /></button>
+ // ── Autosave draft to localStorage (new products only) ────────────────────
+ const DRAFT_KEY = 'malimart-product-draft';
+ const [draftBanner, setDraftBanner] = useState(false);
 
- {/* Left Rail — hidden on mobile, shown on lg */}
- <div className="hidden lg:flex w-72 border-r border-foreground/8 flex-col justify-between py-8 shrink-0 bg-foreground/[0.02]">
- <div className="px-10">
- <div className="w-14 h-14 bg-foreground text-background flex items-center justify-center font-serif text-2xl mb-12 rounded-2xl">M</div>
- <nav className="space-y-3">
- {[
- { id: 'details', label: 'Essentials', icon: Package },
- { id: 'media', label: 'Visuals', icon: ImageIcon },
- { id: 'logistics', label: 'Logistics', icon: Truck },
- { id: 'variants', label: 'Matrix', icon: LayoutGrid },
- { id: 'preview', label: 'Preview', icon: Smartphone }
- ].map((s) => (
- <button key={s.id} onClick={() => setStep(s.id as any)} className={`w-full flex items-center justify-start gap-4 p-4 px-6 transition-all group relative ${step === s.id ? 'bg-foreground/[0.06] text-foreground font-semibold' : 'opacity-40 hover:opacity-100 text-foreground'}`}>
- <s.icon className={`w-5 h-5 flex-shrink-0 ${step === s.id ? 'text-foreground' : 'group-hover:text-foreground'}`} />
- <span className="text-[10px] uppercase tracking-[0.2em]">{s.label}</span>
- {step === s.id && <div className="absolute left-0 top-0 bottom-0 w-1 bg-foreground"></div>}
- </button>
- ))}
- </nav>
- </div>
+ useEffect(() => {
+   if (initialData) return;
+   const saved = localStorage.getItem(DRAFT_KEY);
+   if (saved) {
+     try {
+       const parsed = JSON.parse(saved);
+       if (parsed.name && !formData.name) setDraftBanner(true);
+     } catch { /* ignore */ }
+   }
+ }, []);
+
+ useEffect(() => {
+   if (initialData) return;
+   const timer = setTimeout(() => {
+     if (formData.name || (formData.images?.length ?? 0) > 0) {
+       localStorage.setItem(DRAFT_KEY, JSON.stringify(formData));
+     }
+   }, 2000);
+   return () => clearTimeout(timer);
+ }, [formData, initialData]);
+
+ const restoreDraft = () => {
+   const saved = localStorage.getItem(DRAFT_KEY);
+   if (!saved) return;
+   try {
+     setFormData(prev => ({ ...prev, ...JSON.parse(saved) }));
+     setDraftBanner(false);
+     addToast('Draft restored', 'success');
+   } catch { /* ignore */ }
+ };
+
+ const discardDraft = () => {
+   localStorage.removeItem(DRAFT_KEY);
+   setDraftBanner(false);
+ };
+
+ const clearDraftOnSave = () => {
+   if (!initialData) localStorage.removeItem(DRAFT_KEY);
+ };
+
+ const pf = { step, setStep, isQuickMode, setIsQuickMode, isLoading, setIsLoading, visionLoading, setVisionLoading, aiLoading, setAiLoading, refurbishingIdx, setRefurbishingIdx, includeVat, setIncludeVat, showGenImage, setShowGenImage, showRefineImage, setShowRefineImage, genPrompt, setGenPrompt, refinePrompt, setRefinePrompt, hoveredVariant, setHoveredVariant, generatedVideo, setGeneratedVideo, isMagicFilling, setIsMagicFilling, bulkPrice, setBulkPrice, bulkStock, setBulkStock, formData, setFormData, attributes, setAttributes, variants, setVariants, tagInput, setTagInput, handleMagicFill, handleVisionAnalyze, uploadFileOrDataUrl, downloadImage, handleImageUpload, handleVariantImageUpload, handleRefurbishVariant, generateMagicDescription, handleSuggestPrice, handleTranslate, handleEnhanceDescription, handleSuggestAttributes, handleGenerateSKU, handleGenerateImage, handleRefineImage, handleGenerateVideo, toggleVat, generateVariants, handleBulkApply, handleAutoSkuVariants, handleSubmit, margin, profit, initialData, onClose, stepComplete, clearDraftOnSave };
+
+ const STEPS = [
+   { id: 'details',   label: 'Essentials', mobileLabel: 'Details',  icon: Package },
+   { id: 'media',     label: 'Visuals',    mobileLabel: 'Media',    icon: ImageIcon },
+   { id: 'logistics', label: 'Logistics',  mobileLabel: 'Shipping', icon: Truck },
+   { id: 'variants',  label: 'Matrix',     mobileLabel: 'Options',  icon: LayoutGrid },
+   { id: 'preview',   label: 'Preview',    mobileLabel: 'Preview',  icon: Smartphone },
+ ] as const;
+
+ const formInner = (
+   <div className="w-full max-w-[95vw] xl:max-w-7xl h-[95dvh] md:h-[90dvh] bg-background dark:bg-background flex flex-col lg:flex-row overflow-hidden border border-foreground/10 relative shadow-2xl">
+     {mode === 'modal' && (
+       <button onClick={onClose} className="absolute top-6 right-6 z-50 p-3 bg-transparent hover:opacity-50 transition-opacity text-foreground"><X className="w-6 h-6" /></button>
+     )}
+
+     {/* Left Rail — hidden on mobile, shown on lg */}
+     <div className="hidden lg:flex w-72 border-r border-foreground/8 flex-col justify-between py-8 shrink-0 bg-foreground/[0.02]">
+     <div className="px-10">
+     <div className="w-14 h-14 bg-foreground text-background flex items-center justify-center font-serif text-2xl mb-12 rounded-2xl">M</div>
+     <nav className="space-y-3">
+     {STEPS.map((s) => {
+       const done = stepComplete[s.id as keyof typeof stepComplete];
+       return (
+         <button key={s.id} onClick={() => setStep(s.id as any)} className={`w-full flex items-center justify-start gap-4 p-4 px-6 transition-all group relative ${step === s.id ? 'bg-foreground/[0.06] text-foreground font-semibold' : 'opacity-40 hover:opacity-100 text-foreground'}`}>
+           <s.icon className={`w-5 h-5 flex-shrink-0 ${step === s.id ? 'text-foreground' : 'group-hover:text-foreground'}`} />
+           <span className="text-[10px] uppercase tracking-[0.2em] flex-1 text-left">{s.label}</span>
+           {done && <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />}
+           {step === s.id && <div className="absolute left-0 top-0 bottom-0 w-1 bg-foreground"></div>}
+         </button>
+       );
+     })}
+     </nav>
+     </div>
  <div className="px-10">
  <div className="p-6 bg-foreground text-background dark:text-foreground relative overflow-hidden shadow-2xl">
  <div className="relative z-10">
@@ -539,57 +599,75 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
  </div>
 
  {/* Mobile Steps Nav */}
- <div className="lg:hidden border-b border-foreground/8 bg-foreground/[0.02] overflow-x-auto no-scrollbar">
- <nav className="flex gap-2 px-4 py-3">
- {[
- { id: 'details', label: 'Details', icon: Package },
- { id: 'media', label: 'Media', icon: ImageIcon },
- { id: 'logistics', label: 'Shipping', icon: Truck },
- { id: 'variants', label: 'Options', icon: LayoutGrid },
- { id: 'preview', label: 'Preview', icon: Smartphone }
- ].map((s) => (
- <button key={s.id} onClick={() => setStep(s.id as any)} className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-[9px] uppercase tracking-[0.15em] flex-shrink-0 transition-all ${step === s.id ? 'bg-foreground text-background font-bold' : 'bg-foreground/[0.06] text-foreground opacity-60 hover:opacity-100'}`}>
- <s.icon className="w-4 h-4" />
- <span className="hidden xs:inline">{s.label}</span>
- </button>
- ))}
- </nav>
- </div>
+     <div className="lg:hidden border-b border-foreground/8 bg-foreground/[0.02] overflow-x-auto no-scrollbar">
+       <nav className="flex gap-2 px-4 py-3">
+         {STEPS.map((s) => {
+           const done = stepComplete[s.id as keyof typeof stepComplete];
+           return (
+             <button key={s.id} onClick={() => setStep(s.id as any)} className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-[9px] uppercase tracking-[0.15em] flex-shrink-0 transition-all ${step === s.id ? 'bg-foreground text-background font-bold' : 'bg-foreground/[0.06] text-foreground opacity-60 hover:opacity-100'}`}>
+               <s.icon className="w-4 h-4" />
+               <span className="hidden xs:inline">{s.mobileLabel}</span>
+               {done && <CheckCircle2 className="w-3 h-3 text-green-400 flex-shrink-0" />}
+             </button>
+           );
+         })}
+       </nav>
+     </div>
 
- {/* Form Main Area */}
- <div className="flex-1 overflow-y-auto no-scrollbar bg-background dark:bg-background">
- <div className="max-w-5xl mx-auto p-4 sm:p-6 md:p-8 lg:p-20 space-y-8 md:space-y-16">
- {/* Header */}
- <div className="flex justify-between items-end border-b border-foreground/10 pb-10">
- <div>
- <h1 className="text-4xl font-serif text-foreground tracking-wide">{initialData ? 'Edit Product' : 'New Listing'}</h1>
- <div className="flex items-center gap-2 mt-2">
- <Switch checked={isQuickMode} onCheckedChange={setIsQuickMode} />
- <span className="text-foreground opacity-60 text-[10px] uppercase tracking-[0.2em]">Quick Add Mode</span>
- </div>
- </div>
- <div className="flex gap-3">
- <Button variant="ghost" onClick={onClose} size="lg" className="hidden md:flex text-[10px] uppercase tracking-[0.2em]">Cancel</Button>
- <Button onClick={handleSubmit} disabled={isLoading} className="h-12 px-8 text-[10px] uppercase tracking-[0.2em]">Publish Listing</Button>
- </div>
- </div>
+     {/* Form Main Area */}
+     <div className="flex-1 overflow-y-auto no-scrollbar bg-background dark:bg-background">
+       <div className="max-w-5xl mx-auto p-4 sm:p-6 md:p-8 lg:p-20 space-y-8 md:space-y-16">
 
- {/* Step Content */}
- <div className="animate-in slide-in-from-bottom-4 duration-500 min-h-[400px]">
- {step === 'details' && <DetailsStep />}
+         {/* Draft restore banner */}
+         {draftBanner && (
+           <div className="flex items-center justify-between gap-3 px-5 py-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl text-sm">
+             <span className="text-amber-800 dark:text-amber-300">You have an unsaved draft. Restore it?</span>
+             <div className="flex gap-2">
+               <button onClick={restoreDraft} className="px-3 py-1 rounded-lg bg-amber-600 text-white text-xs font-semibold hover:bg-amber-700 transition-colors">Restore</button>
+               <button onClick={discardDraft} className="px-3 py-1 rounded-lg bg-transparent text-amber-700 dark:text-amber-400 text-xs hover:underline">Discard</button>
+             </div>
+           </div>
+         )}
 
- {step === 'media' && <MediaStep />}
+         {/* Header */}
+         <div className="flex justify-between items-end border-b border-foreground/10 pb-10">
+           <div>
+             <h1 className="text-4xl font-serif text-foreground tracking-wide">{initialData ? 'Edit Product' : 'New Listing'}</h1>
+             <div className="flex items-center gap-2 mt-2">
+               <Switch checked={isQuickMode} onCheckedChange={setIsQuickMode} />
+               <span className="text-foreground opacity-60 text-[10px] uppercase tracking-[0.2em]">Quick Add Mode</span>
+             </div>
+           </div>
+           <div className="flex gap-3">
+             <Button variant="ghost" onClick={onClose} size="lg" className="hidden md:flex text-[10px] uppercase tracking-[0.2em]">Cancel</Button>
+             <Button onClick={handleSubmit} disabled={isLoading} className="h-12 px-8 text-[10px] uppercase tracking-[0.2em]">Publish Listing</Button>
+           </div>
+         </div>
 
- {step === 'logistics' && <LogisticsStep />}
+         {/* Step Content */}
+         <div className="animate-in slide-in-from-bottom-4 duration-500 min-h-[400px]">
+           {step === 'details' && <DetailsStep />}
+           {step === 'media' && <MediaStep />}
+           {step === 'logistics' && <LogisticsStep />}
+           {step === 'variants' && <VariantsStep />}
+           {step === 'preview' && <PreviewStep />}
+         </div>
+       </div>
+     </div>
+   </div>
+ );
 
- {step === 'variants' && <VariantsStep />}
-
- {step === 'preview' && <PreviewStep />}
- </div>
- </div>
- </div>
- </div>
- </div>
- </PFContext.Provider>
+ return (
+   <PFContext.Provider value={pf}>
+     {mode === 'modal' ? (
+       <div className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-xl flex items-center justify-center p-2 md:p-4 animate-in fade-in duration-300">
+         {formInner}
+       </div>
+     ) : (
+       <div className="min-h-screen bg-background flex items-start justify-center p-2 md:p-4">
+         {formInner}
+       </div>
+     )}
+   </PFContext.Provider>
  );
 };

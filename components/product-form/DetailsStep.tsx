@@ -2,12 +2,12 @@ import React from 'react';
 import { Button, Input, Label, Textarea, Switch } from '../UI';
 import { Product } from '../../types';
 import { CATEGORY_HIERARCHY, formatTZS } from '../../constants';
-import { DollarSign, Languages, Loader2, MapPin, Sparkles, Wand2 } from 'lucide-react';
+import { DollarSign, Languages, Loader2, MapPin, Sparkles, Wand2, X as XIcon } from 'lucide-react';
 import { useToast } from '../UI';
 import { usePF } from './FormContext';
 
 export const DetailsStep = () => {
-    const { aiLoading, includeVat, isMagicFilling, formData, setFormData, variants, handleMagicFill, generateMagicDescription, handleSuggestPrice, handleTranslate, handleEnhanceDescription, toggleVat } = usePF();
+    const { aiLoading, includeVat, isMagicFilling, formData, setFormData, variants, tagInput, setTagInput, handleMagicFill, generateMagicDescription, handleSuggestPrice, handleTranslate, handleEnhanceDescription, toggleVat } = usePF();
     const { addToast } = useToast();
     return (
  <div className="space-y-10">
@@ -107,6 +107,50 @@ export const DetailsStep = () => {
  <Languages className="w-3 h-3" /> Translate to Swahili
  </button>
  </div>
+ </div>
+
+ {/* Tags */}
+ <div className="col-span-2">
+   <Label>Tags</Label>
+   <div className="flex flex-wrap gap-2 mb-2">
+     {(formData.tags ?? []).map((tag: string) => (
+       <span key={tag} className="flex items-center gap-1 px-3 py-1 rounded-full bg-foreground/[0.08] text-foreground text-xs border border-foreground/10">
+         {tag}
+         <button type="button" onClick={() => setFormData({ ...formData, tags: (formData.tags ?? []).filter((t: string) => t !== tag) })} className="ml-1 hover:opacity-60 transition-opacity"><XIcon className="w-3 h-3" /></button>
+       </span>
+     ))}
+   </div>
+   <div className="flex gap-2">
+     <Input
+       value={tagInput}
+       onChange={(e: any) => setTagInput(e.target.value)}
+       onKeyDown={(e: any) => {
+         if ((e.key === 'Enter' || e.key === ',') && tagInput.trim()) {
+           e.preventDefault();
+           const next = tagInput.trim().replace(/,$/, '');
+           if (next && !(formData.tags ?? []).includes(next)) {
+             setFormData({ ...formData, tags: [...(formData.tags ?? []), next] });
+           }
+           setTagInput('');
+         } else if (e.key === 'Backspace' && !tagInput && (formData.tags ?? []).length > 0) {
+           setFormData({ ...formData, tags: (formData.tags ?? []).slice(0, -1) });
+         }
+       }}
+       placeholder="Add tag, press Enter or comma..."
+       className="h-10 flex-1 text-sm"
+     />
+     <button
+       type="button"
+       onClick={() => {
+         const next = tagInput.trim().replace(/,$/, '');
+         if (next && !(formData.tags ?? []).includes(next)) {
+           setFormData({ ...formData, tags: [...(formData.tags ?? []), next] });
+         }
+         setTagInput('');
+       }}
+       className="h-10 px-4 bg-foreground/[0.06] border border-foreground/10 text-foreground text-xs uppercase tracking-[0.1em] hover:bg-foreground/[0.12] transition-colors"
+     >Add</button>
+   </div>
  </div>
 
  <div className="col-span-2 p-10 bg-foreground/[0.03] border border-foreground/10">

@@ -82,6 +82,7 @@ export const ProductEditPage = () => {
         {/* Form — rendered inline (no modal overhead) */}
         {!loading && (
           <ProductForm
+            mode="page"
             initialData={isNew ? null : product}
             onClose={() => navigate(backUrl)}
             onSuccess={() => {
