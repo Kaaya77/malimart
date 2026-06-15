@@ -310,7 +310,21 @@ export const BuyerPage = () => {
  <div className="space-y-5">
  <div className="flex items-center justify-between">
  <h2 className="text-xl font-bold text-foreground">Wishlist <span className="text-foreground/35 font-normal">({wishlist.length})</span></h2>
- {wishlist.length>0 && <button onClick={()=>navigate('/shop')} className="text-xs font-bold text-foreground/45 hover:text-foreground">Add more</button>}
+ {wishlist.length > 0 && (
+   <div className="flex items-center gap-3">
+     <button
+       onClick={() => {
+         const canAdd = wishlist.filter(p => !p.variants?.length);
+         canAdd.forEach(p => addToCart(p));
+         if (canAdd.length) addToast(`${canAdd.length} item${canAdd.length > 1 ? 's' : ''} added to bag`, 'success');
+       }}
+       className="text-xs font-bold text-emerald-600 hover:text-emerald-500 transition-colors"
+     >
+       Add all to bag
+     </button>
+     <button onClick={() => navigate('/shop')} className="text-xs font-bold text-foreground/45 hover:text-foreground transition-colors">Add more</button>
+   </div>
+ )}
  </div>
  {wishlist.length===0 ? (
  <div className="flex flex-col items-center py-20 border border-dashed border-foreground/15 rounded-3xl text-foreground/35">

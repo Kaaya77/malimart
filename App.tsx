@@ -209,10 +209,30 @@ const ScrollProgress = () => {
     );
 };
 
+const ROUTE_TITLES: Record<string, string> = {
+  '/': 'MaliMart — Tanzania\'s Marketplace',
+  '/shop': 'Shop All Products | MaliMart',
+  '/cart': 'Shopping Bag | MaliMart',
+  '/categories': 'Explore Categories | MaliMart',
+  '/login': 'Sign In | MaliMart',
+  '/buyer': 'My Account | MaliMart',
+  '/seller': 'Seller Dashboard | MaliMart',
+  '/checkout': 'Checkout | MaliMart',
+  '/notifications': 'Notifications | MaliMart',
+  '/messages': 'Messages | MaliMart',
+  '/settings': 'Settings | MaliMart',
+};
+
 const AppContent = () => {
   const { isDark, user } = useAppState();
   const location = useLocation();
   const [showPreloader, setShowPreloader] = useState(true);
+
+  useEffect(() => {
+    const seg = '/' + location.pathname.split('/')[1];
+    const title = ROUTE_TITLES[location.pathname] || ROUTE_TITLES[seg];
+    if (title) document.title = title;
+  }, [location.pathname]);
 
   useEffect(() => {
     if (showPreloader) {

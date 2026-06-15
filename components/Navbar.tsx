@@ -317,6 +317,14 @@ export const Navbar = () => {
  return ()=>window.removeEventListener('scroll',fn);
  },[]);
 
+ useEffect(()=>{
+ const onKey=(e:KeyboardEvent)=>{
+ if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();setSearchOpen(true);}
+ };
+ window.addEventListener('keydown',onKey);
+ return ()=>window.removeEventListener('keydown',onKey);
+ },[]);
+
  const handleLogout = async ()=>{ await supabase.auth.signOut(); setUser(null); navigate('/'); };
  // Persist theme to the profile so it follows the user across devices.
  const toggleTheme = () => {
@@ -356,7 +364,11 @@ export const Navbar = () => {
  <div className={`flex items-center gap-1 ${isOnDark?'text-white':'text-foreground'}`}>
 
  {/* Search */}
- <button onClick={()=>setSearchOpen(true)} aria-label="Search" className={ibtn}>
+ <button onClick={()=>setSearchOpen(true)} aria-label="Search" className={`${ibtn} hidden md:flex gap-1.5 items-center`}>
+ <Search className="w-[18px] h-[18px] stroke-[2]"/>
+ <span className={`text-[10px] font-semibold tracking-wide hidden lg:inline ${isOnDark?'text-white/50':'text-foreground/35'}`}>⌘K</span>
+ </button>
+ <button onClick={()=>setSearchOpen(true)} aria-label="Search" className={`${ibtn} md:hidden`}>
  <Search className="w-[18px] h-[18px] stroke-[2]"/>
  </button>
 

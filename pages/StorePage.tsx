@@ -287,6 +287,15 @@ export const StorePage: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Results count when filtering */}
+                {search && (
+                  <p className="text-[11px] text-foreground/40 font-semibold">
+                    {storeProducts.length === 0
+                      ? 'No matches'
+                      : `${storeProducts.length} result${storeProducts.length === 1 ? '' : 's'} for "${search}"`}
+                  </p>
+                )}
+
                 {/* Product grid */}
                 {storeProducts.length === 0 ? (
                   <div className="flex flex-col items-center py-16 border border-dashed border-foreground/15 rounded-3xl text-foreground/35">

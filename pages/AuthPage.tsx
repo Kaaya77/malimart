@@ -60,9 +60,21 @@ export const LoginPage = () => {
 
  const security = useMemo(() => {
  const p = formData.password;
- return {
- strength: p.length === 0 ? 0 : p.length < 6 ? 1 : p.length < 10 ? 2 : 3
+ if (!p) return { strength: 0, hints: [] };
+ const checks = {
+   long: p.length >= 8,
+   upper: /[A-Z]/.test(p),
+   number: /[0-9]/.test(p),
+   symbol: /[^A-Za-z0-9]/.test(p),
  };
+ const passed = Object.values(checks).filter(Boolean).length;
+ const hints = [
+   !checks.long && '8+ characters',
+   !checks.upper && 'uppercase letter',
+   !checks.number && 'a number',
+   !checks.symbol && 'a symbol',
+ ].filter(Boolean) as string[];
+ return { strength: passed, hints };
  }, [formData.password]);
 
  const handleSubmit = async (e: React.FormEvent) => {
@@ -317,10 +329,22 @@ export const LoginPage = () => {
  </button>
  </div>
  {mode === 'signup' && formData.password && (
- <div className="flex gap-1 pt-1">
- {[1, 2, 3].map(i => (
- <div key={i} className={`h-1 rounded-full flex-1 transition-colors ${i <= security.strength ? (security.strength === 1 ? 'bg-red-500' : security.strength === 2 ? 'bg-amber-500' : 'bg-emerald-500') : 'bg-foreground/8'}`}></div>
- ))}
+ <div className="space-y-1.5 pt-1">
+   <div className="flex gap-1">
+     {[1, 2, 3, 4].map(i => (
+       <div key={i} className={`h-1 rounded-full flex-1 transition-colors duration-300 ${
+         i <= security.strength
+           ? security.strength <= 1 ? 'bg-red-500'
+           : security.strength === 2 ? 'bg-amber-500'
+           : security.strength === 3 ? 'bg-emerald-400'
+           : 'bg-emerald-500'
+           : 'bg-foreground/8'
+       }`} />
+     ))}
+   </div>
+   {security.hints.length > 0 && (
+     <p className="text-[11px] text-foreground/45">Add: {security.hints.join(', ')}</p>
+   )}
  </div>
  )}
  </motion.div>

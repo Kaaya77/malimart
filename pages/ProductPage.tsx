@@ -21,7 +21,7 @@ import { usePresence } from '../hooks/usePresence';
 export const ProductPage = () => {
  const { id } = useParams();
  const navigate = useNavigate();
- const { products, addToCart, toggleWishlist, isInWishlist, getActiveOfferForProduct, addToRecentlyViewed, user } = useAppState();
+ const { products, addToCart, toggleWishlist, isInWishlist, getActiveOfferForProduct, addToRecentlyViewed, recentlyViewed = [], user } = useAppState();
  const { addToast } = useToast();
  
  const [product, setProduct] = useState<Product | null>(null);
@@ -64,6 +64,13 @@ export const ProductPage = () => {
  });
  }
  }, [id, products, addToRecentlyViewed]);
+
+ useEffect(() => {
+ if (product) {
+   document.title = `${product.name} | MaliMart`;
+   return () => { document.title = 'MaliMart — Tanzania\'s Marketplace'; };
+ }
+ }, [product]);
 
  useEffect(() => {
  if (product?.seller_id) {
@@ -542,7 +549,7 @@ export const ProductPage = () => {
 
  {/* Related Products */}
  {relatedProducts.length > 0 && (
- <motion.div 
+ <motion.div
  initial={{ opacity: 0, y: 30 }}
  whileInView={{ opacity: 1, y: 0 }}
  viewport={{ once: true, margin: "-50px" }}
@@ -553,6 +560,25 @@ export const ProductPage = () => {
  <div className="grid grid-cols-2 md:grid-cols-4 gap-x-3 gap-y-8 md:gap-x-5 md:gap-y-10">
  {relatedProducts.map((p, index) => (
  <ProductCard key={p.id} product={p} index={index} onClick={() => navigate(`/product/${p.id}`)} />
+ ))}
+ </div>
+ </motion.div>
+ )}
+
+ {recentlyViewed.filter(p => p.id !== product.id).length >= 2 && (
+ <motion.div
+ initial={{ opacity: 0, y: 30 }}
+ whileInView={{ opacity: 1, y: 0 }}
+ viewport={{ once: true, margin: '-50px' }}
+ transition={{ duration: 0.6 }}
+ className="mt-12 border-t border-foreground/10 pt-10"
+ >
+ <h2 className="font-serif text-2xl font-semibold mb-6">Recently viewed</h2>
+ <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
+ {recentlyViewed.filter(p => p.id !== product.id).slice(0, 6).map((p, i) => (
+   <div key={p.id} className="flex-shrink-0 w-40 md:w-48">
+     <ProductCard product={p} index={i} onClick={() => navigate(`/product/${p.id}`)} />
+   </div>
  ))}
  </div>
  </motion.div>

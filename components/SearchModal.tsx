@@ -171,9 +171,12 @@ export const SearchModal = ({
  </form>
  <button
  onClick={() => setIsSearchOpen(false)}
- className="text-sm font-semibold text-foreground/70 hover:text-foreground px-3"
+ className="flex items-center gap-1.5 text-sm font-semibold text-foreground/70 hover:text-foreground px-3 flex-shrink-0"
  >
  Cancel
+ <kbd className="hidden lg:inline-flex items-center px-1.5 py-0.5 rounded-md bg-foreground/[0.06] text-[10px] font-mono text-foreground/35 border border-foreground/10">
+   Esc
+ </kbd>
  </button>
  </div>
 

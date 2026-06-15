@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, ArrowUpRight, MapPin, Star, ShieldCheck, Package, Zap } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, MapPin, Star, ShieldCheck, Package, Heart } from 'lucide-react';
 import { VendorProfile } from '../../types';
 import { useAppState } from '../../context/AppContext';
 
@@ -159,7 +159,8 @@ const HeroStoreCard: React.FC<{
 // ─── Standard store card ──────────────────────────────────────────────────────
 const StoreCard: React.FC<{
   shop: VendorProfile; productCount: number; onClick: () => void; index: number;
-}> = ({ shop, productCount, onClick, index }) => {
+  isFollowed: boolean; onFollow: (e: React.MouseEvent) => void;
+}> = ({ shop, productCount, onClick, index, isFollowed, onFollow }) => {
   const [hovered, setHovered] = useState(false);
   const name = shop.store_name || 'Store';
   const [c1, c2] = getGradient(name);
@@ -230,12 +231,21 @@ const StoreCard: React.FC<{
           )}
         </div>
 
-        <motion.div
-          animate={{ opacity: hovered ? 1 : 0, y: hovered ? 0 : 4 }}
-          className="mt-3 flex items-center gap-1 text-[11px] font-bold text-foreground/60"
-        >
-          Visit <ArrowUpRight className="w-3 h-3" />
-        </motion.div>
+        <div className="mt-3 flex items-center justify-between">
+          <motion.div
+            animate={{ opacity: hovered ? 1 : 0, y: hovered ? 0 : 4 }}
+            className="flex items-center gap-1 text-[11px] font-bold text-foreground/60"
+          >
+            Visit <ArrowUpRight className="w-3 h-3" />
+          </motion.div>
+          <button
+            onClick={onFollow}
+            className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors active:scale-90 ${isFollowed ? 'bg-rose-500/10 text-rose-500' : 'bg-foreground/[0.06] text-foreground/35 hover:text-rose-400'}`}
+            aria-label={isFollowed ? 'Unfollow' : 'Follow'}
+          >
+            <Heart className={`w-3.5 h-3.5 stroke-[2.5] ${isFollowed ? 'fill-current stroke-none' : ''}`} />
+          </button>
+        </div>
       </div>
     </motion.button>
   );
@@ -244,7 +254,8 @@ const StoreCard: React.FC<{
 // ─── Mobile compact card ──────────────────────────────────────────────────────
 const MobileStoreCard: React.FC<{
   shop: VendorProfile; productCount: number; onClick: () => void; index: number; isHero?: boolean;
-}> = ({ shop, productCount, onClick, index, isHero }) => {
+  isFollowed: boolean; onFollow: (e: React.MouseEvent) => void;
+}> = ({ shop, productCount, onClick, index, isHero, isFollowed, onFollow }) => {
   const name = shop.store_name || 'Store';
   const [c1, c2] = getGradient(name);
   const hasLogo = !!(shop as any).logo_url;
@@ -288,14 +299,20 @@ const MobileStoreCard: React.FC<{
         </div>
       </div>
 
-      <ArrowRight className="w-4 h-4 text-foreground/25 flex-shrink-0" />
+      <button
+        onClick={onFollow}
+        className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-colors active:scale-90 ${isFollowed ? 'bg-rose-500/10 text-rose-500' : 'text-foreground/25 hover:text-rose-400'}`}
+        aria-label={isFollowed ? 'Unfollow' : 'Follow'}
+      >
+        <Heart className={`w-4 h-4 stroke-[2.5] ${isFollowed ? 'fill-current stroke-none' : ''}`} />
+      </button>
     </motion.button>
   );
 };
 
 // ─── Main export ──────────────────────────────────────────────────────────────
 export const FeaturedStores: React.FC<FeaturedStoresProps> = ({ topShops, setActiveStore, navigate }) => {
-  const { products } = useAppState();
+  const { products, followSeller, unfollowSeller, isFollowing } = useAppState();
 
   const productCountByseller = useMemo(() => {
     const map: Record<string, number> = {};
@@ -335,6 +352,8 @@ export const FeaturedStores: React.FC<FeaturedStoresProps> = ({ topShops, setAct
             productCount={productCountByseller[s.seller_id] || 0}
             onClick={() => setActiveStore(s)}
             index={i}
+            isFollowed={isFollowing(s.seller_id)}
+            onFollow={(e) => { e.stopPropagation(); isFollowing(s.seller_id) ? unfollowSeller(s.seller_id) : followSeller(s.seller_id); }}
           />
         ))}
       </div>
@@ -355,6 +374,8 @@ export const FeaturedStores: React.FC<FeaturedStoresProps> = ({ topShops, setAct
             productCount={productCountByseller[s.seller_id] || 0}
             onClick={() => setActiveStore(s)}
             index={i}
+            isFollowed={isFollowing(s.seller_id)}
+            onFollow={(e) => { e.stopPropagation(); isFollowing(s.seller_id) ? unfollowSeller(s.seller_id) : followSeller(s.seller_id); }}
           />
         ))}
       </div>

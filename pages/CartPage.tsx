@@ -654,7 +654,7 @@ export const CartPage = () => {
  variant="brand" 
  className="w-full h-16 text-xs font-black uppercase tracking-[0.25em] shadow-2xl shadow-emerald-500/20 rounded-2xl transition-all group"
  >
- Secure Checkout <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+ Secure Checkout · {cart.length} {cart.length === 1 ? 'item' : 'items'} <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
  </Button>
  
  <div className="mt-6 flex flex-col items-center gap-2">
