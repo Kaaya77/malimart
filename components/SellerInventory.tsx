@@ -16,6 +16,7 @@
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, Filter, Plus, Zap, Trash2,
   CheckSquare, Square, Copy, Package, X,
@@ -25,7 +26,8 @@ import {
   RefreshCw, Edit2, ToggleLeft, ToggleRight,
   Minus, TrendingUp, TrendingDown, Loader2,
   GripVertical, MoreHorizontal, Star, Eye,
-  Check, AlertTriangle, ArrowUpRight, Wand2, Share2
+  Check, AlertTriangle, ArrowUpRight, Wand2, Share2,
+  RotateCcw, Wifi
 } from 'lucide-react';
 import { useAppState } from '../context/AppContext';
 import { useDebounce } from '../src/hooks/useDebounce';
@@ -127,6 +129,9 @@ export const SellerInventory = ({
   const [isAutoDiscountOpen, setIsAutoDiscountOpen] = useState(false);
   const [productForDiscount, setProductForDiscount] = useState<InventoryProduct | null>(null);
   const [archiveModal, setArchiveModal] = useState<{ ids: string[]; open: boolean }>({ ids: [], open: false });
+  const [restoreModal, setRestoreModal] = useState<{ ids: string[]; open: boolean }>({ ids: [], open: false });
+  const [alertDismissed, setAlertDismissed] = useState(false);
+  const [liveIndicator, setLiveIndicator] = useState(false);
 
   // ── Fetch ────────────────────────────────────────────────────────────────────
   const fetchInventory = useCallback(async (silent = false) => {
@@ -138,7 +143,7 @@ export const SellerInventory = ({
         stock: sort.asc ? 'stock_asc' : 'stock_desc',
         name: 'name_asc',
       };
-      const cacheKey = `seller:inventory:${userId}:${page}:${status}:${debouncedSearch}:${lowStockOnly}:${sort.key}:${sort.asc}`;
+      const cacheKey = `seller:inventory:${userId}:${page}:${status}:${category}:${debouncedSearch}:${lowStockOnly}:${sort.key}:${sort.asc}`;
       // Use 60s cache; silent=true (mutations) busts the cache before refetching
       if (silent) invalidate(cacheKey);
       const data = await withCache(cacheKey, 60_000, async () => {
@@ -150,6 +155,7 @@ export const SellerInventory = ({
           p_search: debouncedSearch || null,
           p_low_stock_only: lowStockOnly,
           p_sort: sortMap[sort.key] ?? 'created_desc',
+          p_category: category !== 'All' ? category : null,
         });
         if (error) throw error;
         return d;
@@ -164,18 +170,36 @@ export const SellerInventory = ({
       setLoading(false);
       setRefreshing(false);
     }
-  }, [userId, page, debouncedSearch, status, sort, lowStockOnly]);
+  }, [userId, page, debouncedSearch, status, category, sort, lowStockOnly]);
 
   // Seed from preloaded context data — instant display on first visit
   useEffect(() => {
-    if (contextInventory?.length && !debouncedSearch && status === 'All' && !lowStockOnly && page === 0) {
+    if (contextInventory?.length && !debouncedSearch && status === 'All' && category === 'All' && !lowStockOnly && page === 0) {
       setProducts(contextInventory as InventoryProduct[]);
       setLoading(false);
     }
   }, [contextInventory]);
 
-  useEffect(() => { setPage(0); }, [debouncedSearch, status, lowStockOnly]);
+  useEffect(() => { setPage(0); }, [debouncedSearch, status, category, lowStockOnly]);
   useEffect(() => { fetchInventory(!!contextInventory?.length); }, [fetchInventory]);
+
+  // Supabase Realtime: live stock updates when products change in DB
+  useEffect(() => {
+    const channel = supabase
+      .channel(`inventory:${userId}`)
+      .on('postgres_changes', {
+        event: 'UPDATE', schema: 'public', table: 'products',
+        filter: `seller_id=eq.${userId}`,
+      }, (payload) => {
+        setLiveIndicator(true);
+        setTimeout(() => setLiveIndicator(false), 2000);
+        setProducts(prev => prev.map(p =>
+          p.id === payload.new.id ? { ...p, ...payload.new } : p
+        ));
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [userId]);
 
   // ── Mutations (all via secure RPCs) ─────────────────────────────────────────
 
@@ -275,6 +299,22 @@ export const SellerInventory = ({
     }
   };
 
+  const handleRestore = async () => {
+    const ids = restoreModal.ids;
+    if (ids.length === 0) return;
+    try {
+      const { data, error } = await supabase.rpc('restore_products', { p_product_ids: ids });
+      if (error) throw error;
+      addToast(`${data} product${data !== 1 ? 's' : ''} restored as draft ✓`, 'success');
+      setSelectedIds(new Set());
+      fetchInventory(true);
+    } catch (err: any) {
+      addToast(err.message || 'Restore failed', 'error');
+    } finally {
+      setRestoreModal({ ids: [], open: false });
+    }
+  };
+
   // ── Drag-and-drop sort (persisted via RPC) ─────────────────────────────────
   const dragId = useRef<string | null>(null);
 
@@ -347,12 +387,15 @@ export const SellerInventory = ({
   };
 
   // ── Render ────────────────────────────────────────────────────────────────
-  // Category is a client-side display filter (RPC doesn't support p_category yet)
-  const displayedProducts = useMemo(
-    () => category === 'All' ? products : products.filter(p => p.category === category),
-    [products, category]
-  );
+  const displayedProducts = products; // server-side filtered via p_category
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+
+  const STATUS_TABS = [
+    { value: 'All', label: 'All', count: totals?.total },
+    { value: 'active', label: 'Active', count: totals?.active },
+    { value: 'draft', label: 'Draft', count: totals?.draft },
+    { value: 'archived', label: 'Archived', count: totals?.archived },
+  ];
 
   return (
     <div className="space-y-5 pb-10">
@@ -389,99 +432,166 @@ export const SellerInventory = ({
         />
       </div>
 
+      {/* Low-stock alert banner */}
+      <AnimatePresence>
+        {!alertDismissed && totals && (totals.out_of_stock > 0 || totals.low_stock > 0) && (
+          <motion.div
+            initial={{ opacity: 0, y: -8, height: 0 }}
+            animate={{ opacity: 1, y: 0, height: 'auto' }}
+            exit={{ opacity: 0, y: -8, height: 0 }}
+            transition={{ duration: 0.25 }}
+            className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200/60 dark:border-amber-700/40"
+          >
+            <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+            <p className="text-sm text-amber-800 dark:text-amber-300 font-semibold flex-1">
+              {totals.out_of_stock > 0 && <span><strong>{totals.out_of_stock}</strong> out of stock</span>}
+              {totals.out_of_stock > 0 && totals.low_stock > 0 && <span className="mx-1.5 opacity-40">·</span>}
+              {totals.low_stock > 0 && <span><strong>{totals.low_stock}</strong> running low</span>}
+              <button
+                onClick={() => { setStatus('All'); setLowStockOnly(true); setAlertDismissed(true); }}
+                className="ml-3 text-amber-700 dark:text-amber-400 underline underline-offset-2 text-xs font-bold"
+              >View all</button>
+            </p>
+            <button onClick={() => setAlertDismissed(true)} className="text-amber-500 hover:text-amber-700 transition-colors">
+              <X className="w-4 h-4" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Control bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-        {/* Search */}
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/30" />
-          <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search by name or SKU…"
-            className="w-full h-10 pl-9 pr-3 rounded-xl border border-foreground/12 bg-foreground/[0.04] text-sm text-foreground placeholder:text-foreground/25 outline-none focus:border-foreground/25 transition-colors"
-          />
+      <div className="space-y-3">
+        {/* Top row: search + actions */}
+        <div className="flex items-center gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/30" />
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search by name or SKU…"
+              className="w-full h-10 pl-9 pr-3 rounded-xl border border-foreground/12 bg-foreground/[0.04] text-sm text-foreground placeholder:text-foreground/25 outline-none focus:border-foreground/25 transition-colors"
+            />
+          </div>
+          {/* Live indicator */}
+          <AnimatePresence>
+            {liveIndicator && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 text-[11px] font-bold"
+              >
+                <Wifi className="w-3 h-3" />Live
+              </motion.div>
+            )}
+          </AnimatePresence>
+          {/* Refresh */}
+          <button onClick={() => fetchInventory(true)} disabled={refreshing}
+            className="h-10 w-10 rounded-xl border border-foreground/12 bg-foreground/[0.04] flex items-center justify-center text-foreground/50 hover:bg-foreground/[0.07] transition-colors disabled:opacity-40">
+            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+          </button>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button onClick={() => navigate('/seller/products/new')}
+              className="h-10 px-5 rounded-xl bg-emerald-600 text-white text-sm font-black hover:bg-emerald-700 active:scale-95 transition-all flex items-center gap-2">
+              <Plus className="w-4 h-4" /><span className="hidden sm:inline">New Product</span><span className="sm:hidden">New</span>
+            </button>
+            <button onClick={() => setIsQuickFormOpen(true)} title="Quick add"
+              className="h-10 px-3.5 rounded-xl border border-foreground/12 bg-foreground/[0.04] text-sm font-semibold text-foreground/60 hover:bg-foreground/[0.07] hover:text-foreground transition-all flex items-center gap-1.5">
+              <Zap className="w-4 h-4" /><span className="hidden sm:inline text-xs">Quick</span>
+            </button>
+            <button onClick={handleExportCSV} title="Export CSV"
+              className="h-10 px-3.5 rounded-xl border border-foreground/12 bg-foreground/[0.04] text-sm font-semibold text-foreground/60 hover:bg-foreground/[0.07] hover:text-foreground transition-all flex items-center gap-1.5">
+              <Download className="w-4 h-4" /><span className="hidden sm:inline text-xs">Export</span>
+            </button>
+            <button onClick={() => setIsCSVImportOpen(true)} title="Import CSV"
+              className="h-10 px-3.5 rounded-xl border border-foreground/12 bg-foreground/[0.04] text-sm font-semibold text-foreground/60 hover:bg-foreground/[0.07] hover:text-foreground transition-all flex items-center gap-1.5">
+              <Upload className="w-4 h-4" /><span className="hidden sm:inline text-xs">Import</span>
+            </button>
+          </div>
         </div>
 
-        {/* Status filter */}
-        <select
-          value={status}
-          onChange={e => setStatus(e.target.value)}
-          className="h-10 px-3 rounded-xl border border-foreground/12 bg-foreground/[0.04] text-sm text-foreground outline-none focus:border-foreground/25 transition-colors min-w-[120px]"
-        >
-          <option value="All">All Status</option>
-          <option value="active">Active</option>
-          <option value="draft">Draft</option>
-          <option value="inactive">Inactive</option>
-        </select>
+        {/* Bottom row: status tabs + category + low stock */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Status tabs */}
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-foreground/[0.04] border border-foreground/8">
+            {STATUS_TABS.map(tab => (
+              <button
+                key={tab.value}
+                onClick={() => setStatus(tab.value)}
+                className={`relative h-7 px-3 rounded-lg text-xs font-bold transition-all ${
+                  status === tab.value
+                    ? 'bg-background shadow-sm text-foreground'
+                    : 'text-foreground/40 hover:text-foreground/70'
+                }`}
+              >
+                {tab.label}
+                {tab.count !== undefined && tab.count > 0 && (
+                  <span className={`ml-1.5 text-[10px] font-black tabular-nums ${
+                    status === tab.value ? 'text-emerald-600' : 'text-foreground/30'
+                  }`}>{tab.count}</span>
+                )}
+              </button>
+            ))}
+          </div>
 
-        {/* Category filter */}
-        <select
-          value={category}
-          onChange={e => setCategory(e.target.value)}
-          className="h-10 px-3 rounded-xl border border-foreground/12 bg-foreground/[0.04] text-sm text-foreground outline-none focus:border-foreground/25 transition-colors min-w-[140px]"
-        >
-          <option value="All">All Categories</option>
-          {Object.keys(CATEGORY_HIERARCHY).map(c => <option key={c} value={c}>{c}</option>)}
-        </select>
+          {/* Category filter */}
+          <select
+            value={category}
+            onChange={e => setCategory(e.target.value)}
+            className="h-9 px-3 rounded-xl border border-foreground/12 bg-foreground/[0.04] text-sm text-foreground outline-none focus:border-foreground/25 transition-colors"
+          >
+            <option value="All">All Categories</option>
+            {Object.keys(CATEGORY_HIERARCHY).map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
 
-        {/* Low stock toggle */}
-        <button
-          onClick={() => setLowStockOnly(!lowStockOnly)}
-          className={`h-10 px-4 rounded-xl border text-sm font-semibold transition-all flex items-center gap-2 ${
-            lowStockOnly
-              ? 'border-amber-300 bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400'
-              : 'border-foreground/12 bg-foreground/[0.04] text-foreground/60 hover:bg-foreground/[0.07]'
-          }`}
-        >
-          <AlertTriangle className="w-3.5 h-3.5" />
-          Low stock
-        </button>
-
-        {/* Refresh */}
-        <button onClick={() => fetchInventory(true)} disabled={refreshing}
-          className="h-10 w-10 rounded-xl border border-foreground/12 bg-foreground/[0.04] flex items-center justify-center text-foreground/50 hover:bg-foreground/[0.07] transition-colors disabled:opacity-40">
-          <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-        </button>
-
-        {/* Actions */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <button onClick={() => navigate('/seller/products/new')}
-            className="h-10 px-5 rounded-xl bg-emerald-600 text-white text-sm font-black hover:bg-emerald-700 active:scale-95 transition-all flex items-center gap-2">
-            <Plus className="w-4 h-4" /> New Product
-          </button>
-          <button onClick={() => setIsQuickFormOpen(true)} title="Quick add"
-            className="h-10 px-3.5 rounded-xl border border-foreground/12 bg-foreground/[0.04] text-sm font-semibold text-foreground/60 hover:bg-foreground/[0.07] hover:text-foreground transition-all flex items-center gap-1.5">
-            <Zap className="w-4 h-4" /><span className="hidden sm:inline text-xs">Quick</span>
-          </button>
-          <button onClick={handleExportCSV} title="Export CSV"
-            className="h-10 px-3.5 rounded-xl border border-foreground/12 bg-foreground/[0.04] text-sm font-semibold text-foreground/60 hover:bg-foreground/[0.07] hover:text-foreground transition-all flex items-center gap-1.5">
-            <Download className="w-4 h-4" /><span className="hidden sm:inline text-xs">Export</span>
-          </button>
-          <button onClick={() => setIsCSVImportOpen(true)} title="Import CSV"
-            className="h-10 px-3.5 rounded-xl border border-foreground/12 bg-foreground/[0.04] text-sm font-semibold text-foreground/60 hover:bg-foreground/[0.07] hover:text-foreground transition-all flex items-center gap-1.5">
-            <Upload className="w-4 h-4" /><span className="hidden sm:inline text-xs">Import</span>
+          {/* Low stock toggle */}
+          <button
+            onClick={() => setLowStockOnly(!lowStockOnly)}
+            className={`h-9 px-3 rounded-xl border text-xs font-semibold transition-all flex items-center gap-1.5 ${
+              lowStockOnly
+                ? 'border-amber-300 bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-700/40'
+                : 'border-foreground/12 bg-foreground/[0.04] text-foreground/50 hover:bg-foreground/[0.07]'
+            }`}
+          >
+            <AlertTriangle className="w-3 h-3" />
+            Low stock only
           </button>
         </div>
       </div>
 
       {/* Bulk action bar */}
-      {selectedIds.size > 0 && (
-        <div className="flex items-center gap-3 px-4 py-3 bg-emerald-600 text-white rounded-2xl">
-          <span className="text-sm font-bold">{selectedIds.size} selected</span>
-          <div className="h-4 w-px bg-white/30 mx-1" />
-          <button onClick={() => setIsBulkEditOpen(true)}
-            className="text-sm font-semibold hover:underline flex items-center gap-1">
-            <Edit2 className="w-3.5 h-3.5" />Bulk Edit
-          </button>
-          <button onClick={() => setArchiveModal({ ids: Array.from(selectedIds), open: true })}
-            className="text-sm font-semibold hover:underline flex items-center gap-1">
-            <Trash2 className="w-3.5 h-3.5" />Archive
-          </button>
-          <button onClick={() => setSelectedIds(new Set())} className="ml-auto">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      )}
+      <AnimatePresence>
+        {selectedIds.size > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -6, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6, scale: 0.98 }}
+            transition={{ duration: 0.2 }}
+            className="flex items-center gap-3 px-4 py-3 bg-emerald-600 text-white rounded-2xl shadow-lg shadow-emerald-600/20"
+          >
+            <span className="text-sm font-bold">{selectedIds.size} selected</span>
+            <div className="h-4 w-px bg-white/30 mx-1" />
+            <button onClick={() => setIsBulkEditOpen(true)}
+              className="text-sm font-semibold hover:underline flex items-center gap-1.5 opacity-90 hover:opacity-100">
+              <Edit2 className="w-3.5 h-3.5" />Bulk Edit
+            </button>
+            {status === 'archived' ? (
+              <button onClick={() => setRestoreModal({ ids: Array.from(selectedIds), open: true })}
+                className="text-sm font-semibold hover:underline flex items-center gap-1.5 opacity-90 hover:opacity-100">
+                <RotateCcw className="w-3.5 h-3.5" />Restore
+              </button>
+            ) : (
+              <button onClick={() => setArchiveModal({ ids: Array.from(selectedIds), open: true })}
+                className="text-sm font-semibold hover:underline flex items-center gap-1.5 opacity-90 hover:opacity-100">
+                <Trash2 className="w-3.5 h-3.5" />Archive
+              </button>
+            )}
+            <button onClick={() => setSelectedIds(new Set())} className="ml-auto opacity-70 hover:opacity-100 transition-opacity">
+              <X className="w-4 h-4" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Table */}
       <div className="rounded-2xl border border-foreground/8 overflow-hidden bg-card">
@@ -536,26 +646,29 @@ export const SellerInventory = ({
               )}
             </div>
           ) : (
-            displayedProducts.map(p => (
-              <InventoryRow
-                key={p.id}
-                product={p}
-                isSelected={selectedIds.has(p.id)}
-                onSelect={() => toggleSelect(p.id)}
-                onEdit={prod => navigate(`/seller/products/${prod.id}/edit`)}
-                onArchive={id => setArchiveModal({ ids: [id], open: true })}
-                onToggleStatus={handleToggleStatus}
-                onToggleBoost={handleToggleBoost}
-                onDuplicate={handleDuplicate}
-                onStockAdjust={prod => setStockAdjProduct(prod)}
-                onDragStart={handleDragStart}
-                onDragOver={e => e.preventDefault()}
-                onDrop={handleDrop}
-                onCreatePromo={prod => onCreatePromo(prod as Product)}
-                onAutoDiscount={prod => { setProductForDiscount(prod); setIsAutoDiscountOpen(true); }}
-                updating={updatingIds.has(p.id)}
-              />
-            ))
+            <AnimatePresence initial={false}>
+              {displayedProducts.map(p => (
+                <InventoryRow
+                  key={p.id}
+                  product={p}
+                  isSelected={selectedIds.has(p.id)}
+                  onSelect={() => toggleSelect(p.id)}
+                  onEdit={prod => navigate(`/seller/products/${prod.id}/edit`)}
+                  onArchive={id => setArchiveModal({ ids: [id], open: true })}
+                  onRestore={id => setRestoreModal({ ids: [id], open: true })}
+                  onToggleStatus={handleToggleStatus}
+                  onToggleBoost={handleToggleBoost}
+                  onDuplicate={handleDuplicate}
+                  onStockAdjust={prod => setStockAdjProduct(prod)}
+                  onDragStart={handleDragStart}
+                  onDragOver={e => e.preventDefault()}
+                  onDrop={handleDrop}
+                  onCreatePromo={prod => onCreatePromo(prod as Product)}
+                  onAutoDiscount={prod => { setProductForDiscount(prod); setIsAutoDiscountOpen(true); }}
+                  updating={updatingIds.has(p.id)}
+                />
+              ))}
+            </AnimatePresence>
           )}
         </div>
 
@@ -597,9 +710,20 @@ export const SellerInventory = ({
         onClose={() => setArchiveModal({ ids: [], open: false })}
         onConfirm={handleArchive}
         title="Archive Products"
-        message={`Archive ${archiveModal.ids.length} product${archiveModal.ids.length !== 1 ? 's' : ''}? They will be removed from your store but kept in records. You can restore them from the database.`}
+        message={`Archive ${archiveModal.ids.length} product${archiveModal.ids.length !== 1 ? 's' : ''}? They'll be hidden from your store. You can restore them any time from the Archived tab.`}
         confirmText="Archive"
         isDestructive
+      />
+
+      {/* Restore confirm */}
+      <ConfirmModal
+        isOpen={restoreModal.open}
+        onClose={() => setRestoreModal({ ids: [], open: false })}
+        onConfirm={handleRestore}
+        title="Restore Products"
+        message={`Restore ${restoreModal.ids.length} product${restoreModal.ids.length !== 1 ? 's' : ''} as draft? You can set them back to active once you review them.`}
+        confirmText="Restore"
+        isDestructive={false}
       />
 
       {/* Forms */}

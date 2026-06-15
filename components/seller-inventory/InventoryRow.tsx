@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { motion } from 'framer-motion';
 import {
   Search, Filter, Plus, Zap, Trash2,
   CheckSquare, Square, Copy, Package, X,
@@ -8,7 +9,8 @@ import {
   RefreshCw, Edit2, ToggleLeft, ToggleRight,
   Minus, TrendingUp, TrendingDown, Loader2,
   GripVertical, MoreHorizontal, Star, Eye,
-  Check, AlertTriangle, ArrowUpRight, Wand2, Share2
+  Check, AlertTriangle, ArrowUpRight, Wand2, Share2,
+  RotateCcw
 } from 'lucide-react';
 import { useToast } from '../UI';
 import { Product } from '../../types';
@@ -21,7 +23,7 @@ import type { InventoryProduct, InventoryMovement } from './config';
 import { MovementHistory } from './MovementHistory';
 
 export const InventoryRow = ({
-  product, isSelected, onSelect, onEdit, onArchive,
+  product, isSelected, onSelect, onEdit, onArchive, onRestore,
   onToggleStatus, onToggleBoost, onDuplicate, onStockAdjust,
   onDragStart, onDragOver, onDrop, onCreatePromo, onAutoDiscount,
   updating,
@@ -31,6 +33,7 @@ export const InventoryRow = ({
   onSelect: () => void;
   onEdit: (p: InventoryProduct) => void;
   onArchive: (id: string) => void;
+  onRestore?: (id: string) => void;
   onToggleStatus: (p: InventoryProduct) => void;
   onToggleBoost: (p: InventoryProduct) => void;
   onDuplicate: (p: InventoryProduct) => void;
@@ -86,14 +89,19 @@ export const InventoryRow = ({
   };
 
   return (
-    <div
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: -4 }}
+      animate={{ opacity: updating ? 0.6 : 1, y: 0 }}
+      exit={{ opacity: 0, height: 0, overflow: 'hidden' }}
+      transition={{ duration: 0.2 }}
       draggable
-      onDragStart={e => onDragStart(e, product.id)}
-      onDragOver={onDragOver}
-      onDrop={e => onDrop(e, product.id)}
+      onDragStart={(e: any) => onDragStart(e, product.id)}
+      onDragOver={(e: any) => onDragOver(e)}
+      onDrop={(e: any) => onDrop(e, product.id)}
       className={`group relative border-b border-foreground/5 last:border-0 transition-colors ${
         isSelected ? 'bg-emerald-50/40 dark:bg-emerald-900/10' : 'hover:bg-foreground/[0.02]'
-      } ${updating ? 'opacity-60 pointer-events-none' : ''}`}
+      } ${updating ? 'pointer-events-none' : ''}`}
     >
       {/* Mobile layout */}
       <div className="flex md:hidden items-center gap-3 p-3.5">
@@ -105,26 +113,40 @@ export const InventoryRow = ({
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-foreground truncate">{product.name}</p>
-          <div className="flex items-center gap-2 mt-0.5">
+          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.color}`}>{cfg.label}</span>
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-              product.stock === 0 ? 'bg-red-50 text-red-600' :
-              product.is_low_stock ? 'bg-amber-50 text-amber-600' :
-              'bg-emerald-50 text-emerald-600'
-            }`}>
-              {product.stock === 0 ? 'Out of stock' : `${product.stock} left`}
-            </span>
+            {product.status !== 'archived' && (
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                product.stock === 0 ? 'bg-red-50 text-red-600 dark:bg-red-900/20' :
+                product.is_low_stock ? 'bg-amber-50 text-amber-600 dark:bg-amber-900/20' :
+                'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20'
+              }`}>
+                {product.stock === 0 ? 'Out of stock' : `${product.stock} left`}
+              </span>
+            )}
           </div>
+          {product.status !== 'archived' && (
+            <p className="text-[10px] text-foreground/35 mt-0.5">{formatTZS(displayPrice)}</p>
+          )}
         </div>
         <div className="flex gap-1 flex-shrink-0">
-          <button onClick={() => onStockAdjust(product)}
-            className="w-9 h-9 rounded-xl bg-foreground/[0.05] flex items-center justify-center text-foreground/50 active:scale-90">
-            <BarChart3 className="w-4 h-4" />
-          </button>
-          <button onClick={() => onEdit(product)}
-            className="w-9 h-9 rounded-xl bg-foreground/[0.05] flex items-center justify-center text-foreground/50 active:scale-90">
-            <Edit2 className="w-4 h-4" />
-          </button>
+          {product.status === 'archived' ? (
+            <button onClick={() => onRestore?.(product.id)}
+              className="h-9 px-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 text-xs font-bold flex items-center gap-1.5 active:scale-90">
+              <RotateCcw className="w-3.5 h-3.5" />Restore
+            </button>
+          ) : (
+            <>
+              <button onClick={() => onStockAdjust(product)}
+                className="w-9 h-9 rounded-xl bg-foreground/[0.05] flex items-center justify-center text-foreground/50 active:scale-90">
+                <BarChart3 className="w-4 h-4" />
+              </button>
+              <button onClick={() => onEdit(product)}
+                className="w-9 h-9 rounded-xl bg-foreground/[0.05] flex items-center justify-center text-foreground/50 active:scale-90">
+                <Edit2 className="w-4 h-4" />
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -199,27 +221,45 @@ export const InventoryRow = ({
           )}
         </div>
 
-        {/* Stock bar + adjust */}
+        {/* Stock bar + quick ±1 + adjust modal */}
         <div className="flex items-center gap-2">
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <div className="flex justify-between items-center mb-1">
               <span className={`text-[10px] font-bold ${
                 product.stock === 0 ? 'text-red-500' :
                 product.is_low_stock ? 'text-amber-500' :
                 'text-foreground/40'
               }`}>
-                {product.stock === 0 ? '⚠ Out of stock' : product.is_low_stock ? '↓ Low stock' : 'In stock'}
+                {product.stock === 0 ? '⚠ Out' : product.is_low_stock ? '↓ Low' : 'OK'}
               </span>
-              <span className="text-xs font-black text-foreground">{product.stock}</span>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={e => { e.stopPropagation(); onStockAdjust({ ...product, _quickDelta: -1 } as any); }}
+                  className="w-5 h-5 rounded-md bg-foreground/[0.05] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-colors text-foreground/30 flex-shrink-0 opacity-0 group-hover:opacity-100"
+                  title="Remove 1"
+                >
+                  <Minus className="w-2.5 h-2.5" />
+                </button>
+                <span className="text-xs font-black text-foreground tabular-nums w-7 text-center">{product.stock}</span>
+                <button
+                  onClick={e => { e.stopPropagation(); onStockAdjust({ ...product, _quickDelta: 1 } as any); }}
+                  className="w-5 h-5 rounded-md bg-foreground/[0.05] flex items-center justify-center hover:bg-emerald-50 hover:text-emerald-600 transition-colors text-foreground/30 flex-shrink-0 opacity-0 group-hover:opacity-100"
+                  title="Add 1"
+                >
+                  <Plus className="w-2.5 h-2.5" />
+                </button>
+              </div>
             </div>
             <div className="h-1 bg-foreground/[0.06] rounded-full overflow-hidden">
-              <div
-                className={`h-full rounded-full transition-all duration-700 ${
+              <motion.div
+                className={`h-full rounded-full ${
                   product.stock === 0 ? 'bg-red-400' :
                   product.is_low_stock ? 'bg-amber-400' :
                   'bg-emerald-500'
                 }`}
-                style={{ width: `${stockPct}%` }}
+                initial={false}
+                animate={{ width: `${stockPct}%` }}
+                transition={{ duration: 0.5 }}
               />
             </div>
           </div>
@@ -296,10 +336,17 @@ export const InventoryRow = ({
                   <Share2 className="w-3.5 h-3.5 text-foreground/40" />Share
                 </button>
                 <div className="h-px bg-foreground/8 mx-2" />
-                <button onClick={() => { onArchive(product.id); setMenuOpen(false); }}
-                  className="w-full text-left px-4 py-2.5 text-xs font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 flex items-center gap-2.5 transition-colors">
-                  <Trash2 className="w-3.5 h-3.5" />Archive
-                </button>
+                {product.status === 'archived' ? (
+                  <button onClick={() => { onRestore?.(product.id); setMenuOpen(false); }}
+                    className="w-full text-left px-4 py-2.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/10 flex items-center gap-2.5 transition-colors">
+                    <RotateCcw className="w-3.5 h-3.5" />Restore as Draft
+                  </button>
+                ) : (
+                  <button onClick={() => { onArchive(product.id); setMenuOpen(false); }}
+                    className="w-full text-left px-4 py-2.5 text-xs font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 flex items-center gap-2.5 transition-colors">
+                    <Trash2 className="w-3.5 h-3.5" />Archive
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -310,7 +357,7 @@ export const InventoryRow = ({
       {showHistory && (
         <MovementHistory movements={product.recent_movements || []} />
       )}
-    </div>
+    </motion.div>
   );
 };
 
