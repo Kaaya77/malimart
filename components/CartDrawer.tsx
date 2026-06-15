@@ -192,7 +192,7 @@ export const CartDrawer = () => {
                                 onClick={() => updateQuantity(item.id, -1, variantId)}
                                 disabled={item.quantity <= 1}
                                 aria-label="Decrease"
-                                className="w-9 h-9 flex items-center justify-center text-foreground/60 hover:bg-foreground/[0.06] disabled:opacity-30 transition-colors"
+                                className="w-11 h-11 flex items-center justify-center text-foreground/60 hover:bg-foreground/[0.06] disabled:opacity-30 transition-colors"
                               >
                                 <Minus className="w-3 h-3 stroke-[2]" />
                               </button>
@@ -201,7 +201,7 @@ export const CartDrawer = () => {
                                 onClick={() => updateQuantity(item.id, 1, variantId)}
                                 disabled={item.quantity >= stock}
                                 aria-label="Increase"
-                                className="w-9 h-9 flex items-center justify-center text-foreground hover:bg-foreground/[0.06] disabled:opacity-30 transition-colors"
+                                className="w-11 h-11 flex items-center justify-center text-foreground hover:bg-foreground/[0.06] disabled:opacity-30 transition-colors"
                               >
                                 <Plus className="w-3 h-3 stroke-[2]" />
                               </button>

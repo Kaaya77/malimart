@@ -111,7 +111,7 @@ export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, on
     <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[300] flex items-end md:items-center justify-center"
+        className="fixed inset-0 z-[350] flex items-end md:items-center justify-center"
         style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(10px)' }}
       >
         <motion.div

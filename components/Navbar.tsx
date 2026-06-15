@@ -152,11 +152,11 @@ const MobileDrawer = ({ open, onClose, user, logout, isDark, toggleDark, notific
  <span className="font-bold text-lg text-foreground tracking-tight">Menu</span>
  <div className="flex items-center gap-1">
  <button onClick={toggleDark} aria-label="Toggle theme"
- className="w-10 h-10 rounded-2xl bg-foreground/[0.06] flex items-center justify-center text-foreground hover:bg-foreground/10 transition-colors">
+ className="w-11 h-11 rounded-2xl bg-foreground/[0.06] flex items-center justify-center text-foreground hover:bg-foreground/10 transition-colors">
  {isDark?<Sun className="w-4 h-4 stroke-[2]"/>:<Moon className="w-4 h-4 stroke-[2]"/>}
  </button>
  <button onClick={onClose} aria-label="Close"
- className="w-10 h-10 rounded-2xl bg-foreground/[0.06] flex items-center justify-center text-foreground hover:bg-foreground/10 transition-colors">
+ className="w-11 h-11 rounded-2xl bg-foreground/[0.06] flex items-center justify-center text-foreground hover:bg-foreground/10 transition-colors">
  <X className="w-4 h-4 stroke-[2.5]"/>
  </button>
  </div>
@@ -330,7 +330,7 @@ export const Navbar = () => {
  ? (user.role==='admin'?'/admin':user.role==='seller'?'/seller':'/buyer') : '/login';
  const initial = (user?.user_metadata?.full_name||user?.email||'?').trim()[0]?.toUpperCase();
 
- const ibtn = `w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-90
+ const ibtn = `w-11 h-11 rounded-full flex items-center justify-center transition-all active:scale-90
  ${isOnDark?'hover:bg-white/15':'hover:bg-foreground/[0.07]'}`;
 
  return (

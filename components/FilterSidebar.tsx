@@ -178,7 +178,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
  aria-pressed={selectedColors.includes(color)}
  >
  <div
- className={`w-8 h-8 rounded-full border border-foreground/10 flex items-center justify-center transition-all ${selectedColors.includes(color) ? 'ring-2 ring-foreground dark:ring-background ring-offset-2 dark:ring-offset-background' : ''}`}
+ className={`w-11 h-11 rounded-full border border-foreground/10 flex items-center justify-center transition-all ${selectedColors.includes(color) ? 'ring-2 ring-foreground dark:ring-background ring-offset-2 dark:ring-offset-background' : ''}`}
  style={{ backgroundColor: color.toLowerCase() }}
  >
  {selectedColors.includes(color) && (
@@ -199,15 +199,18 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
  <h3 className="text-xs uppercase tracking-[0.2em] font-bold mb-4 opacity-50">Sizes</h3>
  <div className="space-y-2">
  {sizes.map(size => (
- <label key={size} className="flex items-center gap-3 cursor-pointer group">
- <div
+ <button
+ key={size}
  onClick={() => toggleItem(selectedSizes, setSelectedSizes, size)}
- className={`w-5 h-5 border flex items-center justify-center transition-all ${selectedSizes.includes(size) ? 'bg-primary border-foreground dark:bg-background dark:border-background' : 'border-foreground/20 group-hover:border-foreground/50 dark:group-hover:border-background/50'}`}
+ className="flex items-center gap-3 cursor-pointer group min-h-[44px] w-full text-left"
+ >
+ <div
+ className={`w-5 h-5 border flex-shrink-0 flex items-center justify-center transition-all ${selectedSizes.includes(size) ? 'bg-primary border-foreground dark:bg-background dark:border-background' : 'border-foreground/20 group-hover:border-foreground/50 dark:group-hover:border-background/50'}`}
  >
  {selectedSizes.includes(size) && <Check className="w-3 h-3 text-background dark:text-foreground" />}
  </div>
  <span className="text-sm font-light">{size}</span>
- </label>
+ </button>
  ))}
  </div>
  </section>
@@ -232,7 +235,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
  <button
  key={star}
  onClick={() => setRating(star === rating ? null : star)}
- className={`w-10 h-10 rounded-full border flex items-center justify-center transition-all ${rating && star <= rating ? 'bg-primary text-background border-foreground dark:bg-background dark:text-foreground dark:border-background' : 'border-foreground/10'}`}
+ className={`w-11 h-11 rounded-full border flex items-center justify-center transition-all ${rating && star <= rating ? 'bg-primary text-background border-foreground dark:bg-background dark:text-foreground dark:border-background' : 'border-foreground/10'}`}
  >
  <Star className={`w-4 h-4 ${rating && star <= rating ? 'fill-current' : ''}`} />
  </button>

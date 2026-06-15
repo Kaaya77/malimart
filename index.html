@@ -100,10 +100,7 @@
       .no-scrollbar::-webkit-scrollbar { display: none; }
       .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-      /* Mobile safe area improvements */
-      body {
-        padding-bottom: env(safe-area-inset-bottom);
-      }
+      /* Safe area handled per-component to avoid double-padding on notched devices */
     </style>
 
   <!-- Perf: preconnect to critical external origins -->
