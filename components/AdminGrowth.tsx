@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Button, Input, Badge, PremiumStatCard, useToast, ConfirmModal } from './UI';
 import { supabase } from '../services/supabaseClient';
 import { TrendingUp, Plus, Trash2, Edit2, Save, X, Zap, Gift, Truck, Tag, ToggleLeft, ToggleRight, Calendar, Users, Target, Percent, DollarSign, RefreshCw, CheckCircle2, AlertCircle } from 'lucide-react';
@@ -81,9 +81,7 @@ export const AdminGrowth = () => {
     start_date: '', end_date: '', is_auto_apply: false, buy_quantity: 1, get_quantity: 1, status: 'active',
   });
 
-  useEffect(() => { fetchCampaigns(); }, []);
-
-  const fetchCampaigns = async () => {
+  const fetchCampaigns = useCallback(async () => {
     setIsLoading(true);
     const { data, error } = await supabase
       .from('offers')
@@ -91,7 +89,9 @@ export const AdminGrowth = () => {
       .order('created_at', { ascending: false });
     if (!error && data) setCampaigns(data as Campaign[]);
     setIsLoading(false);
-  };
+  }, []);
+
+  useEffect(() => { fetchCampaigns(); }, [fetchCampaigns]);
 
   const handleEdit = (c: Campaign) => {
     setEditingCampaign(c);

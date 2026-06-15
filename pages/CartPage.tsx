@@ -31,7 +31,7 @@ export const CartPage = () => {
  const [appliedCoupon, setAppliedCoupon] = useState<Offer | null>(null);
  const [validatingCoupon, setValidatingCoupon] = useState(false);
 
- useEffect(() => { refreshProducts(); }, []);
+ useEffect(() => { refreshProducts(); }, [refreshProducts]);
 
  useEffect(() => {
  const fetchVendors = async () => {

@@ -252,7 +252,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
                 if (profile) {
                     setUser({ ...profile, name: profile.full_name || 'User', email: session.user.email } as User);
                     applyTheme(profile as any); // saved theme_mode/accent/motion/contrast follow the user
-                    supabase.from('profiles').update({ last_seen_at: new Date().toISOString() }).eq('id', session.user.id);
+                    await supabase.from('profiles').update({ last_seen_at: new Date().toISOString() }).eq('id', session.user.id);
                     // 🚀 Single RPC for ALL user data + public data in parallel
                     await Promise.all([
                         applyDashboardRpc(session.user.email || '', profile),
@@ -294,7 +294,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
                 if (profile) {
                     setUser({ ...profile, name: profile.full_name || 'User', email: session.user.email } as User);
                     applyTheme(profile as any); // saved theme_mode/accent/motion/contrast follow the user
-                    supabase.from('profiles').update({ last_seen_at: new Date().toISOString() }).eq('id', session.user.id);
+                    await supabase.from('profiles').update({ last_seen_at: new Date().toISOString() }).eq('id', session.user.id);
                     // 🚀 One RPC replaces 10+ sequential queries on every sign-in
                     await applyDashboardRpc(session.user.email || '', profile);
                     if (profile.role === 'seller') fetchSellerData(profile.id);
@@ -844,26 +844,26 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
 
     const toggleWishlist = useCallback(async (product: Product) => {
         if (!user) return;
-        const exists = wishlist.some(p => p.id === product.id);
-        if (exists) {
-            await supabase.from('wishlist_items').update({ deleted_at: new Date().toISOString() }).match({ user_id: user.id, product_id: product.id });
+        // Query DB as source of truth to avoid double-click race conditions
+        const { data: existing } = await supabase
+            .from('wishlist_items')
+            .select('id, deleted_at')
+            .eq('user_id', user.id)
+            .eq('product_id', product.id)
+            .single();
+        const isInWishlist = existing && existing.deleted_at === null;
+        if (isInWishlist) {
+            await supabase.from('wishlist_items').update({ deleted_at: new Date().toISOString() }).eq('id', existing.id);
             setWishlist(prev => prev.filter(p => p.id !== product.id));
         } else {
-            // Check if a soft-deleted row exists and restore it, otherwise insert fresh
-            const { data: existing } = await supabase
-                .from('wishlist_items')
-                .select('id')
-                .eq('user_id', user.id)
-                .eq('product_id', product.id)
-                .single();
             if (existing) {
                 await supabase.from('wishlist_items').update({ deleted_at: null }).eq('id', existing.id);
             } else {
                 await supabase.from('wishlist_items').insert({ user_id: user.id, product_id: product.id });
             }
-            setWishlist(prev => [...prev, product]);
+            setWishlist(prev => prev.some(p => p.id === product.id) ? prev : [...prev, product]);
         }
-    }, [user, wishlist]);
+    }, [user]);
 
     const addToRecentlyViewed = useCallback((product: Product) => {
         setRecentlyViewed(prev => {
@@ -922,12 +922,11 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
 
     const placeOrder = useCallback(async (details: any) => {
         if (!user) throw new Error("User not logged in");
-        
+
         // SECURITY: Never trust client-side prices.
         // Only send product_id, variant_id, and quantity.
         // The place_order_atomic RPC re-fetches the current price from
         // the products/product_variants table server-side.
-        if (!user) throw new Error('Not authenticated');
         const itemsPayload = cart.map(item => {
             const qty = Math.max(1, Math.min(9999, Math.floor(Number(item.quantity) || 1)));
             return {
@@ -969,7 +968,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         
         // Return basic order data for confirmation page
         return data;
-    }, [user, cart, clearCart, fetchUserData]);
+    }, [user, cart, clearCart, fetchUserData, fetchAndSetOrders]);
 
     const fetchVendorProfile = useCallback(async (sellerId: string) => {
         const { data } = await supabase.from('public_vendor_profiles').select('seller_id, store_name, description, logo_url, banner_url, region, district, is_verified, trust_score, total_sales, verification_level, rating, delivery_fee, return_policy, shipping_policy, processing_time, warranty, vacation_mode, opening_hours, instagram_url, facebook_url, website_url, social_links, tags, store_policy').eq('seller_id', sellerId).single();
@@ -1076,6 +1075,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
 
         if (error) {
             console.error("Message send failed:", error);
+            addToast("Failed to send message", "error");
             return;
         }
 
@@ -1201,9 +1201,9 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         // Update local count optimistically
         setSocialPosts(prev => prev.map(p => {
             if (p.id === postId) {
-                if (type === 'like') return { ...p, likes: p.likes + 1 };
-                if (type === 'share') return { ...p, shares: p.shares + 1 };
-                if (type === 'comment') return { ...p, comments_count: p.comments_count + 1 };
+                if (type === 'like') return { ...p, likes: (p.likes ?? 0) + 1 };
+                if (type === 'share') return { ...p, shares: (p.shares ?? 0) + 1 };
+                if (type === 'comment') return { ...p, comments_count: (p.comments_count ?? 0) + 1 };
             }
             return p;
         }));
@@ -1225,7 +1225,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
 
     const updateOrderStatus = useCallback(async (id: string, status: string, reason?: string) => {
         // Optimistic update — reflect change immediately before server confirms
-        const previous = orders;
+        const previous = orders.map(o => ({ ...o }));
         setOrders(prev => prev.map(o => o.id === id ? { ...o, status: status as import('../types').OrderStatus } : o));
 
         const { error } = await supabase.rpc('update_order_status_rbac', { p_order_id: id, p_new_status: status, p_cancel_reason: reason || null });

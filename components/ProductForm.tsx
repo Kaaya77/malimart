@@ -160,6 +160,7 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
  if (typeof fileOrUrl === 'string') {
  if (!fileOrUrl.startsWith('data:')) return fileOrUrl;
  const res = await fetch(fileOrUrl);
+ if (!res.ok) throw new Error(`Failed to fetch image: ${res.status}`);
  const raw = await res.blob();
  const blob = await compressImage(raw);
  const fileName = `${Math.random()}.${extFor(blob)}`;
@@ -180,6 +181,7 @@ export const ProductForm = ({ initialData, onClose, onSuccess }: ProductFormProp
  const downloadImage = async (url: string, filename: string) => {
  try {
  const response = await fetch(url);
+ if (!response.ok) throw new Error(`HTTP ${response.status}`);
  const blob = await response.blob();
  const blobUrl = window.URL.createObjectURL(blob);
  const a = document.createElement('a');
