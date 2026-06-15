@@ -1,5 +1,5 @@
 import { useDebounce } from '../src/hooks/useDebounce';
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Search, SlidersHorizontal, X, ArrowUpDown, Loader2, AlertTriangle, RefreshCw } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -73,13 +73,17 @@ export const ShopPage: React.FC = () => {
  }, [activeFilters]);
 
  // Server full-text search — searches the ENTIRE catalog, not just loaded products.
- // Falls back silently to client filtering if the RPC isn't available.
+ // Falls back to context products when the RPC is unavailable.
  const debouncedQuery = useDebounce(searchQuery, 350);
  const [serverResults, setServerResults] = useState<Product[] | null>(null);
  const [serverTotal, setServerTotal] = useState<number | null>(null);
+ // Track whether our own fetch is in-flight so we never flash the empty state
+ // before data has had a chance to arrive (cold load, direct URL, PWA start).
+ const [shopLoading, setShopLoading] = useState(true);
+
  useEffect(() => {
    let cancelled = false;
-   // Server-side filtering over the FULL catalog (shop_products RPC).
+   setShopLoading(true);
    shopProductsServer({
      query: debouncedQuery,
      category: activeFilters.categories?.[0],
@@ -93,14 +97,36 @@ export const ShopPage: React.FC = () => {
      limit: 48,
    }).then(res => {
      if (cancelled) return;
-     if (res) { setServerResults(res.products); setServerTotal(res.totalCount); return; }
+     if (res) {
+       setServerResults(res.products);
+       setServerTotal(res.totalCount);
+       setShopLoading(false);
+       return;
+     }
+     // shop_products RPC unavailable — fall back to context products.
      setServerTotal(null);
-     // Fallback chain: legacy FTS RPC, then pure client filtering.
-     if (debouncedQuery.trim().length < 2) { setServerResults(null); return; }
-     searchProductsServer(debouncedQuery).then(r2 => { if (!cancelled) setServerResults(r2); });
+     if (debouncedQuery.trim().length >= 2) {
+       searchProductsServer(debouncedQuery).then(r2 => {
+         if (!cancelled) { setServerResults(r2); setShopLoading(false); }
+       });
+     } else {
+       setServerResults(null);
+       setShopLoading(false);
+     }
    });
    return () => { cancelled = true; };
  }, [debouncedQuery, activeFilters, sortBy]);
+
+ // Bootstrap guard: when the primary RPC fails and context products are also
+ // empty after the context finishes loading, force a context refresh so the
+ // fallback path has data. Runs at most once per mount.
+ const didBootstrap = useRef(false);
+ useEffect(() => {
+   if (!shopLoading && serverResults === null && products.length === 0 && !isLoading && !didBootstrap.current) {
+     didBootstrap.current = true;
+     refreshProducts();
+   }
+ }, [shopLoading, serverResults, products.length, isLoading, refreshProducts]);
 
  const filteredProducts = useMemo(() => {
  // Base list: server search results when available (full catalog),
@@ -303,7 +329,7 @@ export const ShopPage: React.FC = () => {
  {/* Results count */}
  <div className="container mx-auto px-4 md:px-8 py-4">
  <p className="text-sm text-foreground/50">
- {isLoading ? (
+ {(shopLoading || isLoading) ? (
  <span className="flex items-center gap-2"><Loader2 className="w-3.5 h-3.5 animate-spin" /> Loading products…</span>
  ) : (
  <><span className="font-semibold text-foreground">{filteredProducts.length}</span> products{searchQuery ? ` for "${searchQuery}"` : ''}</>
@@ -313,7 +339,7 @@ export const ShopPage: React.FC = () => {
 
  {/* Product Grid */}
  <div className="container mx-auto px-4 md:px-8">
- {isLoading ? (
+ {(shopLoading || isLoading) ? (
  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-3 gap-y-8 md:gap-x-5 md:gap-y-10">
  {Array.from({ length: 10 }).map((_, i) => (
  <div key={i} className="space-y-2">
