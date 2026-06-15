@@ -769,6 +769,11 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
                     p_price:      (variant?.sale_price || variant?.base_price) ?? product.price,
                 });
                 if (rpcError) throw rpcError;
+                // Ensure cartIdRef is populated so removeFromCart can delete from DB
+                if (!cartIdRef.current) {
+                    const { data: c } = await supabase.from('carts').select('id').eq('user_id', user.id).single();
+                    if (c) cartIdRef.current = c.id;
+                }
                 await logActivity('add_to_cart', `Added ${product.name} to cart`, { product_id: product.id });
                 await notify('Cart Updated', `Added ${product.name} to your cart`, 'success', '/cart');
             }
@@ -781,32 +786,25 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
 
     const removeFromCart = useCallback(async (productId: string, variantId?: string) => {
         try {
-            setCart(prev => {
-                const next = prev.filter(p => !(p.id === productId && p.variant_id === variantId));
-                return next;
-            });
-            
+            setCart(prev => prev.filter(p => !(p.id === productId && p.variant_id === variantId)));
+
             if (user) {
-                const cartId = cartIdRef.current;
+                // cartIdRef may be null if upsert_cart_item created the cart after initial fetch
+                let cartId = cartIdRef.current;
+                if (!cartId) {
+                    const { data } = await supabase.from('carts').select('id').eq('user_id', user.id).single();
+                    if (data) { cartId = data.id; cartIdRef.current = data.id; }
+                }
                 if (cartId) {
                     let query = supabase.from('cart_items').delete()
                         .eq('cart_id', cartId)
                         .eq('product_id', productId);
-                    
-                    if (variantId) {
-                        query = query.eq('variant_id', variantId);
-                    } else {
-                        query = query.is('variant_id', null);
-                    }
-                    
+                    if (variantId) query = query.eq('variant_id', variantId);
+                    else query = query.is('variant_id', null);
                     const { error } = await query;
-                    if (error) {
-                        console.error('Error deleting cart item:', error);
-                        throw error;
-                    }
+                    if (error) throw error;
                 }
                 await logActivity('remove_from_cart', `Removed item from cart`, { product_id: productId });
-                await notify('Cart Updated', 'Item removed from cart', 'success');
             }
         } catch (error) {
             console.error('Error removing from cart:', error);
