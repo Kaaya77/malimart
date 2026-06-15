@@ -2,7 +2,7 @@ import React from 'react';
 import { Star, MapPin } from 'lucide-react';
 import { Product } from '../../types';
 import { VerifiedBadge } from '../UI';
-import { CURRENCY } from '../../constants';
+import { formatTZS } from '../../constants';
 
 interface ProductCardContentProps {
  product: Product;
@@ -75,12 +75,12 @@ export const ProductCardContent: React.FC<ProductCardContentProps> = ({
  className={`font-sans font-bold text-foreground tracking-tight
  ${isGrid ? 'text-[17px]' : 'text-2xl'}`}
  >
- {CURRENCY} {Math.round(stats.price).toLocaleString()}
+ {formatTZS(Math.round(stats.price))}
  </span>
  {stats.originalPrice && stats.originalPrice > stats.price && (
  <>
  <span className="text-[12px] font-medium text-foreground/35 line-through">
- {CURRENCY} {Math.round(stats.originalPrice).toLocaleString()}
+ {formatTZS(Math.round(stats.originalPrice))}
  </span>
  <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
  Save {Math.round((1 - stats.price / stats.originalPrice) * 100)}%

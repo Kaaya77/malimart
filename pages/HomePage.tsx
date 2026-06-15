@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -38,6 +38,15 @@ const HomePage: React.FC = () => {
 
   const [activeStore, setActiveStore] = useState<VendorProfile | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPlaceholderIdx, setCurrentPlaceholderIdx] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(
+      () => setCurrentPlaceholderIdx(i => (i + 1) % SEARCH_PLACEHOLDERS.length),
+      3000,
+    );
+    return () => clearInterval(id);
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,7 +112,7 @@ const HomePage: React.FC = () => {
         setSearchQuery={setSearchQuery}
         handleSearch={handleSearch}
         searchPlaceholders={SEARCH_PLACEHOLDERS}
-        currentPlaceholderIdx={0}
+        currentPlaceholderIdx={currentPlaceholderIdx}
         containerVariants={containerVariants}
         itemVariants={itemVariants}
       />
@@ -181,10 +190,6 @@ const HomePage: React.FC = () => {
 
       {/* 10. Trust signals */}
       <TrustStrip />
-
-      {/* Modals */}
-      <AnimatePresence>
-      </AnimatePresence>
 
       <AnimatePresence>
         {activeStore && (

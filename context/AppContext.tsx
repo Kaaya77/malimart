@@ -473,7 +473,25 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
                 async () => {
                     const { data, error } = await supabase.rpc('get_public_products', { p_limit: 60 });
                     if (error) { console.error('Error fetching products:', error); return null; }
-                    return data;
+                    const rows = (data as any[]) ?? [];
+                    // Batch-enrich seller store names so every product card
+                    // shows the real store name instead of the generic "Store" fallback.
+                    const sellerIds = [...new Set(rows.map((p: any) => p.seller_id).filter(Boolean))];
+                    if (sellerIds.length > 0) {
+                        const { data: vendors } = await supabase
+                            .from('public_vendor_profiles')
+                            .select('seller_id, store_name, is_verified')
+                            .in('seller_id', sellerIds);
+                        if (vendors) {
+                            const vmap = Object.fromEntries((vendors as any[]).map((v: any) => [v.seller_id, v]));
+                            return rows.map((p: any) => ({
+                                ...p,
+                                seller_name: vmap[p.seller_id]?.store_name || p.seller_name || '',
+                                is_verified: vmap[p.seller_id]?.is_verified ?? p.is_verified,
+                            }));
+                        }
+                    }
+                    return rows;
                 },
                 (data) => { setProducts(data as any); setCatalogError(null); }
             ),

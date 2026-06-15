@@ -48,6 +48,8 @@ export const StorePage: React.FC = () => {
   const [tab, setTab]                 = useState<Tab>('collection');
   const [search, setSearch]           = useState('');
   const [sortKey, setSortKey]         = useState<SortKey>('popular');
+  const PAGE_SIZE = 20;
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [showSort, setShowSort]       = useState(false);
   const [msgOpen, setMsgOpen]         = useState(false);
   const [reviewProduct, setReviewProduct] = useState<string | null>(null);
@@ -77,6 +79,7 @@ export const StorePage: React.FC = () => {
   }, [id]);
 
   const storeProducts = useMemo(() => {
+    setVisibleCount(PAGE_SIZE);
     let list = allStoreProducts.filter(p =>
       !search || p.name.toLowerCase().includes(search.toLowerCase()) || p.category?.toLowerCase().includes(search.toLowerCase())
     );
@@ -136,7 +139,7 @@ export const StorePage: React.FC = () => {
   );
 
   const TAB_LIST: { id: Tab; label: string }[] = [
-    { id: 'collection', label: `Products (${storeProducts.length})` },
+    { id: 'collection', label: `Products (${allStoreProducts.length})` },
     { id: 'about',      label: 'About' },
     { id: 'reviews',    label: 'Reviews' },
   ];
@@ -294,11 +297,23 @@ export const StorePage: React.FC = () => {
                     )}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-3 gap-y-8 md:gap-x-4">
-                    {storeProducts.map((p, i) => (
-                      <ProductCard key={p.id} product={p} index={i} onClick={() => navigate(`/product/${p.id}`)}/>
-                    ))}
-                  </div>
+                  <>
+                    <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-3 gap-y-8 md:gap-x-4">
+                      {storeProducts.slice(0, visibleCount).map((p, i) => (
+                        <ProductCard key={p.id} product={p} index={i} onClick={() => navigate(`/product/${p.id}`)}/>
+                      ))}
+                    </div>
+                    {storeProducts.length > visibleCount && (
+                      <div className="flex justify-center pt-4">
+                        <button
+                          onClick={() => setVisibleCount(v => v + PAGE_SIZE)}
+                          className="h-11 px-8 rounded-2xl bg-foreground/[0.05] hover:bg-foreground/[0.09] border border-foreground/10 text-foreground text-sm font-semibold transition-colors active:scale-95"
+                        >
+                          Load more · {storeProducts.length - visibleCount} remaining
+                        </button>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             )}

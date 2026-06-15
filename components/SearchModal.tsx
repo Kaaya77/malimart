@@ -1,10 +1,12 @@
 import { safeJsonParse } from '../src/security';
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, X, Loader2, ArrowRight, TrendingUp, Tag, Clock } from 'lucide-react';
+import { Search, X, Loader2, ArrowRight, TrendingUp, Tag, Clock, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppState } from '../context/AppContext';
-import { CURRENCY } from '../constants';
+import { formatTZS } from '../constants';
+import { useDebounce } from '../src/hooks/useDebounce';
+import { supabase } from '../services/supabaseClient';
 
 interface SearchModalProps {
  isSearchOpen: boolean;
@@ -44,18 +46,45 @@ export const SearchModal = ({
  const navigate = useNavigate();
  const { products } = useAppState();
 
- // Local search results from in-memory product list (fast, no extra fetch)
+ // Debounce prevents per-keystroke filtering
+ const debouncedQuery = useDebounce(searchQuery, 300);
+
+ // Server-side search: full-catalog coverage beyond the 60-item context cache
+ const [serverResults, setServerResults] = useState<any[]>([]);
+ const [serverSearching, setServerSearching] = useState(false);
+
+ useEffect(() => {
+   const q = debouncedQuery.trim();
+   if (q.length < 2) { setServerResults([]); return; }
+   let cancelled = false;
+   setServerSearching(true);
+   supabase
+     .from('products')
+     .select('id,name,price,images,category,seller_name,seller_id,status')
+     .eq('status', 'active')
+     .is('deleted_at', null)
+     .or(`name.ilike.%${q}%,category.ilike.%${q}%,seller_name.ilike.%${q}%`)
+     .limit(12)
+     .then(({ data }) => {
+       if (!cancelled) { setServerResults(data ?? []); setServerSearching(false); }
+     })
+     .catch(() => { if (!cancelled) setServerSearching(false); });
+   return () => { cancelled = true; };
+ }, [debouncedQuery]);
+
+ // Merge: local in-memory results first, then any server-only results not in context
  const liveResults = useMemo(() => {
- const q = searchQuery.trim().toLowerCase();
- if (!q || q.length < 2) return [];
- return products
- .filter(p =>
- p.name?.toLowerCase().includes(q) ||
- p.category?.toLowerCase().includes(q) ||
- p.seller_name?.toLowerCase().includes(q)
- )
- .slice(0, 6);
- }, [searchQuery, products]);
+   const q = debouncedQuery.trim().toLowerCase();
+   if (!q || q.length < 2) return [];
+   const local = products.filter(p =>
+     p.name?.toLowerCase().includes(q) ||
+     p.category?.toLowerCase().includes(q) ||
+     p.seller_name?.toLowerCase().includes(q)
+   );
+   const localIds = new Set(local.map(p => p.id));
+   const serverOnly = serverResults.filter(p => !localIds.has(p.id));
+   return [...local, ...serverOnly].slice(0, 8);
+ }, [debouncedQuery, products, serverResults]);
 
  // Popular products (rating × reviews)
  const popularProducts = useMemo(() => {
@@ -71,7 +100,7 @@ export const SearchModal = ({
  }, [products]);
 
  // Recent searches (localStorage)
- const [recent, setRecent] = React.useState<string[]>([]);
+ const [recent, setRecent] = useState<string[]>([]);
  useEffect(() => {
  if (!isSearchOpen) return;
  try {
@@ -153,7 +182,7 @@ export const SearchModal = ({
  {/* Live results */}
  {searchQuery.trim().length >= 2 && (
  <div className="px-4 md:px-5 py-4">
- {isSearching ? (
+ {serverSearching ? (
  <div className="flex items-center justify-center py-12 text-foreground/45">
  <Loader2 className="w-5 h-5 animate-spin mr-2" /> Searching…
  </div>
@@ -188,7 +217,7 @@ export const SearchModal = ({
  <p className="text-[12px] text-foreground/50 truncate">{p.seller_name} · {p.category}</p>
  </div>
  <span className="text-sm font-bold text-foreground tabular-nums flex-shrink-0">
- {CURRENCY} {Math.round(p.price).toLocaleString()}
+ {formatTZS(Math.round(p.price))}
  </span>
  </button>
  ))}
@@ -210,9 +239,17 @@ export const SearchModal = ({
  <div className="px-4 md:px-5 py-4 space-y-7">
  {recent.length > 0 && (
  <section>
- <p className="text-[11px] font-semibold uppercase tracking-wider text-foreground/45 mb-2.5 flex items-center gap-1.5">
- <Clock className="w-3.5 h-3.5" /> Recent
- </p>
+ <div className="flex items-center justify-between mb-2.5">
+   <p className="text-[11px] font-semibold uppercase tracking-wider text-foreground/45 flex items-center gap-1.5">
+     <Clock className="w-3.5 h-3.5" /> Recent
+   </p>
+   <button
+     onClick={() => { setRecent([]); try { localStorage.removeItem(RECENT_KEY); } catch {} }}
+     className="flex items-center gap-1 text-[11px] text-foreground/35 hover:text-foreground/60 transition-colors"
+   >
+     <Trash2 className="w-3 h-3" /> Clear
+   </button>
+ </div>
  <div className="flex flex-wrap gap-2">
  {recent.map(r => (
  <button

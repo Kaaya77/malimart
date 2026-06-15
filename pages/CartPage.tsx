@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ShoppingCart, Heart, Trash2, Minus, Plus, Store, ArrowRight,
@@ -30,6 +30,24 @@ export const CartPage = () => {
  const [couponCode, setCouponCode] = useState('');
  const [appliedCoupon, setAppliedCoupon] = useState<Offer | null>(null);
  const [validatingCoupon, setValidatingCoupon] = useState(false);
+
+ // Undo remove — holds the last removed item for 5 seconds
+ const [lastRemoved, setLastRemoved] = useState<CartItem | null>(null);
+ const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+ const handleRemove = (item: CartItem, variantId?: string) => {
+   if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+   removeFromCart(item.id, variantId);
+   setLastRemoved(item);
+   undoTimerRef.current = setTimeout(() => setLastRemoved(null), 5000);
+ };
+
+ const handleUndoRemove = () => {
+   if (!lastRemoved) return;
+   if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+   addToCart(lastRemoved as unknown as Product, lastRemoved.selectedVariant, lastRemoved.quantity);
+   setLastRemoved(null);
+ };
 
  useEffect(() => { refreshProducts(); }, [refreshProducts]);
 
@@ -505,11 +523,11 @@ export const CartPage = () => {
  <p className="text-sm font-black text-foreground">{formatTZS(price * item.quantity)}</p>
  </div>
  <div className="flex items-center gap-2">
- <button 
+ <button
  onClick={() => {
  toggleWishlist(item);
- removeFromCart(item.id, variant?.id);
- addToast("Moved to wishlist", "success");
+ handleRemove(item, variant?.id);
+ addToast("Saved to wishlist", "success");
  }}
  className="w-11 h-11 flex items-center justify-center text-foreground/25 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all"
  title="Save for later"
@@ -517,8 +535,8 @@ export const CartPage = () => {
  >
  <Heart className="w-5 h-5"/>
  </button>
- <button 
- onClick={() => removeFromCart(item.id, variant?.id)} 
+ <button
+ onClick={() => handleRemove(item, variant?.id)}
  className="w-11 h-11 flex items-center justify-center text-foreground/25 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all"
  title="Remove"
  aria-label="Remove item"
@@ -655,5 +673,25 @@ export const CartPage = () => {
  </motion.div>
  </div>
  </div>
+
+ {/* Undo remove bar */}
+ <AnimatePresence>
+ {lastRemoved && (
+ <motion.div
+ initial={{ opacity: 0, y: 16 }}
+ animate={{ opacity: 1, y: 0 }}
+ exit={{ opacity: 0, y: 16 }}
+ className="fixed bottom-24 md:bottom-8 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-4 bg-foreground text-background px-5 py-3 rounded-2xl shadow-2xl"
+ >
+ <span className="text-sm font-medium whitespace-nowrap">Removed from bag</span>
+ <button
+ onClick={handleUndoRemove}
+ className="text-emerald-400 font-black text-sm uppercase tracking-widest hover:text-emerald-300 transition-colors"
+ >
+ Undo
+ </button>
+ </motion.div>
+ )}
+ </AnimatePresence>
  );
 };
