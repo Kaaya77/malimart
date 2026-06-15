@@ -499,6 +499,9 @@ export const MobileBottomNav = () => {
 
  const active = (path: string) => path==='/' ? location.pathname==='/' : location.pathname.startsWith(path);
 
+ const isSellerForm = location.pathname.startsWith('/seller/products/');
+ if (isSellerForm) return null;
+
  return (
  <nav role="navigation" aria-label="Mobile navigation"
  className="fixed bottom-0 inset-x-0 z-40 md:hidden"

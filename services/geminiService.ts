@@ -191,9 +191,9 @@ export const translateToSwahili = async (text: string): Promise<string> => {
         const ai = getAI();
         const response = await ai.models.generateContent({
             model: MODELS.FAST,
-            contents: `Translate the following product description to professional, appealing Swahili suitable for a Tanzanian marketplace. Keep the tone engaging. Input: "${text}"`,
+            contents: `Translate the product description below into professional, engaging Swahili for a Tanzanian marketplace. Return ONLY the translated text — no English preamble, no explanation, no word-by-word breakdown, nothing else.\n\n${text}`,
         });
-        return response.text || text;
+        return (response.text || text).trim();
     }).catch(() => text);
 }
 
@@ -202,9 +202,9 @@ export const enhanceDescription = async (text: string): Promise<string> => {
         const ai = getAI();
         const response = await ai.models.generateContent({
             model: MODELS.FAST,
-            contents: `Rewrite the following product description to make it more compelling, premium, and SEO-optimized. Focus on sensory details, craftsmanship, and benefits. Keep it under 100 words. Input: "${text}"`,
+            contents: `Rewrite the product description below to make it more compelling, premium, and SEO-optimized for a Tanzanian marketplace. Focus on sensory details, craftsmanship, and benefits. Keep it under 100 words. Use plain prose only — no markdown, no asterisks, no bullet points, no headers.\n\n${text}`,
         });
-        return response.text || text;
+        return (response.text || text).trim();
     }).catch(() => text);
 }
 

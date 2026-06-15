@@ -60,6 +60,7 @@ export const CampaignModal = ({ onClose, onSave, editingOffer, myProducts, isSub
   };
 
   const canNext = () => {
+    if (step === 0 && !formData.title.trim()) return false;
     if (step === 1) {
       if (formData.campaign_type !== 'shipping' && formData.campaign_type !== 'bogo' && !formData.value) return false;
       if (formData.campaign_mode === 'flash' && !formData.end_date) return false;
@@ -162,7 +163,7 @@ export const CampaignModal = ({ onClose, onSave, editingOffer, myProducts, isSub
 
                   {/* Campaign name */}
                   <div className="mt-5">
-                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40 block mb-2">Campaign name</label>
+                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40 block mb-2">Campaign name <span className="text-rose-500">*</span></label>
                     <input
                       value={formData.title}
                       onChange={e => set('title', e.target.value)}

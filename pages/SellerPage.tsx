@@ -269,6 +269,8 @@ export const SellerPage = () => {
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(searchParams.get('orderId'));
   const { stats } = useSellerStats(user?.id);
 
+  useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' }); }, [tab]);
+
   const myProducts = products.filter(p => p.seller_id === user?.id);
   const lowStock = myProducts.filter(p => typeof p.stock === 'number' && p.stock > 0 && p.stock <= 5).length;
   const pendingOrders = stats.pending;

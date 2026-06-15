@@ -308,11 +308,15 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
                 // can fire SIGNED_OUT then SIGNED_IN in quick succession; acting on the
                 // intermediate SIGNED_OUT would bounce an authenticated user to /login.
                 if (initRunningRef.current) return;
+                // Briefly set isLoading so RouteGuard shows a spinner rather than
+                // painting protected page content for one frame before the redirect fires.
+                setIsLoading(true);
                 setUser(null);
                 setCart([]);
                 setWishlist([]);
                 setOrders([]);
                 setNotifications([]);
+                setIsLoading(false);
             }
         });
 

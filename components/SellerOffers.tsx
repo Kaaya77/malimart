@@ -106,6 +106,7 @@ export const SellerOffers = ({ sellerId, preselectedProduct }: { sellerId: strin
       addToast(editingOffer ? 'Campaign updated ✓' : 'Campaign launched ✓', 'success');
       setModalOpen(false);
       setEditingOffer(null);
+      invalidate(CACHE_KEY);
       fetchOffers(false);
     } catch (e: any) {
       addToast(e.message || 'Failed to save', 'error');
