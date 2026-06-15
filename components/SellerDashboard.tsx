@@ -429,10 +429,10 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({
         </h2>
         <KitengeStrip className="w-16 mt-2" />
       </div>
-      {/* Alert banners — use live pendingOrders.length as the single source of truth */}
+      {/* Alert banners — authoritative count from RPC, same source as donut */}
       <AlertBanner
         lowStock={full?.lowStockCount ?? lowStockCount}
-        pending={pendingOrders.length}
+        pending={pending}
         onGoOrders={onGoOrders}
         onGoInventory={onGoInventory}
       />
@@ -466,11 +466,11 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({
         />
         <KpiCard
           label="Pending Orders"
-          value={pendingOrders.length}
+          value={pending}
           icon={Clock}
-          accent={pendingOrders.length > 0 ? '#f59e0b' : '#94a3b8'}
+          accent={pending > 0 ? '#f59e0b' : '#94a3b8'}
           loading={kpiLoading}
-          onClick={pendingOrders.length > 0 ? onGoOrders : undefined}
+          onClick={pending > 0 ? onGoOrders : undefined}
         />
       </div>
 

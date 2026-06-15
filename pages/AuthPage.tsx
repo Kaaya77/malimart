@@ -67,10 +67,14 @@ export const LoginPage = () => {
 
  try {
  if (mode === 'login') {
- const { data: authData, error } = await supabase.auth.signInWithPassword({ 
- email: formData.email, 
- password: formData.password 
- });
+ const withTimeout = <T,>(p: Promise<T>, ms: number, msg: string): Promise<T> =>
+   Promise.race([p, new Promise<never>((_, rej) => setTimeout(() => rej(new Error(msg)), ms))]);
+
+ const { data: authData, error } = await withTimeout(
+   supabase.auth.signInWithPassword({ email: formData.email, password: formData.password }),
+   12_000,
+   'Login timed out — check your connection and try again.'
+ );
 
  if (error) {
  if (error.message.includes("Invalid login credentials")) {
@@ -81,11 +85,11 @@ export const LoginPage = () => {
 
  if (authData.user) {
  // Check if user is banned
- const { data: profile } = await supabase
- .from('profiles')
- .select('is_banned')
- .eq('id', authData.user.id)
- .single();
+ const { data: profile } = await withTimeout(
+   supabase.from('profiles').select('is_banned').eq('id', authData.user.id).single(),
+   8_000,
+   'Login timed out — check your connection and try again.'
+ );
 
  if (profile?.is_banned) {
  await supabase.auth.signOut();

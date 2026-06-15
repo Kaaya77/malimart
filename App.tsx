@@ -261,7 +261,7 @@ const AppContent = () => {
               <Route path="/wishlist" element={<Navigate to="/buyer?tab=wishlist" replace />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/categories" element={<CategoriesPage />} />
-              <Route path="/messages" element={<MessagesPage />} />
+              <Route path="/messages" element={<RouteGuard><MessagesPage /></RouteGuard>} />
               <Route path="/buyer" element={<RouteGuard requiredRole="buyer"><BuyerPage /></RouteGuard>} />
               <Route path="/seller" element={<RouteGuard requiredRole="seller"><SellerPage /></RouteGuard>} />
               <Route path="/seller/products/new" element={<RouteGuard requiredRole="seller"><ProductEditPage /></RouteGuard>} />
