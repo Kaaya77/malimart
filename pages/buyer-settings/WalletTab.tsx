@@ -14,9 +14,15 @@ export const WalletTab = () => {
                     <div className="relative z-10">
                       <p className="text-sm font-medium opacity-80 mb-2 flex items-center gap-2"><Wallet className="w-4 h-4" /> Available Balance</p>
                       <h2 className="text-5xl md:text-6xl font-display font-bold tracking-tight">{CURRENCY} {(user?.wallet_balance || 0).toLocaleString()}</h2>
-                      <div className="mt-8 flex gap-3">
-                        <Button variant="outline" onClick={() => addToast('Wallet top-up is coming soon — mobile money integration (M-Pesa, Tigo Pesa, Airtel Money) is in progress', 'info')} className="bg-white/10 border-white/20 text-white hover:bg-white/20 dark:bg-black/5 dark:border-black/10 dark:text-slate-900 dark:hover:bg-black/10">Top Up</Button>
-                        <Button variant="outline" onClick={() => addToast('Withdrawals are coming soon — contact support to redeem your balance in the meantime', 'info')} className="bg-white/10 border-white/20 text-white hover:bg-white/20 dark:bg-black/5 dark:border-black/10 dark:text-slate-900 dark:hover:bg-black/10">Withdraw</Button>
+                      <div className="mt-8 flex gap-3 flex-wrap">
+                        <div className="flex flex-col gap-1">
+                          <Button variant="outline" disabled className="bg-white/10 border-white/20 text-white/50 cursor-not-allowed dark:bg-black/5 dark:border-black/10 dark:text-slate-900/50">Top Up</Button>
+                          <span className="text-[10px] text-white/50 dark:text-slate-900/50 text-center">Coming soon</span>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <Button variant="outline" disabled className="bg-white/10 border-white/20 text-white/50 cursor-not-allowed dark:bg-black/5 dark:border-black/10 dark:text-slate-900/50">Withdraw</Button>
+                          <span className="text-[10px] text-white/50 dark:text-slate-900/50 text-center">Coming soon</span>
+                        </div>
                       </div>
                     </div>
                 </CardContent>

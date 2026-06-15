@@ -184,13 +184,19 @@ export const ReviewSection: React.FC<ReviewSectionProps> = ({ productId }) => {
 
   const handleHelpful = async (review: Review) => {
     if (votedIds.has(review.id)) return;
+    const newCount = (review.helpful_count || 0) + 1;
+    setReviews(prev => prev.map(r => r.id === review.id ? { ...r, helpful_count: newCount } : r));
+    const next = new Set([...votedIds, review.id]);
+    setVotedIds(next);
     try {
-      await supabase.from('reviews').update({ helpful_count: (review.helpful_count || 0) + 1 }).eq('id', review.id);
-      const next = new Set([...votedIds, review.id]);
-      setVotedIds(next);
+      const { error } = await supabase.from('reviews').update({ helpful_count: newCount }).eq('id', review.id);
+      if (error) throw error;
       localStorage.setItem(`mm_rv_${productId}`, JSON.stringify([...next]));
-      setReviews(prev => prev.map(r => r.id === review.id ? { ...r, helpful_count: (r.helpful_count || 0) + 1 } : r));
-    } catch {}
+    } catch {
+      setReviews(prev => prev.map(r => r.id === review.id ? { ...r, helpful_count: review.helpful_count || 0 } : r));
+      setVotedIds(votedIds);
+      addToast('Could not save your vote — please try again', 'error');
+    }
   };
 
   const handleReport = async (reviewId: string) => {
