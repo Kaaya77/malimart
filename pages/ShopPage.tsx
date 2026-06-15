@@ -1,7 +1,7 @@
 import { useDebounce } from '../src/hooks/useDebounce';
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Search, SlidersHorizontal, X, ArrowUpDown, Loader2, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Search, SlidersHorizontal, X, ArrowUpDown, Loader2, AlertTriangle, RefreshCw, Shuffle } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppState } from '../context/AppContext';
 import { ProductCard } from '../components/ProductCard';
@@ -408,7 +408,32 @@ export const ShopPage: React.FC = () => {
  activeFilters={activeFilters}
  />
 
- {/* Quick view modal */}
+ {/* Surprise Me — random product discovery */}
+ {products.length > 0 && (
+   <motion.button
+     initial={{ opacity: 0, scale: 0.8 }}
+     animate={{ opacity: 1, scale: 1 }}
+     transition={{ delay: 1.2, type: 'spring', stiffness: 300 }}
+     whileHover={{ scale: 1.08 }}
+     whileTap={{ scale: 0.94 }}
+     onClick={() => {
+       const active = products.filter(p => p.status !== 'inactive');
+       if (!active.length) return;
+       const pick = active[Math.floor(Math.random() * active.length)];
+       navigate(`/product/${pick.id}`);
+     }}
+     className="fixed bottom-24 md:bottom-8 right-4 z-[70] flex items-center gap-2 h-12 px-5 rounded-full bg-foreground text-background text-xs font-black uppercase tracking-widest shadow-xl shadow-black/20 hover:shadow-2xl transition-shadow"
+     aria-label="Discover a random product"
+   >
+     <motion.span
+       animate={{ rotate: [0, 20, -20, 0] }}
+       transition={{ repeat: Infinity, repeatDelay: 4, duration: 0.6 }}
+     >
+       <Shuffle className="w-4 h-4" />
+     </motion.span>
+     <span className="hidden sm:inline">Surprise me</span>
+   </motion.button>
+ )}
  </div>
  );
 };

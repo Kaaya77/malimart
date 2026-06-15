@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import {
   Store, MapPin, Star, BadgeCheck, MessageSquare, Share2,
   Search, Globe, Truck, ShieldCheck, Loader2, ArrowRight,
@@ -42,6 +42,10 @@ export const StorePage: React.FC = () => {
   });
   const sellerOnline = storePresence.some((p: any) => p?.role === 'seller');
 
+  const bannerRef = useRef<HTMLDivElement>(null);
+  const { scrollY } = useScroll();
+  const bannerY = useTransform(scrollY, [0, 400], [0, 100]);
+
   const [vendor, setVendor]           = useState<VendorProfile | null>(null);
   const [loading, setLoading]         = useState(true);
   const [allStoreProducts, setAllStoreProducts] = useState<Product[]>([]);
@@ -60,22 +64,22 @@ export const StorePage: React.FC = () => {
     // Fetch vendor profile and store products in parallel.
     // Don't rely on the global 60-product context cache — it may not include
     // this seller's products at all, leaving the storefront permanently empty.
-    Promise.all([
-      fetchVendorProfile(id).catch(() => null),
-      supabase
-        .from('products')
-        .select('id,seller_id,name,description,price,sale_price,images,category,tags,rating,review_count,stock,status,is_verified,is_boosted,created_at,updated_at,region')
-        .eq('seller_id', id)
-        .eq('status', 'active')
-        .is('deleted_at', null)
-        .order('created_at', { ascending: false })
-        .then(({ data }) => data ?? [])
-        .catch(() => [] as Product[]),
-    ]).then(([v, prods]) => {
+    const run = async () => {
+      const [v, res] = await Promise.all([
+        fetchVendorProfile(id).catch(() => null),
+        supabase
+          .from('products')
+          .select('id,seller_id,name,description,price,sale_price,images,category,tags,rating,review_count,stock,status,is_verified,is_boosted,created_at,updated_at,region')
+          .eq('seller_id', id)
+          .eq('status', 'active')
+          .is('deleted_at', null)
+          .order('created_at', { ascending: false }),
+      ]);
       setVendor(v);
-      setAllStoreProducts(prods as Product[]);
+      setAllStoreProducts((res.data ?? []) as Product[]);
       setLoading(false);
-    });
+    };
+    run().catch(() => setLoading(false));
   }, [id]);
 
   const storeProducts = useMemo(() => {
@@ -147,18 +151,41 @@ export const StorePage: React.FC = () => {
   return (
     <div className="min-h-screen bg-background font-sans pb-[calc(5rem+env(safe-area-inset-bottom))]">
 
-      {/* ── Banner ─────────────────────────────────────────────────────── */}
-      <div className="h-[40vh] md:h-[50vh] relative overflow-hidden bg-foreground/[0.04]">
-        <img
+      {/* ── Banner with parallax ───────────────────────────────────────── */}
+      <div ref={bannerRef} className="h-[40vh] md:h-[50vh] relative overflow-hidden bg-foreground/[0.04]">
+        <motion.img
+          style={{ y: bannerY }}
           src={vendor.banner_url || 'https://images.unsplash.com/photo-1542831371-29b0f74f9713?q=80&w=2070&auto=format&fit=crop'}
-          className="w-full h-full object-cover transition-transform duration-[8s] ease-linear hover:scale-105"
+          className="w-full h-[115%] object-cover -mt-[7.5%]"
           loading="lazy" decoding="async" alt="Store banner"/>
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent"/>
       </div>
 
       <div className="container mx-auto px-4 md:px-8 max-w-7xl -mt-28 relative z-10">
 
-        {/* ── Profile card ───────────────────────────────────────────────── */}
+        {/* ── Vacation mode banner ────────────────────────────────────────── */}
+      {(vendor as any).vacation_mode && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6 rounded-3xl overflow-hidden bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 px-6 py-5 flex items-center gap-4"
+        >
+          <span className="text-4xl flex-shrink-0" role="img" aria-label="Palm tree">🌴</span>
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-amber-800 dark:text-amber-300 text-sm">
+              {vendor.store_name} is on vacation
+            </p>
+            <p className="text-amber-700/70 dark:text-amber-400/70 text-xs mt-0.5">
+              Orders placed now will be processed when the seller returns.
+              {(vendor as any).vacation_end_date && (
+                <> Expected back <strong>{new Date((vendor as any).vacation_end_date).toLocaleDateString('en-TZ', { day: 'numeric', month: 'long' })}</strong>.</>
+              )}
+            </p>
+          </div>
+        </motion.div>
+      )}
+
+      {/* ── Profile card ───────────────────────────────────────────────── */}
         <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }}
           className="bg-background/95 backdrop-blur-xl border border-foreground/8 rounded-3xl p-5 md:p-8 mb-6 shadow-xl">
 

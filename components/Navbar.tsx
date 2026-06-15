@@ -418,13 +418,28 @@ export const Navbar = () => {
 
  {/* Cart */}
  <Link to="/cart" aria-label={`Cart (${cartCount})`} className={`relative ${ibtn}`}>
- <ShoppingBag className="w-[18px] h-[18px] stroke-[2]"/>
+ <motion.div
+   key={cartCount}
+   initial={cartCount > 0 ? { scale: 1.35, rotate: -12 } : false}
+   animate={{ scale: 1, rotate: 0 }}
+   transition={{ type: 'spring', stiffness: 500, damping: 18 }}
+ >
+   <ShoppingBag className="w-[18px] h-[18px] stroke-[2]"/>
+ </motion.div>
+ <AnimatePresence>
  {cartCount>0 && (
- <span className={`absolute top-1.5 right-1.5 min-w-[15px] h-[15px] px-0.5 rounded-full text-[9px] font-black flex items-center justify-center
+ <motion.span
+   key={cartCount}
+   initial={{ scale: 0, opacity: 0 }}
+   animate={{ scale: 1, opacity: 1 }}
+   exit={{ scale: 0, opacity: 0 }}
+   transition={{ type: 'spring', stiffness: 500, damping: 20 }}
+   className={`absolute top-1.5 right-1.5 min-w-[15px] h-[15px] px-0.5 rounded-full text-[9px] font-black flex items-center justify-center
  ${isOnDark?'bg-white text-black':'bg-foreground text-background'}`}>
  {cartCount>9?'9+':cartCount}
- </span>
+ </motion.span>
  )}
+ </AnimatePresence>
  </Link>
 
  {/* Account chip (desktop) */}

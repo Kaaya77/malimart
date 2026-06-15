@@ -24,6 +24,22 @@ export const CartPage = () => {
  
  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
  const [activeProduct, setActiveProduct] = useState<Product | null>(null);
+ const [showAbandonModal, setShowAbandonModal] = useState(false);
+
+ // Warn on browser close/refresh when cart has items
+ useEffect(() => {
+   if (cart.length < 2) return;
+   const onBeforeUnload = (e: BeforeUnloadEvent) => { e.preventDefault(); };
+   window.addEventListener('beforeunload', onBeforeUnload);
+   return () => window.removeEventListener('beforeunload', onBeforeUnload);
+ }, [cart.length]);
+
+ // Gentle nudge: show the "your bag is waiting" modal after 90s of no checkout action
+ useEffect(() => {
+   if (cart.length < 2) return;
+   const t = setTimeout(() => setShowAbandonModal(true), 90_000);
+   return () => clearTimeout(t);
+ }, [cart.length]);
  const [vendorMap, setVendorMap] = useState<Record<string, { name: string, fee: number, verified: boolean }>>({});
  const [loadingVendors, setLoadingVendors] = useState(true);
  
@@ -354,6 +370,7 @@ export const CartPage = () => {
  // Main render
  // ───────────────────────────────────────────────
  return (
+ <>
  <div className="container mx-auto px-4 md:px-6 font-sans pt-20 md:pt-28 pb-[calc(5rem+env(safe-area-inset-bottom))] px-4 md:px-6 py-6">
  <div className="flex flex-col lg:flex-row gap-8 lg:gap-16 relative">
  
@@ -433,13 +450,26 @@ export const CartPage = () => {
  : `${item.id}-no-variant`;
 
  return (
- <motion.div 
+ <motion.div
  key={`${itemKey}-${index}`}
  variants={{
  hidden: { opacity: 0, x: -10 },
  visible: { opacity: 1, x: 0, transition: { duration: 0.4 } }
  }}
- className="flex flex-col sm:flex-row gap-6 p-6 group hover:bg-foreground/[0.02] transition-colors relative"
+ className="relative overflow-hidden"
+ >
+ {/* Swipe-to-delete reveal layer (mobile) */}
+ <div className="sm:hidden absolute inset-y-0 right-0 w-20 bg-red-500 flex flex-col items-center justify-center gap-1 pointer-events-none select-none">
+   <Trash2 className="w-5 h-5 text-white" />
+   <span className="text-[9px] font-black text-white uppercase tracking-wider">Delete</span>
+ </div>
+ <motion.div
+ drag="x"
+ dragConstraints={{ left: -80, right: 0 }}
+ dragElastic={0.08}
+ onDragEnd={(_: any, info: any) => { if (info.offset.x < -60) handleRemove(item, variant?.id); }}
+ className="flex flex-col sm:flex-row gap-6 p-6 group hover:bg-foreground/[0.02] bg-background transition-colors relative"
+ style={{ touchAction: 'pan-y' }}
  >
  {/* Image */}
  <div 
@@ -547,6 +577,7 @@ export const CartPage = () => {
  </div>
  </div>
  </div>
+ </motion.div>
  </motion.div>
  );
  })}
@@ -693,5 +724,57 @@ export const CartPage = () => {
  </motion.div>
  )}
  </AnimatePresence>
+
+ {/* ── Cart abandonment interceptor ─────────────────────────────── */}
+ <AnimatePresence>
+   {showAbandonModal && (
+     <motion.div
+       initial={{ opacity: 0 }}
+       animate={{ opacity: 1 }}
+       exit={{ opacity: 0 }}
+       className="fixed inset-0 z-[150] bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
+       onClick={() => setShowAbandonModal(false)}
+     >
+       <motion.div
+         initial={{ opacity: 0, y: 40 }}
+         animate={{ opacity: 1, y: 0 }}
+         exit={{ opacity: 0, y: 40 }}
+         transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+         onClick={e => e.stopPropagation()}
+         className="w-full max-w-sm bg-background rounded-3xl p-6 shadow-2xl"
+       >
+         <div className="text-3xl mb-3 text-center">🛍️</div>
+         <h3 className="text-lg font-black text-foreground text-center mb-1">Your bag is waiting</h3>
+         <p className="text-sm text-foreground/55 text-center mb-5">
+           You have {cart.length} item{cart.length !== 1 ? 's' : ''} that would love to come home with you.
+         </p>
+         {/* Product thumbnail strip */}
+         <div className="flex justify-center gap-2 mb-6">
+           {cart.slice(0, 4).map(item => (
+             <img
+               key={item.id}
+               src={item.images?.[0]}
+               alt={item.name}
+               className="w-14 h-14 rounded-xl object-cover bg-foreground/5"
+             />
+           ))}
+         </div>
+         <button
+           onClick={() => navigate('/checkout')}
+           className="w-full h-12 rounded-2xl bg-foreground text-background font-black text-sm uppercase tracking-widest mb-3 active:scale-[0.98] transition-transform"
+         >
+           Checkout now
+         </button>
+         <button
+           onClick={() => setShowAbandonModal(false)}
+           className="w-full h-10 text-sm text-foreground/45 hover:text-foreground font-semibold transition-colors"
+         >
+           Leave anyway
+         </button>
+       </motion.div>
+     </motion.div>
+   )}
+ </AnimatePresence>
+ </>
  );
 };

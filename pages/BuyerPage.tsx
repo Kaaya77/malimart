@@ -201,6 +201,7 @@ const TABS = [
 
 export const BuyerPage = () => {
  const { user, orders, cancelOrder, deleteOrder, addToCart, fetchVendorProfile, wishlist, toggleWishlist, followers, unfollowSeller } = useAppState();
+ const { addToast } = useToast();
  const [searchParams, setSearchParams] = useSearchParams();
  const navigate = useNavigate();
  const [tab, setTab] = useState<string>((searchParams.get('tab'))||'dashboard');
@@ -312,6 +313,16 @@ export const BuyerPage = () => {
  <h2 className="text-xl font-bold text-foreground">Wishlist <span className="text-foreground/35 font-normal">({wishlist.length})</span></h2>
  {wishlist.length > 0 && (
    <div className="flex items-center gap-3">
+     <button
+       onClick={() => {
+         const ids = wishlist.map(p => p.id).join(',');
+         const url = `${window.location.origin}/shop?giftlist=${encodeURIComponent(ids)}`;
+         navigator.clipboard.writeText(url).then(() => addToast('Gift list link copied! 🎁 Share it with anyone.', 'success'));
+       }}
+       className="flex items-center gap-1 text-xs font-bold text-foreground/45 hover:text-foreground transition-colors"
+     >
+       <Gift className="w-3.5 h-3.5" /> Share list
+     </button>
      <button
        onClick={() => {
          const canAdd = wishlist.filter(p => !p.variants?.length);

@@ -103,7 +103,7 @@ export const LoginPage = () => {
  if (authData.user) {
  // Check if user is banned
  const { data: profile } = await withTimeout(
-   supabase.from('profiles').select('is_banned').eq('id', authData.user.id).single(),
+   Promise.resolve(supabase.from('profiles').select('is_banned').eq('id', authData.user.id).single()),
    8_000,
    'Login timed out — check your connection and try again.'
  );

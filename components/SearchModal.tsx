@@ -58,17 +58,20 @@ export const SearchModal = ({
    if (q.length < 2) { setServerResults([]); return; }
    let cancelled = false;
    setServerSearching(true);
-   supabase
-     .from('products')
-     .select('id,name,price,images,category,seller_name,seller_id,status')
-     .eq('status', 'active')
-     .is('deleted_at', null)
-     .or(`name.ilike.%${q}%,category.ilike.%${q}%,seller_name.ilike.%${q}%`)
-     .limit(12)
-     .then(({ data }) => {
+   (async () => {
+     try {
+       const { data } = await supabase
+         .from('products')
+         .select('id,name,price,images,category,seller_name,seller_id,status')
+         .eq('status', 'active')
+         .is('deleted_at', null)
+         .or(`name.ilike.%${q}%,category.ilike.%${q}%,seller_name.ilike.%${q}%`)
+         .limit(12);
        if (!cancelled) { setServerResults(data ?? []); setServerSearching(false); }
-     })
-     .catch(() => { if (!cancelled) setServerSearching(false); });
+     } catch {
+       if (!cancelled) setServerSearching(false);
+     }
+   })();
    return () => { cancelled = true; };
  }, [debouncedQuery]);
 
@@ -302,7 +305,7 @@ export const SearchModal = ({
  <img src={p.images?.[0]} alt={p.name} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.04]" loading="lazy" decoding="async" />
  </div>
  <p className="text-[13px] font-semibold text-foreground line-clamp-1">{p.name}</p>
- <p className="text-xs font-bold text-foreground/70 tabular-nums">{CURRENCY} {Math.round(p.price).toLocaleString()}</p>
+ <p className="text-xs font-bold text-foreground/70 tabular-nums">{formatTZS(p.price)}</p>
  </button>
  ))}
  </div>

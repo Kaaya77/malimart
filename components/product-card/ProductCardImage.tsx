@@ -26,6 +26,9 @@ export const ProductCardImage: React.FC<ProductCardImageProps> = ({
   const [imgLoaded, setImgLoaded] = useState(false);
   const display = activeVariantImage || images[currentImgIdx] || images[0];
   const lowStock = !stats.isOut && typeof product.stock === 'number' && product.stock > 0 && product.stock <= 5;
+  const isJustIn = product.created_at
+    ? (Date.now() - new Date(product.created_at).getTime()) < 24 * 60 * 60 * 1000
+    : false;
 
   const containerCls = layout === 'grid'
     ? 'aspect-[3/4] w-full rounded-2xl'
@@ -84,11 +87,19 @@ export const ProductCardImage: React.FC<ProductCardImageProps> = ({
               −{stats.campaignDiscount}%
             </span>
           )}
-          {isNew && (
+          {isJustIn ? (
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-500 text-white text-[10px] font-bold uppercase tracking-wider shadow-sm">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-white" />
+              </span>
+              Just In
+            </span>
+          ) : isNew ? (
             <span className="px-2 py-0.5 rounded-lg bg-white/95 dark:bg-black/90 text-foreground text-[10px] font-bold uppercase tracking-wider shadow-sm ring-1 ring-foreground/5">
               New
             </span>
-          )}
+          ) : null}
           {lowStock && (
             <span className="px-2 py-0.5 rounded-lg bg-amber-400/95 text-amber-950 text-[10px] font-bold tracking-wide shadow-sm">
               {product.stock} left

@@ -3,9 +3,9 @@ import { ProductShare } from '../components/ProductShare';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
- Star, Heart, ShoppingBag, Truck, ShieldCheck, 
+ Star, Heart, ShoppingBag, Truck, ShieldCheck,
  Minus, Plus, MessageSquare, ArrowLeft, Share2, Check, Copy,
- Shield, RotateCcw, CreditCard, Zap, MapPin
+ Shield, RotateCcw, CreditCard, Zap, MapPin, X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppState } from '../context/AppContext';
@@ -39,6 +39,7 @@ export const ProductPage = () => {
  });
  const [vendor, setVendor] = useState<VendorProfile | null>(null);
  const [activeImage, setActiveImage] = useState(0);
+ const [lightboxOpen, setLightboxOpen] = useState(false);
  const [qty, setQty] = useState(1);
  const [isLoading, setIsLoading] = useState(true);
  
@@ -223,7 +224,7 @@ export const ProductPage = () => {
  {/* Left: Gallery (7 cols) */}
  <div className="lg:col-span-7 flex flex-col gap-4">
  {/* Main Image */}
- <div className="relative aspect-[4/5] lg:aspect-[3/4] bg-foreground/[0.03] overflow-hidden rounded-2xl group">
+ <div className="relative aspect-[4/5] lg:aspect-[3/4] bg-foreground/[0.03] overflow-hidden rounded-2xl group cursor-zoom-in" onClick={() => setLightboxOpen(true)}>
  <AnimatePresence mode="wait">
  <motion.img
  key={activeImage}
@@ -236,6 +237,10 @@ export const ProductPage = () => {
  className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
  />
  </AnimatePresence>
+ {/* Zoom hint */}
+ <div className="absolute bottom-3 right-3 px-2 py-1 bg-black/40 backdrop-blur-sm rounded-lg text-[9px] font-bold text-white/70 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+   Tap to zoom
+ </div>
  {product.is_boosted && (
  <div className="absolute top-4 left-4 text-[10px] uppercase tracking-[0.2em] font-semibold bg-background/90 backdrop-blur-md px-3 py-1.5 rounded-full border border-foreground/10">
  ⚡ Featured
@@ -607,6 +612,68 @@ export const ProductPage = () => {
  </button>
  </div>
  </div>
+
+ {/* ── Lightbox ──────────────────────────────────────────────────────── */}
+ <AnimatePresence>
+   {lightboxOpen && (
+     <motion.div
+       initial={{ opacity: 0 }}
+       animate={{ opacity: 1 }}
+       exit={{ opacity: 0 }}
+       transition={{ duration: 0.2 }}
+       className="fixed inset-0 z-[200] bg-black/95 flex items-center justify-center"
+       onClick={() => setLightboxOpen(false)}
+     >
+       {/* Close */}
+       <button className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors z-10">
+         <X className="w-5 h-5 stroke-[2]" />
+       </button>
+       {/* Counter */}
+       <div className="absolute top-4 left-1/2 -translate-x-1/2 text-white/50 text-xs font-semibold tabular-nums">
+         {activeImage + 1} / {images.length}
+       </div>
+       {/* Image */}
+       <motion.img
+         key={activeImage}
+         initial={{ opacity: 0, scale: 0.96 }}
+         animate={{ opacity: 1, scale: 1 }}
+         exit={{ opacity: 0, scale: 0.96 }}
+         transition={{ duration: 0.2 }}
+         src={images[activeImage]}
+         alt={product.name}
+         className="max-h-[90vh] max-w-[90vw] object-contain rounded-xl"
+         onClick={e => e.stopPropagation()}
+       />
+       {/* Prev / Next */}
+       {images.length > 1 && (
+         <>
+           <button
+             onClick={e => { e.stopPropagation(); setActiveImage(i => (i - 1 + images.length) % images.length); }}
+             className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+           >
+             <ArrowLeft className="w-5 h-5 stroke-[2]" />
+           </button>
+           <button
+             onClick={e => { e.stopPropagation(); setActiveImage(i => (i + 1) % images.length); }}
+             className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+           >
+             <ArrowLeft className="w-5 h-5 stroke-[2] rotate-180" />
+           </button>
+           {/* Dot strip */}
+           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
+             {images.map((_, i) => (
+               <button
+                 key={i}
+                 onClick={e => { e.stopPropagation(); setActiveImage(i); }}
+                 className={`h-1.5 rounded-full transition-all ${i === activeImage ? 'w-6 bg-white' : 'w-1.5 bg-white/30'}`}
+               />
+             ))}
+           </div>
+         </>
+       )}
+     </motion.div>
+   )}
+ </AnimatePresence>
  </div>
  );
 };
