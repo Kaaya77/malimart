@@ -1,4 +1,4 @@
-import { safeJsonParse } from '../src/security';
+﻿import { safeJsonParse } from '../src/security';
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, X, Loader2, ArrowRight, TrendingUp, Tag, Clock, Trash2, Sparkles } from 'lucide-react';
@@ -27,7 +27,7 @@ const RECENT_KEY = 'malimart:recent-searches';
  * Mobile-first full-screen search.
  *
  * No giant editorial heading (the previous version had a 7xl placeholder
- * input — looked dated, wasted vertical space on mobile).
+ * input â€” looked dated, wasted vertical space on mobile).
  *
  * Structure:
  * - Compact pill input at top with close button
@@ -77,7 +77,7 @@ export const SearchModal = ({
    return () => { cancelled = true; };
  }, [debouncedQuery]);
 
- // AI intent parsing — interprets natural language queries
+ // AI intent parsing â€” interprets natural language queries
  const [aiIntent, setAiIntent] = useState<{ keywords: string; note: string; maxPrice?: number } | null>(null);
  const aiIntentTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
  const lastParsedQuery = useRef('');
@@ -94,7 +94,7 @@ export const SearchModal = ({
      try {
        const ai = getAI();
        const res = await ai.models.generateContent({
-         model: MODELS.FAST,
+         model: MODELS.TEXT,
          contents: [{ role: 'user', parts: [{ text: `You are a search assistant for MaliMart, a Tanzanian e-commerce marketplace. The user typed this search query: "${q}". Extract structured intent as JSON with these fields: keywords (main search term, 1-3 words), note (what you understood, max 8 words), maxPrice (number in TZS if mentioned, else null). Respond ONLY with valid JSON, no markdown.` }] }],
          config: { maxOutputTokens: 80 },
        });
@@ -138,7 +138,7 @@ export const SearchModal = ({
    return [...local, ...serverOnly].slice(0, 8);
  }, [debouncedQuery, products, serverResults]);
 
- // Popular products (rating × reviews)
+ // Popular products (rating Ã— reviews)
  const popularProducts = useMemo(() => {
  return [...products]
  .sort((a, b) => (b.rating || 0) * (b.review_count || 0) - (a.rating || 0) * (a.review_count || 0))
@@ -205,7 +205,7 @@ export const SearchModal = ({
  <input
  ref={searchInputRef}
  type="text"
- placeholder="Search products, brands, sellers…"
+ placeholder="Search products, brands, sellersâ€¦"
  value={searchQuery}
  onChange={e => setSearchQuery(e.target.value)}
  className="w-full h-12 pl-11 pr-12 rounded-xl bg-foreground/[0.04] text-foreground text-[15px] font-medium placeholder:text-foreground/40 focus:outline-none focus:bg-foreground/[0.07] transition-colors"
@@ -239,7 +239,7 @@ export const SearchModal = ({
  <div className="px-4 md:px-5 py-4">
  {serverSearching ? (
  <div className="flex items-center justify-center py-12 text-foreground/45">
- <Loader2 className="w-5 h-5 animate-spin mr-2" /> Searching…
+ <Loader2 className="w-5 h-5 animate-spin mr-2" /> Searchingâ€¦
  </div>
  ) : liveResults.length === 0 ? (
  <div className="text-center py-12">
@@ -247,7 +247,7 @@ export const SearchModal = ({
      <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/8 border border-emerald-500/20 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 mb-4">
        <Sparkles className="w-3 h-3" />
        <span>AI: {aiIntent.note}</span>
-       {aiIntent.maxPrice && <span className="opacity-60">· under {formatTZS(aiIntent.maxPrice)}</span>}
+       {aiIntent.maxPrice && <span className="opacity-60">Â· under {formatTZS(aiIntent.maxPrice)}</span>}
      </div>
    )}
  <p className="text-sm text-foreground/55">
@@ -270,7 +270,7 @@ export const SearchModal = ({
        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/8 border border-emerald-500/20 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
          <Sparkles className="w-3 h-3" />
          <span>{aiIntent.note}</span>
-         {aiIntent.maxPrice && <span className="opacity-60">· under {formatTZS(aiIntent.maxPrice)}</span>}
+         {aiIntent.maxPrice && <span className="opacity-60">Â· under {formatTZS(aiIntent.maxPrice)}</span>}
        </div>
        <button onClick={() => setAiIntent(null)} className="text-foreground/30 hover:text-foreground/60 transition-colors">
          <X className="w-3 h-3" />
@@ -291,7 +291,7 @@ export const SearchModal = ({
  <img src={p.images?.[0]} alt={p.name} className="w-12 h-12 rounded-lg object-cover bg-foreground/5 flex-shrink-0" loading="lazy" decoding="async" />
  <div className="flex-1 min-w-0">
  <p className="text-sm font-semibold text-foreground truncate">{p.name}</p>
- <p className="text-[12px] text-foreground/50 truncate">{p.seller_name} · {p.category}</p>
+ <p className="text-[12px] text-foreground/50 truncate">{p.seller_name} Â· {p.category}</p>
  </div>
  <span className="text-sm font-bold text-foreground tabular-nums flex-shrink-0">
  {formatTZS(Math.round(p.price))}

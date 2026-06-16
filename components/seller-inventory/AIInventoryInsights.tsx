@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Sparkles, TrendingUp, TrendingDown, AlertTriangle, Package, Zap, RefreshCw, ChevronRight, Clock } from 'lucide-react';
 import { getAI } from '../../services/aiClient';
@@ -84,7 +84,7 @@ Analyze this seller's inventory (top 20 products):
 ${summary}
 
 Dead stock count: ${signals.deadStock.length} products with 0 sales and stock > 10
-Critical restock needed: ${signals.criticalStock.length} products running out in ≤7 days
+Critical restock needed: ${signals.criticalStock.length} products running out in â‰¤7 days
 30-day total revenue: ${formatTZS(signals.totalRevenue30d)}
 
 Give a sharp, actionable analysis in 4-5 sentences max. Include:
@@ -96,7 +96,7 @@ Give a sharp, actionable analysis in 4-5 sentences max. Include:
 Be specific, use numbers, and keep it practical for a Tanzanian seller. No fluff.`;
 
       const res = await ai.models.generateContent({
-        model: MODELS.FAST,
+        model: MODELS.TEXT,
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
       });
       setAiInsight(res.text ?? 'Could not generate insight.');
@@ -137,7 +137,7 @@ Be specific, use numbers, and keep it practical for a Tanzanian seller. No fluff
         {/* Critical restock */}
         {signals.criticalStock.length > 0 && (
           <section>
-            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/35 mb-3">🚨 Restock Now</p>
+            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/35 mb-3">ðŸš¨ Restock Now</p>
             <div className="space-y-2">
               {signals.criticalStock.slice(0, 5).map(p => {
                 const colors = urgencyColor(p.days)!;
@@ -148,7 +148,7 @@ Be specific, use numbers, and keep it practical for a Tanzanian seller. No fluff
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         <p className="text-[12px] font-bold text-foreground truncate">{p.name}</p>
-                        <p className="text-[10px] text-foreground/50 mt-0.5">{p.stock} left · {v.toFixed(1)}/day</p>
+                        <p className="text-[10px] text-foreground/50 mt-0.5">{p.stock} left Â· {v.toFixed(1)}/day</p>
                       </div>
                       <div className="text-right shrink-0">
                         <p className={`text-[11px] font-black ${colors.text}`}>{p.days}d left</p>
@@ -165,7 +165,7 @@ Be specific, use numbers, and keep it practical for a Tanzanian seller. No fluff
         {/* Velocity leaderboard */}
         {signals.topPerformers.length > 0 && (
           <section>
-            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/35 mb-3">🔥 Top Performers (30d)</p>
+            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/35 mb-3">ðŸ”¥ Top Performers (30d)</p>
             <div className="space-y-2">
               {signals.topPerformers.map((p, i) => (
                 <div key={p.id} className="flex items-center gap-3 p-3 rounded-xl bg-foreground/[0.03] ring-1 ring-foreground/8">
@@ -187,7 +187,7 @@ Be specific, use numbers, and keep it practical for a Tanzanian seller. No fluff
         {/* Dead stock */}
         {signals.deadStock.length > 0 && (
           <section>
-            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/35 mb-3">💤 Dead Stock ({signals.deadStock.length})</p>
+            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/35 mb-3">ðŸ’¤ Dead Stock ({signals.deadStock.length})</p>
             <div className="p-3 rounded-xl bg-foreground/[0.03] ring-1 ring-foreground/8 space-y-1.5">
               {signals.deadStock.slice(0, 4).map(p => (
                 <div key={p.id} className="flex items-center justify-between gap-2">
@@ -218,7 +218,7 @@ Be specific, use numbers, and keep it practical for a Tanzanian seller. No fluff
         {/* AI Analysis */}
         <section>
           <div className="flex items-center justify-between mb-3">
-            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/35">✨ AI Analysis</p>
+            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/35">âœ¨ AI Analysis</p>
             {aiRequested && !loadingAI && (
               <button onClick={fetchAIInsight} className="text-[9px] font-black uppercase tracking-wider text-foreground/35 hover:text-foreground flex items-center gap-1 transition-colors">
                 <RefreshCw className="w-3 h-3" /> Refresh
@@ -253,7 +253,7 @@ Be specific, use numbers, and keep it practical for a Tanzanian seller. No fluff
 
         {/* Inventory health score */}
         <section>
-          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/35 mb-3">📊 Inventory Health</p>
+          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/35 mb-3">ðŸ“Š Inventory Health</p>
           {[
             { label: 'Products with sales', value: signals.active.filter(p => (p.units_sold_30d ?? 0) > 0).length, total: signals.active.length, color: 'bg-emerald-500' },
             { label: 'Well-stocked (14d+)', value: signals.active.filter(p => { const d = daysToZero(p); return d === null || d > 14; }).length, total: signals.active.length, color: 'bg-blue-500' },

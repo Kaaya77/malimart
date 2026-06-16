@@ -1,7 +1,7 @@
 
 // @model-version: managed in ./aiModels.ts (gemini-2.0-flash shut down 2026-06-01)
 import { GoogleGenAI, Type } from "@google/genai";
-import { getAI, proxiedMediaUrl } from './aiClient';
+import { getAI } from './aiClient';
 import { MODELS, IMAGE_MODEL_CHAIN, safeJson } from './aiModels';
 import { canRequest, on429, blockedFor } from './aiRateLimit';
 import { Product } from '../types';
@@ -88,11 +88,11 @@ export const generateWelcomeGreeting = async (name?: string): Promise<string> =>
     const namePart = name ? ` ${name}` : "";
     // Static fallbacks — save tokens, greetings don't need AI
     const fallbacks = [`Good ${period}${namePart} - Welcome to MaliMart`, "Welcome Back - Enjoy Shopping"];
-    if (!canRequest(MODELS.FAST)) return fallbacks[0];
+    if (!canRequest(MODELS.TEXT)) return fallbacks[0];
     return withRetry(async () => {
         const ai = getAI();
         const response = await ai.models.generateContent({
-            model: MODELS.FAST,
+            model: MODELS.TEXT,
             contents: `One punchy greeting (max 6 words) for a ${period}. Format: "Greeting${namePart} - Subtitle". English only.`,
         });
         return response.text || fallbacks[0];
@@ -103,7 +103,7 @@ export const generateProductDescription = async (productName: string, category: 
   return withRetry(async () => {
     const ai = getAI();
     const response = await ai.models.generateContent({
-      model: MODELS.FAST,
+      model: MODELS.TEXT,
       contents: `Write a compelling, short e-commerce product description for a product named "${productName}" in the category "${category}". 
       Highlight these features: ${keywords}. 
       Tone: Professional, inviting, and high-end. Max 80 words. Use English exclusively.`,
@@ -119,13 +119,13 @@ export const generateProductDescription = async (productName: string, category: 
  * Analyzes an uploaded product image to auto-fill the form.
  */
 export const analyzeProductImage = async (imageBase64: string): Promise<{ name: string, category: string, tags: string[], description: string } | null> => {
-    if (!canRequest(MODELS.FAST)) throw new Error('Rate limit reached — please wait a moment and try again.');
+    if (!canRequest(MODELS.TEXT)) throw new Error('Rate limit reached — please wait a moment and try again.');
     return withRetry(async () => {
         const ai = getAI();
         const cleanBase64 = imageBase64.split(',')[1] || imageBase64;
         
         const response = await ai.models.generateContent({
-            model: MODELS.FAST,
+            model: MODELS.TEXT,
             contents: {
                 parts: [
                     { inlineData: { mimeType: 'image/jpeg', data: cleanBase64 } },
@@ -154,7 +154,7 @@ export const suggestAttributes = async (name: string, category: string, descript
     return withRetry(async () => {
         const ai = getAI();
         const response = await ai.models.generateContent({
-            model: MODELS.FAST,
+            model: MODELS.TEXT,
             contents: `Suggest 2-3 appropriate product attributes (like Color, Size, Material) for a "${name}" in "${category}". 
             Description: "${description}".
             Return JSON array of objects with 'name' and 'values' (array of strings). 
@@ -182,7 +182,7 @@ export const generateSmartSKU = async (name: string, category: string): Promise<
     return withRetry(async () => {
         const ai = getAI();
         const response = await ai.models.generateContent({
-            model: MODELS.FAST,
+            model: MODELS.TEXT,
             contents: `Generate a professional, short SKU (Stock Keeping Unit) code for "${name}" in category "${category}". 
             Format: Uppercase, alphanumeric, 8-12 characters. Example: SHIRT-BLU-01. Return ONLY the string.`,
         });
@@ -210,7 +210,7 @@ export const generateProductListing = async (name: string, imageBase64?: string)
         });
 
         const response = await ai.models.generateContent({
-            model: MODELS.FAST,
+            model: MODELS.TEXT,
             contents: { parts },
             config: {
                 responseMimeType: "application/json",
@@ -237,7 +237,7 @@ export const translateToSwahili = async (text: string): Promise<string> => {
     return withRetry(async () => {
         const ai = getAI();
         const response = await ai.models.generateContent({
-            model: MODELS.FAST,
+            model: MODELS.TEXT,
             contents: `Translate the product description below into professional, engaging Swahili for a Tanzanian marketplace. Return ONLY the translated text — no English preamble, no explanation, no word-by-word breakdown, nothing else.\n\n${text}`,
         });
         return (response.text || text).trim();
@@ -248,7 +248,7 @@ export const enhanceDescription = async (text: string): Promise<string> => {
     return withRetry(async () => {
         const ai = getAI();
         const response = await ai.models.generateContent({
-            model: MODELS.FAST,
+            model: MODELS.TEXT,
             contents: `Rewrite the product description below to make it more compelling, premium, and SEO-optimized for a Tanzanian marketplace. Focus on sensory details, craftsmanship, and benefits. Keep it under 100 words. Use plain prose only — no markdown, no asterisks, no bullet points, no headers.\n\n${text}`,
         });
         return (response.text || text).trim();
@@ -259,7 +259,7 @@ export const moderateContent = async (name: string, description: string): Promis
     return withRetry(async () => {
         const ai = getAI();
         const response = await ai.models.generateContent({
-            model: MODELS.FAST,
+            model: MODELS.TEXT,
             contents: `Analyze the following product name and description for any policy violations. Policies include: no hate speech, no illegal items, no explicit content, no misleading claims.
             Name: "${name}"
             Description: "${description}"
@@ -287,7 +287,7 @@ export const generateSocialCaption = async (imageBase64: string): Promise<string
         const ai = getAI();
         const cleanBase64 = imageBase64.split(',')[1] || imageBase64;
         const response = await ai.models.generateContent({
-            model: MODELS.FAST,
+            model: MODELS.TEXT,
             contents: {
                 parts: [
                     { inlineData: { mimeType: 'image/jpeg', data: cleanBase64 } },
@@ -303,7 +303,7 @@ export const generateSocialPost = async (product: Product): Promise<string> => {
     return withRetry(async () => {
         const ai = getAI();
         const response = await ai.models.generateContent({
-            model: MODELS.FAST,
+            model: MODELS.TEXT,
             contents: `Generate a compelling, high-converting social media post for this product:
             Name: ${product.name}
             Price: ${product.price}
@@ -324,7 +324,7 @@ export const mapCSVColumnsToSchema = async (csvHeaders: string[]): Promise<Recor
     return withRetry(async () => {
         const ai = getAI();
         const response = await ai.models.generateContent({
-            model: MODELS.FAST,
+            model: MODELS.TEXT,
             contents: `Map these CSV headers to our database schema.
             CSV Headers: ${JSON.stringify(csvHeaders)}
             Database Schema: { name: string, price: number, stock: number, category: string }
@@ -342,7 +342,7 @@ export const suggestProductPrice = async (productName: string, category: string)
     return withRetry(async () => {
         const ai = getAI();
         const response = await ai.models.generateContent({
-            model: MODELS.FAST,
+            model: MODELS.TEXT,
             contents: `Suggest a competitive premium price in Tanzanian Shillings (TZS) for this product: "${productName}" in category "${category}". Return ONLY the number. Example: 45000`,
         });
         const num = parseInt(response.text?.replace(/[^0-9]/g, '') || "0");
@@ -354,7 +354,7 @@ export const generateTags = async (name: string, description: string): Promise<s
     return withRetry(async () => {
         const ai = getAI();
         const response = await ai.models.generateContent({
-            model: MODELS.FAST,
+            model: MODELS.TEXT,
             contents: `Generate 8 relevant SEO tags for a product named "${name}". Description: "${description}". Return ONLY a comma-separated list of tags. Example: "shoes, leather, mens fashion, summer, durable"`,
         });
         return (response.text || "").split(',').map(s => s.trim()).filter(s => s.length > 0);
@@ -429,41 +429,12 @@ export const refineProductImage = async (imageInput: string, instruction: string
     });
 };
 
-export const generateMarketingVideo = async (productName: string, description: string): Promise<string | null> => {
-
-    return withRetry(async () => {
-        const ai = getAI();
-        let operation = await ai.models.generateVideos({
-            model: MODELS.VIDEO,
-            prompt: `Cinematic commercial for ${productName}. ${description}. Professional lighting, 4k, smooth camera movement, highly detailed.`,
-            config: {
-                numberOfVideos: 1,
-                resolution: '720p',
-                aspectRatio: '16:9'
-            }
-        });
-
-        // Polling loop
-        while (!operation.done) {
-            await new Promise(resolve => setTimeout(resolve, 5000)); // Check every 5s
-            operation = await ai.operations.getVideosOperation({operation: operation});
-        }
-
-        const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
-        if (!downloadLink) return null;
-
-        // Fetch the actual video blob
-        const res = await fetch(proxiedMediaUrl(downloadLink));
-        const blob = await res.blob();
-        return URL.createObjectURL(blob);
-    });
-};
 
 export const generateRecipesFromCart = async (ingredients: string[]): Promise<any[]> => {
   return withRetry(async () => {
     const ai = getAI();
     const response = await ai.models.generateContent({
-      model: MODELS.SMART,
+      model: MODELS.TEXT,
       contents: `Suggest 3 authentic recipes using: ${ingredients.join(', ')}. Return JSON. Use English for all text.`,
       config: {
         responseMimeType: "application/json",
@@ -491,7 +462,7 @@ export const analyzeImageForSearch = async (imageBase64: string): Promise<string
         const ai = getAI();
         const cleanBase64 = imageBase64.split(',')[1] || imageBase64;
         const response = await ai.models.generateContent({
-            model: MODELS.FAST,
+            model: MODELS.TEXT,
             contents: {
                 parts: [
                     { inlineData: { mimeType: 'image/jpeg', data: cleanBase64 } },
@@ -510,7 +481,7 @@ export const identifyTrendingProduct = async (products: Product[]): Promise<{ id
     if (candidates.length === 0) return null;
 
     const response = await ai.models.generateContent({
-      model: MODELS.SMART,
+      model: MODELS.TEXT,
       contents: `Pick the most appealing product for a flash sale: ${JSON.stringify(candidates.map(p => ({id: p.id, name: p.name})))}. Return JSON: { "id": "uuid", "reason": "short pitch in English" }`,
       config: {
         responseMimeType: "application/json",
@@ -529,7 +500,7 @@ export const getAssistantResponse = async (query: string): Promise<string> => {
     return withRetry(async () => {
         const ai = getAI();
         const response = await ai.models.generateContent({
-            model: MODELS.SMART,
+            model: MODELS.TEXT,
             contents: query,
             config: {
                 systemInstruction: "You are MaliMart AI, a helpful shopping assistant. Communicate clearly in English.",
@@ -559,11 +530,11 @@ export const generateRecipeCardImage = async (title: string): Promise<string | n
 }
 
 export const generateSellerReplies = async (context: string): Promise<string[]> => {
-    if (!canRequest(MODELS.FAST)) return ["Yes, it is available.", "I can ship this today.", "Let me check the stock."];
+    if (!canRequest(MODELS.TEXT)) return ["Yes, it is available.", "I can ship this today.", "Let me check the stock."];
     return withRetry(async () => {
         const ai = getAI();
         const response = await ai.models.generateContent({
-            model: MODELS.FAST,
+            model: MODELS.TEXT,
             contents: `Seller on MaliMart. 3 short polite reply options for: "${context.slice(0, 200)}". Under 10 words each. JSON array of strings.`,
             config: {
                 responseMimeType: "application/json",
@@ -581,7 +552,7 @@ export const analyzeConversation = async (messages: string[]): Promise<{ sentime
     return withRetry(async () => {
         const ai = getAI();
         const response = await ai.models.generateContent({
-            model: MODELS.SMART,
+            model: MODELS.TEXT,
             contents: `Analyze this buyer-seller conversation from the seller's perspective. 
             History: ${JSON.stringify(messages.slice(-5))}
             
@@ -611,7 +582,7 @@ export const analyzeDispute = async (reason: string, description: string): Promi
     return withRetry(async () => {
         const ai = getAI();
         const response = await ai.models.generateContent({
-            model: MODELS.SMART,
+            model: MODELS.TEXT,
             contents: `Analyze this e-commerce dispute.
             Reason: ${reason}
             Description: ${description}
@@ -642,7 +613,7 @@ export const refineMessage = async (draft: string, tone: 'professional' | 'persu
     return withRetry(async () => {
         const ai = getAI();
         const response = await ai.models.generateContent({
-            model: MODELS.FAST,
+            model: MODELS.TEXT,
             contents: `Rewrite the following draft message for a seller to a buyer. 
             Draft: "${draft}"
             Tone: ${tone}

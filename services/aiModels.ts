@@ -10,26 +10,18 @@
 // =====================================================================
 
 export const MODELS = {
-  // High-volume utility calls (tags, SKU, price, translation, captions).
-  // 2.5-flash-lite is priced identically to the old 2.0-flash.
-  FAST: 'gemini-2.5-flash-lite',
-
-  // Quality reasoning (shopping assistant, dispute analysis, trending,
-  // conversation analysis).
-  SMART: 'gemini-2.5-flash',
+  // Single text model for all non-image tasks.
+  TEXT: 'gemini-2.5-flash',
 
   // Primary image generation/editing model.
   IMAGE: 'gemini-2.5-flash-image',
-
-  // Marketing video generation.
-  VIDEO: 'veo-3.1-fast-generate-preview',
 
   // Voice assistant (Live API, websocket).
   LIVE_AUDIO: 'gemini-2.5-flash-native-audio-preview-12-2025',
 } as const;
 
-// Ordered fallback chain for image generation. When the primary model (IMAGE)
-// is rate-limited or returns 429, the caller tries models left to right.
+// Ordered fallback chain for image generation.
+// When the primary model hits 429, callers try models left to right.
 export const IMAGE_MODEL_CHAIN = [
   'gemini-2.5-flash-image',
   'gemini-3.1-flash-image',

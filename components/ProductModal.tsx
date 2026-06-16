@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+﻿import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -23,10 +23,10 @@ interface ProductModalProps {
 }
 
 /**
- * ProductModal — premium editorial redesign.
+ * ProductModal â€” premium editorial redesign.
  *
- * Mobile: stacked layout — full-bleed image → content → floating sticky CTA
- * Desktop: three-column — filmstrip thumbnails | main image (52%) | content panel
+ * Mobile: stacked layout â€” full-bleed image â†’ content â†’ floating sticky CTA
+ * Desktop: three-column â€” filmstrip thumbnails | main image (52%) | content panel
  *
  * Rules of Hooks: all hooks called unconditionally before any early return.
  */
@@ -89,7 +89,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
    try {
      const ai = getAI();
      const res = await ai.models.generateContent({
-       model: MODELS.FAST,
+       model: MODELS.TEXT,
        contents: [{ role: 'user', parts: [{ text: `Write ONE punchy sentence (max 18 words) that highlights why someone should buy this product. Be specific, avoid generic phrases. Product: "${product.name}" | Category: "${product.category || ''}" | Description: "${(product.description || '').slice(0, 150)}". Output only the sentence, no quotes.` }] }],
        config: { maxOutputTokens: 60 },
      });
@@ -157,7 +157,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
  imgScrollRef.current?.children[idx]?.scrollIntoView({ behavior: 'smooth', inline: 'center' });
  };
 
- // ── Reusable sub-views ─────────────────────────────────────────────────
+ // â”€â”€ Reusable sub-views â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
  const RatingRow = () => product.rating ? (
  <div className="flex items-center gap-1.5">
  <div className="flex">
@@ -167,7 +167,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
  </div>
  <span className="text-[13px] font-semibold text-foreground/80">{Number(product.rating).toFixed(1)}</span>
  {product.review_count ? (
- <span className="text-[13px] text-foreground/40">· {product.review_count} review{product.review_count === 1 ? '' : 's'}</span>
+ <span className="text-[13px] text-foreground/40">Â· {product.review_count} review{product.review_count === 1 ? '' : 's'}</span>
  ) : null}
  </div>
  ) : null;
@@ -234,7 +234,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
  className="absolute inset-0 bg-black/70 backdrop-blur-sm"
  />
 
- {/* ════ MOBILE bottom sheet ════════════════════════════════════════ */}
+ {/* â•â•â•â• MOBILE bottom sheet â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
  <motion.div
  role="dialog"
  aria-modal="true"
@@ -299,7 +299,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
 
  {onSale && (
  <div className="absolute top-12 left-4 z-10 px-2.5 py-1 rounded-lg bg-emerald-500 text-white text-[11px] font-bold tracking-wide shadow-md">
- −{savingsPct}% OFF
+ âˆ’{savingsPct}% OFF
  </div>
  )}
 
@@ -423,13 +423,13 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
  : 'bg-foreground text-background active:bg-foreground/90'}`}
  >
  {isAdding ? (
- <span className="opacity-70">Adding…</span>
+ <span className="opacity-70">Addingâ€¦</span>
  ) : stats.isOut ? 'Out of stock' : (
  <>
  <ShoppingBag className="w-[17px] h-[17px] stroke-[2]" />
  <span>Add to bag</span>
  <span className="opacity-55 font-medium text-[13px]">
- · {CURRENCY} {Math.round(finalPrice * quantity).toLocaleString()}
+ Â· {CURRENCY} {Math.round(finalPrice * quantity).toLocaleString()}
  </span>
  </>
  )}
@@ -438,7 +438,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
  </div>
  </motion.div>
 
- {/* ════ DESKTOP: editorial three-column ═══════════════════════════ */}
+ {/* â•â•â•â• DESKTOP: editorial three-column â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
  <motion.div
  role="dialog"
  aria-modal="true"
@@ -493,7 +493,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
 
  {onSale && (
  <div className="absolute top-5 left-5 z-10 px-3 py-1.5 rounded-xl bg-emerald-500 text-white text-[12px] font-bold tracking-wide shadow-md">
- −{savingsPct}% OFF
+ âˆ’{savingsPct}% OFF
  </div>
  )}
 
@@ -654,11 +654,11 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
  ? 'bg-foreground/10 text-foreground/40 cursor-not-allowed'
  : 'bg-foreground text-background hover:bg-foreground/90'}`}
  >
- {isAdding ? 'Adding…' : stats.isOut ? 'Out of stock' : (
+ {isAdding ? 'Addingâ€¦' : stats.isOut ? 'Out of stock' : (
  <>
  Add to bag
  <span className="opacity-55 font-medium text-[13px] tabular-nums">
- · {CURRENCY} {Math.round(finalPrice * quantity).toLocaleString()}
+ Â· {CURRENCY} {Math.round(finalPrice * quantity).toLocaleString()}
  </span>
  </>
  )}

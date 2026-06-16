@@ -53,7 +53,6 @@ export const ProductForm = ({ initialData, onClose, onSuccess, mode = 'modal' }:
  const [genPrompt, setGenPrompt] = useState('');
  const [refinePrompt, setRefinePrompt] = useState('');
  const [hoveredVariant, setHoveredVariant] = useState<ProductVariant | null>(null);
- const [generatedVideo, setGeneratedVideo] = useState<string | null>(null);
  const [isMagicFilling, setIsMagicFilling] = useState(false);
 
  const [bulkPrice, setBulkPrice] = useState('');
@@ -359,24 +358,6 @@ export const ProductForm = ({ initialData, onClose, onSuccess, mode = 'modal' }:
  } finally { setAiLoading(false); }
  };
 
- const handleGenerateVideo = async () => {
- if (!formData.name || !formData.description) return addToast("Name and Description required", "warning");
- setAiLoading(true);
- try {
- const videoUrl = await aiService.generateMarketingVideo(formData.name, formData.description);
- if (videoUrl) {
- setGeneratedVideo(videoUrl);
- addToast("Video Ad Generated!", "success");
- } else {
- addToast("Video generation failed or timed out", "error");
- }
- } catch (e: any) {
- addToast("Failed to generate video", "error");
- } finally {
- setAiLoading(false);
- }
- }
-
  const toggleVat = (enabled: boolean) => {
  setIncludeVat(enabled);
  if (formData.price) {
@@ -549,7 +530,7 @@ export const ProductForm = ({ initialData, onClose, onSuccess, mode = 'modal' }:
    if (!initialData) localStorage.removeItem(DRAFT_KEY);
  };
 
- const pf = { step, setStep, isQuickMode, setIsQuickMode, isLoading, setIsLoading, visionLoading, setVisionLoading, aiLoading, setAiLoading, refurbishingIdx, setRefurbishingIdx, includeVat, setIncludeVat, showGenImage, setShowGenImage, showRefineImage, setShowRefineImage, genPrompt, setGenPrompt, refinePrompt, setRefinePrompt, hoveredVariant, setHoveredVariant, generatedVideo, setGeneratedVideo, isMagicFilling, setIsMagicFilling, bulkPrice, setBulkPrice, bulkStock, setBulkStock, formData, setFormData, attributes, setAttributes, variants, setVariants, tagInput, setTagInput, handleMagicFill, handleVisionAnalyze, uploadFileOrDataUrl, downloadImage, handleImageUpload, handleVariantImageUpload, handleRefurbishVariant, generateMagicDescription, handleSuggestPrice, handleTranslate, handleEnhanceDescription, handleSuggestAttributes, handleGenerateSKU, handleGenerateImage, handleRefineImage, handleGenerateVideo, toggleVat, generateVariants, handleBulkApply, handleAutoSkuVariants, handleSubmit, margin, profit, initialData, onClose, stepComplete, clearDraftOnSave };
+ const pf = { step, setStep, isQuickMode, setIsQuickMode, isLoading, setIsLoading, visionLoading, setVisionLoading, aiLoading, setAiLoading, refurbishingIdx, setRefurbishingIdx, includeVat, setIncludeVat, showGenImage, setShowGenImage, showRefineImage, setShowRefineImage, genPrompt, setGenPrompt, refinePrompt, setRefinePrompt, hoveredVariant, setHoveredVariant, isMagicFilling, setIsMagicFilling, bulkPrice, setBulkPrice, bulkStock, setBulkStock, formData, setFormData, attributes, setAttributes, variants, setVariants, tagInput, setTagInput, handleMagicFill, handleVisionAnalyze, uploadFileOrDataUrl, downloadImage, handleImageUpload, handleVariantImageUpload, handleRefurbishVariant, generateMagicDescription, handleSuggestPrice, handleTranslate, handleEnhanceDescription, handleSuggestAttributes, handleGenerateSKU, handleGenerateImage, handleRefineImage, toggleVat, generateVariants, handleBulkApply, handleAutoSkuVariants, handleSubmit, margin, profit, initialData, onClose, stepComplete, clearDraftOnSave };
 
  const STEPS = [
    { id: 'details',   label: 'Essentials', mobileLabel: 'Details',  icon: Package },

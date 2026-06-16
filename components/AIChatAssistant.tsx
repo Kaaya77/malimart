@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+﻿import React, { useState, useRef, useEffect, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { motion, AnimatePresence, useSpring, useTransform, useMotionValue, useAnimate } from 'framer-motion';
 import { X, Send, Mic, MicOff, Paperclip, ChevronRight, Trash2, Volume2, Loader2, Zap, Copy, Check, ShoppingBag, ChevronLeft } from 'lucide-react';
@@ -9,7 +9,7 @@ import { useAppState } from '../context/AppContext';
 import { formatTZS } from '../constants';
 import { LiveServerMessage, Modality } from '@google/genai';
 
-// ── Audio helpers ─────────────────────────────────────────────────────────────
+// â”€â”€ Audio helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function resample(data: Float32Array, from: number, to: number): Float32Array {
   const ratio = from / to;
   const out = new Float32Array(Math.round(data.length / ratio));
@@ -43,7 +43,7 @@ function createBlob(data: Float32Array) {
   return { data: encode(new Uint8Array(i16.buffer)), mimeType: 'audio/pcm;rate=16000' };
 }
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+// â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 interface Msg {
   id: string;
   role: 'user' | 'assistant';
@@ -56,7 +56,7 @@ interface Msg {
   suggestions?: string[];
 }
 
-// ── Animated mesh background ──────────────────────────────────────────────────
+// â”€â”€ Animated mesh background â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const MeshBackground = () => (
   <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-3xl">
     <motion.div className="absolute -top-16 -left-16 w-64 h-64 rounded-full bg-emerald-500/6 blur-3xl"
@@ -68,7 +68,7 @@ const MeshBackground = () => (
   </div>
 );
 
-// ── Mali avatar with optional rings ──────────────────────────────────────────
+// â”€â”€ Mali avatar with optional rings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const MaliAvatar = ({ size = 36, rings = false, pulse = false }: { size?: number; rings?: boolean; pulse?: boolean }) => (
   <div className="relative flex-shrink-0" style={{ width: size, height: size }}>
     {rings && [1,2,3].map(i => (
@@ -85,13 +85,13 @@ const MaliAvatar = ({ size = 36, rings = false, pulse = false }: { size?: number
       animate={pulse ? { scale: [1, 1.05, 1] } : {}}
       transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
     >
-      <span style={{ fontSize: size * 0.52 }} className="select-none">🛍️</span>
+      <span style={{ fontSize: size * 0.52 }} className="select-none">ðŸ›ï¸</span>
       <div className="absolute inset-0 bg-gradient-to-t from-black/15 to-white/10 rounded-2xl" style={{ borderRadius: size * 0.3 }} />
     </motion.div>
   </div>
 );
 
-// ── Voice mode waveform (canvas) ──────────────────────────────────────────────
+// â”€â”€ Voice mode waveform (canvas) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const VoiceCanvas = ({ analyser }: { analyser: AnalyserNode | null }) => {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
@@ -151,13 +151,13 @@ const VoiceCanvas = ({ analyser }: { analyser: AnalyserNode | null }) => {
   return <canvas ref={ref} width={320} height={60} className="w-full h-[60px]" />;
 };
 
-// ── Typing indicator with rotating context ────────────────────────────────────
+// â”€â”€ Typing indicator with rotating context â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const THINKING = [
-  'Browsing the catalog…',
-  'Thinking of ideas…',
-  'Considering your style…',
-  'Checking the best options…',
-  'Crafting a response…',
+  'Browsing the catalogâ€¦',
+  'Thinking of ideasâ€¦',
+  'Considering your styleâ€¦',
+  'Checking the best optionsâ€¦',
+  'Crafting a responseâ€¦',
 ];
 const TypingBubble = () => {
   const [idx, setIdx] = useState(0);
@@ -189,7 +189,7 @@ const TypingBubble = () => {
   );
 };
 
-// ── Suggestion chips ──────────────────────────────────────────────────────────
+// â”€â”€ Suggestion chips â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const SuggestionChips = ({ chips, onPick }: { chips: string[]; onPick: (s: string) => void }) => (
   <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="flex flex-wrap gap-1.5 mt-2">
     {chips.map((c, i) => (
@@ -203,7 +203,7 @@ const SuggestionChips = ({ chips, onPick }: { chips: string[]; onPick: (s: strin
   </motion.div>
 );
 
-// ── Product carousel ──────────────────────────────────────────────────────────
+// â”€â”€ Product carousel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const ProductCarousel = ({ ids, products, onAdd }: {
   ids: string[]; products: any[]; onAdd: (p: any) => void;
 }) => {
@@ -264,7 +264,7 @@ const ProductCarousel = ({ ids, products, onAdd }: {
   );
 };
 
-// ── Message bubble ────────────────────────────────────────────────────────────
+// â”€â”€ Message bubble â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const MessageBubble = ({ m, isFirst, products, onAdd, onSuggest }: {
   m: Msg; isFirst: boolean; products: any[];
   onAdd: (p: any) => void; onSuggest: (s: string) => void;
@@ -350,15 +350,15 @@ const MessageBubble = ({ m, isFirst, products, onAdd, onSuggest }: {
   );
 };
 
-// ── Main component ────────────────────────────────────────────────────────────
+// â”€â”€ Main component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export const AIChatAssistant = () => {
   const { products, addToCart, user } = useAppState();
   const { addToast } = useToast();
 
   const firstName = user?.full_name?.split(' ')[0] || (user as any)?.display_name || null;
   const greeting = firstName
-    ? `Hey ${firstName}! 👋 I'm Mali, your shopping companion. What are we hunting for today?`
-    : `Hey! 👋 I'm Mali — part shopping buddy, part style guide. What can I help you find today?`;
+    ? `Hey ${firstName}! ðŸ‘‹ I'm Mali, your shopping companion. What are we hunting for today?`
+    : `Hey! ðŸ‘‹ I'm Mali â€” part shopping buddy, part style guide. What can I help you find today?`;
 
   const [isOpen, setIsOpen]         = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
@@ -397,11 +397,11 @@ export const AIChatAssistant = () => {
   };
 
   const getSystem = () => {
-    const catalog = products.slice(0, 60).map(p => `[${p.id}] ${p.name} · ${formatTZS(p.price)} · ${p.category}`).join('\n');
+    const catalog = products.slice(0, 60).map(p => `[${p.id}] ${p.name} Â· ${formatTZS(p.price)} Â· ${p.category}`).join('\n');
     const who = user ? `${(user as any).full_name || (user as any).display_name || 'shopper'}, ${(user as any).role || 'buyer'}` : 'guest';
-    return `You are Mali — a warm, sharp, culturally-proud shopping companion for MaliMart, Tanzania's finest marketplace.
+    return `You are Mali â€” a warm, sharp, culturally-proud shopping companion for MaliMart, Tanzania's finest marketplace.
 
-PERSONALITY: You're like the smartest friend at the market — you know every product, remember what people like, give honest takes ("honestly skip that, this one's way better"), celebrate Tanzanian craft, and keep it fun. Never robotic, never corporate. You ask good follow-up questions and give opinions, not just descriptions.
+PERSONALITY: You're like the smartest friend at the market â€” you know every product, remember what people like, give honest takes ("honestly skip that, this one's way better"), celebrate Tanzanian craft, and keep it fun. Never robotic, never corporate. You ask good follow-up questions and give opinions, not just descriptions.
 
 USER: ${who}
 
@@ -409,16 +409,16 @@ CATALOG:
 ${catalog}
 
 RESPONSE FORMAT:
-1. Answer in 2-4 sentences max unless detail is requested — respect people's time
+1. Answer in 2-4 sentences max unless detail is requested â€” respect people's time
 2. Use [PRODUCT:id] tags when recommending specific products (can include multiple)
 3. At the END of every response add exactly this JSON (and nothing else after it):
    {"suggestions":["short follow-up 1","short follow-up 2","short follow-up 3"]}
    Keep suggestions to 5 words or less each
 4. Be specific and human: "This kanzu would be perfect for a Zanzibar ceremony" beats "Nice formal wear"
-5. If asked about something not in catalog — say so honestly and suggest the closest match`;
+5. If asked about something not in catalog â€” say so honestly and suggest the closest match`;
   };
 
-  // ── Live voice ────────────────────────────────────────────────────────────────
+  // â”€â”€ Live voice â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const stopLiveSession = useCallback(() => {
     sessionRef.current?.then((s: any) => { try { s.close(); } catch {} });
     sessionRef.current = null;
@@ -487,7 +487,7 @@ RESPONSE FORMAT:
     } catch { stopLiveSession(); }
   };
 
-  // ── Send (streaming) ──────────────────────────────────────────────────────────
+  // â”€â”€ Send (streaming) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const handleSend = async (e?: React.FormEvent, override?: string) => {
     if (e) e.preventDefault();
     const text = override || input.trim();
@@ -502,7 +502,7 @@ RESPONSE FORMAT:
       const ai = getAI();
       const history = messages.filter(m => m.type === 'text' && !m.streaming)
         .map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.text }] }));
-      const chat = ai.chats.create({ model: MODELS.SMART, history, config: { systemInstruction: getSystem(), tools: [{ googleSearch: {} }] } });
+      const chat = ai.chats.create({ model: MODELS.TEXT, history, config: { systemInstruction: getSystem(), tools: [{ googleSearch: {} }] } });
       const payload: any[] = [];
       if (img) payload.push({ inlineData: { mimeType: 'image/jpeg', data: img.split(',')[1] } });
       if (text) payload.push({ text });
@@ -527,7 +527,7 @@ RESPONSE FORMAT:
         cleanText = full.replace(suggestMatch[0], '').trim();
       }
 
-      // Extract product tags — group into carousel
+      // Extract product tags â€” group into carousel
       const productRegex = /\[PRODUCT:([a-zA-Z0-9-]+)\]/g;
       const productIds: string[] = [];
       let match: RegExpExecArray | null;
@@ -549,7 +549,7 @@ RESPONSE FORMAT:
       }
     } catch {
       setIsTyping(false);
-      setMessages(prev => [...prev, { id: genId(), role: 'assistant', type: 'text', ts: Date.now(), text: "Oops, something went sideways! Try again — I'm still here 😊" }]);
+      setMessages(prev => [...prev, { id: genId(), role: 'assistant', type: 'text', ts: Date.now(), text: "Oops, something went sideways! Try again â€” I'm still here ðŸ˜Š" }]);
     }
   };
 
@@ -567,7 +567,7 @@ RESPONSE FORMAT:
     return prev.role !== curr.role || curr.ts - prev.ts > 60_000;
   };
 
-  // ── FAB ───────────────────────────────────────────────────────────────────────
+  // â”€â”€ FAB â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (!isOpen) return (
     <div className="fixed bottom-[84px] right-4 md:bottom-6 md:right-4 z-[90]">
       <motion.button initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
@@ -594,7 +594,7 @@ RESPONSE FORMAT:
         <div className="absolute inset-0 rounded-[18px] bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-xl shadow-emerald-500/40 overflow-hidden">
           <motion.span className="text-2xl select-none relative z-10"
             animate={{ rotate: [0, -6, 6, 0] }} transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: 1 }}>
-            🛍️
+            ðŸ›ï¸
           </motion.span>
           <motion.div className="absolute inset-0 bg-white/10"
             animate={{ opacity: [0, 0.2, 0] }} transition={{ duration: 2.5, repeat: Infinity }} />
@@ -603,12 +603,12 @@ RESPONSE FORMAT:
     </div>
   );
 
-  // ── Chat window ───────────────────────────────────────────────────────────────
+  // â”€â”€ Chat window â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const starters = [
-    { emoji: '✨', label: "What's new?",   q: "What's new in the store?" },
-    { emoji: '🎁', label: 'Gift ideas',    q: 'Help me find a gift under 50,000 TZS' },
-    { emoji: '👗', label: 'Style advice',  q: 'Give me style advice for a Tanzanian summer' },
-    { emoji: '🔥', label: 'Best deals',    q: 'Show me the best deals right now' },
+    { emoji: 'âœ¨', label: "What's new?",   q: "What's new in the store?" },
+    { emoji: 'ðŸŽ', label: 'Gift ideas',    q: 'Help me find a gift under 50,000 TZS' },
+    { emoji: 'ðŸ‘—', label: 'Style advice',  q: 'Give me style advice for a Tanzanian summer' },
+    { emoji: 'ðŸ”¥', label: 'Best deals',    q: 'Show me the best deals right now' },
   ];
 
   return (
@@ -622,7 +622,7 @@ RESPONSE FORMAT:
         <div className="flex flex-col h-full rounded-[23px] overflow-hidden bg-background/97 backdrop-blur-2xl relative">
           <MeshBackground />
 
-          {/* ── Header ── */}
+          {/* â”€â”€ Header â”€â”€ */}
           <div className="relative z-10 px-4 py-3 border-b border-foreground/6 flex items-center justify-between flex-shrink-0 bg-background/80 backdrop-blur-sm">
             <div className="flex items-center gap-3">
               <MaliAvatar size={38} rings={isLive} />
@@ -633,7 +633,7 @@ RESPONSE FORMAT:
                     animate={{ opacity: [1, 0.3, 1], scale: [1, 0.8, 1] }}
                     transition={{ duration: 2, repeat: Infinity }} />
                   <span className="text-[9px] font-bold uppercase tracking-widest text-foreground/35">
-                    {isConnecting ? 'Connecting…' : isLive ? 'Voice on' : 'Ready to help'}
+                    {isConnecting ? 'Connectingâ€¦' : isLive ? 'Voice on' : 'Ready to help'}
                   </span>
                 </div>
               </div>
@@ -662,7 +662,7 @@ RESPONSE FORMAT:
 
           {!isMinimized && (
             <>
-              {/* ── Voice overlay ── */}
+              {/* â”€â”€ Voice overlay â”€â”€ */}
               <AnimatePresence>
                 {isLive && (
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -683,7 +683,7 @@ RESPONSE FORMAT:
                     </div>
                     <div className="flex flex-col items-center gap-1">
                       <p className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground/50">Mali is listening</p>
-                      <p className="text-[9px] text-foreground/25">Speak naturally — she'll respond</p>
+                      <p className="text-[9px] text-foreground/25">Speak naturally â€” she'll respond</p>
                     </div>
                     <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
                       onClick={stopLiveSession}
@@ -694,13 +694,13 @@ RESPONSE FORMAT:
                 )}
               </AnimatePresence>
 
-              {/* ── Messages ── */}
+              {/* â”€â”€ Messages â”€â”€ */}
               <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 relative z-10 scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 <AnimatePresence initial={false}>
                   {messages.map((m, i) => (
                     <MessageBubble key={m.id} m={m} isFirst={isFirstInGroup(i)}
                       products={products}
-                      onAdd={p => { addToCart(p); addToast(`Added ${p.name} to bag 🛍️`, 'success'); }}
+                      onAdd={p => { addToCart(p); addToast(`Added ${p.name} to bag ðŸ›ï¸`, 'success'); }}
                       onSuggest={s => handleSend(undefined, s)} />
                   ))}
                 </AnimatePresence>
@@ -731,7 +731,7 @@ RESPONSE FORMAT:
                 <AnimatePresence>{isTyping && <TypingBubble />}</AnimatePresence>
               </div>
 
-              {/* ── Input ── */}
+              {/* â”€â”€ Input â”€â”€ */}
               <div className="relative z-10 px-3 pb-3 pt-2 border-t border-foreground/6 bg-background/80 backdrop-blur-sm flex-shrink-0">
                 {/* Attachment preview */}
                 <AnimatePresence>
@@ -762,7 +762,7 @@ RESPONSE FORMAT:
                     <motion.input ref={inputRef} value={input}
                       onChange={e => setInput(e.target.value)}
                       onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-                      placeholder={isLive ? 'Speaking…' : 'Ask Mali anything…'}
+                      placeholder={isLive ? 'Speakingâ€¦' : 'Ask Mali anythingâ€¦'}
                       disabled={isLive}
                       className="w-full h-10 pl-4 pr-10 rounded-2xl bg-foreground/[0.05] border border-foreground/8 focus:border-emerald-500/40 focus:bg-foreground/[0.07] text-[12px] font-medium text-foreground placeholder:text-foreground/25 outline-none transition-all"
                     />
@@ -775,7 +775,7 @@ RESPONSE FORMAT:
                             try {
                               const ai = getAI();
                               const r = await ai.models.generateContent({
-                                model: MODELS.FAST,
+                                model: MODELS.TEXT,
                                 contents: `Rephrase this shopping query to be clearer and more specific for a Tanzanian marketplace, return ONLY the rephrased query: "${input}"`,
                               });
                               setInput(r.text?.trim() || input);
