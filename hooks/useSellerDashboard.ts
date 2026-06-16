@@ -60,7 +60,7 @@ export function useSellerPendingOrders(sellerId: string | undefined) {
         queryFn:   async () => {
             const { data, error } = await supabase
                 .from('orders')
-                .select('id, total, created_at, status, profiles:buyer_id(display_name, full_name)')
+                .select('id, total, created_at, status, profiles:user_id(display_name, full_name)')
                 .eq('seller_id', sellerId!)
                 .in('status', ['pending', 'processing', 'confirmed'])
                 .order('created_at', { ascending: true })
