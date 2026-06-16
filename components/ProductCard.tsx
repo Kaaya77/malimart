@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Product } from '../types';
 import { useCart, useCatalog } from '../context/AppContext';
 import { useToast } from './UI';
@@ -8,6 +8,7 @@ import { ProductCardImage } from './product-card/ProductCardImage';
 import { ProductCardContent } from './product-card/ProductCardContent';
 import { ProductCardActions } from './product-card/ProductCardActions';
 import { useProductPricing } from '../hooks/useProductPricing';
+import { getCategoryEmoji, getActionMessage } from '../services/productExperience';
 
 interface ProductCardProps {
  product: Product;
@@ -49,6 +50,7 @@ const ProductCardInner: React.FC<ProductCardProps> = ({
  const [isHovered, setIsHovered] = useState(false);
  const [currentImgIdx, setCurrentImgIdx] = useState(0);
  const [isAdding, setIsAdding] = useState(false);
+ const [showBurst, setShowBurst] = useState(false);
  const [activeVariantImage] = useState<string | null>(null);
  const [activeVariantId] = useState<string | null>(null);
 
@@ -96,9 +98,12 @@ const ProductCardInner: React.FC<ProductCardProps> = ({
  }
 
  setIsAdding(true);
+ setShowBurst(true);
  addToCart(product);
- addToast(`${product.name} added to bag`, 'success');
+ const msg = getActionMessage('add_to_cart', product.category);
+ addToast(`${getCategoryEmoji(product.category)} ${msg}`, 'success');
  window.setTimeout(() => setIsAdding(false), 900);
+ window.setTimeout(() => setShowBurst(false), 900);
  };
 
  const handleCardClick = (e: React.MouseEvent) => {
@@ -149,6 +154,22 @@ const ProductCardInner: React.FC<ProductCardProps> = ({
  layout={layout}
  isHovered={isHovered}
  />
+ {/* Emoji burst on add-to-cart */}
+ <AnimatePresence>
+   {showBurst && Array.from({ length: 5 }).map((_, i) => (
+     <motion.span
+       key={i}
+       className="absolute pointer-events-none text-xl select-none z-50"
+       style={{ left: `${20 + i * 15}%`, bottom: '20%' }}
+       initial={{ opacity: 1, y: 0, scale: 0.5, rotate: 0 }}
+       animate={{ opacity: 0, y: -60 - i * 15, scale: 1.2, rotate: (i - 2) * 30 }}
+       exit={{ opacity: 0 }}
+       transition={{ duration: 0.7, delay: i * 0.06, ease: 'easeOut' }}
+     >
+       {getCategoryEmoji(product.category)}
+     </motion.span>
+   ))}
+ </AnimatePresence>
  </div>
 
  <ProductCardContent

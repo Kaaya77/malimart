@@ -27,7 +27,7 @@ import {
   Minus, TrendingUp, TrendingDown, Loader2,
   GripVertical, MoreHorizontal, Star, Eye,
   Check, AlertTriangle, ArrowUpRight, Wand2, Share2,
-  RotateCcw, Wifi
+  RotateCcw, Wifi, LayoutGrid, List, ChevronRight
 } from 'lucide-react';
 import { useAppState } from '../context/AppContext';
 import { useDebounce } from '../src/hooks/useDebounce';
@@ -87,6 +87,7 @@ import { StockAdjustModal } from './seller-inventory/StockAdjustModal';
 import { InventoryRow } from './seller-inventory/InventoryRow';
 import { StatCard } from './seller-inventory/StatCard';
 import { AIInventoryInsights } from './seller-inventory/AIInventoryInsights';
+import { getCategoryEmoji, getCategoryGradient } from '../services/productExperience';
 
 export const SellerInventory = ({
   products: initialProducts,
@@ -391,6 +392,7 @@ export const SellerInventory = ({
   // ── Render ────────────────────────────────────────────────────────────────
   const displayedProducts = products; // server-side filtered via p_category
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>(() => window.innerWidth < 768 ? 'cards' : 'table');
 
   const STATUS_TABS = [
     { value: 'All', label: 'All', count: totals?.total },
@@ -492,6 +494,17 @@ export const SellerInventory = ({
             className="h-10 w-10 rounded-xl border border-foreground/12 bg-foreground/[0.04] flex items-center justify-center text-foreground/50 hover:bg-foreground/[0.07] transition-colors disabled:opacity-40">
             <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
           </button>
+          {/* View mode toggle */}
+          <div className="flex items-center rounded-xl border border-foreground/12 bg-foreground/[0.04] overflow-hidden flex-shrink-0">
+            <button onClick={() => setViewMode('cards')} title="Card view"
+              className={`h-10 px-2.5 flex items-center transition-colors ${viewMode === 'cards' ? 'bg-foreground/[0.08] text-foreground' : 'text-foreground/35 hover:text-foreground/60'}`}>
+              <LayoutGrid className="w-4 h-4" />
+            </button>
+            <button onClick={() => setViewMode('table')} title="Table view"
+              className={`h-10 px-2.5 flex items-center transition-colors ${viewMode === 'table' ? 'bg-foreground/[0.08] text-foreground' : 'text-foreground/35 hover:text-foreground/60'}`}>
+              <List className="w-4 h-4" />
+            </button>
+          </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <button onClick={() => setShowAIInsights(true)} title="AI Inventory Insights"
               className="h-10 px-3.5 rounded-xl border border-emerald-500/30 bg-emerald-500/8 text-sm font-semibold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/15 hover:border-emerald-500/50 transition-all flex items-center gap-1.5">
@@ -599,7 +612,114 @@ export const SellerInventory = ({
         )}
       </AnimatePresence>
 
-      {/* Table */}
+      {/* Card view (mobile-first) */}
+      {viewMode === 'cards' && (
+        <div>
+          {loading ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {[1,2,3,4,5,6].map(i => (
+                <div key={i} className="h-52 rounded-2xl bg-foreground/[0.04] animate-pulse" />
+              ))}
+            </div>
+          ) : products.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-3">
+              <div className="w-14 h-14 rounded-2xl bg-foreground/[0.04] flex items-center justify-center">
+                <Package className="w-7 h-7 text-foreground/20" />
+              </div>
+              <p className="text-sm font-bold text-foreground/30">
+                {debouncedSearch ? 'No products match your search' : 'No products yet'}
+              </p>
+              {!debouncedSearch && (
+                <button onClick={() => navigate('/seller/products/new')}
+                  className="mt-2 h-10 px-6 rounded-xl bg-emerald-600 text-white text-sm font-black hover:bg-emerald-700 transition-colors">
+                  Add your first product
+                </button>
+              )}
+            </div>
+          ) : (
+            <AnimatePresence initial={false}>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {displayedProducts.map((p, idx) => {
+                  const statusColor = p.status === 'active' ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400' :
+                    p.status === 'draft' ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400' :
+                    'bg-foreground/8 text-foreground/50';
+                  const stockAlert = (p as any).is_out_of_stock ? 'text-red-500' : (p as any).is_low_stock ? 'text-amber-500' : 'text-emerald-600';
+                  return (
+                    <motion.div
+                      key={p.id}
+                      initial={{ opacity: 0, y: 12, scale: 0.97 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ delay: idx * 0.03 }}
+                      className={`relative bg-card rounded-2xl border overflow-hidden cursor-pointer group transition-all hover:shadow-md ${
+                        selectedIds.has(p.id) ? 'border-emerald-500/50 ring-2 ring-emerald-500/20' : 'border-foreground/8 hover:border-foreground/15'
+                      }`}
+                      onClick={() => toggleSelect(p.id)}
+                    >
+                      {/* Product image */}
+                      <div className="relative aspect-square bg-foreground/[0.03] overflow-hidden">
+                        {p.images?.[0] ? (
+                          <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
+                        ) : (
+                          <div className={`w-full h-full bg-gradient-to-br ${getCategoryGradient(p.category)} opacity-20 flex items-center justify-center`}>
+                            <span className="text-3xl opacity-60">{getCategoryEmoji(p.category)}</span>
+                          </div>
+                        )}
+                        {/* Status badge */}
+                        <div className={`absolute top-2 left-2 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${statusColor}`}>
+                          {p.status}
+                        </div>
+                        {/* Selected overlay */}
+                        {selectedIds.has(p.id) && (
+                          <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="absolute inset-0 bg-emerald-500/20 flex items-center justify-center"
+                          >
+                            <div className="w-7 h-7 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg">
+                              <Check className="w-4 h-4 text-white" />
+                            </div>
+                          </motion.div>
+                        )}
+                      </div>
+
+                      {/* Info */}
+                      <div className="p-2.5">
+                        <p className="text-xs font-bold text-foreground leading-snug line-clamp-2 mb-1.5">{p.name}</p>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-black text-emerald-600">{formatTZS(p.price)}</span>
+                          <span className={`text-[10px] font-bold ${stockAlert}`}>
+                            {(p as any).is_out_of_stock ? '0 left' : `${p.stock} left`}
+                          </span>
+                        </div>
+
+                        {/* Quick actions */}
+                        <div className="flex gap-1 mt-2" onClick={e => e.stopPropagation()}>
+                          <button
+                            onClick={() => navigate(`/seller/products/${p.id}/edit`)}
+                            className="flex-1 h-7 rounded-lg bg-foreground/5 hover:bg-foreground/10 text-[9px] font-black uppercase text-foreground/60 hover:text-foreground transition-all flex items-center justify-center gap-1"
+                          >
+                            <Edit2 className="w-3 h-3" /> Edit
+                          </button>
+                          <button
+                            onClick={() => setStockAdjProduct(p)}
+                            className="flex-1 h-7 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-[9px] font-black uppercase text-emerald-600 transition-all flex items-center justify-center gap-1"
+                          >
+                            <TrendingUp className="w-3 h-3" /> Stock
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </AnimatePresence>
+          )}
+        </div>
+      )}
+
+      {/* Table view */}
+      {viewMode === 'table' && (
       <div className="rounded-2xl border border-foreground/8 overflow-hidden bg-card">
         {/* Table header (desktop) */}
         <div className="hidden md:grid items-center px-4 py-3 border-b border-foreground/8 bg-foreground/[0.02] text-[9px] font-black uppercase tracking-widest text-foreground/40"
@@ -700,6 +820,26 @@ export const SellerInventory = ({
           </div>
         )}
       </div>
+      )}
+
+      {/* Pagination for card view */}
+      {viewMode === 'cards' && totalCount > PAGE_SIZE && (
+        <div className="flex items-center justify-between mt-2">
+          <p className="text-[11px] text-foreground/40">
+            {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, totalCount)} of {totalCount}
+          </p>
+          <div className="flex gap-2">
+            <button disabled={page === 0} onClick={() => setPage(p => p - 1)}
+              className="h-9 px-4 rounded-xl border border-foreground/12 text-xs font-semibold text-foreground/60 hover:bg-foreground/[0.05] disabled:opacity-30 transition-colors">
+              Prev
+            </button>
+            <button disabled={page + 1 >= totalPages} onClick={() => setPage(p => p + 1)}
+              className="h-9 px-4 rounded-xl border border-foreground/12 text-xs font-semibold text-foreground/60 hover:bg-foreground/[0.05] disabled:opacity-30 transition-colors">
+              Next
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Stock adjustment modal */}
       {stockAdjProduct && (

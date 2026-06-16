@@ -135,6 +135,35 @@
     33% { transform: translateY(-8px) rotate(0.5deg); }
     66% { transform: translateY(-4px) rotate(-0.3deg); }
   }
+
+  @keyframes mali-pop {
+    0% { transform: scale(0.5) rotate(-10deg); opacity: 0; }
+    60% { transform: scale(1.15) rotate(5deg); opacity: 1; }
+    80% { transform: scale(0.95) rotate(-2deg); }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+
+  @keyframes mali-sway {
+    0%, 100% { transform: rotate(-8deg) translateY(0); }
+    50% { transform: rotate(8deg) translateY(-6px); }
+  }
+
+  @keyframes mali-confetti {
+    0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  }
+
+  @keyframes bounce-in {
+    0% { transform: scale(0); opacity: 0; }
+    50% { transform: scale(1.15); }
+    70% { transform: scale(0.95); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  @keyframes slide-up-fade {
+    from { transform: translateY(16px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
 }
 
 /* ─── Shimmer utility ─── */
@@ -341,7 +370,34 @@
     @apply text-center text-muted-foreground text-sm py-2;
   }
 }
-/* cache-bust: 20260521114205 */
+/* cache-bust: 20260616-redesign */
+
+/* ─── Dark mode explicit overrides for stubborn elements ─── */
+@layer base {
+  /* Fix select elements in dark mode */
+  .dark select {
+    color-scheme: dark;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+
+  /* Fix scrollbar in dark mode */
+  .dark {
+    color-scheme: dark;
+    scrollbar-color: hsl(var(--muted)) transparent;
+  }
+
+  /* Better focus rings */
+  .dark *:focus-visible {
+    @apply ring-primary/40;
+  }
+
+  /* Fun animation utilities */
+  .animate-mali-pop { animation: mali-pop 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  .animate-mali-sway { animation: mali-sway 3.2s ease-in-out infinite; }
+  .animate-bounce-in { animation: bounce-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  .animate-slide-up-fade { animation: slide-up-fade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+}
 
 /* === ENHANCED MOBILE & TOUCH IMPROVEMENTS === */
 @layer base {

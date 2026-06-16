@@ -8,6 +8,7 @@ import { useToast } from './UI';
 import { useAppState } from '../context/AppContext';
 import { formatTZS } from '../constants';
 import { LiveServerMessage, Modality } from '@google/genai';
+import { MaliAnimalAvatar, AnimalPicker, useAnimalAvatar, type EmoteType } from './MaliAnimalAvatar';
 
 // â”€â”€ Audio helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function resample(data: Float32Array, from: number, to: number): Float32Array {
@@ -69,26 +70,9 @@ const MeshBackground = () => (
 );
 
 // â”€â”€ Mali avatar with optional rings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-const MaliAvatar = ({ size = 36, rings = false, pulse = false }: { size?: number; rings?: boolean; pulse?: boolean }) => (
-  <div className="relative flex-shrink-0" style={{ width: size, height: size }}>
-    {rings && [1,2,3].map(i => (
-      <motion.div key={i}
-        className="absolute inset-0 rounded-2xl border border-emerald-400/30"
-        style={{ borderRadius: size * 0.3 }}
-        animate={{ scale: [1, 1.2 + i * 0.15], opacity: [0.5, 0] }}
-        transition={{ duration: 1.8, delay: i * 0.4, repeat: Infinity, ease: 'easeOut' }}
-      />
-    ))}
-    <motion.div
-      className="absolute inset-0 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/30"
-      style={{ borderRadius: size * 0.3 }}
-      animate={pulse ? { scale: [1, 1.05, 1] } : {}}
-      transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-    >
-      <span style={{ fontSize: size * 0.52 }} className="select-none">ðŸ›ï¸</span>
-      <div className="absolute inset-0 bg-gradient-to-t from-black/15 to-white/10 rounded-2xl" style={{ borderRadius: size * 0.3 }} />
-    </motion.div>
-  </div>
+// MaliAvatar now delegates to MaliAnimalAvatar
+const MaliAvatar = ({ size = 36, rings = false, pulse = false, emote }: { size?: number; rings?: boolean; pulse?: boolean; emote?: EmoteType }) => (
+  <MaliAnimalAvatar size={size} rings={rings} pulse={pulse} emote={emote ?? 'idle'} />
 );
 
 // â”€â”€ Voice mode waveform (canvas) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -356,9 +340,20 @@ export const AIChatAssistant = () => {
   const { addToast } = useToast();
 
   const firstName = user?.full_name?.split(' ')[0] || (user as any)?.display_name || null;
-  const greeting = firstName
-    ? `Hey ${firstName}! ðŸ‘‹ I'm Mali, your shopping companion. What are we hunting for today?`
-    : `Hey! ðŸ‘‹ I'm Mali â€” part shopping buddy, part style guide. What can I help you find today?`;
+  const { animalInfo } = useAnimalAvatar();
+
+  const _greetWithName = [
+    (n: string, a: typeof animalInfo) => `Hey ${n}! Your ${a.name} companion is ready to help. What are we shopping for? ${a.emoji}`,
+    (n: string, a: typeof animalInfo) => `Habari ${n}! ${a.emoji} Let's find something amazing today!`,
+    (n: string, a: typeof animalInfo) => `Karibu ${n}! Shopping time is best time ${a.emoji}`,
+  ];
+  const _greetNoName = [
+    (a: typeof animalInfo) => `Jambo! ${a.emoji} I'm ${a.name}, your MaliMart companion. What are we hunting for?`,
+    (a: typeof animalInfo) => `Hey there! ${a.emoji} Ready to find something amazing in Tanzania's best marketplace?`,
+    (a: typeof animalInfo) => `Karibu! ${a.emoji} ${a.name} here — your personal shopping buddy!`,
+  ];
+  const _pick = <T,>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
+  const greeting = firstName ? _pick(_greetWithName)(firstName, animalInfo) : _pick(_greetNoName)(animalInfo);
 
   const [isOpen, setIsOpen]         = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
@@ -370,6 +365,8 @@ export const AIChatAssistant = () => {
   const [isLive, setIsLive]         = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isTyping, setIsTyping]     = useState(false);
+  const [avatarEmote, setAvatarEmote] = useState<EmoteType>('waving');
+  const [showAnimalPicker, setShowAnimalPicker] = useState(false);
 
   const scrollRef    = useRef<HTMLDivElement>(null);
   const inputRef     = useRef<HTMLInputElement>(null);
@@ -497,6 +494,7 @@ RESPONSE FORMAT:
     setInput(''); setAttachment(null);
     setMessages(prev => [...prev, { id: genId(), role: 'user', text, image: img || undefined, type: 'text', ts: Date.now() }]);
     setIsTyping(true);
+    setAvatarEmote('thinking');
 
     try {
       const ai = getAI();
@@ -510,6 +508,8 @@ RESPONSE FORMAT:
       const stream = await chat.sendMessageStream({ message: payload });
       const aid = genId();
       setIsTyping(false);
+      setAvatarEmote('happy');
+      setTimeout(() => setAvatarEmote('idle'), 1800);
       setMessages(prev => [...prev, { id: aid, role: 'assistant', text: '', type: 'text', ts: Date.now(), streaming: true }]);
 
       let full = '';
@@ -590,14 +590,9 @@ RESPONSE FORMAT:
           </motion.div>
         ))}
 
-        {/* Button surface */}
-        <div className="absolute inset-0 rounded-[18px] bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-xl shadow-emerald-500/40 overflow-hidden">
-          <motion.span className="text-2xl select-none relative z-10"
-            animate={{ rotate: [0, -6, 6, 0] }} transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: 1 }}>
-            ðŸ›ï¸
-          </motion.span>
-          <motion.div className="absolute inset-0 bg-white/10"
-            animate={{ opacity: [0, 0.2, 0] }} transition={{ duration: 2.5, repeat: Infinity }} />
+        {/* Button surface -- shows user's chosen animal */}
+        <div className="absolute inset-0 rounded-[18px] flex items-center justify-center shadow-xl overflow-hidden">
+          <MaliAnimalAvatar size={56} pulse emote="waving" />
         </div>
       </motion.button>
     </div>
@@ -625,9 +620,21 @@ RESPONSE FORMAT:
           {/* â”€â”€ Header â”€â”€ */}
           <div className="relative z-10 px-4 py-3 border-b border-foreground/6 flex items-center justify-between flex-shrink-0 bg-background/80 backdrop-blur-sm">
             <div className="flex items-center gap-3">
-              <MaliAvatar size={38} rings={isLive} />
+              <div className="relative">
+                <motion.button whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.93 }}
+                  onClick={() => setShowAnimalPicker(v => !v)} title="Change companion">
+                  <MaliAvatar size={38} rings={isLive} emote={avatarEmote} />
+                </motion.button>
+                <AnimatePresence>
+                  {showAnimalPicker && (
+                    <div className="absolute top-12 left-0 z-50">
+                      <AnimalPicker onClose={() => setShowAnimalPicker(false)} />
+                    </div>
+                  )}
+                </AnimatePresence>
+              </div>
               <div>
-                <p className="font-black text-sm bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">Mali</p>
+                <p className="font-black text-sm bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">{animalInfo.name}</p>
                 <div className="flex items-center gap-1.5">
                   <motion.span className={`w-1.5 h-1.5 rounded-full ${isLive ? 'bg-red-500' : 'bg-emerald-500'}`}
                     animate={{ opacity: [1, 0.3, 1], scale: [1, 0.8, 1] }}

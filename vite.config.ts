@@ -210,6 +210,7 @@ export default defineConfig(({ mode }) => {
         '@supabase/supabase-js',
         'framer-motion',
         'lucide-react',
+        'p-retry',
       ],
       exclude: [
         // Never pre-bundle — always lazy loaded

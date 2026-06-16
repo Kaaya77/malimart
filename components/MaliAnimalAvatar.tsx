@@ -1,0 +1,170 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+export type AnimalType = 'fox' | 'cat' | 'panda' | 'bunny' | 'bear' | 'lion' | 'owl' | 'parrot';
+export type EmoteType = 'idle' | 'happy' | 'thinking' | 'excited' | 'surprised' | 'love' | 'sleeping' | 'dancing' | 'waving' | 'cool' | 'sad';
+
+export const ANIMALS: Record<AnimalType, { emoji: string; name: string; gradient: string; accent: string }> = {
+  fox:    { emoji: '🦊', name: 'Hadithi',  gradient: 'from-orange-400 via-red-400 to-orange-600',   accent: 'orange' },
+  cat:    { emoji: '🐱', name: 'Paka',     gradient: 'from-violet-400 via-purple-400 to-indigo-500', accent: 'purple' },
+  panda:  { emoji: '🐼', name: 'Nguvu',    gradient: 'from-slate-300 via-gray-400 to-slate-600',     accent: 'slate'  },
+  bunny:  { emoji: '🐰', name: 'Haraka',   gradient: 'from-pink-300 via-rose-400 to-pink-500',       accent: 'pink'   },
+  bear:   { emoji: '🐻', name: 'Simba',    gradient: 'from-amber-500 via-orange-500 to-amber-700',   accent: 'amber'  },
+  lion:   { emoji: '🦁', name: 'Mfalme',   gradient: 'from-yellow-400 via-amber-400 to-yellow-600',  accent: 'yellow' },
+  owl:    { emoji: '🦉', name: 'Akili',    gradient: 'from-teal-400 via-cyan-400 to-teal-600',       accent: 'teal'   },
+  parrot: { emoji: '🦜', name: 'Kelele',   gradient: 'from-emerald-400 via-green-400 to-teal-500',   accent: 'emerald'},
+};
+
+const EMOTES: Record<EmoteType, { overlay: string; animation: object; label: string }> = {
+  idle:      { overlay: '',   animation: {}, label: '' },
+  happy:     { overlay: '😊', animation: { rotate: [0, -8, 8, 0] }, label: 'Happy!' },
+  thinking:  { overlay: '🤔', animation: { y: [0, -3, 0] }, label: 'Thinking...' },
+  excited:   { overlay: '🤩', animation: { scale: [1, 1.15, 1], rotate: [0, 5, -5, 0] }, label: 'Woah!' },
+  surprised: { overlay: '😲', animation: { scale: [1, 1.2, 0.95, 1] }, label: 'Whoa!' },
+  love:      { overlay: '😍', animation: { scale: [1, 1.1, 1], y: [0, -4, 0] }, label: 'Love it!' },
+  sleeping:  { overlay: '😴', animation: { rotate: [0, 3, -3, 0] }, label: 'Zzzz...' },
+  dancing:   { overlay: '🕺', animation: { x: [-4, 4, -4], rotate: [-5, 5, -5] }, label: 'Yay!' },
+  waving:    { overlay: '👋', animation: { rotate: [0, 15, -5, 15, 0] }, label: 'Hi!' },
+  cool:      { overlay: '😎', animation: { scale: [1, 1.05, 1] }, label: 'Cool!' },
+  sad:       { overlay: '😢', animation: { y: [0, 3, 0], rotate: [-3, 3, -3] }, label: 'Oops...' },
+};
+
+const STORAGE_KEY = 'mali_animal';
+
+export function useAnimalAvatar() {
+  const [animal, setAnimalState] = useState<AnimalType>(() => {
+    const saved = localStorage.getItem(STORAGE_KEY) as AnimalType;
+    return saved && ANIMALS[saved] ? saved : 'fox';
+  });
+
+  const setAnimal = useCallback((a: AnimalType) => {
+    setAnimalState(a);
+    localStorage.setItem(STORAGE_KEY, a);
+  }, []);
+
+  return { animal, setAnimal, animalInfo: ANIMALS[animal] };
+}
+
+interface MaliAnimalAvatarProps {
+  size?: number;
+  rings?: boolean;
+  pulse?: boolean;
+  emote?: EmoteType;
+  animal?: AnimalType;
+  showEmoteLabel?: boolean;
+  className?: string;
+}
+
+export const MaliAnimalAvatar = ({
+  size = 36,
+  rings = false,
+  pulse = false,
+  emote = 'idle',
+  animal: animalProp,
+  showEmoteLabel = false,
+  className = '',
+}: MaliAnimalAvatarProps) => {
+  const { animal: storedAnimal } = useAnimalAvatar();
+  const animal = animalProp ?? storedAnimal;
+  const info = ANIMALS[animal];
+  const emoteInfo = EMOTES[emote];
+  const br = size * 0.28;
+
+  return (
+    <div className={`relative flex-shrink-0 ${className}`} style={{ width: size, height: size }}>
+      {rings && [1, 2, 3].map(i => (
+        <motion.div key={i}
+          className={`absolute inset-0 rounded-[${br}px] border border-current opacity-30`}
+          style={{ borderRadius: br, color: info.accent }}
+          animate={{ scale: [1, 1.2 + i * 0.12], opacity: [0.4, 0] }}
+          transition={{ duration: 1.8, delay: i * 0.4, repeat: Infinity, ease: 'easeOut' }}
+        />
+      ))}
+
+      <motion.div
+        className={`absolute inset-0 bg-gradient-to-br ${info.gradient} flex items-center justify-center shadow-lg`}
+        style={{ borderRadius: br }}
+        animate={pulse ? { scale: [1, 1.05, 1] } : (Object.keys(emoteInfo.animation).length > 0 ? emoteInfo.animation as any : undefined)}
+        transition={pulse
+          ? { duration: 1.5, repeat: Infinity, ease: 'easeInOut' }
+          : { duration: 0.6, ease: 'easeInOut' }
+        }
+      >
+        <span style={{ fontSize: size * 0.58, lineHeight: 1 }} className="select-none">
+          {info.emoji}
+        </span>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-white/15" style={{ borderRadius: br }} />
+      </motion.div>
+
+      {/* Emote overlay bubble */}
+      <AnimatePresence>
+        {emote !== 'idle' && emoteInfo.overlay && (
+          <motion.div
+            key={emote}
+            initial={{ scale: 0, opacity: 0, y: 4 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0, opacity: 0, y: -4 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+            className="absolute -top-2 -right-2 bg-white dark:bg-gray-800 rounded-full shadow-md flex items-center justify-center"
+            style={{ width: size * 0.5, height: size * 0.5, fontSize: size * 0.28 }}
+          >
+            {emoteInfo.overlay}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Emote label */}
+      <AnimatePresence>
+        {showEmoteLabel && emote !== 'idle' && emoteInfo.label && (
+          <motion.div
+            initial={{ opacity: 0, y: 4, scale: 0.8 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -4, scale: 0.8 }}
+            className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[9px] font-black whitespace-nowrap text-foreground/60 bg-background/80 backdrop-blur px-1.5 py-0.5 rounded-full border border-foreground/10"
+          >
+            {emoteInfo.label}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+// ── Animal Picker UI ───────────────────────────────────────────────────────────
+interface AnimalPickerProps {
+  onClose?: () => void;
+}
+
+export const AnimalPicker = ({ onClose }: AnimalPickerProps) => {
+  const { animal, setAnimal } = useAnimalAvatar();
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9, y: 8 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.9, y: 8 }}
+      className="bg-background border border-foreground/10 rounded-2xl shadow-xl p-4 w-64"
+    >
+      <p className="text-[10px] font-black uppercase tracking-widest text-foreground/40 mb-3">Choose your companion</p>
+      <div className="grid grid-cols-4 gap-2">
+        {(Object.entries(ANIMALS) as [AnimalType, typeof ANIMALS[AnimalType]][]).map(([key, info]) => (
+          <motion.button
+            key={key}
+            whileHover={{ scale: 1.12, y: -2 }}
+            whileTap={{ scale: 0.92 }}
+            onClick={() => { setAnimal(key); onClose?.(); }}
+            className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${
+              animal === key
+                ? 'bg-emerald-500/15 ring-2 ring-emerald-500/40'
+                : 'hover:bg-foreground/5'
+            }`}
+          >
+            <span style={{ fontSize: 24 }}>{info.emoji}</span>
+            <span className="text-[8px] font-bold text-foreground/50">{info.name}</span>
+          </motion.button>
+        ))}
+      </div>
+      <p className="text-[9px] text-foreground/30 text-center mt-3">Your Mali companion follows you everywhere ✨</p>
+    </motion.div>
+  );
+};
