@@ -35,12 +35,22 @@ export function verify(root) {
 
 export function applyEdits(root, edits = []) {
   for (const e of edits) {
+    const op = e.op || (e.oldText === '' ? 'create' : 'edit');
     const fp = path.join(root, e.file);
-    if (e.oldText === '') {
+
+    if (op === 'delete') {
+      if (!fs.existsSync(fp)) throw new Error(`delete: file not found: ${e.file}`);
+      fs.rmSync(fp);
+      continue;
+    }
+
+    if (op === 'create' || op === 'migration') {
       fs.mkdirSync(path.dirname(fp), { recursive: true });
       fs.writeFileSync(fp, e.newText);
       continue;
     }
+
+    // op === 'edit'
     const s = fs.readFileSync(fp, 'utf8');
     const idx = s.indexOf(e.oldText);
     if (idx === -1) throw new Error(`edit oldText not found in ${e.file}`);
@@ -69,8 +79,13 @@ export async function runReview({ edits, repoMap, blastRadius = [], changedFiles
   for (const l of reviewLenses) {
     const system = LENS_PROMPTS[l];
     if (!system) continue;
-    const user = `Edits under review, plus the change's blastRadius. Return a JSON array of Finding objects only.\n\n${JSON.stringify({ edits, blastRadius }, null, 2)}`;
-    const arr = parseJson(await callFn({ tier: l === 'security' ? 'strong' : 'cheap', system, user }));
+    // migration lens only sees migration edits; others see everything
+    const scopedEdits = l === 'migration'
+      ? edits.filter((e) => /supabase\/migrations\/.*\.sql$/i.test(e.file))
+      : edits;
+    const strongLenses = new Set(['security', 'migration']);
+    const user = `Edits under review, plus the change's blastRadius. Return a JSON array of Finding objects only.\n\n${JSON.stringify({ edits: scopedEdits, blastRadius }, null, 2)}`;
+    const arr = parseJson(await callFn({ tier: strongLenses.has(l) ? 'strong' : 'cheap', system, user }));
     if (Array.isArray(arr)) findings = findings.concat(arr);
   }
   return { lensesRun, findings };

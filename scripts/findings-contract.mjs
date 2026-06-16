@@ -25,7 +25,7 @@ import fs from 'node:fs';
 /** @typedef {{ tsc: { ok: boolean, errors: number }, build: { ok: boolean, errors: number } }} VerifyResult */
 /** @typedef {{ schemaVersion: '1.0', task: string, attempt: number, maxAttempts: number, diffRef?: string, verify: VerifyResult, lensesRun: LensName[], findings: Finding[], verdict?: Verdict }} FindingsReport */
 
-export const LENSES = ['security', 'ai-integration', 'design-ux', 'verify', 'build'];
+export const LENSES = ['security', 'ai-integration', 'design-ux', 'migration', 'verify', 'build'];
 export const SEVERITIES = ['blocking', 'advisory'];
 
 /**
@@ -150,6 +150,7 @@ export function lensesForChange(blastRadius = [], changedFiles = []) {
     set.add('security');
   if (changedFiles.some((f) => /aiService|AIChatAssistant|genai/i.test(f))) set.add('ai-integration');
   if (changedFiles.some((f) => /\.(tsx|css)$/i.test(f) || /components\/UI/i.test(f))) set.add('design-ux');
+  if (changedFiles.some((f) => /supabase\/migrations\/.*\.sql$/i.test(f))) set.add('migration');
   return [...set];
 }
 

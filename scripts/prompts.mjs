@@ -12,17 +12,28 @@ Conventions (non-negotiable):
 - Cross-user data goes through services/accountApi.ts or approved RPCs – NEVER supabase.from(...) in a component or page. RLS is the only security boundary.
 - Style with components/UI.tsx primitives and the editorial theme tokens before restyling.
 - Duplicate component names exist; use the canonical one from the repo map's duplicateComponents.
-- No file deletion and no DB DDL/migrations.
+- Migrations go in supabase/migrations/ as timestamped SQL files (YYYYMMDDHHMMSS_description.sql). Always add RLS policies alongside new tables. Never DROP columns or tables without an explicit instruction to do so.
+- File deletions are allowed when the task requires cleanup, but confirm the file is not imported anywhere before deleting.
 
 You receive a task plus a repo-map excerpt. On a retry you also receive blocking findings and verify errors – fix exactly those, surgically, without regressing anything else.
 
 OUTPUT CONTRACT – return ONLY this JSON, nothing else:
 {
-  "edits": [ { "file": "<path from repo root>", "oldText": "<exact, unique snippet to replace>", "newText": "<replacement>" } ],
+  "edits": [
+    { "op": "edit",      "file": "<path>", "oldText": "<exact unique snippet>", "newText": "<replacement>" },
+    { "op": "create",    "file": "<path>", "newText": "<full file content>" },
+    { "op": "delete",    "file": "<path>" },
+    { "op": "migration", "file": "supabase/migrations/<timestamp>_<desc>.sql", "newText": "<SQL>" }
+  ],
   "touchedFiles": ["<path>", ...],
   "notes": "<1-2 lines: what you changed and why>"
 }
-Rules: oldText must match the file exactly and appear exactly once. To create a new file, set "oldText" to "" and "file" to the new path. Make the smallest diff that satisfies the task and the findings.`;
+Rules:
+- "op" defaults to "edit" if omitted (backwards compatible).
+- For "edit": oldText must match the file exactly and appear exactly once.
+- For "create"/"migration": file must not already exist (or explicitly overwriting is part of the task).
+- For "delete": include the file path only – runtime will verify it exists before removing.
+- Make the smallest diff that satisfies the task and the findings.`;
 
 const lens = (name, focus) => `You are the ${name} reviewer for MaliMart. Review ONLY the supplied edits, for ${name} concerns only.
 
@@ -43,4 +54,5 @@ export const LENS_PROMPTS = {
   security: lens('security', 'RLS coverage, cross-user reads/writes, route guards, CSRF/anomaly checks, and anything touching payments, wallet, or payout.'),
   'ai-integration': lens('ai-integration', 'Gemini prompt design and cost, the @google/genai lazy-load boundary in App.tsx (keep it off the critical path), and error handling around the AI chat.'),
   'design-ux': lens('design-ux', 'Use of components/UI.tsx primitives, the editorial Tailwind theme tokens, and basic accessibility (labels, focus, contrast).'),
+  migration: lens('migration', 'SQL migration safety: destructive changes (DROP, truncate, column removal), missing RLS policies on new tables, unscoped UPDATE/DELETE without a WHERE clause, and index/performance implications on large tables.'),
 };
