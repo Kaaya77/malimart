@@ -86,6 +86,7 @@ import { STATUS_CFG } from './seller-inventory/config';
 import { StockAdjustModal } from './seller-inventory/StockAdjustModal';
 import { InventoryRow } from './seller-inventory/InventoryRow';
 import { StatCard } from './seller-inventory/StatCard';
+import { AIInventoryInsights } from './seller-inventory/AIInventoryInsights';
 
 export const SellerInventory = ({
   products: initialProducts,
@@ -132,6 +133,7 @@ export const SellerInventory = ({
   const [restoreModal, setRestoreModal] = useState<{ ids: string[]; open: boolean }>({ ids: [], open: false });
   const [alertDismissed, setAlertDismissed] = useState(false);
   const [liveIndicator, setLiveIndicator] = useState(false);
+  const [showAIInsights, setShowAIInsights] = useState(false);
 
   // ── Fetch ────────────────────────────────────────────────────────────────────
   const fetchInventory = useCallback(async (silent = false) => {
@@ -491,6 +493,10 @@ export const SellerInventory = ({
             <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
           </button>
           <div className="flex items-center gap-2 flex-shrink-0">
+            <button onClick={() => setShowAIInsights(true)} title="AI Inventory Insights"
+              className="h-10 px-3.5 rounded-xl border border-emerald-500/30 bg-emerald-500/8 text-sm font-semibold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/15 hover:border-emerald-500/50 transition-all flex items-center gap-1.5">
+              <Wand2 className="w-4 h-4" /><span className="hidden sm:inline text-xs font-black">AI Insights</span>
+            </button>
             <button onClick={() => navigate('/seller/products/new')}
               className="h-10 px-5 rounded-xl bg-emerald-600 text-white text-sm font-black hover:bg-emerald-700 active:scale-95 transition-all flex items-center gap-2">
               <Plus className="w-4 h-4" /><span className="hidden sm:inline">New Product</span><span className="sm:hidden">New</span>
@@ -752,6 +758,23 @@ export const SellerInventory = ({
         product={productForDiscount as any}
         onSave={() => fetchInventory(true)}
       />
+
+      {/* AI Inventory Insights panel */}
+      <AnimatePresence>
+        {showAIInsights && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[199] bg-black/30 backdrop-blur-sm"
+              onClick={() => setShowAIInsights(false)}
+            />
+            <AIInventoryInsights
+              products={products as any}
+              onClose={() => setShowAIInsights(false)}
+            />
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

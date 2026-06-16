@@ -22,10 +22,10 @@ export const ProfileTab = () => {
             const ext = file.name.split('.').pop() ?? 'jpg';
             const path = `avatars/${user.id}.${ext}`;
             const { error: uploadError } = await supabase.storage
-                .from('product-images')
+                .from('mali-mart-uploads')
                 .upload(path, compressed, { upsert: true, contentType: file.type });
             if (uploadError) throw uploadError;
-            const { data } = supabase.storage.from('product-images').getPublicUrl(path);
+            const { data } = supabase.storage.from('mali-mart-uploads').getPublicUrl(path);
             const url = data.publicUrl + `?v=${Date.now()}`;
             setProfileData((prev: any) => ({ ...prev, avatar_url: url }));
             await updateUserProfile({ avatar_url: url });
@@ -47,10 +47,10 @@ export const ProfileTab = () => {
             const ext = file.name.split('.').pop() ?? 'jpg';
             const path = `covers/${user.id}.${ext}`;
             const { error: uploadError } = await supabase.storage
-                .from('product-images')
+                .from('mali-mart-uploads')
                 .upload(path, compressed, { upsert: true, contentType: file.type });
             if (uploadError) throw uploadError;
-            const { data } = supabase.storage.from('product-images').getPublicUrl(path);
+            const { data } = supabase.storage.from('mali-mart-uploads').getPublicUrl(path);
             const url = data.publicUrl + `?v=${Date.now()}`;
             setProfileData((prev: any) => ({ ...prev, cover_image_url: url }));
             await updateUserProfile({ cover_image_url: url });

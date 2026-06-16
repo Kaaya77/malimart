@@ -75,10 +75,10 @@ export function AccountSettingsPage() {
       const ext = file.name.split('.').pop() ?? 'jpg';
       const path = `avatars/${user.id}.${ext}`;
       const { error: uploadError } = await supabase.storage
-        .from('product-images')
+        .from('mali-mart-uploads')
         .upload(path, compressed, { upsert: true, contentType: file.type });
       if (uploadError) throw uploadError;
-      const { data } = supabase.storage.from('product-images').getPublicUrl(path);
+      const { data } = supabase.storage.from('mali-mart-uploads').getPublicUrl(path);
       const url = data.publicUrl + `?v=${Date.now()}`;
       set('avatar_url', url);
       await updateMySettings({ avatar_url: url });

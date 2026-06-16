@@ -1,12 +1,14 @@
 import { safeJsonParse } from '../src/security';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, X, Loader2, ArrowRight, TrendingUp, Tag, Clock, Trash2 } from 'lucide-react';
+import { Search, X, Loader2, ArrowRight, TrendingUp, Tag, Clock, Trash2, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppState } from '../context/AppContext';
 import { formatTZS } from '../constants';
 import { useDebounce } from '../src/hooks/useDebounce';
 import { supabase } from '../services/supabaseClient';
+import { getAI } from '../services/aiClient';
+import { MODELS } from '../services/aiModels';
 
 interface SearchModalProps {
  isSearchOpen: boolean;
@@ -74,6 +76,53 @@ export const SearchModal = ({
    })();
    return () => { cancelled = true; };
  }, [debouncedQuery]);
+
+ // AI intent parsing — interprets natural language queries
+ const [aiIntent, setAiIntent] = useState<{ keywords: string; note: string; maxPrice?: number } | null>(null);
+ const aiIntentTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+ const lastParsedQuery = useRef('');
+
+ useEffect(() => {
+   const q = debouncedQuery.trim();
+   if (q.length < 5 || q === lastParsedQuery.current) return;
+   // Only trigger AI for natural-language-looking queries (contains space or price words)
+   const looksNatural = /\s/.test(q) || /\d{3,}|cheap|under|below|best|good|affordable/i.test(q);
+   if (!looksNatural) { setAiIntent(null); return; }
+   if (aiIntentTimer.current) clearTimeout(aiIntentTimer.current);
+   aiIntentTimer.current = setTimeout(async () => {
+     lastParsedQuery.current = q;
+     try {
+       const ai = getAI();
+       const res = await ai.models.generateContent({
+         model: MODELS.FAST,
+         contents: [{ role: 'user', parts: [{ text: `You are a search assistant for MaliMart, a Tanzanian e-commerce marketplace. The user typed this search query: "${q}". Extract structured intent as JSON with these fields: keywords (main search term, 1-3 words), note (what you understood, max 8 words), maxPrice (number in TZS if mentioned, else null). Respond ONLY with valid JSON, no markdown.` }] }],
+         config: { maxOutputTokens: 80 },
+       });
+       const text = (res.text ?? '').trim().replace(/```json|```/g, '');
+       const parsed = JSON.parse(text);
+       if (parsed?.keywords) setAiIntent(parsed);
+     } catch { /* silent */ }
+   }, 600);
+   return () => { if (aiIntentTimer.current) clearTimeout(aiIntentTimer.current); };
+ }, [debouncedQuery]);
+
+ // When aiIntent changes, refine server search with extracted keywords
+ useEffect(() => {
+   if (!aiIntent?.keywords) return;
+   const q = aiIntent.keywords;
+   let cancelled = false;
+   setServerSearching(true);
+   (async () => {
+     try {
+       let query = supabase.from('products').select('id,name,price,images,category,seller_name,seller_id,status').eq('status', 'active').is('deleted_at', null).or(`name.ilike.%${q}%,category.ilike.%${q}%,seller_name.ilike.%${q}%`);
+       if (aiIntent.maxPrice) query = query.lte('price', aiIntent.maxPrice);
+       const { data } = await query.limit(12);
+       if (!cancelled) setServerResults(data ?? []);
+     } catch { /* silent */ }
+     finally { if (!cancelled) setServerSearching(false); }
+   })();
+   return () => { cancelled = true; };
+ }, [aiIntent]);
 
  // Merge: local in-memory results first, then any server-only results not in context
  const liveResults = useMemo(() => {
@@ -194,6 +243,13 @@ export const SearchModal = ({
  </div>
  ) : liveResults.length === 0 ? (
  <div className="text-center py-12">
+   {aiIntent && (
+     <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/8 border border-emerald-500/20 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 mb-4">
+       <Sparkles className="w-3 h-3" />
+       <span>AI: {aiIntent.note}</span>
+       {aiIntent.maxPrice && <span className="opacity-60">· under {formatTZS(aiIntent.maxPrice)}</span>}
+     </div>
+   )}
  <p className="text-sm text-foreground/55">
  No results for <span className="font-semibold text-foreground">"{searchQuery}"</span>.
  </p>
@@ -207,6 +263,21 @@ export const SearchModal = ({
  </div>
  ) : (
  <>
+ <AnimatePresence>
+   {aiIntent && (
+     <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+       className="flex items-center gap-2 mb-3">
+       <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/8 border border-emerald-500/20 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
+         <Sparkles className="w-3 h-3" />
+         <span>{aiIntent.note}</span>
+         {aiIntent.maxPrice && <span className="opacity-60">· under {formatTZS(aiIntent.maxPrice)}</span>}
+       </div>
+       <button onClick={() => setAiIntent(null)} className="text-foreground/30 hover:text-foreground/60 transition-colors">
+         <X className="w-3 h-3" />
+       </button>
+     </motion.div>
+   )}
+ </AnimatePresence>
  <p className="text-[11px] font-semibold uppercase tracking-wider text-foreground/45 mb-3">
  Matching products
  </p>

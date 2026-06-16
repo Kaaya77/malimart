@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import {
  X, Heart, Star, Shield, Truck, MapPin, Plus, Minus,
  Share2, Package, ShoppingBag, ChevronUp, ChevronDown,
- ChevronLeft, ChevronRight, ArrowRight,
+ ChevronLeft, ChevronRight, ArrowRight, Sparkles, ZoomIn, ExternalLink,
 } from 'lucide-react';
 import { Product } from '../types';
 import { useAppState } from '../context/AppContext';
@@ -13,6 +13,8 @@ import { CURRENCY } from '../constants';
 import { ReviewSection } from './ReviewSection';
 import { useProductPricing } from '../hooks/useProductPricing';
 import { useVariantSelection } from '../hooks/useVariantSelection';
+import { getAI } from '../services/aiClient';
+import { MODELS } from '../services/aiModels';
 
 interface ProductModalProps {
  product: Product | null;
@@ -37,6 +39,8 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
  const [quantity, setQuantity] = useState(1);
  const [isAdding, setIsAdding] = useState(false);
  const [descExpanded, setDescExpanded] = useState(false);
+ const [aiPitch, setAiPitch] = useState('');
+ const [zoomedImg, setZoomedImg] = useState<string | null>(null);
  const scrollRef = useRef<HTMLDivElement>(null);
  const imgScrollRef = useRef<HTMLDivElement>(null);
 
@@ -73,8 +77,27 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
  setSelectedImg(0);
  setQuantity(1);
  setDescExpanded(false);
+ setAiPitch('');
  if (scrollRef.current) scrollRef.current.scrollTop = 0;
  }, [product?.id]);
+
+ // Generate a compelling AI pitch line when the modal opens
+ useEffect(() => {
+ if (!isOpen || !product || aiPitch) return;
+ let cancelled = false;
+ (async () => {
+   try {
+     const ai = getAI();
+     const res = await ai.models.generateContent({
+       model: MODELS.FAST,
+       contents: [{ role: 'user', parts: [{ text: `Write ONE punchy sentence (max 18 words) that highlights why someone should buy this product. Be specific, avoid generic phrases. Product: "${product.name}" | Category: "${product.category || ''}" | Description: "${(product.description || '').slice(0, 150)}". Output only the sentence, no quotes.` }] }],
+       config: { maxOutputTokens: 60 },
+     });
+     if (!cancelled) setAiPitch(res.text?.trim() ?? '');
+   } catch { /* silent */ }
+ })();
+ return () => { cancelled = true; };
+ }, [isOpen, product?.id]);
 
  useEffect(() => {
  const el = imgScrollRef.current;
@@ -319,6 +342,14 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
  {product.name}
  </h2>
 
+ {/* AI pitch line */}
+ {aiPitch && (
+   <div className="flex items-start gap-1.5 mb-3 px-3 py-2 rounded-xl bg-emerald-500/8 border border-emerald-500/15">
+     <Sparkles className="w-3 h-3 text-emerald-600 mt-0.5 shrink-0" />
+     <p className="text-[12px] font-semibold text-emerald-800 dark:text-emerald-300 leading-snug">{aiPitch}</p>
+   </div>
+ )}
+
  <div className="mb-4"><RatingRow /></div>
 
  {/* Price */}
@@ -466,6 +497,15 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
  </div>
  )}
 
+ {/* Zoom button */}
+ <button
+   onClick={() => setZoomedImg(images[selectedImg])}
+   className="absolute bottom-5 right-5 z-10 w-9 h-9 rounded-full bg-background/80 backdrop-blur-md ring-1 ring-foreground/10 flex items-center justify-center text-foreground/60 hover:text-foreground hover:bg-background transition-colors shadow-sm"
+   aria-label="Zoom image"
+ >
+   <ZoomIn className="w-4 h-4 stroke-[2]" />
+ </button>
+
  {/* Prev/next arrows */}
  {images.length > 1 && (
  <div className="absolute inset-x-3 top-1/2 -translate-y-1/2 flex justify-between pointer-events-none">
@@ -525,6 +565,14 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
  <h2 className="font-sans text-[30px] font-semibold tracking-tight leading-tight text-foreground mb-3">
  {product.name}
  </h2>
+
+ {/* AI pitch line */}
+ {aiPitch && (
+   <div className="flex items-start gap-2 mb-4 px-3.5 py-2.5 rounded-xl bg-emerald-500/8 border border-emerald-500/15">
+     <Sparkles className="w-3.5 h-3.5 text-emerald-600 mt-0.5 shrink-0" />
+     <p className="text-[13px] font-semibold text-emerald-800 dark:text-emerald-300 leading-snug">{aiPitch}</p>
+   </div>
+ )}
 
  <div className="mb-5"><RatingRow /></div>
 
@@ -629,6 +677,40 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
 
  </div>
  )}
+
+ {/* Image zoom lightbox */}
+ <AnimatePresence>
+   {zoomedImg && (
+     <motion.div
+       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+       className="fixed inset-0 z-[500] bg-black/95 flex items-center justify-center p-4 cursor-zoom-out"
+       onClick={() => setZoomedImg(null)}
+     >
+       <motion.img
+         src={zoomedImg}
+         alt="Zoomed"
+         initial={{ scale: 0.9, opacity: 0 }}
+         animate={{ scale: 1, opacity: 1 }}
+         exit={{ scale: 0.9, opacity: 0 }}
+         transition={{ type: 'spring', damping: 26, stiffness: 300 }}
+         className="max-w-full max-h-full object-contain rounded-2xl"
+         onClick={e => e.stopPropagation()}
+       />
+       <button onClick={() => setZoomedImg(null)}
+         className="absolute top-5 right-5 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors">
+         <X className="w-5 h-5 stroke-[2.5]" />
+       </button>
+       {images.length > 1 && (
+         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
+           {images.map((src, i) => (
+             <button key={i} onClick={e => { e.stopPropagation(); setZoomedImg(src); }}
+               className={`w-2 h-2 rounded-full transition-all ${zoomedImg === src ? 'bg-white scale-125' : 'bg-white/35 hover:bg-white/60'}`} />
+           ))}
+         </div>
+       )}
+     </motion.div>
+   )}
+ </AnimatePresence>
  </AnimatePresence>
  );
 };

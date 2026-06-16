@@ -27,10 +27,10 @@ export const StoreTab = () => {
             const ext = file.name.split('.').pop() ?? 'jpg';
             const path = `store/${user.id}/${pathKey}.${ext}`;
             const { error: uploadError } = await supabase.storage
-                .from('product-images')
+                .from('mali-mart-uploads')
                 .upload(path, compressed, { upsert: true, contentType: file.type });
             if (uploadError) throw uploadError;
-            const { data } = supabase.storage.from('product-images').getPublicUrl(path);
+            const { data } = supabase.storage.from('mali-mart-uploads').getPublicUrl(path);
             const url = data.publicUrl + `?v=${Date.now()}`;
             setProfileData((prev: any) => ({ ...prev, [fieldKey]: url }));
             addToast(`${pathKey === 'logo' ? 'Logo' : 'Banner'} updated`, 'success');
