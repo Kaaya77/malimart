@@ -14,6 +14,29 @@ export const StoreTab = () => {
  <CardDescription>Your public store details and location.</CardDescription>
  </CardHeader>
  <CardContent>
+ {/* Logo + Banner row */}
+ <div className="flex gap-4 items-start mb-6">
+   {/* Store Logo */}
+   <div className="flex flex-col items-center gap-2 shrink-0">
+     <div className="w-20 h-20 rounded-2xl border-2 border-foreground/10 bg-foreground/[0.04] overflow-hidden flex items-center justify-center">
+       {profileData.logo_url
+         ? <img src={profileData.logo_url} alt="Logo" className="w-full h-full object-cover" />
+         : <Store className="w-8 h-8 text-foreground/25" />}
+     </div>
+     <span className="text-[9px] uppercase tracking-[0.15em] text-foreground/40">Logo</span>
+   </div>
+   <div className="flex-1 space-y-3">
+     <div className="space-y-1">
+       <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground block">Logo URL</label>
+       <Input placeholder="https://…/logo.png" value={profileData.logo_url || ''} onChange={(e: any) => setProfileData({...profileData, logo_url: e.target.value})} />
+     </div>
+     <div className="space-y-1">
+       <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground block">Banner / Cover URL</label>
+       <Input placeholder="https://…/banner.jpg" value={profileData.banner_url || ''} onChange={(e: any) => setProfileData({...profileData, banner_url: e.target.value})} />
+     </div>
+   </div>
+ </div>
+
  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
  <div className="space-y-1">
  <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground mb-2 block">Store Name</label>

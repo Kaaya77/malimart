@@ -1,10 +1,28 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Switch } from '../../components/UI';
-import { CheckCircle2, Download, Loader2, LogOut } from 'lucide-react';
+import { CheckCircle2, Download, KeyRound, Loader2, LogOut, Mail } from 'lucide-react';
+import { supabase } from '../../services/supabaseClient';
 import { useBuyerSettings } from './context';
 
 export const SecurityTab = () => {
-    const { confirmRequestAccountDeletion, connectedAccounts, handleConnectAccount, handleExportData, isExporting, loginHistory, preferences, setPreferences, togglePreference, updateUserProfile } = useBuyerSettings();
+    const { addToast, confirmRequestAccountDeletion, connectedAccounts, handleConnectAccount, handleExportData, isExporting, loginHistory, preferences, setPreferences, togglePreference, updateUserProfile, user } = useBuyerSettings();
+    const [sendingReset, setSendingReset] = useState(false);
+
+    const handlePasswordReset = async () => {
+        if (!user?.email) return;
+        setSendingReset(true);
+        try {
+            const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
+                redirectTo: `${window.location.origin}/reset-password`,
+            });
+            if (error) throw error;
+            addToast('Password reset link sent to ' + user.email, 'success');
+        } catch (err: any) {
+            addToast(err.message || 'Failed to send reset email', 'error');
+        } finally {
+            setSendingReset(false);
+        }
+    };
     return (
             <div className="space-y-6 animate-in fade-in">
               <Card>
@@ -43,6 +61,17 @@ export const SecurityTab = () => {
                       <CardDescription>Protect your account.</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
+                      {/* Password reset */}
+                      <div className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-white/5">
+                          <div>
+                              <p className="font-medium text-sm text-foreground">Password</p>
+                              <p className="text-xs text-muted-foreground">We'll email you a secure reset link</p>
+                          </div>
+                          <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5" onClick={handlePasswordReset} disabled={sendingReset}>
+                              {sendingReset ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
+                              {sendingReset ? 'Sending…' : 'Send Reset Email'}
+                          </Button>
+                      </div>
                       <div className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-white/5">
                           <div>
                               <p className="font-medium text-sm text-foreground">Two-Factor Authentication (2FA)</p>

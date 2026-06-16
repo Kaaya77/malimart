@@ -6,12 +6,13 @@
 // (role, wallet_balance, tier, is_banned are unreachable by design).
 // Route: /account/settings
 // =====================================================================
-import { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { supabase } from "../services/supabaseClient";
 import {
   updateMySettings, revokeSession, revokeOtherSessions,
 } from "../services/accountApi";
 import { applyTheme, ACCENTS, ThemeMode } from "../services/theme";
+import { compressImage } from "../services/imageCompression";
 import ConfirmDialog from "../components/ConfirmDialog";
 
 type Tab = "profile" | "appearance" | "notifications" | "security" | "privacy";
@@ -60,6 +61,37 @@ export function AccountSettingsPage() {
   const [toast, setToast] = useState<string | null>(null);
   const [sessions, setSessions] = useState<any[]>([]);
   const [confirmRevokeAll, setConfirmRevokeAll] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !p) return;
+    setUploadingAvatar(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+      const compressed = await compressImage(file, 400, 0.8);
+      const ext = file.name.split('.').pop() ?? 'jpg';
+      const path = `avatars/${user.id}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from('product-images')
+        .upload(path, compressed, { upsert: true, contentType: file.type });
+      if (uploadError) throw uploadError;
+      const { data } = supabase.storage.from('product-images').getPublicUrl(path);
+      const url = data.publicUrl + `?v=${Date.now()}`;
+      set('avatar_url', url);
+      await updateMySettings({ avatar_url: url });
+      setToast('Avatar updated');
+      setTimeout(() => setToast(null), 2500);
+    } catch (err: any) {
+      setToast(err.message || 'Upload failed');
+      setTimeout(() => setToast(null), 2500);
+    } finally {
+      setUploadingAvatar(false);
+      e.target.value = '';
+    }
+  };
 
   useEffect(() => {
     (async () => {
@@ -119,6 +151,34 @@ export function AccountSettingsPage() {
       <div className="mt-6 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 p-5 sm:p-6">
         {tab === "profile" && (
           <div className="grid gap-5 sm:grid-cols-2">
+            {/* Avatar upload */}
+            <div className="sm:col-span-2 flex items-center gap-5">
+              <div className="relative w-20 h-20 shrink-0 group">
+                <div className="w-20 h-20 rounded-full bg-neutral-100 dark:bg-neutral-800 overflow-hidden border-2 border-neutral-200 dark:border-neutral-700 flex items-center justify-center">
+                  {p.avatar_url
+                    ? <img src={p.avatar_url} alt="avatar" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                    : <span className="text-2xl text-neutral-400">{(p.full_name || p.display_name || '?')[0]?.toUpperCase()}</span>}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => avatarInputRef.current?.click()}
+                  disabled={uploadingAvatar}
+                  className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  {uploadingAvatar
+                    ? <svg className="w-5 h-5 text-white animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                    : <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>}
+                </button>
+                <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+              </div>
+              <div>
+                <p className="text-sm font-medium">Profile photo</p>
+                <p className="text-xs text-neutral-400 mt-0.5">Hover and click to upload. Max 5 MB.</p>
+                <button type="button" onClick={() => avatarInputRef.current?.click()} disabled={uploadingAvatar} className="mt-1.5 text-xs font-semibold underline underline-offset-2 hover:opacity-60 transition-opacity">
+                  {uploadingAvatar ? 'Uploading…' : 'Change photo'}
+                </button>
+              </div>
+            </div>
             <Field label="Full name"><input className={input} value={p.full_name ?? ""} onChange={(e) => set("full_name", e.target.value)} /></Field>
             <Field label="Display name" hint="Shown publicly on reviews and chat">
               <input className={input} value={p.display_name ?? ""} onChange={(e) => set("display_name", e.target.value)} /></Field>

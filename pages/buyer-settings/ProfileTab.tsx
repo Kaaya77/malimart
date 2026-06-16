@@ -1,11 +1,40 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Switch } from '../../components/UI';
 import { TANZANIA_REGIONS } from '../../constants';
-import { Globe, Home, Loader2, Mail, Phone, User as UserIcon, Wallet } from 'lucide-react';
+import { Globe, Home, Loader2, Mail, Phone, Upload, User as UserIcon, Wallet } from 'lucide-react';
+import { supabase } from '../../services/supabaseClient';
+import { compressImage } from '../../services/imageCompression';
 import { useBuyerSettings } from './context';
 
 export const ProfileTab = () => {
-    const { handleLanguageChange, handleProfileUpdate, isSavingProfile, preferences, profileData, setPreferences, setProfileData, togglePreference, updateUserProfile, user } = useBuyerSettings();
+    const { addToast, handleLanguageChange, handleProfileUpdate, isSavingProfile, preferences, profileData, setPreferences, setProfileData, togglePreference, updateUserProfile, user } = useBuyerSettings();
+    const avatarInputRef = useRef<HTMLInputElement>(null);
+    const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+    const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !user) return;
+        setUploadingAvatar(true);
+        try {
+            const compressed = await compressImage(file, 400, 0.8);
+            const ext = file.name.split('.').pop() ?? 'jpg';
+            const path = `avatars/${user.id}.${ext}`;
+            const { error: uploadError } = await supabase.storage
+                .from('product-images')
+                .upload(path, compressed, { upsert: true, contentType: file.type });
+            if (uploadError) throw uploadError;
+            const { data } = supabase.storage.from('product-images').getPublicUrl(path);
+            const url = data.publicUrl + `?v=${Date.now()}`;
+            setProfileData((prev: any) => ({ ...prev, avatar_url: url }));
+            await updateUserProfile({ avatar_url: url });
+            addToast('Avatar updated', 'success');
+        } catch (err: any) {
+            addToast(err.message || 'Upload failed', 'error');
+        } finally {
+            setUploadingAvatar(false);
+            e.target.value = '';
+        }
+    };
     return (
             <div className="space-y-6 animate-in fade-in">
               <Card>
@@ -16,16 +45,30 @@ export const ProfileTab = () => {
                 <CardContent>
                   <form onSubmit={handleProfileUpdate} className="space-y-6">
                     <div className="flex items-center gap-6 mb-6">
-                      <div className="w-20 h-20 rounded-full bg-foreground/[0.06] overflow-hidden border-2 border-foreground/10 flex items-center justify-center shrink-0">
-                        {profileData.avatar_url ? (
-                          <img src={profileData.avatar_url} alt="Avatar" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                        ) : (
-                          <UserIcon className="w-8 h-8 text-foreground/40" />
-                        )}
+                      <div className="relative w-20 h-20 shrink-0 group">
+                        <div className="w-20 h-20 rounded-full bg-foreground/[0.06] overflow-hidden border-2 border-foreground/10 flex items-center justify-center">
+                          {profileData.avatar_url ? (
+                            <img src={profileData.avatar_url} alt="Avatar" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                          ) : (
+                            <UserIcon className="w-8 h-8 text-foreground/40" />
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => avatarInputRef.current?.click()}
+                          disabled={uploadingAvatar}
+                          className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          {uploadingAvatar ? <Loader2 className="w-5 h-5 text-white animate-spin" /> : <Upload className="w-5 h-5 text-white" />}
+                        </button>
+                        <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
                       </div>
-                      <div className="flex-1">
-                        <Input placeholder="Avatar URL (Optional)" value={profileData.avatar_url || ''} onChange={(e: any) => setProfileData({ ...profileData, avatar_url: e.target.value })} />
-                        <p className="text-xs text-muted-foreground mt-2">Provide a valid image URL for your profile picture.</p>
+                      <div>
+                        <p className="text-sm font-medium text-foreground">Profile Photo</p>
+                        <p className="text-xs text-muted-foreground mt-1">Hover the circle and click to upload. Max 5 MB.</p>
+                        <button type="button" onClick={() => avatarInputRef.current?.click()} disabled={uploadingAvatar} className="mt-2 text-xs font-semibold text-foreground underline underline-offset-2 hover:opacity-60 transition-opacity">
+                          {uploadingAvatar ? 'Uploading…' : 'Change photo'}
+                        </button>
                       </div>
                     </div>
 
