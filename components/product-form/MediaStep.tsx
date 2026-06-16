@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Button, Input, Label, ImageDropzone } from '../UI';
 import * as aiService from '../../services/geminiService';
 import { CheckCircle2, Download, Loader2, Sparkles, Trash2, Wand2, X, ImageIcon } from 'lucide-react';
@@ -21,6 +21,21 @@ export const MediaStep = () => {
         handleRefineImage,
     } = usePF();
     const { addToast } = useToast();
+
+    // useRef guard — unlike aiLoading (React state), this updates synchronously
+    // so rapid Enter keypresses can't slip through between re-renders.
+    const inFlightRef = useRef(false);
+
+    const safeGenerate = () => {
+        if (inFlightRef.current) return;
+        inFlightRef.current = true;
+        handleGenerateImage().finally(() => { inFlightRef.current = false; });
+    };
+    const safeRefine = () => {
+        if (inFlightRef.current) return;
+        inFlightRef.current = true;
+        handleRefineImage().finally(() => { inFlightRef.current = false; });
+    };
 
     // Index of image being individually enhanced (-1 = none)
     const [enhancingIdx, setEnhancingIdx] = useState<number | null>(null);
@@ -108,12 +123,12 @@ export const MediaStep = () => {
                         <Input
                             value={genPrompt || ''}
                             onChange={(e: any) => setGenPrompt(e.target.value)}
-                            onKeyDown={(e: any) => { if (e.key === 'Enter' && !aiLoading) handleGenerateImage(); }}
+                            onKeyDown={(e: any) => { if (e.key === 'Enter') safeGenerate(); }}
                             placeholder="e.g. Premium leather bag on a minimalist marble surface"
                             className="bg-white/10 border-white/20 text-white placeholder:text-white/40 flex-1"
                         />
                         <Button
-                            onClick={handleGenerateImage}
+                            onClick={safeGenerate}
                             disabled={aiLoading || !genPrompt}
                             className="bg-background text-foreground hover:bg-background/90 shrink-0 min-w-[120px]"
                         >
@@ -142,12 +157,12 @@ export const MediaStep = () => {
                         <Input
                             value={refinePrompt || ''}
                             onChange={(e: any) => setRefinePrompt(e.target.value)}
-                            onKeyDown={(e: any) => { if (e.key === 'Enter' && !aiLoading) handleRefineImage(); }}
+                            onKeyDown={(e: any) => { if (e.key === 'Enter') safeRefine(); }}
                             placeholder="e.g. Change background to a lush tropical garden"
                             className="bg-white/10 border-white/20 text-white placeholder:text-white/40 flex-1"
                         />
                         <Button
-                            onClick={handleRefineImage}
+                            onClick={safeRefine}
                             disabled={aiLoading || !refinePrompt}
                             className="bg-background text-foreground hover:bg-background/90 shrink-0 min-w-[100px]"
                         >
