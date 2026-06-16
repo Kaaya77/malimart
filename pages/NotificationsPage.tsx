@@ -3,6 +3,8 @@ import { useAppState } from '../context/AppContext';
 import { Bell, CheckCheck, X, ShoppingBag, Store, AlertCircle, Info, Star, Gift, Package, MessageSquare, CreditCard } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { SwipeableRow } from '../components/SwipeableRow';
+import { BackButton } from '../components/BackButton';
 
 const TYPE_CONFIG: Record<string, { icon: React.ElementType; color: string; bg: string }> = {
   order:       { icon: ShoppingBag, color: 'text-blue-500',   bg: 'bg-blue-50 dark:bg-blue-900/20' },
@@ -53,6 +55,9 @@ export const NotificationsPage = () => {
       <div className="max-w-2xl mx-auto px-4 pb-24 pt-6 md:pt-10">
 
         {/* Header */}
+        <div className="mb-2 -ml-1">
+          <BackButton label="Back" />
+        </div>
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl md:text-3xl font-black uppercase tracking-tight text-foreground">Notifications</h1>
@@ -114,55 +119,59 @@ export const NotificationsPage = () => {
                   layout
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, x: 20, height: 0, marginBottom: 0 }}
+                  exit={{ opacity: 0, height: 0, marginBottom: 0, transition: { duration: 0.2 } }}
                   transition={{ duration: 0.25 }}
-                  className={`relative flex gap-4 p-4 rounded-2xl border transition-all cursor-pointer group ${
-                    notif.read
-                      ? 'border-foreground/6 bg-background hover:border-foreground/12'
-                      : 'border-foreground/12 bg-foreground/[0.02] hover:border-foreground/20'
-                  }`}
-                  onClick={() => handleClick(notif)}
+                  className="rounded-2xl overflow-hidden border border-foreground/6"
                 >
-                  {/* Unread dot */}
-                  {!notif.read && (
-                    <div className="absolute top-4 right-4 w-2 h-2 rounded-full bg-foreground" />
-                  )}
-
-                  {/* Icon */}
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${cfg.bg}`}>
-                    <Icon className={`w-4 h-4 ${cfg.color}`} />
-                  </div>
-
-                  {/* Content */}
-                  <div className="flex-1 min-w-0 pr-6">
-                    {notif.title && (
-                      <p className={`text-[12px] font-black leading-tight mb-0.5 ${notif.read ? 'text-foreground/60' : 'text-foreground'}`}>
-                        {notif.title}
-                      </p>
-                    )}
-                    <p className={`text-[11px] leading-relaxed font-medium ${notif.read ? 'text-foreground/40' : 'text-foreground/60'}`}>
-                      {notif.message}
-                    </p>
-                    <div className="flex items-center gap-3 mt-2">
-                      <span className="text-[9px] font-bold text-foreground/30 uppercase tracking-wider">
-                        {timeAgo(notif.created_at)}
-                      </span>
-                      {(notif.link || notif.payload?.action_link) && (
-                        <span className="text-[9px] font-black uppercase tracking-wider text-foreground/40 hover:text-foreground transition-colors">
-                          {notif.payload?.action_label || 'View →'}
-                        </span>
+                  <SwipeableRow onDelete={() => dismissNotification(notif.id)}>
+                    <div
+                      className={`relative flex gap-4 p-4 cursor-pointer group transition-colors ${
+                        notif.read ? 'bg-background hover:bg-foreground/[0.02]' : 'bg-foreground/[0.02] hover:bg-foreground/[0.04]'
+                      }`}
+                      onClick={() => handleClick(notif)}
+                    >
+                      {/* Unread dot */}
+                      {!notif.read && (
+                        <div className="absolute top-4 right-4 w-2 h-2 rounded-full bg-foreground" />
                       )}
-                    </div>
-                  </div>
 
-                  {/* Dismiss */}
-                  <button
-                    onClick={e => { e.stopPropagation(); dismissNotification(notif.id); }}
-                    className="absolute top-3 right-3 w-5 h-5 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 bg-foreground/[0.06] hover:bg-foreground/15 transition-all"
-                    aria-label="Dismiss"
-                  >
-                    <X className="w-2.5 h-2.5 text-foreground/50" />
-                  </button>
+                      {/* Icon */}
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${cfg.bg}`}>
+                        <Icon className={`w-4 h-4 ${cfg.color}`} />
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex-1 min-w-0 pr-6">
+                        {notif.title && (
+                          <p className={`text-[12px] font-black leading-tight mb-0.5 ${notif.read ? 'text-foreground/60' : 'text-foreground'}`}>
+                            {notif.title}
+                          </p>
+                        )}
+                        <p className={`text-[11px] leading-relaxed font-medium ${notif.read ? 'text-foreground/40' : 'text-foreground/60'}`}>
+                          {notif.message}
+                        </p>
+                        <div className="flex items-center gap-3 mt-2">
+                          <span className="text-[9px] font-bold text-foreground/30 uppercase tracking-wider">
+                            {timeAgo(notif.created_at)}
+                          </span>
+                          {(notif.link || notif.payload?.action_link) && (
+                            <span className="text-[9px] font-black uppercase tracking-wider text-foreground/40 hover:text-foreground transition-colors">
+                              {notif.payload?.action_label || 'View →'}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Dismiss (desktop hover) */}
+                      <button
+                        onClick={e => { e.stopPropagation(); dismissNotification(notif.id); }}
+                        className="absolute top-3 right-3 w-5 h-5 hidden md:flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 bg-foreground/[0.06] hover:bg-foreground/15 transition-all"
+                        aria-label="Dismiss"
+                      >
+                        <X className="w-2.5 h-2.5 text-foreground/50" />
+                      </button>
+                    </div>
+                  </SwipeableRow>
                 </motion.div>
               );
             })}

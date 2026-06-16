@@ -525,6 +525,7 @@ export const MobileBottomNav = () => {
  ];
 
  const active = (path: string) => path==='/' ? location.pathname==='/' : location.pathname.startsWith(path);
+ const activeIdx = tabs.findIndex(t => active(t.path));
 
  const isSellerForm = location.pathname.startsWith('/seller/products/');
  if (isSellerForm) return null;
@@ -533,26 +534,37 @@ export const MobileBottomNav = () => {
  <nav role="navigation" aria-label="Mobile navigation"
  className="fixed bottom-0 inset-x-0 z-40 md:hidden"
  style={{paddingBottom:'env(safe-area-inset-bottom)'}}>
- <div className="mx-2 mb-2 rounded-2xl bg-background/97 backdrop-blur-2xl ring-1 ring-foreground/8 shadow-[0_-2px_20px_-4px_rgba(0,0,0,0.12)]">
+ <div className="mx-2 mb-2 rounded-2xl bg-background/97 backdrop-blur-2xl ring-1 ring-foreground/8 shadow-[0_-2px_20px_-4px_rgba(0,0,0,0.12)] relative overflow-hidden">
+ {/* Sliding pill indicator */}
+ {activeIdx >= 0 && (
+   <motion.div
+     layout
+     layoutId="bottomNavPill"
+     transition={{ type: 'spring', stiffness: 500, damping: 40 }}
+     className="absolute top-1.5 h-[calc(100%-12px)] bg-foreground/[0.06] rounded-xl pointer-events-none"
+     style={{ width: `${100/tabs.length}%`, left: `${activeIdx * (100/tabs.length)}%` }}
+   />
+ )}
  <div className="grid grid-cols-5 h-[58px]">
- {tabs.map(t=>{
+ {tabs.map((t,i)=>{
  const Icon=t.icon;
  const on=active(t.path);
  return (
  <button key={t.id} onClick={()=>navigate(t.path)}
  aria-label={t.label} aria-current={on?'page':undefined}
- className={`relative flex flex-col items-center justify-center gap-0.5 transition-all active:scale-90
- ${on?'text-foreground':'text-foreground/32 hover:text-foreground/60'}`}>
- {on && <span className="absolute top-1 w-5 h-[2px] rounded-full bg-emerald-500"/>}
+ className={`relative z-10 flex flex-col items-center justify-center gap-0.5 transition-all active:scale-[0.88]
+ ${on?'text-foreground':'text-foreground/35'}`}>
  <span className="relative">
- <Icon className={`w-5 h-5 transition-all ${on?'stroke-[2.3]':'stroke-[1.6]'}`}/>
+ <Icon className={`w-[19px] h-[19px] transition-all duration-200 ${on?'stroke-[2.3]':'stroke-[1.5]'}`}/>
  {t.badge!=null && t.badge>0 && (
- <span className="absolute -top-1.5 -right-2 min-w-[14px] h-[14px] px-0.5 rounded-full bg-rose-500 text-white text-[8px] font-black flex items-center justify-center">
+ <motion.span
+   initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 600, damping: 20 }}
+   className="absolute -top-1.5 -right-2 min-w-[14px] h-[14px] px-0.5 rounded-full bg-rose-500 text-white text-[8px] font-black flex items-center justify-center">
  {t.badge>9?'9+':t.badge}
- </span>
+ </motion.span>
  )}
  </span>
- <span className={`text-[9px] font-semibold leading-none ${on?'opacity-100':'opacity-70'}`}>{t.label}</span>
+ <span className={`text-[9px] font-semibold leading-none transition-all duration-200 ${on?'opacity-100':'opacity-50'}`}>{t.label}</span>
  </button>
  );
  })}

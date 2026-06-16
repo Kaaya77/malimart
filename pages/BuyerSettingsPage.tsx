@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useAppState } from '../context/AppContext';
 import { Button, Input, Card, CardHeader, CardContent, CardTitle, CardDescription, ConfirmDialog, useToast, Switch, ConfirmModal, Badge } from '../components/UI';
 import { User as UserIcon, Mail, Phone, Home, PlusCircle, Trash2, Edit, Loader2, Wallet, Gift, Copy, ArrowUpRight, ArrowDownLeft, Bell, Shield, Globe, CreditCard, Download, LogOut, CheckCircle2, MapPin, Settings, Lock, Activity } from 'lucide-react';
+import { BackButton } from '../components/BackButton';
 import { CURRENCY, TANZANIA_REGIONS, TANZANIA_DISTRICTS, MOBILE_MONEY_PROVIDERS, BANK_PROVIDERS, isValidTanzanianPhone } from '../constants';
 import { supabase } from '../services/supabaseClient';
 import { BuyerSettingsCtx } from './buyer-settings/context';
@@ -368,6 +369,7 @@ export const BuyerSettingsPage = () => {
 
     <div className="max-w-6xl mx-auto pb-12 animate-in fade-in">
       <div className="mb-8">
+        <BackButton label="Back" className="mb-3" />
         <h1 className="text-3xl font-display font-bold tracking-tight text-foreground">Settings</h1>
         <p className="text-muted-foreground mt-1">Manage your account preferences and settings.</p>
       </div>
