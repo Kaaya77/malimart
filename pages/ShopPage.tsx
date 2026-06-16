@@ -394,7 +394,6 @@ export const ShopPage: React.FC = () => {
  product={p}
  index={i}
  onClick={() => navigate(`/product/${p.id}`)}
- onQuickView={() => navigate(`/product/${p.id}`)}
  />
  ))}
  </motion.div>

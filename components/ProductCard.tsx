@@ -13,7 +13,6 @@ import { getCategoryEmoji, getActionMessage } from '../services/productExperienc
 interface ProductCardProps {
  product: Product;
  onClick?: () => void;
- onQuickView?: (product: Product) => void;
  onCompare?: (product: Product) => void;
  isComparing?: boolean;
  className?: string;
@@ -33,7 +32,6 @@ interface ProductCardProps {
 const ProductCardInner: React.FC<ProductCardProps> = ({
  product,
  onClick,
- onQuickView,
  onCompare,
  isComparing = false,
  className = '',
@@ -148,7 +146,6 @@ const ProductCardInner: React.FC<ProductCardProps> = ({
  isLiked={isLiked}
  isComparing={isComparing}
  onCompare={onCompare}
- onQuickView={onQuickView}
  onAdd={handleAdd}
  isAdding={isAdding}
  layout={layout}

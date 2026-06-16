@@ -125,7 +125,6 @@ const HomePage: React.FC = () => {
         <FeaturedProducts
           products={boostedProducts}
           navigate={navigate}
-          setActiveProduct={(p) => navigate(`/product/${p.id}`)}
         />
       )}
 
@@ -136,7 +135,6 @@ const HomePage: React.FC = () => {
           description="Fresh drops from Tanzania's best sellers."
           products={newArrivals}
           navigate={navigate}
-          setActiveProduct={(p) => navigate(`/product/${p.id}`)}
         />
       )}
 
@@ -156,7 +154,6 @@ const HomePage: React.FC = () => {
           description="Pick up where you left off."
           products={recentlyViewed.slice(0, 8)}
           navigate={navigate}
-          setActiveProduct={(p) => navigate(`/product/${p.id}`)}
         />
       )}
 
@@ -167,7 +164,6 @@ const HomePage: React.FC = () => {
           description="Loved by buyers across Tanzania."
           products={topRated}
           navigate={navigate}
-          setActiveProduct={(p) => navigate(`/product/${p.id}`)}
         />
       )}
 

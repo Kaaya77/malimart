@@ -1,5 +1,5 @@
 import React from 'react';
-import { Heart, Plus, Check, Eye } from 'lucide-react';
+import { Heart, Plus, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Product } from '../../types';
 import { useAppState } from '../../context/AppContext';
@@ -11,7 +11,6 @@ interface ProductCardActionsProps {
  isLiked: boolean;
  isComparing: boolean;
  onCompare?: (product: Product) => void;
- onQuickView?: (product: Product) => void;
  onAdd: (e: React.MouseEvent) => void;
  isAdding: boolean;
  layout: 'grid' | 'list';
@@ -29,7 +28,6 @@ export const ProductCardActions: React.FC<ProductCardActionsProps> = ({
  product,
  stats,
  isLiked,
- onQuickView,
  onAdd,
  isAdding,
  layout,
@@ -42,11 +40,6 @@ export const ProductCardActions: React.FC<ProductCardActionsProps> = ({
  e.stopPropagation();
  toggleWishlist(product);
  addToast(isLiked ? 'Removed from wishlist' : 'Saved to wishlist', 'success');
- };
-
- const handleQuickView = (e: React.MouseEvent) => {
- e.stopPropagation();
- onQuickView?.(product);
  };
 
  return (
@@ -68,17 +61,6 @@ export const ProductCardActions: React.FC<ProductCardActionsProps> = ({
  className={`absolute bottom-3 right-3 z-30 hidden md:flex items-center gap-2 transition-all duration-300
  ${layout === 'grid' && isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-1.5 pointer-events-none'}`}
  >
- {onQuickView && (
- <motion.button
- whileTap={{ scale: 0.92 }}
- onClick={handleQuickView}
- aria-label="Quick view"
- className="h-9 px-3 rounded-full bg-white/95 dark:bg-black/80 text-foreground text-[11px] font-semibold tracking-wide flex items-center gap-1.5 ring-1 ring-foreground/10 backdrop-blur-md hover:bg-white dark:hover:bg-black transition-colors shadow-sm"
- >
- <Eye className="w-3.5 h-3.5 stroke-[2.2]" />
- Preview
- </motion.button>
- )}
  <motion.button
  whileTap={{ scale: 0.92 }}
  onClick={onAdd}

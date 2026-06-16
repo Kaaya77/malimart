@@ -7,7 +7,6 @@ import { ProductCard } from '../ProductCard';
 interface FeaturedProductsProps {
   products: Product[];
   navigate: (path: string) => void;
-  setActiveProduct: (p: Product) => void;
 }
 
 /**
@@ -18,7 +17,7 @@ interface FeaturedProductsProps {
  * Mobile: Horizontal snap scroll (unchanged, proven pattern).
  */
 export const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
-  products, navigate, setActiveProduct,
+  products, navigate,
 }) => {
   if (!products || products.length === 0) return null;
   const list = products.slice(0, 8);
@@ -65,7 +64,6 @@ export const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
                 product={p}
                 index={i}
                 onClick={() => navigate(`/product/${p.id}`)}
-                onQuickView={() => setActiveProduct(p)}
               />
             </div>
           ))}
@@ -86,7 +84,6 @@ export const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
               product={p}
               index={i}
               onClick={() => navigate(`/product/${p.id}`)}
-              onQuickView={() => setActiveProduct(p)}
             />
           </motion.div>
         ))}
@@ -107,7 +104,6 @@ export const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
                 product={p}
                 index={i + 4}
                 onClick={() => navigate(`/product/${p.id}`)}
-                onQuickView={() => setActiveProduct(p)}
               />
             </motion.div>
           ))}

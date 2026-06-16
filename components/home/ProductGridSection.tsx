@@ -9,24 +9,13 @@ interface ProductGridSectionProps {
  description: string;
  products: Product[];
  navigate: (path: string) => void;
- setActiveProduct: (product: Product) => void;
 }
 
-/**
- * Product grid section.
- *
- * Mobile: 2 cols, horizontally-tight; the cards do the visual work.
- * Tablet (md): 3 cols. Desktop (lg+): 4 cols.
- *
- * Section header is single-line on mobile (no helper copy) to keep the
- * scroll fast — the grid below explains itself.
- */
 export const ProductGridSection = ({
  title,
  description,
  products,
  navigate,
- setActiveProduct,
 }: ProductGridSectionProps) => {
  if (!products || products.length === 0) return null;
 
@@ -65,7 +54,6 @@ export const ProductGridSection = ({
  product={p}
  index={i}
  onClick={() => navigate(`/product/${p.id}`)}
- onQuickView={() => setActiveProduct(p)}
  />
  ))}
  </div>
