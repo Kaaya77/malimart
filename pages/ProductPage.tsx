@@ -297,17 +297,19 @@ export const ProductPage = () => {
  {product.is_verified && <ShieldCheck className="w-4 h-4 text-emerald-500" />}
  </div>
  <div className="flex items-center gap-4">
- <div className="flex items-center gap-1.5 opacity-60">
- <Star className="w-3.5 h-3.5 fill-current stroke-[1]" />
- <span className="text-xs font-medium">{product.rating?.toFixed(1) || '4.8'}</span>
+ {(product.rating && product.rating > 0) ? (
+   <div className="flex items-center gap-1.5 opacity-60">
+     <Star className="w-3.5 h-3.5 fill-current stroke-[1]" />
+     <span className="text-xs font-medium">{Number(product.rating).toFixed(1)}</span>
+   </div>
+ ) : null}
  </div>
  </div>
- </div>
- 
+
  <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl font-light tracking-tight leading-[1.1] mb-6">{product.name}</h1>
- 
+
  <div className="flex flex-wrap items-center gap-4 text-[10px] uppercase tracking-[0.2em] opacity-60 mb-8">
- <span>{product.review_count} Reviews</span>
+ {(product.review_count && product.review_count > 0) ? <span>{product.review_count} Reviews</span> : <span className="text-emerald-600 dark:text-emerald-400">New arrival</span>}
  {viewers > 1 && (
    <>
      <span className="w-1 h-1 bg-foreground/20 rounded-full"></span>

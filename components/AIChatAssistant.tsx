@@ -253,12 +253,12 @@ const ProductCarousel = ({ ids, products, onAdd }: {
                 ))}
               </div>
               <div className="flex gap-1">
-                <button onClick={() => setIdx(i => Math.max(0, i - 1))}
+                <button aria-label="Previous product" onClick={() => setIdx(i => Math.max(0, i - 1))}
                   className="w-5 h-5 rounded-full bg-foreground/5 hover:bg-foreground/10 flex items-center justify-center transition-colors disabled:opacity-30"
                   disabled={idx === 0}>
                   <ChevronLeft className="w-3 h-3" />
                 </button>
-                <button onClick={() => setIdx(i => Math.min(items.length - 1, i + 1))}
+                <button aria-label="Next product" onClick={() => setIdx(i => Math.min(items.length - 1, i + 1))}
                   className="w-5 h-5 rounded-full bg-foreground/5 hover:bg-foreground/10 flex items-center justify-center transition-colors disabled:opacity-30"
                   disabled={idx === items.length - 1}>
                   <ChevronRight className="w-3 h-3" />
@@ -338,7 +338,7 @@ const MessageBubble = ({ m, isFirst, products, onAdd, onSuggest }: {
             {/* Copy button */}
             <AnimatePresence>
               {hovered && !m.streaming && (
-                <motion.button initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
+                <motion.button aria-label={copied ? 'Copied' : 'Copy message'} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8 }} transition={{ duration: 0.15 }}
                   onClick={copy}
                   className={`absolute -top-2 ${isUser ? 'left-0 -translate-x-full -ml-1' : 'right-0 translate-x-full ml-1'} w-6 h-6 rounded-lg bg-background border border-foreground/10 flex items-center justify-center shadow-sm hover:bg-foreground/5 transition-colors`}>
@@ -761,6 +761,7 @@ RESPONSE FORMAT:
                 <Trash2 className="w-3.5 h-3.5 text-foreground/35" />
               </motion.button>
               <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                aria-label={isMinimized ? 'Expand chat' : 'Minimise chat'}
                 onClick={() => setIsMinimized(v => !v)} className="p-2 hover:bg-foreground/6 rounded-xl transition-colors">
                 <motion.div animate={{ rotate: isMinimized ? 180 : 0 }} transition={{ duration: 0.3 }}>
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="text-foreground/35">
@@ -770,6 +771,7 @@ RESPONSE FORMAT:
                 </motion.div>
               </motion.button>
               <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                aria-label="Close chat"
                 onClick={() => { stopLiveSession(); setIsOpen(false); }}
                 className="p-2 hover:bg-rose-500/8 hover:text-rose-500 text-foreground/35 rounded-xl transition-colors">
                 <X className="w-3.5 h-3.5" />
@@ -859,7 +861,7 @@ RESPONSE FORMAT:
                         <img src={attachment} alt="" className="w-full h-full object-cover" />
                       </div>
                       <span className="text-[10px] text-foreground/40 font-medium flex-1">Image attached</span>
-                      <motion.button whileTap={{ scale: 0.9 }} onClick={() => setAttachment(null)}
+                      <motion.button whileTap={{ scale: 0.9 }} aria-label="Remove attachment" onClick={() => setAttachment(null)}
                         className="w-5 h-5 rounded-full bg-foreground/8 flex items-center justify-center">
                         <X className="w-2.5 h-2.5 text-foreground/50" />
                       </motion.button>
@@ -868,7 +870,7 @@ RESPONSE FORMAT:
                 </AnimatePresence>
 
                 <form onSubmit={handleSend} className="flex gap-2 items-center">
-                  <motion.button type="button" whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.9 }}
+                  <motion.button type="button" aria-label="Attach image" whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.9 }}
                     onClick={() => fileInputRef.current?.click()}
                     className="w-10 h-10 flex items-center justify-center rounded-xl bg-foreground/5 hover:bg-foreground/8 text-foreground/35 hover:text-emerald-600 transition-all flex-shrink-0">
                     <Paperclip className="w-4 h-4" />
@@ -879,7 +881,7 @@ RESPONSE FORMAT:
                     <motion.input ref={inputRef} value={input}
                       onChange={e => setInput(e.target.value)}
                       onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-                      placeholder={isLive ? 'Speaking…' : 'Ask Mali anything…'}
+                      placeholder={isLive ? 'Speaking…' : `Ask ${animalInfo.name} anything…`}
                       disabled={isLive}
                       className="w-full h-10 pl-4 pr-10 rounded-2xl bg-foreground/[0.05] border border-foreground/8 focus:border-emerald-500/40 focus:bg-foreground/[0.07] text-[12px] font-medium text-foreground placeholder:text-foreground/25 outline-none transition-all"
                     />
@@ -908,13 +910,13 @@ RESPONSE FORMAT:
 
                   <AnimatePresence mode="wait">
                     {input.trim() || attachment ? (
-                      <motion.button key="send" type="submit" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                      <motion.button key="send" type="submit" aria-label="Send message" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
                         exit={{ scale: 0.8, opacity: 0 }} whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.9 }}
                         className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-emerald-500/35 transition-shadow hover:shadow-emerald-500/55">
                         <Send className="w-4 h-4 text-white" />
                       </motion.button>
                     ) : (
-                      <motion.button key="mic" type="button" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                      <motion.button key="mic" type="button" aria-label={isLive ? 'End voice session' : 'Start voice session'} initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
                         exit={{ scale: 0.8, opacity: 0 }} whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.9 }}
                         onClick={() => isLive ? stopLiveSession() : startLiveSession()}
                         disabled={isConnecting}

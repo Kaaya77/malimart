@@ -566,6 +566,18 @@ html, body {
   overscroll-behavior: contain;
 }
 
+/* ── Container utility: explicit responsive max-widths for Tailwind v4 ─── */
+@utility container {
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  @media (width >= 640px)  { max-width: 640px;  }
+  @media (width >= 768px)  { max-width: 768px;  }
+  @media (width >= 1024px) { max-width: 1024px; }
+  @media (width >= 1280px) { max-width: 1280px; }
+  @media (width >= 1536px) { max-width: 1536px; }
+}
+
 /* ═══════════════════════ MALIMART SOUL ═══════════════════════ */
 
 /* Kitenge wave — a strip of East African pattern energy.
