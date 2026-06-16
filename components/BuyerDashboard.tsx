@@ -3,15 +3,15 @@
  * Zero extra fetches — all derived from AppContext props.
  */
 
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { maliGreeting, KitengeStrip } from './MaliSoul';
 import {
   ShoppingBag, DollarSign, Star, Wallet,
-  TrendingUp, TrendingDown, Heart, ArrowRight,
-  Package, Clock, CheckCircle2, XCircle, Truck,
-  Tag, RefreshCw, AlertTriangle, X, ShoppingCart,
-  Award, ChevronRight, RotateCcw, MapPin
+  Heart, ArrowRight,
+  Package, Clock, Truck,
+  Tag, X, ShoppingCart,
+  Award, RotateCcw, MapPin
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis,
@@ -21,74 +21,9 @@ import { formatTZS } from '../constants';
 import { Order, Product } from '../types';
 import { Sk } from './DashboardShell';
 import { CancelOrderModal } from './CancelOrderModal';
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-const timeAgo = (d?: string) => {
-  if (!d) return '—';
-  const s = Math.floor((Date.now() - new Date(d).getTime()) / 1000);
-  if (s < 60) return 'Just now';
-  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
-  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
-  if (s < 2592000) return `${Math.floor(s / 86400)}d ago`;
-  return new Date(d).toLocaleDateString('en-TZ', { day: 'numeric', month: 'short' });
-};
-
-// ─── Loyalty Tier ─────────────────────────────────────────────────────────────
-const TIERS = [
-  { name: 'Starter', color: '#94a3b8', bg: 'bg-slate-100 dark:bg-slate-800', threshold: 0, next: 500 },
-  { name: 'Bronze',  color: '#cd7f32', bg: 'bg-amber-50 dark:bg-amber-900/20', threshold: 500, next: 3000 },
-  { name: 'Silver',  color: '#94a3b8', bg: 'bg-slate-50 dark:bg-slate-800/60', threshold: 3000, next: 10000 },
-  { name: 'Gold',    color: '#f59e0b', bg: 'bg-yellow-50 dark:bg-yellow-900/20', threshold: 10000, next: null },
-];
-
-const getLoyaltyTier = (points: number) => {
-  for (let i = TIERS.length - 1; i >= 0; i--) {
-    if (points >= TIERS[i].threshold) return TIERS[i];
-  }
-  return TIERS[0];
-};
-
-// ─── KPI Card ─────────────────────────────────────────────────────────────────
-const KpiCard = ({ label, value, icon: Icon, accent, trend, sub }: {
-  label: string; value: string; icon: React.ElementType;
-  accent: string; trend?: { value: number; positive: boolean }; sub?: string;
-}) => (
-  <motion.div
-    whileHover={{ y: -2 }}
-    transition={{ duration: 0.2 }}
-    className="relative overflow-hidden rounded-2xl border border-foreground/[0.08] bg-foreground/[0.02] p-5"
-  >
-    <div className="absolute -top-6 -right-6 w-20 h-20 rounded-full blur-2xl opacity-15" style={{ background: accent }} />
-    <div className="flex items-start justify-between mb-3">
-      <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: `${accent}20` }}>
-        <Icon className="w-4 h-4" style={{ color: accent }} strokeWidth={2} />
-      </div>
-      {trend && (
-        <span className={`flex items-center gap-0.5 text-[10px] font-bold ${trend.positive ? 'text-emerald-500' : 'text-rose-500'}`}>
-          {trend.positive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-          {Math.abs(trend.value).toFixed(1)}%
-        </span>
-      )}
-    </div>
-    <p className="text-xl font-black text-foreground tracking-tight">{value}</p>
-    <div className="flex items-center justify-between mt-0.5">
-      <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-foreground/40">{label}</p>
-      {sub && <p className="text-[10px] text-foreground/30">{sub}</p>}
-    </div>
-  </motion.div>
-);
-
-// ─── Status config ─────────────────────────────────────────────────────────────
-const STATUS_CFG: Record<string, { label: string; color: string; icon: React.ElementType }> = {
-  pending:     { label: 'Pending',    color: '#f59e0b', icon: Clock },
-  processing:  { label: 'Processing', color: '#3b82f6', icon: Package },
-  confirmed:   { label: 'Confirmed',  color: '#3b82f6', icon: Package },
-  in_transit:  { label: 'Shipped',    color: '#8b5cf6', icon: Truck },
-  shipped:     { label: 'Shipped',    color: '#8b5cf6', icon: Truck },
-  delivered:   { label: 'Delivered',  color: '#10b981', icon: CheckCircle2 },
-  cancelled:   { label: 'Cancelled',  color: '#ef4444', icon: XCircle },
-  refunded:    { label: 'Refunded',   color: '#f97316', icon: RefreshCw },
-};
+import { KpiCard } from './buyer-dashboard/KpiCard';
+import { useDashboardStats } from './buyer-dashboard/useDashboardStats';
+import { timeAgo, TIERS, getLoyaltyTier, STATUS_CFG, CHART_COLORS as COLORS } from './buyer-dashboard/dashboardUtils';
 
 // ─── Main Component ─────────────────────────────────────────────────────────────
 interface BuyerDashboardProps {
@@ -109,76 +44,9 @@ export const BuyerDashboard: React.FC<BuyerDashboardProps> = ({
   onCancelOrder, onRemoveWishlist, onAddToCart, onReorder,
 }) => {
   const [cancelTarget, setCancelTarget] = useState<Order | null>(null);
-
-  const stats = useMemo(() => {
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const now = new Date();
-    const excluded = new Set(['cancelled', 'refunded', 'failed']);
-    const activeOrders = orders.filter(o => !(o as any).deleted_at);
-
-    let totalSpent = 0, savings = 0;
-    const statusDist: Record<string, number> = {};
-    const monthlyMap = new Map<string, number>();
-
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      monthlyMap.set(`${months[d.getMonth()]} ${d.getFullYear()}`, 0);
-    }
-
-    const categories = new Map<string, number>();
-    const recentOrders = [...activeOrders].sort((a, b) =>
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    ).slice(0, 4);
-
-    activeOrders.forEach((o: any) => {
-      statusDist[o.status] = (statusDist[o.status] || 0) + 1;
-      if (!excluded.has(o.status)) {
-        totalSpent += Number(o.total) || 0;
-        savings += Number(o.discount_amount) || 0;
-        const d = new Date(o.created_at);
-        const key = `${months[d.getMonth()]} ${d.getFullYear()}`;
-        if (monthlyMap.has(key)) monthlyMap.set(key, (monthlyMap.get(key) || 0) + Number(o.total));
-        (o.items || []).forEach((item: any) => {
-          const prod = item.products || item.product || {};
-          const cat = prod.category || 'Other';
-          const amt = Number(item.price_at_purchase || item.price || 0) * Number(item.quantity || 1);
-          if (amt > 0) categories.set(cat, (categories.get(cat) || 0) + amt);
-        });
-      }
-    });
-
-    const spendHistory = Array.from(monthlyMap.entries()).map(([month, amount]) => ({ month, amount }));
-    const categoryDist = Array.from(categories.entries())
-      .sort(([,a],[,b]) => b - a).slice(0, 5)
-      .map(([name, value]) => ({ name, value }));
-
-    const thirtyAgo = new Date(Date.now() - 30 * 86400000);
-    const sixtyAgo = new Date(Date.now() - 60 * 86400000);
-    let spend30 = 0, spendPrev30 = 0;
-    activeOrders.forEach((o: any) => {
-      if (excluded.has(o.status)) return;
-      const d = new Date(o.created_at);
-      if (d >= thirtyAgo) spend30 += Number(o.total) || 0;
-      else if (d >= sixtyAgo) spendPrev30 += Number(o.total) || 0;
-    });
-    const spendTrend = spendPrev30 > 0 ? ((spend30 - spendPrev30) / spendPrev30) * 100 : 0;
-
-    const pending = activeOrders.filter(o => ['pending','processing','confirmed'].includes(o.status)).length;
-    const inTransit = activeOrders.filter(o => ['in_transit','shipped'].includes(o.status)).length;
-    const inTransitOrders = activeOrders
-      .filter(o => ['in_transit','shipped'].includes(o.status))
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-    return {
-      totalSpent, savings, spendTrend, spendHistory, categoryDist,
-      statusDist, recentOrders, pending, inTransit, inTransitOrders,
-      orderCount: activeOrders.length,
-    };
-  }, [orders]);
-
+  const stats = useDashboardStats(orders);
   const tier = getLoyaltyTier(user?.points || 0);
   const points = user?.points || 0;
-  const COLORS = ['#10b981','#3b82f6','#f59e0b','#8b5cf6','#06b6d4'];
 
   return (
     <div className="space-y-5">

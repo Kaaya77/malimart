@@ -10,6 +10,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppState } from '../context/AppContext';
 import { Button, Badge, Skeleton, Accordion, useToast } from '../components/UI';
+import { Breadcrumb } from '../components/ui/Breadcrumb';
 import { ReviewSection } from '../components/ReviewSection';
 import { ProductCard } from '../components/ProductCard';
 import { Magnetic } from '../components/Effects';
@@ -210,9 +211,12 @@ export const ProductPage = () => {
  {/* Breadcrumb / Back */}
  <div className="flex items-center gap-4 mb-8">
  <button onClick={() => navigate(-1)} className="p-3 bg-background/80 backdrop-blur-md rounded-full active:scale-95 transition-transform border border-foreground/10 shadow-sm"><ArrowLeft className="w-5 h-5 stroke-[1]"/></button>
- <div className="text-[10px] font-semibold uppercase tracking-[0.2em] opacity-60">
- <span>{product.category}</span> <span className="mx-2 opacity-40">/</span> <span>{product.name}</span>
- </div>
+ <Breadcrumb items={[
+   { label: 'Home', href: '/' },
+   { label: 'Shop', href: '/shop' },
+   { label: product.category, href: `/shop?category=${encodeURIComponent(product.category)}` },
+   { label: product.name },
+ ]} />
  </div>
 
  <motion.div 

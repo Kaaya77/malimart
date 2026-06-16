@@ -1,780 +1,345 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-  ShoppingCart, Heart, Trash2, Minus, Plus, Store, ArrowRight,
-  ShieldCheck, Tag, Info, CheckCircle2, Truck, AlertTriangle,
-  Package, Zap, Gift, ChevronRight, X, Sparkles, Lock
-} from 'lucide-react';
+import { ShoppingCart } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAppState } from '../context/AppContext';
-import { Button, Input, Badge, useToast, Card, Label, Skeleton } from '../components/UI';
+import { Button, useToast } from '../components/UI';
 import { CURRENCY, formatTZS, getEffectiveUnitPrice, calculateVatIncluded, normalizeVatRate } from '../constants';
 import { Product, Offer, Address, CartItem } from '../types';
 import { supabase } from '../services/supabaseClient';
 import { useCartTotals } from '../hooks/useCartTotals';
+import { UpsellBanner } from '../components/cart/UpsellBanner';
+import { VendorGroup } from '../components/cart/VendorGroup';
+import { OrderSummary } from '../components/cart/OrderSummary';
+import { UndoBar } from '../components/cart/UndoBar';
+import { AbandonmentModal } from '../components/cart/AbandonmentModal';
+import { CartSkeleton } from '../components/cart/CartSkeleton';
+import { EmptyState } from '../components/ui/EmptyState';
 
 export const CartPage = () => {
- const { 
- cart, removeFromCart, updateQuantity, placeOrder, user, 
- refreshProducts, addToCart, toggleWishlist, wishlist, offers, getActiveOfferForProduct
- } = useAppState();
- const { addToast } = useToast();
- const navigate = useNavigate();
- const location = useLocation();
- 
- const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
- const [activeProduct, setActiveProduct] = useState<Product | null>(null);
- const [showAbandonModal, setShowAbandonModal] = useState(false);
+  const {
+    cart, removeFromCart, updateQuantity, placeOrder, user,
+    refreshProducts, addToCart, toggleWishlist, wishlist, offers, getActiveOfferForProduct,
+  } = useAppState();
+  const { addToast } = useToast();
+  const navigate = useNavigate();
+  const location = useLocation();
 
- // Warn on browser close/refresh when cart has items
- useEffect(() => {
-   if (cart.length < 2) return;
-   const onBeforeUnload = (e: BeforeUnloadEvent) => { e.preventDefault(); };
-   window.addEventListener('beforeunload', onBeforeUnload);
-   return () => window.removeEventListener('beforeunload', onBeforeUnload);
- }, [cart.length]);
+  const [showAbandonModal, setShowAbandonModal] = useState(false);
+  const [vendorMap, setVendorMap] = useState<Record<string, { name: string; fee: number; verified: boolean }>>({});
+  const [loadingVendors, setLoadingVendors] = useState(true);
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<Offer | null>(null);
+  const [validatingCoupon, setValidatingCoupon] = useState(false);
+  const [lastRemoved, setLastRemoved] = useState<CartItem | null>(null);
+  const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
- // Gentle nudge: show the "your bag is waiting" modal after 90s of no checkout action
- useEffect(() => {
-   if (cart.length < 2) return;
-   const t = setTimeout(() => setShowAbandonModal(true), 90_000);
-   return () => clearTimeout(t);
- }, [cart.length]);
- const [vendorMap, setVendorMap] = useState<Record<string, { name: string, fee: number, verified: boolean }>>({});
- const [loadingVendors, setLoadingVendors] = useState(true);
- 
- const [couponCode, setCouponCode] = useState('');
- const [appliedCoupon, setAppliedCoupon] = useState<Offer | null>(null);
- const [validatingCoupon, setValidatingCoupon] = useState(false);
+  // Warn on browser close when cart has items
+  useEffect(() => {
+    if (cart.length < 2) return;
+    const onBeforeUnload = (e: BeforeUnloadEvent) => { e.preventDefault(); };
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, [cart.length]);
 
- // Undo remove — holds the last removed item for 5 seconds
- const [lastRemoved, setLastRemoved] = useState<CartItem | null>(null);
- const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Show abandonment modal after 90s of inactivity
+  useEffect(() => {
+    if (cart.length < 2) return;
+    const t = setTimeout(() => setShowAbandonModal(true), 90_000);
+    return () => clearTimeout(t);
+  }, [cart.length]);
 
- const handleRemove = (item: CartItem, variantId?: string) => {
-   if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
-   removeFromCart(item.id, variantId);
-   setLastRemoved(item);
-   undoTimerRef.current = setTimeout(() => setLastRemoved(null), 5000);
- };
+  useEffect(() => { refreshProducts(); }, [refreshProducts]);
 
- const handleUndoRemove = () => {
-   if (!lastRemoved) return;
-   if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
-   addToCart(lastRemoved as unknown as Product, lastRemoved.selectedVariant, lastRemoved.quantity);
-   setLastRemoved(null);
- };
+  useEffect(() => {
+    const fetchVendors = async () => {
+      const sellerIds = Array.from(new Set(cart.map(i => i.seller_id)));
+      if (sellerIds.length === 0) { setLoadingVendors(false); return; }
+      const { data } = await supabase
+        .from('vendor_profiles')
+        .select('seller_id, store_name, delivery_fee, is_verified')
+        .in('seller_id', sellerIds);
+      if (data) {
+        const map: Record<string, any> = {};
+        data.forEach((v: any) => {
+          map[v.seller_id] = { name: v.store_name, fee: Number(v.delivery_fee || 0), verified: v.is_verified };
+        });
+        setVendorMap(map);
+      }
+      setLoadingVendors(false);
+    };
+    fetchVendors();
+  }, [cart]);
 
- useEffect(() => { refreshProducts(); }, [refreshProducts]);
+  const handleRemove = (item: CartItem, variantId?: string) => {
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    removeFromCart(item.id, variantId);
+    setLastRemoved(item);
+    undoTimerRef.current = setTimeout(() => setLastRemoved(null), 5000);
+  };
 
- useEffect(() => {
- const fetchVendors = async () => {
- const sellerIds = Array.from(new Set(cart.map(i => i.seller_id)));
- if (sellerIds.length === 0) {
- setLoadingVendors(false);
- return;
- }
- 
- const { data } = await supabase
- .from('vendor_profiles')
- .select('seller_id, store_name, delivery_fee, is_verified')
- .in('seller_id', sellerIds);
- 
- if (data) {
- const map: Record<string, any> = {};
- data.forEach((v: any) => { 
- map[v.seller_id] = { 
- name: v.store_name, 
- fee: Number(v.delivery_fee || 0),
- verified: v.is_verified
- }; 
- });
- setVendorMap(map);
- }
- setLoadingVendors(false);
- };
- fetchVendors();
- }, [cart]);
+  const handleUndoRemove = () => {
+    if (!lastRemoved) return;
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    addToCart(lastRemoved as unknown as Product, lastRemoved.selectedVariant, lastRemoved.quantity);
+    setLastRemoved(null);
+  };
 
- // ───────────────────────────────────────────────
- // Item price with auto-apply discount (non-BOGO)
- // ───────────────────────────────────────────────
- const calculateItemPrice = (item: CartItem) => {
- const basePrice = getEffectiveUnitPrice(item);
- const activeOffer = getActiveOfferForProduct(item.id);
- 
- if (activeOffer && activeOffer.is_auto_apply && activeOffer.campaign_type !== 'bogo') {
- let discountedPrice = basePrice;
- if (activeOffer.type === 'percentage') {
- discountedPrice = basePrice - (basePrice * activeOffer.value / 100);
- } else {
- discountedPrice = Math.max(0, basePrice - activeOffer.value);
- }
- return { price: Math.round(discountedPrice), originalPrice: basePrice, offer: activeOffer };
- }
- return { price: basePrice, originalPrice: null, offer: null };
- };
+  const handleSaveForLater = (item: CartItem, variantId?: string) => {
+    toggleWishlist(item);
+    handleRemove(item, variantId);
+    addToast('Saved to wishlist', 'success');
+  };
 
- // ───────────────────────────────────────────────
- // Financial calculations
- // ───────────────────────────────────────────────
- const subtotal = cart.reduce((sum, item) => {
- const { price } = calculateItemPrice(item);
- return sum + (price * item.quantity);
- }, 0);
- 
- const localVAT = cart.reduce((sum, item) => {
- const price = getEffectiveUnitPrice(item);
- const vatRate = normalizeVatRate(item.selectedVariant?.vat_rate ?? item.vat_rate ?? 0.18);
- return sum + (calculateVatIncluded(price, vatRate) * item.quantity);
- }, 0);
+  // ── Item price with auto-apply discount (non-BOGO) ───────────────────────
+  const calculateItemPrice = (item: CartItem) => {
+    const basePrice = getEffectiveUnitPrice(item);
+    const activeOffer = getActiveOfferForProduct(item.id);
+    if (activeOffer && activeOffer.is_auto_apply && activeOffer.campaign_type !== 'bogo') {
+      const discountedPrice = activeOffer.type === 'percentage'
+        ? basePrice - (basePrice * activeOffer.value / 100)
+        : Math.max(0, basePrice - activeOffer.value);
+      return { price: Math.round(discountedPrice), originalPrice: basePrice, offer: activeOffer };
+    }
+    return { price: basePrice, originalPrice: null, offer: null };
+  };
 
- const deliveryFeeTotal = Object.values(vendorMap).reduce((acc, v: any) => acc + (v.fee || 0), 0);
+  // ── Financial calculations ───────────────────────────────────────────────
+  const subtotal = cart.reduce((sum, item) => sum + (calculateItemPrice(item).price * item.quantity), 0);
 
- // ───────────────────────────────────────────────
- // Upsell / BOGO prompts (your original logic, just safer)
- // ───────────────────────────────────────────────
- const upsellOpportunity = useMemo(() => {
- if (cart.length === 0) return null;
+  const localVAT = cart.reduce((sum, item) => {
+    const price = getEffectiveUnitPrice(item);
+    const vatRate = normalizeVatRate(item.selectedVariant?.vat_rate ?? item.vat_rate ?? 0.18);
+    return sum + (calculateVatIncluded(price, vatRate) * item.quantity);
+  }, 0);
 
- for (const item of cart) {
- const itemOffer = offers.find(o => 
- o.campaign_type === 'bogo' && 
- o.status === 'active' &&
- (
- (o.target_type === 'product' && o.target_ids?.includes(item.id)) || 
- (o.target_type === 'store' && o.seller_id === item.seller_id) ||
- (o.target_type === 'category' && o.target_ids?.includes(item.category))
- )
- );
+  const deliveryFeeTotal = Object.values(vendorMap).reduce((acc, v: any) => acc + (v.fee || 0), 0);
 
- if (itemOffer && itemOffer.buy_quantity && itemOffer.get_quantity) {
- const cycle = itemOffer.buy_quantity + itemOffer.get_quantity;
- const remainder = item.quantity % cycle;
- if (remainder === itemOffer.buy_quantity) {
- return {
- type: 'bogo',
- title: 'Free Item Unlocked!',
- msg: `You qualify for ${itemOffer.get_quantity} FREE ${item.name}! Add to bag now.`,
- action: () => updateQuantity(item.id, itemOffer.get_quantity!, item.variant_id),
- icon: Gift
- };
- }
- }
- }
+  const upsellOpportunity = useMemo(() => {
+    if (cart.length === 0) return null;
+    for (const item of cart) {
+      const itemOffer = offers.find(o =>
+        o.campaign_type === 'bogo' && o.status === 'active' &&
+        ((o.target_type === 'product' && o.target_ids?.includes(item.id)) ||
+         (o.target_type === 'store' && o.seller_id === item.seller_id) ||
+         (o.target_type === 'category' && o.target_ids?.includes(item.category)))
+      );
+      if (itemOffer?.buy_quantity && itemOffer?.get_quantity) {
+        const cycle = itemOffer.buy_quantity + itemOffer.get_quantity;
+        if (item.quantity % cycle === itemOffer.buy_quantity) {
+          return {
+            type: 'bogo' as const,
+            title: 'Free Item Unlocked!',
+            msg: `You qualify for ${itemOffer.get_quantity} FREE ${item.name}!`,
+            action: () => updateQuantity(item.id, itemOffer.get_quantity!, item.variant_id),
+            icon: require('lucide-react').Gift,
+          };
+        }
+      }
+    }
+    const best = offers
+      .filter(o => (o.target_type === 'store' || o.scope === 'platform') && o.min_order_value && o.min_order_value > subtotal && o.status === 'active')
+      .sort((a, b) => (a.min_order_value! - subtotal) - (b.min_order_value! - subtotal))[0];
+    if (best && best.min_order_value! - subtotal < 50000) {
+      return {
+        type: 'spend' as const,
+        title: 'So Close!',
+        msg: `Add ${formatTZS(best.min_order_value! - subtotal)} to unlock ${best.title} (${best.code})`,
+        action: () => navigate('/shop'),
+        icon: require('lucide-react').Zap,
+      };
+    }
+    return null;
+  }, [cart, subtotal, offers, navigate, updateQuantity]);
 
- const potentialCoupons = offers.filter(o => 
- (o.target_type === 'store' || o.scope === 'platform') && 
- o.min_order_value && 
- o.min_order_value > subtotal &&
- o.status === 'active'
- );
+  const autoApplyDiscount = useMemo(() => {
+    let total = 0;
+    const seen = new Set<string>();
+    cart.forEach(item => {
+      if (seen.has(item.id)) return;
+      const activeOffer = getActiveOfferForProduct(item.id);
+      if (activeOffer?.is_auto_apply && activeOffer.campaign_type === 'bogo' && activeOffer.buy_quantity && activeOffer.get_quantity) {
+        const { price } = calculateItemPrice(item);
+        const sets = Math.floor(item.quantity / (activeOffer.buy_quantity + activeOffer.get_quantity));
+        if (sets > 0) total += sets * activeOffer.get_quantity * price;
+        seen.add(item.id);
+      }
+    });
+    return total;
+  }, [cart, getActiveOfferForProduct]);
 
- if (potentialCoupons.length > 0) {
- const best = potentialCoupons.sort((a,b) => (a.min_order_value! - subtotal) - (b.min_order_value! - subtotal))[0];
- const diff = best.min_order_value! - subtotal;
- if (diff < 50000) {
- return {
- type: 'spend',
- title: 'So Close!',
- msg: `Add ${formatTZS(diff)} to unlock ${best.title} (${best.code})`,
- action: () => navigate('/shop'),
- icon: Zap
- };
- }
- }
+  const discountAmount = appliedCoupon ? (() => {
+    if (appliedCoupon.min_order_value && subtotal < appliedCoupon.min_order_value) return 0;
+    if (appliedCoupon.campaign_type === 'shipping') return deliveryFeeTotal;
+    if (appliedCoupon.campaign_type === 'bogo' && appliedCoupon.buy_quantity && appliedCoupon.get_quantity) {
+      return cart
+        .filter(item =>
+          appliedCoupon.target_type === 'store' ||
+          (appliedCoupon.target_type === 'product' && appliedCoupon.target_ids?.includes(item.id)) ||
+          (appliedCoupon.target_type === 'category' && appliedCoupon.target_ids?.includes(item.category))
+        )
+        .reduce((d, item) => {
+          const { price } = calculateItemPrice(item);
+          const sets = Math.floor(item.quantity / (appliedCoupon.buy_quantity! + appliedCoupon.get_quantity!));
+          return d + (sets > 0 ? sets * appliedCoupon.get_quantity! * price : 0);
+        }, 0);
+    }
+    if (appliedCoupon.type === 'percentage') return Math.floor((subtotal * appliedCoupon.value) / 100);
+    if (appliedCoupon.type === 'fixed') return appliedCoupon.value;
+    return 0;
+  })() : 0;
 
- return null;
- }, [cart, subtotal, offers, navigate, updateQuantity]);
+  const couponDiscountOnSubtotal = (appliedCoupon && appliedCoupon.campaign_type !== 'shipping') ? discountAmount : 0;
+  const shippingFee = (appliedCoupon && appliedCoupon.campaign_type === 'shipping') ? 0 : Number(deliveryFeeTotal);
+  const localTotal = Math.max(0, subtotal + shippingFee - autoApplyDiscount - couponDiscountOnSubtotal);
+  const totalDiscountAmount = autoApplyDiscount + couponDiscountOnSubtotal + (Number(deliveryFeeTotal) - shippingFee);
 
- // ───────────────────────────────────────────────
- // Auto-apply BOGO discount
- // ───────────────────────────────────────────────
- const autoApplyDiscount = useMemo(() => {
- let totalDiscount = 0;
- const processedItems = new Set<string>();
+  const cartTotalsItems = useMemo(
+    () => cart.map((i: any) => ({ product_id: i.id, variant_id: i.variant_id || null, quantity: i.quantity })),
+    [cart]
+  );
+  const { totals: srvTotals, loading: totalsLoading } = useCartTotals({
+    items: cartTotalsItems,
+    deliveryFee: Number(deliveryFeeTotal),
+    discount: totalDiscountAmount,
+  });
+  const totalVAT = totalsLoading ? localVAT : srvTotals.vat_amount;
+  const total = localTotal;
 
- cart.forEach(item => {
- if (processedItems.has(item.id)) return;
- const activeOffer = getActiveOfferForProduct(item.id);
- if (activeOffer && activeOffer.is_auto_apply && activeOffer.campaign_type === 'bogo' && activeOffer.buy_quantity && activeOffer.get_quantity) {
- const { price } = calculateItemPrice(item);
- const totalSets = Math.floor(item.quantity / (activeOffer.buy_quantity + activeOffer.get_quantity));
- if (totalSets > 0) {
- totalDiscount += (totalSets * activeOffer.get_quantity * price);
- }
- processedItems.add(item.id);
- }
- });
- return totalDiscount;
- }, [cart, getActiveOfferForProduct]);
+  const groupedItems = useMemo(() => {
+    const groups: Record<string, CartItem[]> = {};
+    cart.forEach(item => {
+      const sid = item.seller_id;
+      if (!groups[sid]) groups[sid] = [];
+      groups[sid].push(item);
+    });
+    return groups;
+  }, [cart]);
 
- // ───────────────────────────────────────────────
- // Manual coupon discount
- // ───────────────────────────────────────────────
- const discountAmount = appliedCoupon ? (() => {
- if (appliedCoupon.min_order_value && subtotal < appliedCoupon.min_order_value) return 0;
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setValidatingCoupon(true);
+    try {
+      const now = new Date().toISOString();
+      const { data, error } = await supabase
+        .from('offers')
+        .select('*')
+        .eq('code', couponCode.toUpperCase())
+        .eq('status', 'active')
+        .lte('start_date', now)
+        .or(`end_date.is.null,end_date.gte.${now}`)
+        .single();
+      if (error || !data) throw new Error('Invalid or expired coupon code.');
+      const offer = data as Offer;
+      if (offer.min_order_value && subtotal < offer.min_order_value) throw new Error(`Order must exceed ${formatTZS(offer.min_order_value)}`);
+      if (offer.max_usage && (offer.current_usage || 0) >= offer.max_usage) throw new Error('Coupon usage limit reached.');
+      if (offer.campaign_type === 'bogo') {
+        const hasItems = cart.some(item =>
+          offer.target_type === 'store' ||
+          (offer.target_type === 'product' && offer.target_ids?.includes(item.id)) ||
+          (offer.target_type === 'category' && offer.target_ids?.includes(item.category))
+        );
+        if (!hasItems) throw new Error('Cart does not contain eligible items for this BOGO offer.');
+      }
+      setAppliedCoupon(offer);
+      addToast(`Coupon ${offer.code} applied!`, 'success');
+    } catch (e: any) {
+      setAppliedCoupon(null);
+      addToast(e.message, 'error');
+    } finally {
+      setValidatingCoupon(false);
+    }
+  };
 
- if (appliedCoupon.campaign_type === 'shipping') {
- return deliveryFeeTotal;
- }
+  const handleCheckoutClick = () => {
+    if (!user) {
+      addToast('Please login to secure your order', 'info');
+      navigate(`/login?redirect=${encodeURIComponent(location.pathname)}`);
+      return;
+    }
+    navigate('/checkout', { state: { total, subtotal, vat: totalVAT, discount: totalDiscountAmount } });
+  };
 
- if (appliedCoupon.campaign_type === 'bogo' && appliedCoupon.buy_quantity && appliedCoupon.get_quantity) {
- const targetItems = cart.filter(item => 
- appliedCoupon.target_type === 'store' || 
- (appliedCoupon.target_type === 'product' && appliedCoupon.target_ids?.includes(item.id)) ||
- (appliedCoupon.target_type === 'category' && appliedCoupon.target_ids?.includes(item.category))
- );
- 
- let totalDiscount = 0;
- targetItems.forEach(item => {
- const { price } = calculateItemPrice(item);
- const totalSets = Math.floor(item.quantity / (appliedCoupon.buy_quantity! + appliedCoupon.get_quantity!));
- if (totalSets > 0) {
- totalDiscount += (totalSets * appliedCoupon.get_quantity! * price);
- }
- });
- return totalDiscount;
- }
+  if (loadingVendors && cart.length > 0) return <CartSkeleton />;
 
- if (appliedCoupon.type === 'percentage') {
- return Math.floor((subtotal * appliedCoupon.value) / 100);
- } else if (appliedCoupon.type === 'fixed') { 
- return appliedCoupon.value; 
- }
- return 0;
- })() : 0;
+  // ── Empty state ──────────────────────────────────────────────────────────
+  if (cart.length === 0) {
+    return (
+      <div className="min-h-screen pt-24 flex items-center justify-center">
+        <EmptyState
+          icon="cart"
+          title="Your bag is empty"
+          description="Your collection awaits. Discover authentic artifacts from Tanzania's finest creators."
+          action={{ label: 'Start Shopping', onClick: () => navigate('/shop') }}
+        />
+      </div>
+    );
+  }
 
- const couponDiscountOnSubtotal = (appliedCoupon && appliedCoupon.campaign_type !== 'shipping') ? discountAmount : 0;
- const shippingFee = (appliedCoupon && appliedCoupon.campaign_type === 'shipping') ? 0 : Number(deliveryFeeTotal);
- const localTotal = Math.max(0, subtotal + shippingFee - autoApplyDiscount - couponDiscountOnSubtotal);
- const totalDiscountAmount = (() => {
- const val = autoApplyDiscount + couponDiscountOnSubtotal + (Number(deliveryFeeTotal) - shippingFee);
- return val;
- })();
+  // ── Main render ──────────────────────────────────────────────────────────
+  return (
+    <>
+      <div className="container mx-auto px-4 md:px-6 font-sans pt-20 md:pt-28 pb-[calc(5rem+env(safe-area-inset-bottom))]">
+        <div className="flex flex-col lg:flex-row gap-8 lg:gap-16 relative">
 
- // Server RPC gives authoritative VAT (per-product vat_rate), but doesn't know
- // about client-side campaign discounts applied in calculateItemPrice. Use the
- // server VAT amount only; keep the client-computed total to avoid overcharging.
- const cartTotalsItems = useMemo(
-   () => cart.map((i: any) => ({ product_id: i.id, variant_id: i.variant_id || null, quantity: i.quantity })),
-   [cart]
- );
- const { totals: srvTotals, loading: totalsLoading } = useCartTotals({
-   items: cartTotalsItems,
-   deliveryFee: Number(deliveryFeeTotal),
-   discount: totalDiscountAmount,
- });
- const totalVAT = totalsLoading ? localVAT : srvTotals.vat_amount;
- const total = localTotal;
+          {/* LEFT: Items by vendor */}
+          <div className="flex-1 space-y-10">
+            <div className="flex justify-between items-end pb-6 border-b border-foreground/8">
+              <div>
+                <h1 className="text-3xl md:text-4xl font-black text-foreground font-display uppercase tracking-tight">Shopping Bag</h1>
+                <p className="text-foreground/50 text-sm font-bold mt-1 uppercase tracking-wider">
+                  {cart.length} {cart.length === 1 ? 'Product' : 'Products'} selected
+                </p>
+              </div>
+            </div>
 
- // ───────────────────────────────────────────────
- // Group items by seller
- // ───────────────────────────────────────────────
- const groupedItems = useMemo(() => {
- const groups: Record<string, CartItem[]> = {};
- cart.forEach(item => {
- const sid = item.seller_id;
- if (!groups[sid]) groups[sid] = [];
- groups[sid].push(item);
- });
- return groups;
- }, [cart]);
+            {upsellOpportunity && <UpsellBanner opportunity={upsellOpportunity} />}
 
- // ───────────────────────────────────────────────
- // Coupon apply handler (your original + minor safety)
- // ───────────────────────────────────────────────
- const handleApplyCoupon = async () => {
- if (!couponCode.trim()) return;
- setValidatingCoupon(true);
- try {
- const now = new Date().toISOString();
- const { data, error } = await supabase
- .from('offers')
- .select('*')
- .eq('code', couponCode.toUpperCase())
- .eq('status', 'active')
- .lte('start_date', now)
- .or(`end_date.is.null,end_date.gte.${now}`)
- .single();
+            <div className="space-y-12">
+              {(Object.entries(groupedItems) as [string, CartItem[]][]).map(([sellerId, items], vendorIndex) => (
+                <VendorGroup
+                  key={sellerId}
+                  sellerId={sellerId}
+                  items={items}
+                  vendor={vendorMap[sellerId]}
+                  vendorIndex={vendorIndex}
+                  calculateItemPrice={calculateItemPrice}
+                  onUpdateQuantity={updateQuantity}
+                  onRemove={handleRemove}
+                  onSaveForLater={handleSaveForLater}
+                  onNavigate={navigate}
+                />
+              ))}
+            </div>
+          </div>
 
- if (error || !data) throw new Error("Invalid or expired coupon code.");
- const offer = data as Offer;
- 
- if (offer.min_order_value && subtotal < offer.min_order_value) throw new Error(`Order must exceed ${formatTZS(offer.min_order_value)}`);
- if (offer.max_usage && (offer.current_usage || 0) >= offer.max_usage) throw new Error("Coupon usage limit reached.");
+          {/* RIGHT: Order summary */}
+          <OrderSummary
+            itemCount={cart.length}
+            subtotal={subtotal}
+            totalVAT={totalVAT}
+            deliveryFeeTotal={deliveryFeeTotal}
+            shippingFee={shippingFee}
+            autoApplyDiscount={autoApplyDiscount}
+            couponDiscountOnSubtotal={couponDiscountOnSubtotal}
+            total={total}
+            appliedCoupon={appliedCoupon}
+            couponCode={couponCode}
+            validatingCoupon={validatingCoupon}
+            onCouponChange={setCouponCode}
+            onApplyCoupon={handleApplyCoupon}
+            onCheckout={handleCheckoutClick}
+          />
+        </div>
+      </div>
 
- if (offer.campaign_type === 'bogo') {
- const hasItems = cart.some(item => 
- offer.target_type === 'store' || 
- (offer.target_type === 'product' && offer.target_ids?.includes(item.id)) ||
- (offer.target_type === 'category' && offer.target_ids?.includes(item.category))
- );
- if (!hasItems) throw new Error("Cart does not contain eligible items for this BOGO offer.");
- }
- 
- setAppliedCoupon(offer);
- addToast(`Coupon ${offer.code} applied!`, "success");
- } catch (e: any) {
- setAppliedCoupon(null);
- addToast(e.message, "error");
- } finally {
- setValidatingCoupon(false);
- }
- };
+      <UndoBar lastRemoved={lastRemoved} onUndo={handleUndoRemove} />
 
- const handleCheckoutClick = () => {
- if (!user) {
- addToast("Please login to secure your order", "info");
- navigate(`/login?redirect=${encodeURIComponent(location.pathname)}`);
- return;
- }
- navigate('/checkout', { state: { total, subtotal, vat: totalVAT, discount: totalDiscountAmount } });
- };
-
- const handleCompleteOrder = async (details: { address: Address, paymentMethod: string, deliveryFee: number, note: string, paymentRef?: string, isGift?: boolean, giftMessage?: string, deliveryDate?: string, deliverySlot?: string }) => {
- try {
- const newOrder = await placeOrder({ 
- ...details, 
- vat: totalVAT, 
- subtotal: subtotal, 
- discount: totalDiscountAmount, 
- coupon: appliedCoupon 
- });
- setIsCheckoutOpen(false);
- navigate('/order-confirmation', { state: { order: newOrder } });
- addToast("Order placed successfully!", "success");
- } catch (e: any) {
- addToast(e.message || "Failed to place order.", "error");
- }
- };
-
- // ───────────────────────────────────────────────
- // Empty cart UI (your original)
- // ───────────────────────────────────────────────
- if (cart.length === 0) {
- return (
- <div className="container mx-auto px-4 py-12 text-center animate-in fade-in zoom-in-95 font-sans min-h-screen pt-24 flex flex-col items-center justify-center">
- <div className="w-48 h-48 bg-foreground/[0.04] rounded-full flex items-center justify-center mb-8 relative group">
- <ShoppingCart className="w-16 h-16 text-foreground/20 group-hover:text-foreground/60 transition-colors duration-500" />
- <div className="absolute top-8 right-10 w-4 h-4 bg-foreground/15 rounded-full animate-bounce"></div>
- </div>
- <h2 className="text-4xl md:text-6xl font-black text-foreground mb-6 font-display tracking-tighter uppercase leading-none">Bag Empty</h2>
- <p className="text-foreground/50 mb-12 max-w-md mx-auto font-medium text-base leading-relaxed">Your collection awaits. Discover authentic artifacts from Tanzania's finest creators.</p>
- <Link to="/shop"><Button size="lg" variant="brand" className="px-12 h-16 rounded-full shadow-2xl shadow-emerald-500/20 font-black uppercase tracking-widest text-xs hover:scale-105 transition-transform">Start Collecting</Button></Link>
- </div>
- );
- }
-
- // ───────────────────────────────────────────────
- // Main render
- // ───────────────────────────────────────────────
- return (
- <>
- <div className="container mx-auto px-4 md:px-6 font-sans pt-20 md:pt-28 pb-[calc(5rem+env(safe-area-inset-bottom))] px-4 md:px-6 py-6">
- <div className="flex flex-col lg:flex-row gap-8 lg:gap-16 relative">
- 
- {/* LEFT COLUMN: Items Grouped by Vendor */}
- <div className="flex-1 space-y-10">
- <div className="flex justify-between items-end pb-6 border-b border-foreground/8">
- <div>
- <h1 className="text-3xl md:text-4xl font-black text-foreground font-display uppercase tracking-tight">Shopping Bag</h1>
- <p className="text-foreground/50 text-sm font-bold mt-1 uppercase tracking-wider">{cart.length} {cart.length === 1 ? 'Product' : 'Products'} selected</p>
- </div>
- </div>
-
- {upsellOpportunity && (
- <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl p-6 text-white shadow-xl shadow-indigo-500/20 flex items-center justify-between gap-4 animate-in slide-in-from-top-4">
- <div className="flex items-center gap-4">
- <div className="p-3 bg-background/20 backdrop-blur-md rounded-full">
- <upsellOpportunity.icon className="w-6 h-6"/>
- </div>
- <div>
- <h4 className="font-black uppercase tracking-wide text-sm">{upsellOpportunity.title}</h4>
- <p className="text-xs font-medium opacity-90">{upsellOpportunity.msg}</p>
- </div>
- </div>
- <button onClick={upsellOpportunity.action} className="px-5 py-2 bg-background text-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-background/90 transition-colors shadow-sm whitespace-nowrap">
- {upsellOpportunity.type === 'bogo' ? 'Add Now' : 'Shop Now'}
- </button>
- </div>
- )}
-
- <div className="space-y-12">
- {(Object.entries(groupedItems) as [string, CartItem[]][]).map(([sellerId, items], vendorIndex) => {
- const vendor = vendorMap[sellerId];
- return (
- <motion.div 
- key={sellerId} 
- initial={{ opacity: 0, y: 20 }}
- whileInView={{ opacity: 1, y: 0 }}
- viewport={{ once: true, margin: "-50px" }}
- transition={{ duration: 0.6, delay: vendorIndex * 0.1, ease: [0.22, 1, 0.36, 1] }}
- className="space-y-4"
- >
- <div className="flex items-center justify-between px-2">
- <Link to={`/store/${sellerId}`} className="flex items-center gap-2 text-foreground uppercase tracking-widest text-xs font-black hover:opacity-70 transition-colors">
- <Store className="w-4 h-4 text-brand-500" />
- <span>{vendor?.name || 'Loading Store...'}</span>
- {vendor?.verified && <CheckCircle2 className="w-3.5 h-3.5 text-blue-500" />}
- </Link>
- <Badge variant="outline" className="text-[9px] font-bold border-brand-200 text-brand-700 bg-brand-50 dark:bg-brand-900/10 dark:border-brand-900/50">
- Delivery: {formatTZS(vendor?.fee || 0)}
- </Badge>
- </div>
- 
- <motion.div 
- initial="hidden"
- whileInView="visible"
- viewport={{ once: true }}
- variants={{
- hidden: { opacity: 0 },
- visible: {
- opacity: 1,
- transition: { staggerChildren: 0.05 }
- }
- }}
- className="bg-background rounded-3xl border border-foreground/8 overflow-hidden shadow-sm divide-y divide-foreground/5"
- >
- {items.map((item, index) => {
- const variant = item.selectedVariant;
- const { price, originalPrice, offer } = calculateItemPrice(item);
- const stock = variant?.stock ?? item.stock ?? 0;
- const isStockLow = stock > 0 && stock < 5;
- const variantLabel = variant ? Object.values(variant.attributes ?? {}).join(' / ') : null;
- const image = variant?.image_url || item.images?.[0] || 'data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 600 800%27%3E%3Crect width=%27600%27 height=%27800%27 fill=%27%23f1f0ec%27/%3E%3Cg fill=%27%23c8c5bc%27%3E%3Ccircle cx=%27300%27 cy=%27340%27 r=%2770%27/%3E%3Cpath d=%27M170 560 q60 -110 130 -40 q40 -70 130 30 l0 50 l-260 0 z%27/%3E%3C/g%3E%3Ctext x=%27300%27 y=%27660%27 font-family=%27sans-serif%27 font-size=%2728%27 fill=%27%23a8a59c%27 text-anchor=%27middle%27%3ENo image%3C/text%3E%3C/svg%3E';
-
- // Safe unique key — fixes duplicate key error
- const itemKey = variant?.id 
- ? `${item.id}-${variant.id}`
- : `${item.id}-no-variant`;
-
- return (
- <motion.div
- key={`${itemKey}-${index}`}
- variants={{
- hidden: { opacity: 0, x: -10 },
- visible: { opacity: 1, x: 0, transition: { duration: 0.4 } }
- }}
- className="relative overflow-hidden"
- >
- {/* Swipe-to-delete reveal layer (mobile) */}
- <div className="sm:hidden absolute inset-y-0 right-0 w-20 bg-red-500 flex flex-col items-center justify-center gap-1 pointer-events-none select-none">
-   <Trash2 className="w-5 h-5 text-white" />
-   <span className="text-[9px] font-black text-white uppercase tracking-wider">Delete</span>
- </div>
- <motion.div
- drag="x"
- dragConstraints={{ left: -80, right: 0 }}
- dragElastic={0.08}
- onDragEnd={(_: any, info: any) => { if (info.offset.x < -60) handleRemove(item, variant?.id); }}
- className="flex flex-col sm:flex-row gap-6 p-6 group hover:bg-foreground/[0.02] bg-background transition-colors relative"
- style={{ touchAction: 'pan-y' }}
- >
- {/* Image */}
- <div 
- className="w-full sm:w-32 aspect-square rounded-[1.5rem] overflow-hidden bg-foreground/[0.06] shrink-0 border border-foreground/10 relative cursor-pointer group/img" 
- onClick={() => navigate(`/product/${(item as any).product_id || (item as any).id}`)}
- >
- <img 
- src={image} 
- alt={item.name} 
- className="w-full h-full object-cover group-hover/img:scale-110 transition-transform duration-700" loading="lazy" decoding="async" 
- />
- {isStockLow && (
- <div className="absolute bottom-0 left-0 right-0 bg-red-500 text-white text-[7px] font-black uppercase text-center py-1">
- Low Stock
- </div>
- )}
- </div>
- 
- {/* Details */}
- <div className="flex-1 flex flex-col justify-between min-w-0 py-1">
- <div className="space-y-2">
- <div className="flex justify-between items-start">
- <h3 
- className="font-bold text-sm sm:text-base text-foreground leading-tight truncate pr-4 cursor-pointer hover:text-brand-600 transition-colors uppercase" 
- onClick={() => navigate(`/product/${(item as any).product_id || (item as any).id}`)}
- >
- {item.name}
- </h3>
- <div className="text-right">
- <p className="font-black text-sm sm:text-base whitespace-nowrap">{formatTZS(price)}</p>
- {originalPrice && originalPrice > price && (
- <p className="text-[10px] text-foreground/40 line-through">
- {formatTZS(originalPrice)}
- </p>
- )}
- </div>
- </div>
- 
- <div className="flex flex-wrap gap-2">
- <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-wider bg-foreground/[0.06] text-foreground/50">
- {item.category}
- </Badge>
- {variantLabel && (
- <Badge variant="outline" className="text-[10px] font-bold uppercase tracking-wider border-foreground/10">
- {variantLabel}
- </Badge>
- )}
- {offer && (
- <Badge className={`${offer.campaign_type === 'bogo' ? 'bg-indigo-600' : 'bg-red-500'} text-white border-none text-[10px] font-black uppercase tracking-widest flex items-center gap-1`}>
- {offer.campaign_type === 'bogo' ? <Gift className="w-3 h-3"/> : <Zap className="w-3 h-3 fill-current"/>}
- {offer.title}
- </Badge>
- )}
- </div>
- </div>
-
- <div className="flex justify-between items-end mt-6">
- <div className="flex items-center gap-1 bg-foreground/[0.05] p-1 rounded-xl border border-foreground/8">
- <button 
- onClick={() => updateQuantity(item.id, -1, variant?.id)} 
- disabled={item.quantity <= 1} 
- className="w-11 h-11 rounded-lg flex items-center justify-center bg-background shadow-sm hover:scale-95 transition-all disabled:opacity-50 text-foreground/60"
- aria-label="Decrease quantity"
- >
- <Minus className="w-4 h-4"/>
- </button>
- <span className="text-sm font-black w-10 text-center tabular-nums">{item.quantity}</span>
- <button 
- onClick={() => updateQuantity(item.id, 1, variant?.id)} 
- disabled={item.quantity >= stock}
- className="w-11 h-11 rounded-lg flex items-center justify-center bg-background shadow-sm hover:scale-95 transition-all text-foreground"
- aria-label="Increase quantity"
- >
- <Plus className="w-4 h-4"/>
- </button>
- </div>
- 
- <div className="flex items-center gap-4">
- <div className="text-right">
- <p className="text-[10px] font-bold uppercase text-foreground/40">Total</p>
- <p className="text-sm font-black text-foreground">{formatTZS(price * item.quantity)}</p>
- </div>
- <div className="flex items-center gap-2">
- <button
- onClick={() => {
- toggleWishlist(item);
- handleRemove(item, variant?.id);
- addToast("Saved to wishlist", "success");
- }}
- className="w-11 h-11 flex items-center justify-center text-foreground/25 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all"
- title="Save for later"
- aria-label="Save for later"
- >
- <Heart className="w-5 h-5"/>
- </button>
- <button
- onClick={() => handleRemove(item, variant?.id)}
- className="w-11 h-11 flex items-center justify-center text-foreground/25 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all"
- title="Remove"
- aria-label="Remove item"
- >
- <Trash2 className="w-5 h-5"/>
- </button>
- </div>
- </div>
- </div>
- </div>
- </motion.div>
- </motion.div>
- );
- })}
- </motion.div>
- </motion.div>
- );
- })}
- </div>
- </div>
-
- {/* RIGHT COLUMN: Summary */}
- <motion.div 
- initial={{ opacity: 0, x: 20 }}
- whileInView={{ opacity: 1, x: 0 }}
- viewport={{ once: true, margin: "-50px" }}
- transition={{ duration: 0.6 }}
- className="lg:w-[420px] shrink-0 relative"
- >
- <div className="space-y-6 lg:sticky lg:top-32">
- <Card className="p-6 md:p-8 rounded-3xl bg-background border border-foreground/8 shadow-2xl relative overflow-hidden">
- <div className="absolute top-0 right-0 w-64 h-64 bg-brand-500/5 blur-[80px] rounded-full pointer-events-none"></div>
- 
- <h3 className="font-black text-lg mb-8 uppercase tracking-tight flex items-center gap-3">
- <ShieldCheck className="w-5 h-5 text-brand-500" /> Order Summary
- </h3>
- 
- <div className="space-y-4 mb-8">
- <div className="flex justify-between text-xs font-bold text-foreground/50 uppercase tracking-wide">
- <span>Subtotal</span>
- <span className="text-foreground">{formatTZS(subtotal)}</span>
- </div>
- <div className="flex justify-between text-xs font-bold text-foreground/50 uppercase tracking-wide">
- <span className="flex items-center gap-1">VAT <Info className="w-3 h-3"/></span>
- <span className="text-foreground">{formatTZS(Math.round(totalVAT))}</span>
- </div>
- <div className="flex justify-between text-xs font-bold text-foreground/50 uppercase tracking-wide">
- <span>Est. Delivery</span>
- <span className="text-foreground">{formatTZS(Number(deliveryFeeTotal))}</span>
- </div>
- 
- {autoApplyDiscount > 0 && (
- <div className="flex justify-between text-xs font-black text-emerald-500 uppercase tracking-wide bg-emerald-50 dark:bg-emerald-900/20 p-2 rounded-lg">
- <span>Auto-applied Savings</span>
- <span>-{formatTZS(autoApplyDiscount)}</span>
- </div>
- )}
- {couponDiscountOnSubtotal > 0 && (
- <div className="flex justify-between text-xs font-black text-emerald-500 uppercase tracking-wide bg-emerald-50 dark:bg-emerald-900/20 p-2 rounded-lg">
- <span>Coupon '{appliedCoupon?.code}'</span>
- <span>-{formatTZS(couponDiscountOnSubtotal)}</span>
- </div>
- )}
- {Number(deliveryFeeTotal) > shippingFee && (
- <div className="flex justify-between text-xs font-black text-emerald-500 uppercase tracking-wide bg-emerald-50 dark:bg-emerald-900/20 p-2 rounded-lg">
- <span>Free Shipping</span>
- <span>-{formatTZS(Number(deliveryFeeTotal) - shippingFee)}</span>
- </div>
- )}
- 
- <div className="h-px bg-foreground/8 my-4"></div>
- 
- <div className="flex justify-between items-end">
- <span className="font-black text-sm uppercase text-foreground tracking-widest">Total Pay</span>
- <div className="text-right">
- <span className="font-black text-3xl md:text-5xl tracking-tighter text-foreground block leading-[0.9] font-display">
- {formatTZS(Math.round(total))}
- </span>
- {totalVAT > 0 && <span className="text-[9px] font-bold text-foreground/40 uppercase tracking-widest">Inclusive of all taxes</span>}
- </div>
- </div>
- </div>
-
- {/* Coupon Input */}
- <div className="mb-8">
- <Label className="mb-2 ml-1">Promo Code</Label>
- <div className="flex gap-2">
- <div className="relative flex-1">
- <Tag className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/30" />
- <Input 
- placeholder="ENTER CODE" 
- value={couponCode} 
- onChange={(e: any) => setCouponCode(e.target.value)} 
- className="h-12 bg-foreground/[0.04] border-none rounded-2xl text-xs font-black uppercase tracking-widest pl-10" 
- disabled={!!appliedCoupon} 
- />
- </div>
- <Button 
- className="h-12 w-12 p-0 rounded-2xl bg-foreground text-background shadow-lg" 
- onClick={handleApplyCoupon} 
- disabled={!!appliedCoupon || !couponCode} 
- isLoading={validatingCoupon}
- >
- {appliedCoupon ? <CheckCircle2 className="w-5 h-5"/> : <ArrowRight className="w-5 h-5" />}
- </Button>
- </div>
- {appliedCoupon && (
- <div className="mt-3 flex items-center justify-center gap-2 text-[10px] text-emerald-600 font-black uppercase tracking-widest bg-emerald-50 dark:bg-emerald-900/10 py-2 rounded-xl">
- <CheckCircle2 className="w-3 h-3"/> Coupon "{appliedCoupon.code}" Active
- </div>
- )}
- </div>
-
- <Button 
- onClick={handleCheckoutClick} 
- variant="brand" 
- className="w-full h-16 text-xs font-black uppercase tracking-[0.25em] shadow-2xl shadow-emerald-500/20 rounded-2xl transition-all group"
- >
- Secure Checkout · {cart.length} {cart.length === 1 ? 'item' : 'items'} <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
- </Button>
- 
- <div className="mt-6 flex flex-col items-center gap-2">
- <div className="flex gap-3 opacity-40 grayscale hover:grayscale-0 transition-all duration-500">
- <span className="text-[9px] font-bold uppercase tracking-widest text-foreground/40">M-Pesa</span>
- <span className="text-[9px] font-bold uppercase tracking-widest text-foreground/40">Tigo</span>
- <span className="text-[9px] font-bold uppercase tracking-widest text-foreground/40">Airtel</span>
- <span className="text-[9px] font-bold uppercase tracking-widest text-foreground/40">Bank</span>
- </div>
- <div className="flex items-center gap-2 text-[8px] font-bold text-foreground/40 uppercase tracking-widest">
- <ShieldCheck className="w-3 h-3" /> Encrypted & Secure
- </div>
- </div>
- </Card>
- </div>
- </motion.div>
- </div>
- </div>
-
- {/* Undo remove bar */}
- <AnimatePresence>
- {lastRemoved && (
- <motion.div
- initial={{ opacity: 0, y: 16 }}
- animate={{ opacity: 1, y: 0 }}
- exit={{ opacity: 0, y: 16 }}
- className="fixed bottom-24 md:bottom-8 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-4 bg-foreground text-background px-5 py-3 rounded-2xl shadow-2xl"
- >
- <span className="text-sm font-medium whitespace-nowrap">Removed from bag</span>
- <button
- onClick={handleUndoRemove}
- className="text-emerald-400 font-black text-sm uppercase tracking-widest hover:text-emerald-300 transition-colors"
- >
- Undo
- </button>
- </motion.div>
- )}
- </AnimatePresence>
-
- {/* ── Cart abandonment interceptor ─────────────────────────────── */}
- <AnimatePresence>
-   {showAbandonModal && (
-     <motion.div
-       initial={{ opacity: 0 }}
-       animate={{ opacity: 1 }}
-       exit={{ opacity: 0 }}
-       className="fixed inset-0 z-[150] bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
-       onClick={() => setShowAbandonModal(false)}
-     >
-       <motion.div
-         initial={{ opacity: 0, y: 40 }}
-         animate={{ opacity: 1, y: 0 }}
-         exit={{ opacity: 0, y: 40 }}
-         transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-         onClick={e => e.stopPropagation()}
-         className="w-full max-w-sm bg-background rounded-3xl p-6 shadow-2xl"
-       >
-         <div className="text-3xl mb-3 text-center">🛍️</div>
-         <h3 className="text-lg font-black text-foreground text-center mb-1">Your bag is waiting</h3>
-         <p className="text-sm text-foreground/55 text-center mb-5">
-           You have {cart.length} item{cart.length !== 1 ? 's' : ''} that would love to come home with you.
-         </p>
-         {/* Product thumbnail strip */}
-         <div className="flex justify-center gap-2 mb-6">
-           {cart.slice(0, 4).map(item => (
-             <img
-               key={item.id}
-               src={item.images?.[0]}
-               alt={item.name}
-               className="w-14 h-14 rounded-xl object-cover bg-foreground/5"
-             />
-           ))}
-         </div>
-         <button
-           onClick={() => navigate('/checkout')}
-           className="w-full h-12 rounded-2xl bg-foreground text-background font-black text-sm uppercase tracking-widest mb-3 active:scale-[0.98] transition-transform"
-         >
-           Checkout now
-         </button>
-         <button
-           onClick={() => setShowAbandonModal(false)}
-           className="w-full h-10 text-sm text-foreground/45 hover:text-foreground font-semibold transition-colors"
-         >
-           Leave anyway
-         </button>
-       </motion.div>
-     </motion.div>
-   )}
- </AnimatePresence>
- </>
- );
+      <AbandonmentModal
+        open={showAbandonModal}
+        cart={cart}
+        onClose={() => setShowAbandonModal(false)}
+        onCheckout={() => navigate('/checkout')}
+      />
+    </>
+  );
 };
