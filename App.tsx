@@ -138,8 +138,14 @@ const FooterLink: React.FC<PropsWithChildren<{ href: string }>> = ({ href, child
 const BackToTop = () => {
     const [visible, setVisible] = useState(false);
     useEffect(() => {
-        const toggle = () => setVisible(window.scrollY > 500);
-        window.addEventListener('scroll', toggle);
+        let ticking = false;
+        const toggle = () => {
+            if (!ticking) {
+                requestAnimationFrame(() => { setVisible(window.scrollY > 500); ticking = false; });
+                ticking = true;
+            }
+        };
+        window.addEventListener('scroll', toggle, { passive: true });
         return () => window.removeEventListener('scroll', toggle);
     }, []);
 
@@ -189,14 +195,18 @@ const ScrollProgress = () => {
     const [progress, setProgress] = useState(0);
 
     useEffect(() => {
+        let ticking = false;
         const updateProgress = () => {
-            const currentScroll = window.scrollY;
-            const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
-            if (scrollHeight) {
-                setProgress(Number((currentScroll / scrollHeight).toFixed(2)) * 100);
+            if (!ticking) {
+                requestAnimationFrame(() => {
+                    const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+                    if (scrollHeight) setProgress(Math.round((window.scrollY / scrollHeight) * 100));
+                    ticking = false;
+                });
+                ticking = true;
             }
         };
-        window.addEventListener('scroll', updateProgress);
+        window.addEventListener('scroll', updateProgress, { passive: true });
         return () => window.removeEventListener('scroll', updateProgress);
     }, []);
 

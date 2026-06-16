@@ -75,6 +75,7 @@ export const ShopPage: React.FC = () => {
  // Server full-text search — searches the ENTIRE catalog, not just loaded products.
  // Falls back to context products when the RPC is unavailable.
  const debouncedQuery = useDebounce(searchQuery, 350);
+ const debouncedFilters = useDebounce(JSON.stringify(activeFilters), 400);
  const [serverResults, setServerResults] = useState<Product[] | null>(null);
  const [serverTotal, setServerTotal] = useState<number | null>(null);
  // Track whether our own fetch is in-flight so we never flash the empty state
@@ -82,17 +83,18 @@ export const ShopPage: React.FC = () => {
  const [shopLoading, setShopLoading] = useState(true);
 
  useEffect(() => {
+   const filters = JSON.parse(debouncedFilters);
    let cancelled = false;
    setShopLoading(true);
    shopProductsServer({
      query: debouncedQuery,
-     category: activeFilters.categories?.[0],
-     minPrice: activeFilters.priceRange?.[0],
-     maxPrice: activeFilters.priceRange?.[1],
-     minRating: activeFilters.rating,
-     verified: activeFilters.verified,
-     inStock: activeFilters.stock,
-     region: activeFilters.location,
+     category: filters.categories?.[0],
+     minPrice: filters.priceRange?.[0],
+     maxPrice: filters.priceRange?.[1],
+     minRating: filters.rating,
+     verified: filters.verified,
+     inStock: filters.stock,
+     region: filters.location,
      sort: sortBy,
      limit: 48,
    }).then(res => {
@@ -115,7 +117,7 @@ export const ShopPage: React.FC = () => {
      }
    });
    return () => { cancelled = true; };
- }, [debouncedQuery, activeFilters, sortBy]);
+ }, [debouncedQuery, debouncedFilters, sortBy]);
 
  // Bootstrap guard: when the primary RPC fails and context products are also
  // empty after the context finishes loading, force a context refresh so the

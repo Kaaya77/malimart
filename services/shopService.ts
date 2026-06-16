@@ -10,6 +10,7 @@
  * existing client-side filtering. This module NEVER throws.
  */
 import { supabase } from './supabaseClient';
+import { withCache } from './queryCache';
 import type { Product } from '../types';
 
 export interface ShopFilters {
@@ -33,8 +34,12 @@ export interface ShopResult {
 
 let rpcAvailable = true;
 
+const SHOP_CACHE_TTL = 60_000; // 1 min — shop results can be slightly stale
+
 export async function shopProductsServer(f: ShopFilters): Promise<ShopResult | null> {
   if (!rpcAvailable) return null;
+  const cacheKey = `shop:${JSON.stringify(f)}`;
+  return withCache(cacheKey, SHOP_CACHE_TTL, async () => {
   try {
     const { data, error } = await supabase.rpc('shop_products', {
       p_query: f.query && f.query.trim().length >= 2 ? f.query.trim() : null,
@@ -63,4 +68,5 @@ export async function shopProductsServer(f: ShopFilters): Promise<ShopResult | n
   } catch {
     return null;
   }
+  });
 }

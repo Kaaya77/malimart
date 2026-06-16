@@ -312,7 +312,8 @@ export const Navbar = () => {
  const unread = notifications?.filter((n:any)=>!n.read).length||0;
 
  useEffect(()=>{
- const fn=()=>setScrolled(window.scrollY>60);
+ let ticking=false;
+ const fn=()=>{if(!ticking){requestAnimationFrame(()=>{setScrolled(window.scrollY>60);ticking=false;});ticking=true;}};
  fn(); window.addEventListener('scroll',fn,{passive:true});
  return ()=>window.removeEventListener('scroll',fn);
  },[]);

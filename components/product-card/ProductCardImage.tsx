@@ -46,6 +46,8 @@ export const ProductCardImage: React.FC<ProductCardImageProps> = ({
           key={display}
           src={display}
           alt={product.name}
+          width={layout === 'grid' ? 600 : 176}
+          height={layout === 'grid' ? 800 : 176}
           initial={{ opacity: 0 }}
           animate={{ opacity: imgLoaded ? 1 : 0 }}
           exit={{ opacity: 0 }}
