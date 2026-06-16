@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "1.0",
+  "task": "Make CheckoutPage load the buyer order summary via the RPC layer",
+  "attempt": 1,
+  "maxAttempts": 3,
+  "diffRef": "patch-7f3a1c",
+  "verify": {
+    "tsc": {
+      "ok": true,
+      "errors": 0
+    },
+    "build": {
+      "ok": true,
+      "errors": 0
+    }
+  },
+  "lensesRun": [
+    "verify",
+    "build",
+    "security",
+    "design-ux"
+  ],
+  "findings": [
+    {
+      "id": "SEC-001",
+      "lens": "security",
+      "severity": "blocking",
+      "title": "CheckoutPage reads orders directly via supabase.from",
+      "location": {
+        "file": "pages/CheckoutPage.tsx",
+        "line": 88,
+        "symbol": "loadSummary"
+      },
+      "rationale": "Direct table access bypasses RLS/RPC; a buyer could read order rows the policy is meant to scope.",
+      "fix": "Replace supabase.from('orders')... with the get_buyer_order_summary RPC in services/accountApi.ts.",
+      "ruleId": "no-direct-supabase-from-in-component",
+      "blastRadius": [
+        "auth",
+        "payments",
+        "cross-user"
+      ]
+    },
+    {
+      "id": "UX-001",
+      "lens": "design-ux",
+      "severity": "advisory",
+      "title": "Confirm button is a raw <button>, not the UI primitive",
+      "location": {
+        "file": "pages/CheckoutPage.tsx",
+        "line": 142,
+        "symbol": "ConfirmButton"
+      },
+      "rationale": "Skips the editorial theme tokens and focus styles the Button primitive provides.",
+      "fix": "Use Button from components/UI.tsx instead of the inline <button>."
+    }
+  ],
+  "verdict": "changes_requested"
+}
