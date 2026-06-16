@@ -13,16 +13,10 @@ import { SecurityTab } from './buyer-settings/SecurityTab';
 
 
 export const BuyerSettingsPage = () => {
-  const { user, addresses, addAddress, updateAddress, deleteAddress, updateUserProfile, walletTransactions, paymentMethods, connectedAccounts } = useAppState();
+  const { user, addresses, addAddress, updateAddress, deleteAddress, updateUserProfile, walletTransactions, paymentMethods, connectedAccounts, loginHistory } = useAppState();
   const { addToast } = useToast();
 
   const [activeTab, setActiveTab] = useState('profile');
-  const [loginHistory, setLoginHistory] = useState<any[]>([]);
-  useEffect(() => {
-    if (!user) return;
-    supabase.from('login_history').select('*').eq('user_id', user.id).order('login_time', { ascending: false }).limit(10)
-      .then(({ data }) => { if (data) setLoginHistory(data); });
-  }, [user?.id]);
 
   const [profileData, setProfileData] = useState({ 
     full_name: user?.full_name || user?.name || '', 
@@ -268,20 +262,30 @@ export const BuyerSettingsPage = () => {
       } finally { setIsExporting(false); }
   };
 
+  const [localPaymentMethods, setLocalPaymentMethods] = useState<any[] | null>(null);
+  const activePaymentMethods = localPaymentMethods ?? paymentMethods;
+
+  const refreshPaymentMethods = async () => {
+      if (!user) return;
+      const { data } = await supabase.from('payment_methods').select('*').eq('user_id', user.id);
+      if (data) setLocalPaymentMethods(data);
+  };
+
   const handleAddPaymentMethod = async (e: React.FormEvent) => {
       e.preventDefault();
       if (!user) return;
       setIsAddingPayment(true);
       try {
-          await supabase.from('payment_methods').insert({
+          const { error } = await supabase.from('payment_methods').insert({
               user_id: user.id,
               ...paymentData
           });
+          if (error) throw error;
           addToast('Payment method added', 'success');
           setPaymentData({ type: 'visa', provider: 'visa', last4: '', phone_number: '' });
-          // Context will auto-refresh on next page visit; user stays on page without reload
-      } catch (error) {
-          addToast('Failed to add payment method', 'error');
+          await refreshPaymentMethods();
+      } catch (error: any) {
+          addToast(error?.message || 'Failed to add payment method', 'error');
       } finally {
           setIsAddingPayment(false);
       }
@@ -296,12 +300,13 @@ export const BuyerSettingsPage = () => {
       if (paymentToDelete) {
           setIsDeletingPayment(true);
           try {
-              await supabase.from('payment_methods').delete().eq('id', paymentToDelete);
+              const { error } = await supabase.from('payment_methods').delete().eq('id', paymentToDelete);
+              if (error) throw error;
               addToast('Payment method removed', 'success');
+              setLocalPaymentMethods(prev => (prev ?? paymentMethods).filter(p => p.id !== paymentToDelete));
               setPaymentToDelete(null);
-              // (state refreshed via AppContext subscription)
-          } catch (error) {
-              addToast('Failed to remove payment method', 'error');
+          } catch (error: any) {
+              addToast(error?.message || 'Failed to remove payment method', 'error');
           } finally {
               setIsDeletingPayment(false);
           }
@@ -355,7 +360,7 @@ export const BuyerSettingsPage = () => {
     { id: 'wallet', label: 'Wallet & Rewards', icon: Wallet },
     { id: 'security', label: 'Security & Privacy', icon: Shield },
   ];
-  const __ctx = { addToast, addressData, addressToDelete, addresses, confirmDeleteAddress, confirmDeletePayment, confirmRequestAccountDeletion, connectedAccounts, copyReferralCode, handleAddAddress, handleAddPaymentMethod, handleConnectAccount, handleExportData, handleLanguageChange, handleProfileUpdate, handleSetDefaultAddress, isAddingAddress, isAddingPayment, isDeletingAddress, isExporting, isSavingProfile, loginHistory, paymentData, paymentMethods, preferences, profileData, setAddressData, setEditingAddress, setPaymentData, setPreferences, setProfileData, togglePreference, updateUserProfile, user, walletTransactions };
+  const __ctx = { addToast, addressData, addressToDelete, addresses, confirmDeleteAddress, confirmDeletePayment, confirmRequestAccountDeletion, connectedAccounts, copyReferralCode, handleAddAddress, handleAddPaymentMethod, handleConnectAccount, handleExportData, handleLanguageChange, handleProfileUpdate, handleSetDefaultAddress, isAddingAddress, isAddingPayment, isDeletingAddress, isExporting, isSavingProfile, loginHistory, paymentData, paymentMethods: activePaymentMethods, preferences, profileData, setAddressData, setEditingAddress, setPaymentData, setPreferences, setProfileData, togglePreference, updateUserProfile, user, walletTransactions };
 
 
   return (

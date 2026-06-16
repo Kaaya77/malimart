@@ -674,8 +674,8 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
             supabase.from('addresses').select('*').eq('user_id', userId).is('deleted_at', null),
             isBanned ? { data: [] } : supabase.from('notifications').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
             supabase.from('wallet_transactions').select('*').eq('profile_id', userId).order('created_at', { ascending: false }).limit(20),
-            supabase.from('payments').select('*, order:orders!inner(id, status, total, created_at)').eq('orders.user_id', userId).limit(20),
-            supabase.from('shipments').select('*, order:orders!inner(id, status, total, created_at)').eq('orders.user_id', userId).limit(20),
+            supabase.from('payments').select('*, order:orders!inner(id, status, total, created_at, user_id)').eq('order.user_id', userId).limit(20),
+            supabase.from('shipments').select('*, order:orders!inner(id, status, total, created_at, user_id)').eq('order.user_id', userId).limit(20),
             supabase.from('payment_methods').select('*').eq('user_id', userId),
             supabase.from('connected_accounts').select('*').eq('user_id', userId),
             supabase.from('blocked_users').select('blocked_id').eq('blocker_id', userId)
@@ -1188,18 +1188,23 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     const requestReturn = useCallback(async (orderId: string, itemId: string, reason: string) => {
         if (!user) return;
         const { data: item } = await supabase.from('order_items').select('seller_id').eq('id', itemId).single();
-        if (!item) return;
+        if (!item) { addToast('Could not find order item', 'error'); return; }
 
-        await supabase.from('returns').insert({
+        const { error } = await supabase.from('return_requests').insert({
             order_id: orderId,
             order_item_id: itemId,
+            buyer_id: user.id,
             seller_id: item.seller_id,
             reason,
-            status: 'requested'
+            status: 'requested',
+            requested_at: new Date().toISOString(),
+            created_at: new Date().toISOString(),
         });
+        if (error) { addToast(error.message || 'Failed to submit return request', 'error'); throw error; }
         await logActivity('request_return', `Requested return for order ${orderId}`, { order_id: orderId, item_id: itemId });
         addToast('Return request submitted', 'success');
-    }, [user, logActivity, addToast]);
+        await fetchBuyerReturns(user.id, true);
+    }, [user, logActivity, addToast, fetchBuyerReturns]);
 
     const addOrderNote = useCallback(async (orderId: string, note: string, visibility: 'seller' | 'admin' | 'internal') => {
         if (!user) return;
