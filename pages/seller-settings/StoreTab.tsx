@@ -1,11 +1,47 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Textarea } from '../../components/UI';
 import { SOCIAL_PLATFORMS, TANZANIA_DISTRICTS, TANZANIA_REGIONS } from '../../constants';
-import { Globe, Info, Loader2, Store, Trash2 } from 'lucide-react';
+import { Globe, ImageIcon, Info, Loader2, Store, Trash2, Upload } from 'lucide-react';
+import { supabase } from '../../services/supabaseClient';
+import { compressImage } from '../../services/imageCompression';
 import { useSellerSettings } from './context';
 
 export const StoreTab = () => {
-    const { handleAddSocial, handleGenericSave, handleRemoveSocial, isSaving, newSocial, policiesData, profileData, setNewSocial, setPoliciesData, setProfileData, socialLinks } = useSellerSettings();
+    const { addToast, handleAddSocial, handleGenericSave, handleRemoveSocial, isSaving, newSocial, policiesData, profileData, setNewSocial, setPoliciesData, setProfileData, socialLinks, user } = useSellerSettings();
+    const logoInputRef = useRef<HTMLInputElement>(null);
+    const bannerInputRef = useRef<HTMLInputElement>(null);
+    const [uploadingLogo, setUploadingLogo] = useState(false);
+    const [uploadingBanner, setUploadingBanner] = useState(false);
+
+    const uploadStoreImage = async (
+        file: File,
+        pathKey: 'logo' | 'banner',
+        setUploading: (v: boolean) => void,
+        fieldKey: 'logo_url' | 'banner_url',
+        inputEl: HTMLInputElement | null,
+    ) => {
+        if (!file || !user) return;
+        setUploading(true);
+        try {
+            const compressed = await compressImage(file, pathKey === 'logo' ? 400 : 1200, 0.8);
+            const ext = file.name.split('.').pop() ?? 'jpg';
+            const path = `store/${user.id}/${pathKey}.${ext}`;
+            const { error: uploadError } = await supabase.storage
+                .from('product-images')
+                .upload(path, compressed, { upsert: true, contentType: file.type });
+            if (uploadError) throw uploadError;
+            const { data } = supabase.storage.from('product-images').getPublicUrl(path);
+            const url = data.publicUrl + `?v=${Date.now()}`;
+            setProfileData((prev: any) => ({ ...prev, [fieldKey]: url }));
+            addToast(`${pathKey === 'logo' ? 'Logo' : 'Banner'} updated`, 'success');
+        } catch (err: any) {
+            addToast(err.message || 'Upload failed', 'error');
+        } finally {
+            setUploading(false);
+            if (inputEl) inputEl.value = '';
+        }
+    };
+
     return (
  <div className="space-y-6 animate-in fade-in">
  <Card>
@@ -15,25 +51,41 @@ export const StoreTab = () => {
  </CardHeader>
  <CardContent>
  {/* Logo + Banner row */}
- <div className="flex gap-4 items-start mb-6">
+ <div className="flex flex-col sm:flex-row gap-4 mb-6">
    {/* Store Logo */}
    <div className="flex flex-col items-center gap-2 shrink-0">
-     <div className="w-20 h-20 rounded-2xl border-2 border-foreground/10 bg-foreground/[0.04] overflow-hidden flex items-center justify-center">
-       {profileData.logo_url
-         ? <img src={profileData.logo_url} alt="Logo" className="w-full h-full object-cover" />
-         : <Store className="w-8 h-8 text-foreground/25" />}
+     <div className="relative w-20 h-20 group cursor-pointer" onClick={() => logoInputRef.current?.click()}>
+       <div className="w-20 h-20 rounded-2xl border-2 border-foreground/10 bg-foreground/[0.04] overflow-hidden flex items-center justify-center">
+         {profileData.logo_url
+           ? <img src={profileData.logo_url} alt="Logo" className="w-full h-full object-cover" />
+           : <Store className="w-8 h-8 text-foreground/25" />}
+       </div>
+       <div className="absolute inset-0 rounded-2xl bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+         {uploadingLogo ? <Loader2 className="w-5 h-5 text-white animate-spin" /> : <Upload className="w-5 h-5 text-white" />}
+       </div>
      </div>
-     <span className="text-[9px] uppercase tracking-[0.15em] text-foreground/40">Logo</span>
+     <button type="button" onClick={() => logoInputRef.current?.click()} disabled={uploadingLogo} className="text-[9px] uppercase tracking-[0.15em] text-foreground/40 hover:text-foreground/70 transition-colors">
+       {uploadingLogo ? 'Uploading…' : 'Change Logo'}
+     </button>
+     <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => uploadStoreImage(e.target.files![0], 'logo', setUploadingLogo, 'logo_url', logoInputRef.current)} />
    </div>
-   <div className="flex-1 space-y-3">
-     <div className="space-y-1">
-       <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground block">Logo URL</label>
-       <Input placeholder="https://…/logo.png" value={profileData.logo_url || ''} onChange={(e: any) => setProfileData({...profileData, logo_url: e.target.value})} />
+   {/* Banner */}
+   <div className="flex-1 flex flex-col gap-2">
+     <div
+       className="relative w-full h-24 rounded-2xl border-2 border-dashed border-foreground/15 bg-foreground/[0.03] overflow-hidden flex items-center justify-center cursor-pointer group"
+       onClick={() => bannerInputRef.current?.click()}
+     >
+       {profileData.banner_url
+         ? <img src={profileData.banner_url} alt="Banner" className="w-full h-full object-cover" />
+         : <div className="flex flex-col items-center gap-1 text-foreground/30"><ImageIcon className="w-6 h-6" /><span className="text-[10px] uppercase tracking-[0.1em]">Banner</span></div>}
+       <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl">
+         {uploadingBanner ? <Loader2 className="w-5 h-5 text-white animate-spin" /> : <><Upload className="w-4 h-4 text-white mr-1.5" /><span className="text-white text-xs font-medium">Upload Banner</span></>}
+       </div>
      </div>
-     <div className="space-y-1">
-       <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground block">Banner / Cover URL</label>
-       <Input placeholder="https://…/banner.jpg" value={profileData.banner_url || ''} onChange={(e: any) => setProfileData({...profileData, banner_url: e.target.value})} />
-     </div>
+     <button type="button" onClick={() => bannerInputRef.current?.click()} disabled={uploadingBanner} className="text-[9px] uppercase tracking-[0.15em] text-foreground/40 hover:text-foreground/70 transition-colors text-left">
+       {uploadingBanner ? 'Uploading…' : 'Click to change banner / cover image'}
+     </button>
+     <input ref={bannerInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => uploadStoreImage(e.target.files![0], 'banner', setUploadingBanner, 'banner_url', bannerInputRef.current)} />
    </div>
  </div>
 

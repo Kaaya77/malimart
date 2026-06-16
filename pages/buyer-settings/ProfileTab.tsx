@@ -9,7 +9,9 @@ import { useBuyerSettings } from './context';
 export const ProfileTab = () => {
     const { addToast, handleLanguageChange, handleProfileUpdate, isSavingProfile, preferences, profileData, setPreferences, setProfileData, togglePreference, updateUserProfile, user } = useBuyerSettings();
     const avatarInputRef = useRef<HTMLInputElement>(null);
+    const coverInputRef = useRef<HTMLInputElement>(null);
     const [uploadingAvatar, setUploadingAvatar] = useState(false);
+    const [uploadingCover, setUploadingCover] = useState(false);
 
     const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -32,6 +34,31 @@ export const ProfileTab = () => {
             addToast(err.message || 'Upload failed', 'error');
         } finally {
             setUploadingAvatar(false);
+            e.target.value = '';
+        }
+    };
+
+    const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !user) return;
+        setUploadingCover(true);
+        try {
+            const compressed = await compressImage(file, 1200, 0.8);
+            const ext = file.name.split('.').pop() ?? 'jpg';
+            const path = `covers/${user.id}.${ext}`;
+            const { error: uploadError } = await supabase.storage
+                .from('product-images')
+                .upload(path, compressed, { upsert: true, contentType: file.type });
+            if (uploadError) throw uploadError;
+            const { data } = supabase.storage.from('product-images').getPublicUrl(path);
+            const url = data.publicUrl + `?v=${Date.now()}`;
+            setProfileData((prev: any) => ({ ...prev, cover_image_url: url }));
+            await updateUserProfile({ cover_image_url: url });
+            addToast('Cover image updated', 'success');
+        } catch (err: any) {
+            addToast(err.message || 'Upload failed', 'error');
+        } finally {
+            setUploadingCover(false);
             e.target.value = '';
         }
     };
@@ -137,8 +164,19 @@ export const ProfileTab = () => {
                           </select>
                         </div>
                         <div className="space-y-1">
-                          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Cover Image URL</label>
-                          <Input placeholder="Cover image URL (banner)" value={profileData.cover_image_url || ''} onChange={(e: any) => setProfileData({ ...profileData, cover_image_url: e.target.value })} />
+                          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Cover Image</label>
+                          <div
+                            className="relative w-full h-20 rounded-xl border-2 border-dashed border-foreground/15 bg-foreground/[0.03] overflow-hidden flex items-center justify-center cursor-pointer group"
+                            onClick={() => coverInputRef.current?.click()}
+                          >
+                            {profileData.cover_image_url
+                              ? <img src={profileData.cover_image_url} alt="Cover" className="w-full h-full object-cover" />
+                              : <div className="flex items-center gap-2 text-foreground/30"><Upload className="w-4 h-4" /><span className="text-xs">Upload cover banner</span></div>}
+                            <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                              {uploadingCover ? <Loader2 className="w-5 h-5 text-white animate-spin" /> : <><Upload className="w-4 h-4 text-white mr-1.5" /><span className="text-white text-xs font-medium">Change Cover</span></>}
+                            </div>
+                          </div>
+                          <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} />
                         </div>
                     </div>
                     <div className="flex justify-end pt-4 border-t border-slate-100 dark:border-white/5">

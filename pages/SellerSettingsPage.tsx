@@ -188,7 +188,7 @@ export const SellerSettingsPage = ({ onBack }: { onBack?: () => void } = {}) => 
  { id: 'delivery', label: 'Delivery & Shipping', icon: Truck },
  { id: 'preferences', label: 'Preferences', icon: Settings },
  ];
-  const __ctx = { businessData, calcDistrict, calcRegion, deliveryData, handleAddPayment, handleAddSocial, handleAddZone, handleGenericSave, handleRemovePayment, handleRemoveSocial, handleRemoveZone, isSaving, newPayment, newSocial, newZone, paymentMethods, policiesData, preferences, profileData, setBusinessData, setCalcDistrict, setCalcRegion, setDeliveryData, setNewPayment, setNewSocial, setNewZone, setPoliciesData, setPreferences, setProfileData, shippingZones, socialLinks };
+  const __ctx = { addToast, businessData, calcDistrict, calcRegion, deliveryData, handleAddPayment, handleAddSocial, handleAddZone, handleGenericSave, handleRemovePayment, handleRemoveSocial, handleRemoveZone, isSaving, newPayment, newSocial, newZone, paymentMethods, policiesData, preferences, profileData, setBusinessData, setCalcDistrict, setCalcRegion, setDeliveryData, setNewPayment, setNewSocial, setNewZone, setPoliciesData, setPreferences, setProfileData, shippingZones, socialLinks, user };
 
 
  return (
