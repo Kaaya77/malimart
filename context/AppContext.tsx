@@ -152,7 +152,12 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     });
     const [products, setProducts] = useState<Product[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
-    const [cart, setCart] = useState<CartItem[]>([]);
+    const [cart, setCart] = useState<CartItem[]>(() => {
+        try {
+            const stored = localStorage.getItem('mali_guest_cart');
+            return stored ? JSON.parse(stored) : [];
+        } catch { return []; }
+    });
     const [wishlist, setWishlist] = useState<Product[]>([]);
     const [recentlyViewed, setRecentlyViewed] = useState<Product[]>([]);
     const [orders, setOrders] = useState<Order[]>([]);
@@ -227,6 +232,14 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
             localStorage.setItem('theme', 'light');
         }
     }, [isDark]);
+
+    // Persist guest cart to localStorage so it survives Supabase auth events and re-mounts.
+    // Cleared when a user logs in (server cart takes over).
+    useEffect(() => {
+        if (!user) {
+            try { localStorage.setItem('mali_guest_cart', JSON.stringify(cart)); } catch {}
+        }
+    }, [cart, user]);
 
     useEffect(() => {
         const init = async () => {
@@ -308,6 +321,10 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
                 // can fire SIGNED_OUT then SIGNED_IN in quick succession; acting on the
                 // intermediate SIGNED_OUT would bounce an authenticated user to /login.
                 if (initRunningRef.current) return;
+                // Skip spurious SIGNED_OUT for guests who were never signed in —
+                // Supabase fires this event on session expiry probes even with no active user,
+                // which was clearing the in-memory guest cart on navigation.
+                if (!user) return;
                 // Briefly set isLoading so RouteGuard shows a spinner rather than
                 // painting protected page content for one frame before the redirect fires.
                 setIsLoading(true);
@@ -534,6 +551,8 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     }, []);
 
     const fetchAndSetCart = useCallback(async (userId: string) => {
+        // Server cart takes over — discard any guest cart that was in localStorage.
+        try { localStorage.removeItem('mali_guest_cart'); } catch {}
         const { data: cartData } = await supabase.from('carts').select('id, items:cart_items(*, product:products(id, name, price, images, stock, seller_id, variants:product_variants(*)))').eq('user_id', userId).single();
         if (cartData) {
             cartIdRef.current = cartData.id;

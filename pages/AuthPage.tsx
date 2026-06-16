@@ -477,6 +477,7 @@ export const LoginPage = () => {
          {/* Form */}
          <motion.form
            key={mode}
+           method="post"
            initial="hidden"
            animate="visible"
            variants={{ hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.08 } } }}
@@ -530,6 +531,8 @@ export const LoginPage = () => {
                  id="auth-email"
                  name="email"
                  type="email"
+                 required
+                 autoComplete="email"
                  placeholder="name@example.com"
                  value={formData.email}
                  onChange={handleInputChange}
@@ -556,6 +559,8 @@ export const LoginPage = () => {
                    id="auth-password"
                    name="password"
                    type={showPassword ? 'text' : 'password'}
+                   required
+                   autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
                    placeholder="••••••••"
                    value={formData.password}
                    onChange={handleInputChange}
