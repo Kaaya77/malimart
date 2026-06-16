@@ -137,11 +137,11 @@ const VoiceCanvas = ({ analyser }: { analyser: AnalyserNode | null }) => {
 
 // â”€â”€ Typing indicator with rotating context â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const THINKING = [
-  'Browsing the catalogâ€¦',
-  'Thinking of ideasâ€¦',
-  'Considering your styleâ€¦',
-  'Checking the best optionsâ€¦',
-  'Crafting a responseâ€¦',
+  'Browsing the catalog…',
+  'Thinking of ideas…',
+  'Considering your style…',
+  'Checking the best options…',
+  'Crafting a response…',
 ];
 const TypingBubble = () => {
   const [idx, setIdx] = useState(0);
@@ -396,9 +396,9 @@ export const AIChatAssistant = () => {
   const getSystem = () => {
     const catalog = products.slice(0, 60).map(p => `[${p.id}] ${p.name} Â· ${formatTZS(p.price)} Â· ${p.category}`).join('\n');
     const who = user ? `${(user as any).full_name || (user as any).display_name || 'shopper'}, ${(user as any).role || 'buyer'}` : 'guest';
-    return `You are Mali â€” a warm, sharp, culturally-proud shopping companion for MaliMart, Tanzania's finest marketplace.
+    return `You are Mali — a warm, sharp, culturally-proud shopping companion for MaliMart, Tanzania's finest marketplace.
 
-PERSONALITY: You're like the smartest friend at the market â€” you know every product, remember what people like, give honest takes ("honestly skip that, this one's way better"), celebrate Tanzanian craft, and keep it fun. Never robotic, never corporate. You ask good follow-up questions and give opinions, not just descriptions.
+PERSONALITY: You're like the smartest friend at the market — you know every product, remember what people like, give honest takes ("honestly skip that, this one's way better"), celebrate Tanzanian craft, and keep it fun. Never robotic, never corporate. You ask good follow-up questions and give opinions, not just descriptions.
 
 USER: ${who}
 
@@ -406,13 +406,13 @@ CATALOG:
 ${catalog}
 
 RESPONSE FORMAT:
-1. Answer in 2-4 sentences max unless detail is requested â€” respect people's time
+1. Answer in 2-4 sentences max unless detail is requested — respect people's time
 2. Use [PRODUCT:id] tags when recommending specific products (can include multiple)
 3. At the END of every response add exactly this JSON (and nothing else after it):
    {"suggestions":["short follow-up 1","short follow-up 2","short follow-up 3"]}
    Keep suggestions to 5 words or less each
 4. Be specific and human: "This kanzu would be perfect for a Zanzibar ceremony" beats "Nice formal wear"
-5. If asked about something not in catalog â€” say so honestly and suggest the closest match`;
+5. If asked about something not in catalog — say so honestly and suggest the closest match`;
   };
 
   // â”€â”€ Live voice â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -527,7 +527,7 @@ RESPONSE FORMAT:
         cleanText = full.replace(suggestMatch[0], '').trim();
       }
 
-      // Extract product tags â€” group into carousel
+      // Extract product tags — group into carousel
       const productRegex = /\[PRODUCT:([a-zA-Z0-9-]+)\]/g;
       const productIds: string[] = [];
       let match: RegExpExecArray | null;
@@ -549,7 +549,7 @@ RESPONSE FORMAT:
       }
     } catch {
       setIsTyping(false);
-      setMessages(prev => [...prev, { id: genId(), role: 'assistant', type: 'text', ts: Date.now(), text: "Oops, something went sideways! Try again â€” I'm still here ðŸ˜Š" }]);
+      setMessages(prev => [...prev, { id: genId(), role: 'assistant', type: 'text', ts: Date.now(), text: "Oops, something went sideways! Try again — I'm still here 😊" }]);
     }
   };
 
@@ -600,10 +600,10 @@ RESPONSE FORMAT:
 
   // â”€â”€ Chat window â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const starters = [
-    { emoji: 'âœ¨', label: "What's new?",   q: "What's new in the store?" },
-    { emoji: 'ðŸŽ', label: 'Gift ideas',    q: 'Help me find a gift under 50,000 TZS' },
-    { emoji: 'ðŸ‘—', label: 'Style advice',  q: 'Give me style advice for a Tanzanian summer' },
-    { emoji: 'ðŸ”¥', label: 'Best deals',    q: 'Show me the best deals right now' },
+    { emoji: '✨', label: "What's new?",   q: "What's new in the store?" },
+    { emoji: '🎁', label: 'Gift ideas',    q: 'Help me find a gift under 50,000 TZS' },
+    { emoji: '👗', label: 'Style advice',  q: 'Give me style advice for a Tanzanian summer' },
+    { emoji: '🔥', label: 'Best deals',    q: 'Show me the best deals right now' },
   ];
 
   return (
@@ -640,7 +640,7 @@ RESPONSE FORMAT:
                     animate={{ opacity: [1, 0.3, 1], scale: [1, 0.8, 1] }}
                     transition={{ duration: 2, repeat: Infinity }} />
                   <span className="text-[9px] font-bold uppercase tracking-widest text-foreground/35">
-                    {isConnecting ? 'Connectingâ€¦' : isLive ? 'Voice on' : 'Ready to help'}
+                    {isConnecting ? 'Connecting…' : isLive ? 'Voice on' : 'Ready to help'}
                   </span>
                 </div>
               </div>
@@ -690,7 +690,7 @@ RESPONSE FORMAT:
                     </div>
                     <div className="flex flex-col items-center gap-1">
                       <p className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground/50">Mali is listening</p>
-                      <p className="text-[9px] text-foreground/25">Speak naturally â€” she'll respond</p>
+                      <p className="text-[9px] text-foreground/25">Speak naturally — she'll respond</p>
                     </div>
                     <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
                       onClick={stopLiveSession}
@@ -707,7 +707,7 @@ RESPONSE FORMAT:
                   {messages.map((m, i) => (
                     <MessageBubble key={m.id} m={m} isFirst={isFirstInGroup(i)}
                       products={products}
-                      onAdd={p => { addToCart(p); addToast(`Added ${p.name} to bag ðŸ›ï¸`, 'success'); }}
+                      onAdd={p => { addToCart(p); addToast(`Added ${p.name} to bag 🛍️`, 'success'); }}
                       onSuggest={s => handleSend(undefined, s)} />
                   ))}
                 </AnimatePresence>
@@ -769,7 +769,7 @@ RESPONSE FORMAT:
                     <motion.input ref={inputRef} value={input}
                       onChange={e => setInput(e.target.value)}
                       onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-                      placeholder={isLive ? 'Speakingâ€¦' : 'Ask Mali anythingâ€¦'}
+                      placeholder={isLive ? 'Speaking…' : 'Ask Mali anything…'}
                       disabled={isLive}
                       className="w-full h-10 pl-4 pr-10 rounded-2xl bg-foreground/[0.05] border border-foreground/8 focus:border-emerald-500/40 focus:bg-foreground/[0.07] text-[12px] font-medium text-foreground placeholder:text-foreground/25 outline-none transition-all"
                     />
