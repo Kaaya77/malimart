@@ -193,13 +193,18 @@ export const SellerMessages = ({
 
   const activeUser = useMemo(() => users.find((u: any) => u.id === selectedChatUser), [users, selectedChatUser]);
 
+  const lastSeenMsgIdRef = useRef<string | null>(null);
   useEffect(() => {
-    if (activeChats.length > 0) {
-      const lastMsg = activeChats[activeChats.length - 1];
-      if (lastMsg.sender_id !== userId) {
-        aiService.generateSellerReplies(lastMsg.text || lastMsg.body).then(setSuggestedReplies);
-      } else { setSuggestedReplies([]); }
-    }
+    if (activeChats.length === 0) return;
+    const lastMsg = activeChats[activeChats.length - 1];
+    // Only call AI when there's a NEW inbound message we haven't processed yet
+    if (lastMsg.sender_id === userId) { setSuggestedReplies([]); return; }
+    if (lastMsg.id === lastSeenMsgIdRef.current) return;
+    lastSeenMsgIdRef.current = lastMsg.id;
+    const t = setTimeout(() => {
+      aiService.generateSellerReplies(lastMsg.text || lastMsg.body).then(setSuggestedReplies);
+    }, 1500); // debounce: wait 1.5s in case more messages arrive
+    return () => clearTimeout(t);
   }, [activeChats, userId]);
 
   const handleSend = async (e?: React.FormEvent, textOverride?: string) => {

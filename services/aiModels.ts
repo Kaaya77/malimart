@@ -18,8 +18,7 @@ export const MODELS = {
   // conversation analysis).
   SMART: 'gemini-2.5-flash',
 
-  // Image generation & editing ("Nano Banana"). The old code pointed
-  // image generation at a text model, which never returned images.
+  // Primary image generation/editing model.
   IMAGE: 'gemini-2.5-flash-image',
 
   // Marketing video generation.
@@ -28,6 +27,14 @@ export const MODELS = {
   // Voice assistant (Live API, websocket).
   LIVE_AUDIO: 'gemini-2.5-flash-native-audio-preview-12-2025',
 } as const;
+
+// Ordered fallback chain for image generation. When the primary model (IMAGE)
+// is rate-limited or returns 429, the caller tries models left to right.
+export const IMAGE_MODEL_CHAIN = [
+  'gemini-2.5-flash-image',
+  'gemini-3.1-flash-image',
+  'gemini-3-pro-image',
+] as const;
 
 // Defensive JSON parse for structured responses — strips ```json fences
 // and never throws on malformed output.

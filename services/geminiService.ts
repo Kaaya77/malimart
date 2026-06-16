@@ -2,13 +2,22 @@
 // @model-version: managed in ./aiModels.ts (gemini-2.0-flash shut down 2026-06-01)
 import { GoogleGenAI, Type } from "@google/genai";
 import { getAI, proxiedMediaUrl } from './aiClient';
-import { MODELS, safeJson } from './aiModels';
+import { MODELS, IMAGE_MODEL_CHAIN, safeJson } from './aiModels';
+import { canRequest, on429, blockedFor } from './aiRateLimit';
 import { Product } from '../types';
 
+class RateLimitError extends Error {
+  constructor(model: string, waitSec: number) {
+    super(`AI model ${model} is rate-limited. Try again in ${waitSec}s.`);
+    this.name = 'RateLimitError';
+  }
+}
+
 /**
- * Utility for retrying failed AI requests with exponential backoff.
+ * Retry helper. Never retries 429 immediately — parses retryDelay from the
+ * Gemini error body and blocks the model for that duration instead.
  */
-const withRetry = async <T>(fn: () => Promise<T>, maxRetries = 2): Promise<T> => {
+const withRetry = async <T>(fn: () => Promise<T>, maxRetries = 1): Promise<T> => {
     let lastError: any;
     for (let i = 0; i <= maxRetries; i++) {
         try {
@@ -16,18 +25,21 @@ const withRetry = async <T>(fn: () => Promise<T>, maxRetries = 2): Promise<T> =>
         } catch (e: any) {
             lastError = e;
             const errorMsg = e?.message || "";
-            // Model-retired / bad-key errors are permanent; don't retry.
-            if (errorMsg.includes('Requested entity was not found') || errorMsg.includes('API key not valid') || errorMsg.includes('is not found for API version')) {
-                throw e;
-            }
+            // Permanent errors — don't retry.
+            if (
+              errorMsg.includes('Requested entity was not found') ||
+              errorMsg.includes('API key not valid') ||
+              errorMsg.includes('is not found for API version')
+            ) throw e;
 
-            // Don't retry if it's a 4xx error that isn't a rate limit
-            if (e?.status >= 400 && e?.status < 500 && e?.status !== 429) {
-                throw e;
-            }
+            // 429: honor the retryDelay, do NOT retry immediately
+            if (e?.status === 429 || errorMsg.includes('RESOURCE_EXHAUSTED')) throw e;
+
+            // Other 4xx: don't retry
+            if (e?.status >= 400 && e?.status < 500) throw e;
 
             if (i < maxRetries) {
-                const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+                const delay = Math.pow(2, i) * 1000 + Math.random() * 500;
                 await new Promise(r => setTimeout(r, delay));
             }
         }
@@ -35,22 +47,56 @@ const withRetry = async <T>(fn: () => Promise<T>, maxRetries = 2): Promise<T> =>
     throw lastError;
 };
 
+/**
+ * Like withRetry but cycles through IMAGE_MODEL_CHAIN on 429/rate-limit.
+ * Finds the first model in the chain that isn't currently blocked.
+ */
+const withImageModelFallback = async <T>(
+    buildRequest: (model: string) => Promise<T>
+): Promise<T> => {
+    let lastError: any;
+    for (const model of IMAGE_MODEL_CHAIN) {
+        const wait = blockedFor(model);
+        if (wait > 0) {
+            console.info(`[AI] ${model} blocked for ${wait}s — trying next`);
+            continue;
+        }
+        if (!canRequest(model)) {
+            console.info(`[AI] ${model} bucket empty — trying next`);
+            continue;
+        }
+        try {
+            return await buildRequest(model);
+        } catch (e: any) {
+            const msg = e?.message || '';
+            if (e?.status === 429 || msg.includes('RESOURCE_EXHAUSTED')) {
+                on429(model, e);
+                lastError = e;
+                continue; // try next model
+            }
+            throw e; // non-429 error — surface immediately
+        }
+    }
+    // All models blocked
+    const soonest = Math.min(...IMAGE_MODEL_CHAIN.map(m => blockedFor(m)).filter(s => s > 0));
+    throw new RateLimitError('image', isFinite(soonest) ? soonest : 60);
+};
+
 export const generateWelcomeGreeting = async (name?: string): Promise<string> => {
+    const time = new Date().getHours();
+    const period = time < 12 ? 'morning' : time < 17 ? 'afternoon' : 'evening';
+    const namePart = name ? ` ${name}` : "";
+    // Static fallbacks — save tokens, greetings don't need AI
+    const fallbacks = [`Good ${period}${namePart} - Welcome to MaliMart`, "Welcome Back - Enjoy Shopping"];
+    if (!canRequest(MODELS.FAST)) return fallbacks[0];
     return withRetry(async () => {
         const ai = getAI();
-        const time = new Date().getHours();
-        const period = time < 12 ? 'morning' : time < 17 ? 'afternoon' : 'evening';
-        const namePart = name ? ` ${name}` : "";
-        
         const response = await ai.models.generateContent({
             model: MODELS.FAST,
-            contents: `Generate a concise, punchy greeting (max 5 words) for a ${period} in English. 
-            Format: "Greeting - Subtitle". 
-            Example: "Good Morning${namePart} - Welcome to MaliMart". 
-            Keep it professional and welcoming.`,
+            contents: `One punchy greeting (max 6 words) for a ${period}. Format: "Greeting${namePart} - Subtitle". English only.`,
         });
-        return response.text || "Welcome Back - Enjoy Shopping";
-    }).catch(() => "Welcome Back - Enjoy Shopping");
+        return response.text || fallbacks[0];
+    }).catch(() => fallbacks[0]);
 };
 
 export const generateProductDescription = async (productName: string, category: string, keywords: string): Promise<string> => {
@@ -73,6 +119,7 @@ export const generateProductDescription = async (productName: string, category: 
  * Analyzes an uploaded product image to auto-fill the form.
  */
 export const analyzeProductImage = async (imageBase64: string): Promise<{ name: string, category: string, tags: string[], description: string } | null> => {
+    if (!canRequest(MODELS.FAST)) throw new Error('Rate limit reached — please wait a moment and try again.');
     return withRetry(async () => {
         const ai = getAI();
         const cleanBase64 = imageBase64.split(',')[1] || imageBase64;
@@ -315,64 +362,60 @@ export const generateTags = async (name: string, description: string): Promise<s
 };
 
 export const generateProductImage = async (prompt: string): Promise<string | null> => {
-  return withRetry(async () => {
+  return withImageModelFallback(async (model) => {
     const ai = getAI();
     const response = await ai.models.generateContent({
-      model: MODELS.IMAGE,
+      model,
       contents: {
           parts: [{ text: `High-end professional e-commerce product photography of ${prompt}. Studio lighting, clean minimal background, 8k resolution, photorealistic, center aligned, premium commercial quality.` }]
       },
       config: { responseModalities: ['IMAGE', 'TEXT'] }
     });
-
     const parts = response.candidates?.[0]?.content?.parts;
     if (!parts) return null;
-
     for (const part of parts) {
         if (part.inlineData) return `data:image/png;base64,${part.inlineData.data}`;
     }
     return null;
   }).catch(error => {
+    if (error?.name === 'RateLimitError') throw error; // let callers show a proper toast
     console.error("Gemini Image Gen Error:", error);
     return null;
   });
 };
 
 export const refineProductImage = async (imageInput: string, instruction: string): Promise<string | null> => {
-    return withRetry(async () => {
+    // Resolve image to base64 once, before trying models
+    let mimeType = 'image/jpeg';
+    let cleanBase64 = imageInput;
+    if (imageInput.startsWith('http')) {
+        const fetchRes = await fetch(imageInput);
+        const blob = await fetchRes.blob();
+        mimeType = blob.type || 'image/jpeg';
+        const buffer = await blob.arrayBuffer();
+        let binary = '';
+        const bytes = new Uint8Array(buffer);
+        for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+        cleanBase64 = btoa(binary);
+    } else if (imageInput.includes('base64,')) {
+        const imgParts = imageInput.split('base64,');
+        cleanBase64 = imgParts[1];
+        const match = imgParts[0].match(/:(.*?);/);
+        if (match) mimeType = match[1];
+    }
+
+    return withImageModelFallback(async (model) => {
         const ai = getAI();
-        let mimeType = 'image/jpeg';
-        let cleanBase64 = imageInput;
-
-        if (imageInput.startsWith('http')) {
-            const fetchRes = await fetch(imageInput);
-            const blob = await fetchRes.blob();
-            mimeType = blob.type || 'image/jpeg';
-            const buffer = await blob.arrayBuffer();
-            let binary = '';
-            const bytes = new Uint8Array(buffer);
-            for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
-            cleanBase64 = btoa(binary);
-        } else if (imageInput.includes('base64,')) {
-            const parts = imageInput.split('base64,');
-            cleanBase64 = parts[1];
-            const match = parts[0].match(/:(.*?);/);
-            if (match) mimeType = match[1];
-        } else {
-            cleanBase64 = imageInput;
-        }
-
         const response = await ai.models.generateContent({
-            model: MODELS.IMAGE,
+            model,
             contents: {
                 parts: [
-                    { inlineData: { mimeType: mimeType, data: cleanBase64 } },
-                    { text: `Edit this image to improve its e-commerce appeal. specifically: ${instruction}. Keep it high resolution and photorealistic.` }
+                    { inlineData: { mimeType, data: cleanBase64 } },
+                    { text: `Edit this image to improve its e-commerce appeal. Specifically: ${instruction}. Keep it high resolution and photorealistic.` }
                 ]
             },
             config: { responseModalities: ['IMAGE', 'TEXT'] }
         });
-
         const parts = response.candidates?.[0]?.content?.parts;
         if (!parts) return null;
         for (const part of parts) {
@@ -380,6 +423,7 @@ export const refineProductImage = async (imageInput: string, instruction: string
         }
         return null;
     }).catch(e => {
+        if (e?.name === 'RateLimitError') throw e;
         console.error("Refine Error:", e);
         return null;
     });
@@ -496,10 +540,10 @@ export const getAssistantResponse = async (query: string): Promise<string> => {
 };
 
 export const generateRecipeCardImage = async (title: string): Promise<string | null> => {
-    return withRetry(async () => {
+    return withImageModelFallback(async (model) => {
         const ai = getAI();
         const response = await ai.models.generateContent({
-            model: MODELS.IMAGE,
+            model,
             contents: {
                 parts: [{ text: `Gourmet dish: ${title}, top-down photography, vibrant colors, fresh ingredients, 4k` }]
             },
@@ -515,11 +559,12 @@ export const generateRecipeCardImage = async (title: string): Promise<string | n
 }
 
 export const generateSellerReplies = async (context: string): Promise<string[]> => {
+    if (!canRequest(MODELS.FAST)) return ["Yes, it is available.", "I can ship this today.", "Let me check the stock."];
     return withRetry(async () => {
         const ai = getAI();
         const response = await ai.models.generateContent({
             model: MODELS.FAST,
-            contents: `You are a professional seller on MaliMart. Generate 3 short, polite, and distinct quick-reply options for this customer message: "${context}". Keep them under 10 words. Return JSON array of strings.`,
+            contents: `Seller on MaliMart. 3 short polite reply options for: "${context.slice(0, 200)}". Under 10 words each. JSON array of strings.`,
             config: {
                 responseMimeType: "application/json",
                 responseSchema: {

@@ -122,13 +122,17 @@ export const AdminMessages = ({
     return u || { name: 'User', avatar: null };
   }, [selectedChatUser, users]);
 
+  const lastSeenMsgIdRef = useRef<string | null>(null);
   useEffect(() => {
-    if (activeChats.length > 0) {
-      const lastMsg = activeChats[activeChats.length - 1];
-      if (lastMsg.sender_id !== user?.id) {
-        aiService.generateSellerReplies(lastMsg.text || lastMsg.body).then(setSuggestedReplies);
-      } else { setSuggestedReplies([]); }
-    }
+    if (activeChats.length === 0) return;
+    const lastMsg = activeChats[activeChats.length - 1];
+    if (lastMsg.sender_id === user?.id) { setSuggestedReplies([]); return; }
+    if (lastMsg.id === lastSeenMsgIdRef.current) return;
+    lastSeenMsgIdRef.current = lastMsg.id;
+    const t = setTimeout(() => {
+      aiService.generateSellerReplies(lastMsg.text || lastMsg.body).then(setSuggestedReplies);
+    }, 1500);
+    return () => clearTimeout(t);
   }, [activeChats, user?.id]);
 
   const handleSend = async (e?: React.FormEvent, textOverride?: string) => {
