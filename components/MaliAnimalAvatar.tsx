@@ -2,7 +2,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export type AnimalType = 'fox' | 'cat' | 'panda' | 'bunny' | 'bear' | 'lion' | 'owl' | 'parrot';
-export type EmoteType = 'idle' | 'happy' | 'thinking' | 'excited' | 'surprised' | 'love' | 'sleeping' | 'dancing' | 'waving' | 'cool' | 'sad';
+export type EmoteType =
+  | 'idle' | 'happy' | 'thinking' | 'excited' | 'surprised' | 'love'
+  | 'sleeping' | 'dancing' | 'waving' | 'cool' | 'sad'
+  // expanded set
+  | 'searching' | 'lightbulb' | 'catalog' | 'gifting' | 'mindblown'
+  | 'facepalm' | 'shrug' | 'heartEyes' | 'clapping' | 'sleepy'
+  | 'shy' | 'flexing' | 'celebrating' | 'tanzanian' | 'counting';
 
 export const ANIMALS: Record<AnimalType, { emoji: string; name: string; gradient: string; accent: string }> = {
   fox:    { emoji: '🦊', name: 'Hadithi',  gradient: 'from-orange-400 via-red-400 to-orange-600',   accent: 'orange' },
@@ -16,17 +22,34 @@ export const ANIMALS: Record<AnimalType, { emoji: string; name: string; gradient
 };
 
 const EMOTES: Record<EmoteType, { overlay: string; animation: object; label: string }> = {
-  idle:      { overlay: '',   animation: {}, label: '' },
-  happy:     { overlay: '😊', animation: { rotate: [0, -8, 8, 0] }, label: 'Happy!' },
-  thinking:  { overlay: '🤔', animation: { y: [0, -3, 0] }, label: 'Thinking...' },
-  excited:   { overlay: '🤩', animation: { scale: [1, 1.15, 1], rotate: [0, 5, -5, 0] }, label: 'Woah!' },
-  surprised: { overlay: '😲', animation: { scale: [1, 1.2, 0.95, 1] }, label: 'Whoa!' },
-  love:      { overlay: '😍', animation: { scale: [1, 1.1, 1], y: [0, -4, 0] }, label: 'Love it!' },
-  sleeping:  { overlay: '😴', animation: { rotate: [0, 3, -3, 0] }, label: 'Zzzz...' },
-  dancing:   { overlay: '🕺', animation: { x: [-4, 4, -4], rotate: [-5, 5, -5] }, label: 'Yay!' },
-  waving:    { overlay: '👋', animation: { rotate: [0, 15, -5, 15, 0] }, label: 'Hi!' },
-  cool:      { overlay: '😎', animation: { scale: [1, 1.05, 1] }, label: 'Cool!' },
-  sad:       { overlay: '😢', animation: { y: [0, 3, 0], rotate: [-3, 3, -3] }, label: 'Oops...' },
+  // Core
+  idle:        { overlay: '',   animation: {}, label: '' },
+  happy:       { overlay: '😊', animation: { rotate: [0, -8, 8, 0] }, label: 'Happy!' },
+  thinking:    { overlay: '🤔', animation: { y: [0, -3, 0] }, label: 'Thinking…' },
+  excited:     { overlay: '🤩', animation: { scale: [1, 1.15, 1], rotate: [0, 5, -5, 0] }, label: 'Woah!' },
+  surprised:   { overlay: '😲', animation: { scale: [1, 1.2, 0.95, 1] }, label: 'Whoa!' },
+  love:        { overlay: '😍', animation: { scale: [1, 1.1, 1], y: [0, -4, 0] }, label: 'Love it!' },
+  sleeping:    { overlay: '😴', animation: { rotate: [0, 3, -3, 0] }, label: 'Zzzz…' },
+  dancing:     { overlay: '🕺', animation: { x: [-4, 4, -4], rotate: [-5, 5, -5] }, label: 'Yay!' },
+  waving:      { overlay: '👋', animation: { rotate: [0, 15, -5, 15, 0] }, label: 'Hi!' },
+  cool:        { overlay: '😎', animation: { scale: [1, 1.05, 1] }, label: 'Cool!' },
+  sad:         { overlay: '😢', animation: { y: [0, 3, 0], rotate: [-3, 3, -3] }, label: 'Oops…' },
+  // Expanded — shopping & helping
+  searching:   { overlay: '🔍', animation: { x: [-3, 3, -3, 3, 0], rotate: [-8, 8, -8, 0] }, label: 'Searching…' },
+  lightbulb:   { overlay: '💡', animation: { scale: [1, 1.3, 1], y: [0, -6, 0] }, label: 'Aha!' },
+  catalog:     { overlay: '📋', animation: { rotate: [0, -5, 5, 0], y: [0, -2, 0] }, label: 'Checking…' },
+  gifting:     { overlay: '🎁', animation: { scale: [1, 1.15, 1], rotate: [-8, 8, 0] }, label: 'Gift!' },
+  mindblown:   { overlay: '🤯', animation: { scale: [1, 1.25, 0.9, 1.1, 1], rotate: [0, -10, 10, 0] }, label: 'Mind blown!' },
+  facepalm:    { overlay: '🤦', animation: { y: [0, 4, 0], rotate: [0, -5, 0] }, label: 'Oops!' },
+  shrug:       { overlay: '🤷', animation: { rotate: [-5, 5, -5, 0], y: [0, -2, 0] }, label: 'Dunno!' },
+  heartEyes:   { overlay: '😻', animation: { scale: [1, 1.12, 1], rotate: [0, -6, 6, 0] }, label: 'In love!' },
+  clapping:    { overlay: '👏', animation: { scale: [1, 1.08, 1, 1.08, 1], rotate: [-3, 3, -3, 0] }, label: 'Bravo!' },
+  sleepy:      { overlay: '💤', animation: { y: [0, -2, 0], rotate: [0, 5, 0] }, label: 'Late night…' },
+  shy:         { overlay: '🙈', animation: { scale: [1, 0.9, 1], rotate: [-8, 0] }, label: 'Aw shucks!' },
+  flexing:     { overlay: '💪', animation: { scale: [1, 1.15, 1], rotate: [0, -5, 5, 0] }, label: 'Got you!' },
+  celebrating: { overlay: '🎉', animation: { scale: [1, 1.2, 0.95, 1.1, 1], x: [-3, 3, -3, 0], rotate: [-5, 5, 0] }, label: 'Woohoo!' },
+  tanzanian:   { overlay: '🇹🇿', animation: { scale: [1, 1.1, 1], y: [0, -4, 0] }, label: 'Tanzanian pride!' },
+  counting:    { overlay: '🪙', animation: { rotate: [0, 15, 0, -10, 0], y: [0, -3, 0] }, label: 'Counting coins…' },
 };
 
 const STORAGE_KEY = 'mali_animal';
@@ -129,6 +152,33 @@ export const MaliAnimalAvatar = ({
     </div>
   );
 };
+
+// ── Confetti burst (reusable) ─────────────────────────────────────────────────
+const CONFETTI_COLORS = ['#10b981','#f59e0b','#ef4444','#8b5cf6','#3b82f6','#ec4899','#14b8a6','#f97316'];
+
+export const MaliConfetti = ({ count = 40 }: { count?: number }) => (
+  <div className="fixed inset-0 pointer-events-none z-[999] overflow-hidden">
+    {Array.from({ length: count }).map((_, i) => (
+      <motion.div
+        key={i}
+        className="absolute w-2 h-2 rounded-sm"
+        style={{
+          left: `${Math.random() * 100}%`,
+          top: '-10px',
+          backgroundColor: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+          rotate: Math.random() * 360,
+        }}
+        animate={{
+          y: ['0vh', `${80 + Math.random() * 30}vh`],
+          x: [(Math.random() - 0.5) * 100, (Math.random() - 0.5) * 200],
+          rotate: [0, (Math.random() - 0.5) * 720],
+          opacity: [1, 1, 0],
+        }}
+        transition={{ duration: 2 + Math.random() * 1.5, delay: Math.random() * 0.6, ease: 'easeIn' }}
+      />
+    ))}
+  </div>
+);
 
 // ── Animal Picker UI ───────────────────────────────────────────────────────────
 interface AnimalPickerProps {

@@ -8,7 +8,13 @@ import { useToast } from './UI';
 import { useAppState } from '../context/AppContext';
 import { formatTZS } from '../constants';
 import { LiveServerMessage, Modality } from '@google/genai';
-import { MaliAnimalAvatar, AnimalPicker, useAnimalAvatar, type EmoteType } from './MaliAnimalAvatar';
+import { MaliAnimalAvatar, AnimalPicker, useAnimalAvatar, MaliConfetti, type EmoteType } from './MaliAnimalAvatar';
+import {
+  MALI_BACKSTORY, getDailyMethali, getTimeGreeting, getTimeOfDay,
+  detectEasterEgg, detectUserMood, getMoodResponse, detectPurchase, isLateNight,
+  SASS_SYSTEM_ADDITION, SHENG_SYSTEM_ADDITION,
+  type PersonalityMode, type LanguageMode,
+} from '../services/maliPersonality';
 
 // â”€â”€ Audio helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function resample(data: Float32Array, from: number, to: number): Float32Array {
@@ -67,6 +73,27 @@ const MeshBackground = () => (
     <motion.div className="absolute -bottom-12 left-1/3 w-56 h-56 rounded-full bg-emerald-600/4 blur-3xl"
       animate={{ x: [0,20,0], y: [0,-20,0] }} transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut', delay: 4 }} />
   </div>
+);
+
+
+// ── Methali toast ─────────────────────────────────────────────────────────────
+const MethaliToast = ({ methali, onClose }: { methali: { sw: string; en: string }; onClose: () => void }) => (
+  <motion.div key="methali"
+    initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
+    className="absolute top-16 left-3 right-3 z-40 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 rounded-2xl p-3 backdrop-blur-sm shadow-lg">
+    <div className="flex items-start gap-2">
+      <span className="text-lg flex-shrink-0">📜</span>
+      <div className="flex-1 min-w-0">
+        <p className="text-[9px] font-black uppercase tracking-widest text-emerald-500 mb-0.5">Methali ya Leo</p>
+        <p className="text-[11px] font-bold text-foreground/80 italic">&ldquo;{methali.sw}&rdquo;</p>
+        <p className="text-[9px] text-foreground/50 mt-0.5">{methali.en}</p>
+      </div>
+      <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+        onClick={onClose} className="flex-shrink-0 text-foreground/30 hover:text-foreground/60 transition-colors">
+        <X className="w-3 h-3" />
+      </motion.button>
+    </div>
+  </motion.div>
 );
 
 // â”€â”€ Mali avatar with optional rings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -342,15 +369,17 @@ export const AIChatAssistant = () => {
   const firstName = user?.full_name?.split(' ')[0] || (user as any)?.display_name || null;
   const { animalInfo } = useAnimalAvatar();
 
+  const _timeG = getTimeGreeting();
+  const _tod = getTimeOfDay();
   const _greetWithName = [
-    (n: string, a: typeof animalInfo) => `Hey ${n}! Your ${a.name} companion is ready to help. What are we shopping for? ${a.emoji}`,
-    (n: string, a: typeof animalInfo) => `Habari ${n}! ${a.emoji} Let's find something amazing today!`,
-    (n: string, a: typeof animalInfo) => `Karibu ${n}! Shopping time is best time ${a.emoji}`,
+    (n: string, a: typeof animalInfo) => `${_timeG.sw} ${n}! ${a.emoji} ${a.name} yako yuko hapa — tunaenda kufanya nini leo?`,
+    (n: string, a: typeof animalInfo) => `${_timeG.en} ${n}! Your companion ${a.name} ${a.emoji} is ready. What are we hunting for?`,
+    (n: string, a: typeof animalInfo) => `Karibu tena ${n}! ${_timeG.emote} ${a.name} amekukumbuka — nini leo?`,
   ];
   const _greetNoName = [
-    (a: typeof animalInfo) => `Jambo! ${a.emoji} I'm ${a.name}, your MaliMart companion. What are we hunting for?`,
-    (a: typeof animalInfo) => `Hey there! ${a.emoji} Ready to find something amazing in Tanzania's best marketplace?`,
-    (a: typeof animalInfo) => `Karibu! ${a.emoji} ${a.name} here — your personal shopping buddy!`,
+    (a: typeof animalInfo) => `${_timeG.sw} ${_timeG.emote} I'm ${a.name} ${a.emoji}, your MaliMart companion from Kariakoo to your screen. What are we finding today?`,
+    (a: typeof animalInfo) => `Jambo! ${a.emoji} ${a.name} hapa — ${_tod === 'usiku' ? "late-night shopping? My favorite kind 🌙" : "ready to explore the soko with you!"}`,
+    (a: typeof animalInfo) => `${_timeG.en} ${a.emoji} ${a.name} reporting for duty! Tanzania's best marketplace awaits — where do we start?`,
   ];
   const _pick = <T,>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
   const greeting = firstName ? _pick(_greetWithName)(firstName, animalInfo) : _pick(_greetNoName)(animalInfo);
@@ -367,6 +396,20 @@ export const AIChatAssistant = () => {
   const [isTyping, setIsTyping]     = useState(false);
   const [avatarEmote, setAvatarEmote] = useState<EmoteType>('waving');
   const [showAnimalPicker, setShowAnimalPicker] = useState(false);
+  const [personalityMode, setPersonalityMode] = useState<PersonalityMode>(
+    () => (localStorage.getItem('mali_personality') as PersonalityMode) ?? 'calm'
+  );
+  const [languageMode, setLanguageMode] = useState<LanguageMode>(
+    () => (localStorage.getItem('mali_language') as LanguageMode) ?? 'english'
+  );
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [showMethali, setShowMethali] = useState(false);
+  const [methaliSeen] = useState(() => {
+    const today = new Date().toDateString();
+    if (localStorage.getItem('mali_methali_date') === today) return true;
+    localStorage.setItem('mali_methali_date', today);
+    return false;
+  });
 
   const scrollRef    = useRef<HTMLDivElement>(null);
   const inputRef     = useRef<HTMLInputElement>(null);
@@ -386,6 +429,10 @@ export const AIChatAssistant = () => {
   useEffect(() => { scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' }); }, [messages, isTyping]);
   useEffect(() => { if (isOpen && !isMinimized) setTimeout(() => inputRef.current?.focus(), 250); }, [isOpen, isMinimized]);
   useEffect(() => () => stopLiveSession(), []);
+  // Show methali on first open of the day
+  useEffect(() => {
+    if (isOpen && !methaliSeen) { setTimeout(() => setShowMethali(true), 1200); }
+  }, [isOpen]);
 
   const clearChat = () => {
     if (isLive) stopLiveSession();
@@ -394,11 +441,14 @@ export const AIChatAssistant = () => {
   };
 
   const getSystem = () => {
-    const catalog = products.slice(0, 60).map(p => `[${p.id}] ${p.name} Â· ${formatTZS(p.price)} Â· ${p.category}`).join('\n');
+    const catalog = products.slice(0, 60).map(p => `[${p.id}] ${p.name} · ${formatTZS(p.price)} · ${p.category}`).join('\n');
     const who = user ? `${(user as any).full_name || (user as any).display_name || 'shopper'}, ${(user as any).role || 'buyer'}` : 'guest';
     return `You are Mali — a warm, sharp, culturally-proud shopping companion for MaliMart, Tanzania's finest marketplace.
 
+${MALI_BACKSTORY}
+
 PERSONALITY: You're like the smartest friend at the market — you know every product, remember what people like, give honest takes ("honestly skip that, this one's way better"), celebrate Tanzanian craft, and keep it fun. Never robotic, never corporate. You ask good follow-up questions and give opinions, not just descriptions.
+${personalityMode === 'sass' ? '\n' + SASS_SYSTEM_ADDITION : ''}${languageMode === 'sheng' ? '\n' + SHENG_SYSTEM_ADDITION : ''}
 
 USER: ${who}
 
@@ -494,7 +544,37 @@ RESPONSE FORMAT:
     setInput(''); setAttachment(null);
     setMessages(prev => [...prev, { id: genId(), role: 'user', text, image: img || undefined, type: 'text', ts: Date.now() }]);
     setIsTyping(true);
-    setAvatarEmote('thinking');
+    setAvatarEmote(isLateNight() ? 'sleepy' : 'thinking');
+
+    // Easter egg check — short-circuit AI call if triggered
+    const egg = detectEasterEgg(text);
+    if (egg && egg.responses.length > 0) {
+      const pick = (a: string[]) => a[Math.floor(Math.random() * a.length)];
+      const resp = pick(egg.responses);
+      setTimeout(() => {
+        setIsTyping(false);
+        setAvatarEmote(egg.emote as EmoteType);
+        setTimeout(() => setAvatarEmote('idle'), 3000);
+        setMessages(prev => [...prev, { id: genId(), role: 'assistant', text: resp, type: 'text', ts: Date.now() }]);
+      }, 600);
+      return;
+    }
+
+    // Mood detection — prepend empathy response
+    const mood = detectUserMood(text);
+    if (mood !== 'neutral') {
+      const moodResp = getMoodResponse(mood);
+      setAvatarEmote(mood === 'happy' ? 'celebrating' : mood === 'sad' ? 'sad' : 'surprised');
+      setTimeout(() => setAvatarEmote('thinking'), 1500);
+      setMessages(prev => [...prev, { id: genId(), role: 'assistant', text: moodResp, type: 'text', ts: Date.now() }]);
+    }
+
+    // Purchase confetti
+    if (detectPurchase(text)) {
+      setShowConfetti(true);
+      setAvatarEmote('celebrating');
+      setTimeout(() => { setShowConfetti(false); setAvatarEmote('idle'); }, 4000);
+    }
 
     try {
       const ai = getAI();
@@ -617,6 +697,14 @@ RESPONSE FORMAT:
         <div className="flex flex-col h-full rounded-[23px] overflow-hidden bg-background/97 backdrop-blur-2xl relative">
           <MeshBackground />
 
+          {/* Confetti on purchase */}
+          <AnimatePresence>{showConfetti && <MaliConfetti count={50} />}</AnimatePresence>
+
+          {/* Methali of the day — first open only */}
+          <AnimatePresence>
+            {showMethali && <MethaliToast methali={getDailyMethali()} onClose={() => setShowMethali(false)} />}
+          </AnimatePresence>
+
           {/* â”€â”€ Header â”€â”€ */}
           <div className="relative z-10 px-4 py-3 border-b border-foreground/6 flex items-center justify-between flex-shrink-0 bg-background/80 backdrop-blur-sm">
             <div className="flex items-center gap-3">
@@ -646,6 +734,28 @@ RESPONSE FORMAT:
               </div>
             </div>
             <div className="flex items-center gap-0.5">
+              {/* Sheng toggle */}
+              <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                title={languageMode === 'sheng' ? 'Switch to English' : 'Switch to Sheng mode'}
+                onClick={() => {
+                  const next: LanguageMode = languageMode === 'english' ? 'sheng' : 'english';
+                  setLanguageMode(next); localStorage.setItem('mali_language', next);
+                }}
+                className={`p-1.5 rounded-xl transition-all text-[9px] font-black tracking-wide ${languageMode === 'sheng' ? 'bg-emerald-500/15 text-emerald-500' : 'text-foreground/30 hover:bg-foreground/6'}`}>
+                {languageMode === 'sheng' ? 'SHENG' : 'SW'}
+              </motion.button>
+              {/* Sass/calm toggle */}
+              <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                title={personalityMode === 'sass' ? 'Switch to calm mode' : 'Activate sass mode 🌶️'}
+                onClick={() => {
+                  const next: PersonalityMode = personalityMode === 'calm' ? 'sass' : 'calm';
+                  setPersonalityMode(next); localStorage.setItem('mali_personality', next);
+                  setAvatarEmote(next === 'sass' ? 'cool' : 'waving');
+                  setTimeout(() => setAvatarEmote('idle'), 1800);
+                }}
+                className={`p-1.5 rounded-xl transition-all text-[11px] ${personalityMode === 'sass' ? 'bg-rose-500/10 text-rose-500' : 'text-foreground/30 hover:bg-foreground/6'}`}>
+                {personalityMode === 'sass' ? '🌶️' : '😇'}
+              </motion.button>
               <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
                 onClick={clearChat} className="p-2 hover:bg-foreground/6 rounded-xl transition-colors" title="Clear">
                 <Trash2 className="w-3.5 h-3.5 text-foreground/35" />
