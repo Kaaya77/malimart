@@ -117,11 +117,10 @@ const MobileDrawer = ({ open, onClose, user, logout, isDark, toggleDark, notific
  ? (user.role==='admin'?'/admin':user.role==='seller'?'/seller':'/buyer')
  : '/login';
 
+ // Bottom bar owns: Home, Shop, Explore, Bag, Account.
+ // Drawer owns secondary actions only.
  const navItems = [
- { label:'Shop', path:'/shop', icon:Store, desc:'Browse all products' },
- { label:'Categories', path:'/categories', icon:LayoutGrid, desc:'Explore by category' },
  { label:'Wishlist', path:'/wishlist', icon:Heart, desc:'Your saved items' },
- { label:'Shopping Bag', path:'/cart', icon:ShoppingBag, desc:'Review your cart' },
  ];
 
  const accountItems = user ? [
@@ -151,10 +150,6 @@ const MobileDrawer = ({ open, onClose, user, logout, isDark, toggleDark, notific
  <div className="flex items-center justify-between px-5 py-4 border-b border-foreground/8 shrink-0">
  <span className="font-bold text-lg text-foreground tracking-tight">Menu</span>
  <div className="flex items-center gap-1">
- <button onClick={toggleDark} aria-label="Toggle theme"
- className="w-11 h-11 rounded-2xl bg-foreground/[0.06] flex items-center justify-center text-foreground hover:bg-foreground/10 transition-colors">
- {isDark?<Sun className="w-4 h-4 stroke-[2]"/>:<Moon className="w-4 h-4 stroke-[2]"/>}
- </button>
  <button onClick={onClose} aria-label="Close"
  className="w-11 h-11 rounded-2xl bg-foreground/[0.06] flex items-center justify-center text-foreground hover:bg-foreground/10 transition-colors">
  <X className="w-4 h-4 stroke-[2.5]"/>

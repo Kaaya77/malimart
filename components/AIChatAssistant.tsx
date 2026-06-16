@@ -649,7 +649,7 @@ RESPONSE FORMAT:
 
   // â”€â”€ FAB â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (!isOpen) return (
-    <div className="fixed bottom-[84px] right-4 md:bottom-6 md:right-4 z-[90]">
+    <div className="fixed bottom-[100px] right-4 md:bottom-6 md:right-4 z-[90]">
       <motion.button initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 300, damping: 18, delay: 0.3 }}
         whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.9 }}
@@ -690,7 +690,7 @@ RESPONSE FORMAT:
     <motion.div initial={{ opacity: 0, y: 28, scale: 0.92 }} animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: 28, scale: 0.92 }}
       transition={{ type: 'spring', stiffness: 320, damping: 26 }}
-      className={`fixed bottom-[84px] right-4 md:bottom-4 md:right-4 z-[90] w-[calc(100vw-2rem)] md:w-[390px] ${isMinimized ? 'h-16' : 'h-[550px] md:h-[590px]'} transition-[height] duration-300 ease-out`}
+      className={`fixed bottom-[100px] right-4 md:bottom-4 md:right-4 z-[90] w-[calc(100vw-2rem)] md:w-[390px] ${isMinimized ? 'h-16' : 'h-[550px] md:h-[590px]'} transition-[height] duration-300 ease-out`}
     >
       {/* Gradient border wrapper */}
       <div className="h-full p-px rounded-3xl bg-gradient-to-b from-emerald-500/20 via-foreground/5 to-teal-500/15 shadow-2xl shadow-black/25">

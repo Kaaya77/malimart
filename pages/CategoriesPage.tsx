@@ -6,7 +6,7 @@ import { supabase } from '../services/supabaseClient';
 import { categoryCountsServer, trendingProductsServer } from '../services/exploreService';
 import { CATEGORY_HIERARCHY } from '../constants';
 import { VendorProfile } from '../types';
-import { LayoutGrid, Store, Flame, Tag } from 'lucide-react';
+import { LayoutGrid, Store, Flame, Tag, Search } from 'lucide-react';
 import { ExploreTab, TrendSubTab, CATEGORY_IMAGES } from '../components/categories/categoryConstants';
 import { CategoriesTab } from '../components/categories/CategoriesTab';
 import { StoresTab } from '../components/categories/StoresTab';
@@ -144,28 +144,41 @@ export const CategoriesPage = () => {
     <div className="min-h-screen bg-background pt-16 md:pt-20 pb-[calc(5rem+env(safe-area-inset-bottom))]">
 
       {/* Hero */}
-      <div className="bg-foreground text-background px-5 md:px-8 pt-10 pb-0">
+      <div className="bg-foreground text-background px-5 md:px-8 pt-6 md:pt-10 pb-4 md:pb-0">
         <div className="container mx-auto max-w-7xl">
-          <p className="text-[10px] uppercase tracking-[0.3em] text-background/40 font-bold mb-3">Explore MaliMart</p>
-          <h1 className="text-3xl md:text-5xl font-bold tracking-tight leading-tight mb-4">
-            Discover Tanzania's<br />
+          <p className="text-[10px] uppercase tracking-[0.3em] text-background/40 font-bold mb-2 md:mb-3">Explore MaliMart</p>
+          <h1 className="text-2xl md:text-5xl font-bold tracking-tight leading-tight mb-3 md:mb-4">
+            Discover Tanzania's{' '}
             <span className="text-emerald-400">Best Marketplace</span>
           </h1>
-          <div className="flex items-center gap-6 text-xs text-background/50 mb-6">
+          <div className="flex items-center gap-5 text-xs text-background/50 mb-4">
             {totalProducts > 0 && (
               <span className="flex items-center gap-1.5">
                 <Store className="w-3.5 h-3.5 text-emerald-400" />
                 <span className="font-bold text-background/80">{totalProducts.toLocaleString()}</span> products
               </span>
             )}
-            <span className="flex items-center gap-1.5">
-              <Store className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="font-bold text-background/80">{vendors.length || '—'}</span> sellers
-            </span>
+            {vendors.length > 0 && (
+              <span className="flex items-center gap-1.5">
+                <Store className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="font-bold text-background/80">{vendors.length}</span> sellers
+              </span>
+            )}
             <span className="flex items-center gap-1.5">
               <LayoutGrid className="w-3.5 h-3.5 text-emerald-400" />
               <span className="font-bold text-background/80">{organizedCategories.length || Object.keys(CATEGORY_HIERARCHY).length}</span> categories
             </span>
+          </div>
+          {/* Search — visible above the fold on mobile */}
+          <div className="relative max-w-lg mb-4 md:mb-6">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-background/40 pointer-events-none" />
+            <input
+              type="search"
+              value={searchQ}
+              onChange={e => { setSearchQ(e.target.value); if (tab !== 'categories') setTab('categories'); }}
+              placeholder="Search categories, stores…"
+              className="w-full h-11 bg-background/10 border border-background/20 rounded-2xl pl-10 pr-4 text-sm text-background placeholder:text-background/40 focus:outline-none focus:border-emerald-400/60 transition-colors"
+            />
           </div>
         </div>
       </div>
@@ -178,7 +191,7 @@ export const CategoriesPage = () => {
               const Icon = t.icon;
               return (
                 <button key={t.id} onClick={() => setTab(t.id)}
-                  className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all flex-shrink-0 ${tab === t.id ? 'bg-foreground text-background' : 'text-foreground/45 hover:text-foreground hover:bg-foreground/[0.05]'}`}>
+                  className={`relative flex items-center gap-2 px-4 py-3 min-h-[44px] rounded-xl text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all flex-shrink-0 ${tab === t.id ? 'bg-foreground text-background' : 'text-foreground/45 hover:text-foreground hover:bg-foreground/[0.05]'}`}>
                   <Icon className="w-3.5 h-3.5 stroke-[2]" />
                   {t.label}
                   {t.badge ? (
