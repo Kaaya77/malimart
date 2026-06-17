@@ -124,11 +124,11 @@ export const MaliAnimalAvatar = ({
         {emote !== 'idle' && emoteInfo.overlay && (
           <motion.div
             key={emote}
-            initial={{ scale: 0, opacity: 0, y: 4 }}
+            initial={{ scale: 0, opacity: 0, y: -4 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0, opacity: 0, y: -4 }}
+            exit={{ scale: 0, opacity: 0, y: 4 }}
             transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-            className="absolute -top-2 -right-2 bg-white dark:bg-gray-800 rounded-full shadow-md flex items-center justify-center"
+            className="absolute -bottom-1 -right-2 bg-white dark:bg-gray-800 rounded-full shadow-md flex items-center justify-center z-10"
             style={{ width: size * 0.5, height: size * 0.5, fontSize: size * 0.28 }}
           >
             {emoteInfo.overlay}

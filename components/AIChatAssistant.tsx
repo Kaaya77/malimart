@@ -671,7 +671,7 @@ RESPONSE FORMAT:
         ))}
 
         {/* Button surface -- shows user's chosen animal */}
-        <div className="absolute inset-0 rounded-[18px] flex items-center justify-center shadow-xl overflow-hidden">
+        <div className="absolute inset-0 rounded-[18px] flex items-center justify-center shadow-xl overflow-visible">
           <MaliAnimalAvatar size={56} pulse emote="waving" />
         </div>
       </motion.button>
