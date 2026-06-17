@@ -113,28 +113,38 @@ export const MaliAnimalAvatar = ({
           : { duration: 0.6, ease: 'easeInOut' }
         }
       >
-        <span style={{ fontSize: size * 0.58, lineHeight: 1 }} className="select-none">
+        {/* Animal emoji — fades back when an expression is active */}
+        <motion.span
+          style={{ fontSize: size * 0.58, lineHeight: 1, position: 'relative', zIndex: 1 }}
+          className="select-none"
+          animate={{ opacity: emote !== 'idle' && emoteInfo.overlay ? 0.18 : 1 }}
+          transition={{ duration: 0.25 }}
+        >
           {info.emoji}
-        </span>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-white/15" style={{ borderRadius: br }} />
+        </motion.span>
+
+        {/* Facial expression — fills the face area when emoting */}
+        <AnimatePresence>
+          {emote !== 'idle' && emoteInfo.overlay && (
+            <motion.span
+              key={emote}
+              className="absolute inset-0 flex items-center justify-center select-none"
+              style={{ fontSize: size * 0.62, lineHeight: 1, zIndex: 2 }}
+              initial={{ scale: 0.4, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.4, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 380, damping: 22 }}
+            >
+              {emoteInfo.overlay}
+            </motion.span>
+          )}
+        </AnimatePresence>
+
+        <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-white/15 pointer-events-none" style={{ borderRadius: br, zIndex: 3 }} />
       </motion.div>
 
-      {/* Emote overlay bubble */}
-      <AnimatePresence>
-        {emote !== 'idle' && emoteInfo.overlay && (
-          <motion.div
-            key={emote}
-            initial={{ scale: 0, opacity: 0, y: -4 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0, opacity: 0, y: 4 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-            className="absolute -bottom-1 -right-2 bg-white dark:bg-gray-800 rounded-full shadow-md flex items-center justify-center z-10"
-            style={{ width: size * 0.5, height: size * 0.5, fontSize: size * 0.28 }}
-          >
-            {emoteInfo.overlay}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Corner badge for non-face action emotes (👋 waving, 🕺 dancing, etc.)
+          kept small so the main face expression is dominant */}
 
       {/* Emote label */}
       <AnimatePresence>
