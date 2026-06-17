@@ -158,7 +158,12 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
             return stored ? JSON.parse(stored) : [];
         } catch { return []; }
     });
-    const [wishlist, setWishlist] = useState<Product[]>([]);
+    const [wishlist, setWishlist] = useState<Product[]>(() => {
+        try {
+            const stored = localStorage.getItem('mali_guest_wishlist');
+            return stored ? JSON.parse(stored) : [];
+        } catch { return []; }
+    });
     const [recentlyViewed, setRecentlyViewed] = useState<Product[]>([]);
     const [orders, setOrders] = useState<Order[]>([]);
     const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -240,6 +245,13 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
             try { localStorage.setItem('mali_guest_cart', JSON.stringify(cart)); } catch {}
         }
     }, [cart, user]);
+
+    // Persist guest wishlist to localStorage — same pattern as cart.
+    useEffect(() => {
+        if (!user) {
+            try { localStorage.setItem('mali_guest_wishlist', JSON.stringify(wishlist)); } catch {}
+        }
+    }, [wishlist, user]);
 
     useEffect(() => {
         const init = async () => {
@@ -546,6 +558,8 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     }, []);
 
     const fetchAndSetWishlist = useCallback(async (userId: string) => {
+        // Server wishlist takes over — discard any guest wishlist in localStorage.
+        try { localStorage.removeItem('mali_guest_wishlist'); } catch {}
         const { data } = await supabase.from('wishlist_items').select('product:products(*)').eq('user_id', userId).is('deleted_at', null);
         if (data) setWishlist(data.map((w: any) => w.product).filter(Boolean));
     }, []);
@@ -885,8 +899,16 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     const isFollowing = useCallback((sellerId: string) => followers.some(f => f.seller_id === sellerId), [followers]);
 
     const toggleWishlist = useCallback(async (product: Product) => {
-        if (!user) return;
-        // Query DB as source of truth to avoid double-click race conditions
+        // Guest: toggle in-memory (persisted to localStorage by the sync effect)
+        if (!user) {
+            setWishlist(prev =>
+                prev.some(p => p.id === product.id)
+                    ? prev.filter(p => p.id !== product.id)
+                    : [...prev, product]
+            );
+            return;
+        }
+        // Authenticated: query DB as source of truth to avoid double-click race conditions
         const { data: existing } = await supabase
             .from('wishlist_items')
             .select('id, deleted_at')

@@ -36,10 +36,18 @@ export const ProductCardActions: React.FC<ProductCardActionsProps> = ({
  const { toggleWishlist } = useAppState();
  const { addToast } = useToast();
 
+ const { user } = useAppState();
+
  const handleWishlist = (e: React.MouseEvent) => {
  e.stopPropagation();
  toggleWishlist(product);
- addToast(isLiked ? 'Removed from wishlist' : 'Saved to wishlist', 'success');
+ if (isLiked) {
+   addToast('Removed from wishlist', 'success');
+ } else if (!user) {
+   addToast('Saved to wishlist — sign in to keep it across devices', 'info');
+ } else {
+   addToast('Saved to wishlist', 'success');
+ }
  };
 
  return (
