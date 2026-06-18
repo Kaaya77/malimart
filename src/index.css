@@ -197,6 +197,51 @@
   perspective: 1000px;
 }
 
+/* ─── Glassmorphism kit ─── */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 8px 40px -8px rgba(0, 0, 0, 0.35), inset 0 1px 0 0 rgba(255,255,255,0.25);
+}
+.glass-input {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  transition: all 0.2s ease;
+}
+.glass-input:focus {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.45);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.10);
+}
+/* Frosted surface that adapts to the app's light/dark theme (for in-app pages) */
+.glass-surface {
+  background: color-mix(in srgb, hsl(var(--background)) 55%, transparent);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  border: 1px solid color-mix(in srgb, hsl(var(--foreground)) 12%, transparent);
+}
+
+/* Animated aurora background blobs */
+.aurora {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(90px);
+  opacity: 0.65;
+  will-change: transform;
+}
+@keyframes aurora-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%      { transform: translate(40px, -30px) scale(1.15); }
+  66%      { transform: translate(-30px, 25px) scale(0.95); }
+}
+.aurora-1 { animation: aurora-drift 18s ease-in-out infinite; }
+.aurora-2 { animation: aurora-drift 22s ease-in-out infinite reverse; }
+.aurora-3 { animation: aurora-drift 26s ease-in-out infinite; }
+
 /* ─── Hide scrollbar (horizontal scrollers / mobile rails) ─── */
 .no-scrollbar {
   -ms-overflow-style: none;

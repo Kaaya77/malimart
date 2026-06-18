@@ -116,7 +116,7 @@ const SideProductPill: React.FC<{
       onClick={onClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className="group relative w-full text-left rounded-2xl overflow-hidden bg-foreground/[0.03] border border-foreground/[0.06] hover:border-foreground/20 transition-all duration-300 flex"
+      className="glass-surface group relative w-full text-left rounded-2xl overflow-hidden hover:border-foreground/25 transition-all duration-300 flex"
       style={{ minHeight: '7rem' }}
     >
       <div className="w-28 flex-shrink-0 relative overflow-hidden">
@@ -231,15 +231,23 @@ export const HeroSection = ({
   }
 
   return (
-    <section className="relative w-full pt-20 md:pt-24 pb-4 md:pb-8">
+    <section className="relative w-full pt-20 md:pt-24 pb-4 md:pb-8 overflow-hidden isolate">
+      {/* Ambient aurora backdrop (fades into the page) */}
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="aurora aurora-1 w-[34rem] h-[34rem] -top-40 -left-24 bg-emerald-400/25 dark:bg-emerald-500/20" />
+        <div className="aurora aurora-2 w-[28rem] h-[28rem] -top-20 right-0 bg-teal-300/20 dark:bg-teal-400/15" />
+        <div className="aurora aurora-3 w-[24rem] h-[24rem] top-40 left-1/3 bg-violet-300/15 dark:bg-violet-500/12" />
+        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-background" />
+      </div>
+
       {/* Desktop greeting */}
       {greeting && (
-        <div className="hidden md:flex container mx-auto px-8 mb-5 items-center justify-between">
-          <p className="text-sm font-medium text-foreground/50">{greeting}</p>
+        <div className="hidden md:flex container mx-auto px-8 mb-5 items-center justify-between relative z-10">
+          <p className="text-sm font-medium text-foreground/60">{greeting}</p>
           {activeCount > 0 && (
-            <div className="flex items-center gap-2 bg-foreground/[0.04] rounded-full px-4 py-1.5 border border-foreground/[0.06]">
+            <div className="glass-surface flex items-center gap-2 rounded-full px-4 py-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-xs font-medium text-foreground/55">{activeCount} products live</span>
+              <span className="text-xs font-medium text-foreground/65">{activeCount} products live</span>
             </div>
           )}
         </div>
@@ -247,7 +255,7 @@ export const HeroSection = ({
 
       {/* MOBILE */}
       <div
-        className="md:hidden px-4"
+        className="md:hidden px-4 relative z-10"
         onTouchStart={e => { dragStartX.current = e.touches[0].clientX; }}
         onTouchEnd={e => {
           const diff = dragStartX.current - e.changedTouches[0].clientX;
@@ -334,7 +342,7 @@ export const HeroSection = ({
       </div>
 
       {/* DESKTOP */}
-      <div className="hidden md:block container mx-auto px-8">
+      <div className="hidden md:block container mx-auto px-8 relative z-10">
         <div className="grid grid-cols-12 gap-4" style={{ minHeight: '520px' }}>
           <div className="col-span-7 relative">
             <AnimatePresence mode="wait">
@@ -363,7 +371,7 @@ export const HeroSection = ({
             </div>
             <button
               onClick={() => navigate('/shop')}
-              className="group w-full flex items-center justify-center gap-2 h-11 rounded-2xl border border-foreground/10 hover:border-foreground/25 hover:bg-foreground/[0.03] text-sm font-semibold text-foreground/60 hover:text-foreground transition-all"
+              className="glass-surface group w-full flex items-center justify-center gap-2 h-11 rounded-2xl hover:border-foreground/25 text-sm font-semibold text-foreground/65 hover:text-foreground transition-all"
             >
               {activeCount > 0 ? `Browse all ${activeCount} products` : 'Browse all products'}
               <ArrowRight className="w-4 h-4 stroke-[2.2] group-hover:translate-x-0.5 transition-transform" />
