@@ -404,6 +404,40 @@ export const SellerInventory = ({
   return (
     <div className="space-y-5 pb-10">
 
+      {/* Page header */}
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Inventory</h1>
+            <AnimatePresence>
+              {liveIndicator && (
+                <motion.span
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/12 text-emerald-600 text-[10px] font-bold"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />Live
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </div>
+          <p className="text-sm text-foreground/50 mt-1">
+            {totals?.total ?? products.length} products · {formatTZS(totals?.inventory_value ?? 0)} in stock value
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setShowAIInsights(true)}
+            className="h-10 px-4 rounded-xl border border-emerald-500/30 bg-emerald-500/[0.06] text-sm font-semibold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/12 transition-all flex items-center gap-2">
+            <Wand2 className="w-4 h-4" /><span className="hidden sm:inline">AI Insights</span>
+          </button>
+          <button onClick={() => navigate('/seller/products/new')}
+            className="h-10 px-4 rounded-xl bg-emerald-600 text-white text-sm font-semibold shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 active:scale-95 transition-all flex items-center gap-2">
+            <Plus className="w-4 h-4" />New Product
+          </button>
+        </div>
+      </div>
+
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatCard
@@ -463,39 +497,26 @@ export const SellerInventory = ({
         )}
       </AnimatePresence>
 
-      {/* Control bar */}
-      <div className="space-y-3">
-        {/* Top row: search + actions */}
-        <div className="flex items-center gap-3">
+      {/* Control toolbar */}
+      <div className="rounded-2xl border border-foreground/8 bg-card p-3 space-y-3">
+        {/* Row 1: search + view/tools */}
+        <div className="flex items-center gap-2.5">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/30" />
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search by name or SKU…"
-              className="w-full h-10 pl-9 pr-3 rounded-xl border border-foreground/12 bg-foreground/[0.04] text-sm text-foreground placeholder:text-foreground/25 outline-none focus:border-foreground/25 transition-colors"
+              className="w-full h-10 pl-9 pr-3 rounded-xl border border-foreground/12 bg-foreground/[0.03] text-sm text-foreground placeholder:text-foreground/30 outline-none focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10 transition-all"
             />
           </div>
-          {/* Live indicator */}
-          <AnimatePresence>
-            {liveIndicator && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 text-[11px] font-bold"
-              >
-                <Wifi className="w-3 h-3" />Live
-              </motion.div>
-            )}
-          </AnimatePresence>
           {/* Refresh */}
-          <button onClick={() => fetchInventory(true)} disabled={refreshing}
-            className="h-10 w-10 rounded-xl border border-foreground/12 bg-foreground/[0.04] flex items-center justify-center text-foreground/50 hover:bg-foreground/[0.07] transition-colors disabled:opacity-40">
+          <button onClick={() => fetchInventory(true)} disabled={refreshing} title="Refresh"
+            className="h-10 w-10 rounded-xl border border-foreground/12 bg-foreground/[0.03] flex items-center justify-center text-foreground/50 hover:bg-foreground/[0.06] transition-colors disabled:opacity-40 flex-shrink-0">
             <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
           </button>
           {/* View mode toggle */}
-          <div className="flex items-center rounded-xl border border-foreground/12 bg-foreground/[0.04] overflow-hidden flex-shrink-0">
+          <div className="flex items-center rounded-xl border border-foreground/12 bg-foreground/[0.03] overflow-hidden flex-shrink-0">
             <button onClick={() => setViewMode('cards')} title="Card view"
               className={`h-10 px-2.5 flex items-center transition-colors ${viewMode === 'cards' ? 'bg-foreground/[0.08] text-foreground' : 'text-foreground/35 hover:text-foreground/60'}`}>
               <LayoutGrid className="w-4 h-4" />
@@ -505,47 +526,40 @@ export const SellerInventory = ({
               <List className="w-4 h-4" />
             </button>
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <button onClick={() => setShowAIInsights(true)} title="AI Inventory Insights"
-              className="h-10 px-3.5 rounded-xl border border-emerald-500/30 bg-emerald-500/8 text-sm font-semibold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/15 hover:border-emerald-500/50 transition-all flex items-center gap-1.5">
-              <Wand2 className="w-4 h-4" /><span className="hidden sm:inline text-xs font-black">AI Insights</span>
-            </button>
-            <button onClick={() => navigate('/seller/products/new')}
-              className="h-10 px-5 rounded-xl bg-emerald-600 text-white text-sm font-black hover:bg-emerald-700 active:scale-95 transition-all flex items-center gap-2">
-              <Plus className="w-4 h-4" /><span className="hidden sm:inline">New Product</span><span className="sm:hidden">New</span>
-            </button>
+          {/* Data tools */}
+          <div className="hidden sm:flex items-center rounded-xl border border-foreground/12 bg-foreground/[0.03] overflow-hidden flex-shrink-0 divide-x divide-foreground/8">
             <button onClick={() => setIsQuickFormOpen(true)} title="Quick add"
-              className="h-10 px-3.5 rounded-xl border border-foreground/12 bg-foreground/[0.04] text-sm font-semibold text-foreground/60 hover:bg-foreground/[0.07] hover:text-foreground transition-all flex items-center gap-1.5">
-              <Zap className="w-4 h-4" /><span className="hidden sm:inline text-xs">Quick</span>
+              className="h-10 px-3 flex items-center gap-1.5 text-xs font-semibold text-foreground/55 hover:bg-foreground/[0.06] hover:text-foreground transition-all">
+              <Zap className="w-4 h-4" />Quick
             </button>
             <button onClick={handleExportCSV} title="Export CSV"
-              className="h-10 px-3.5 rounded-xl border border-foreground/12 bg-foreground/[0.04] text-sm font-semibold text-foreground/60 hover:bg-foreground/[0.07] hover:text-foreground transition-all flex items-center gap-1.5">
-              <Download className="w-4 h-4" /><span className="hidden sm:inline text-xs">Export</span>
+              className="h-10 px-3 flex items-center gap-1.5 text-xs font-semibold text-foreground/55 hover:bg-foreground/[0.06] hover:text-foreground transition-all">
+              <Download className="w-4 h-4" />Export
             </button>
             <button onClick={() => setIsCSVImportOpen(true)} title="Import CSV"
-              className="h-10 px-3.5 rounded-xl border border-foreground/12 bg-foreground/[0.04] text-sm font-semibold text-foreground/60 hover:bg-foreground/[0.07] hover:text-foreground transition-all flex items-center gap-1.5">
-              <Upload className="w-4 h-4" /><span className="hidden sm:inline text-xs">Import</span>
+              className="h-10 px-3 flex items-center gap-1.5 text-xs font-semibold text-foreground/55 hover:bg-foreground/[0.06] hover:text-foreground transition-all">
+              <Upload className="w-4 h-4" />Import
             </button>
           </div>
         </div>
 
-        {/* Bottom row: status tabs + category + low stock */}
-        <div className="flex flex-wrap items-center gap-2">
+        {/* Row 2: status tabs + filters */}
+        <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-foreground/8">
           {/* Status tabs */}
-          <div className="flex items-center gap-1 p-1 rounded-xl bg-foreground/[0.04] border border-foreground/8">
+          <div className="flex items-center gap-1 mt-2">
             {STATUS_TABS.map(tab => (
               <button
                 key={tab.value}
                 onClick={() => setStatus(tab.value)}
-                className={`relative h-7 px-3 rounded-lg text-xs font-bold transition-all ${
+                className={`relative h-8 px-3 rounded-lg text-xs font-semibold transition-all ${
                   status === tab.value
-                    ? 'bg-background shadow-sm text-foreground'
-                    : 'text-foreground/40 hover:text-foreground/70'
+                    ? 'bg-foreground/[0.07] text-foreground'
+                    : 'text-foreground/40 hover:text-foreground/70 hover:bg-foreground/[0.03]'
                 }`}
               >
                 {tab.label}
                 {tab.count !== undefined && tab.count > 0 && (
-                  <span className={`ml-1.5 text-[10px] font-black tabular-nums ${
+                  <span className={`ml-1.5 text-[10px] font-bold tabular-nums ${
                     status === tab.value ? 'text-emerald-600' : 'text-foreground/30'
                   }`}>{tab.count}</span>
                 )}
@@ -553,28 +567,30 @@ export const SellerInventory = ({
             ))}
           </div>
 
-          {/* Category filter */}
-          <select
-            value={category}
-            onChange={e => setCategory(e.target.value)}
-            className="h-9 px-3 rounded-xl border border-foreground/12 bg-foreground/[0.04] text-sm text-foreground outline-none focus:border-foreground/25 transition-colors"
-          >
-            <option value="All">All Categories</option>
-            {Object.keys(CATEGORY_HIERARCHY).map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
+          <div className="flex items-center gap-2 ml-auto mt-2">
+            {/* Category filter */}
+            <select
+              value={category}
+              onChange={e => setCategory(e.target.value)}
+              className="h-9 px-3 rounded-xl border border-foreground/12 bg-foreground/[0.03] text-xs font-medium text-foreground outline-none focus:border-emerald-500/50 transition-colors"
+            >
+              <option value="All">All Categories</option>
+              {Object.keys(CATEGORY_HIERARCHY).map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
 
-          {/* Low stock toggle */}
-          <button
-            onClick={() => setLowStockOnly(!lowStockOnly)}
-            className={`h-9 px-3 rounded-xl border text-xs font-semibold transition-all flex items-center gap-1.5 ${
-              lowStockOnly
-                ? 'border-amber-300 bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-700/40'
-                : 'border-foreground/12 bg-foreground/[0.04] text-foreground/50 hover:bg-foreground/[0.07]'
-            }`}
-          >
-            <AlertTriangle className="w-3 h-3" />
-            Low stock only
-          </button>
+            {/* Low stock toggle */}
+            <button
+              onClick={() => setLowStockOnly(!lowStockOnly)}
+              className={`h-9 px-3 rounded-xl border text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                lowStockOnly
+                  ? 'border-amber-400/50 bg-amber-500/10 text-amber-700 dark:text-amber-400'
+                  : 'border-foreground/12 bg-foreground/[0.03] text-foreground/50 hover:bg-foreground/[0.06]'
+              }`}
+            >
+              <AlertTriangle className="w-3.5 h-3.5" />
+              Low stock
+            </button>
+          </div>
         </div>
       </div>
 
