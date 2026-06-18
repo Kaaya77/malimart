@@ -201,10 +201,14 @@ export const ReviewSection: React.FC<ReviewSectionProps> = ({ productId }) => {
 
   const handleReport = async (reviewId: string) => {
     if (!user) return addToast('Sign in to report', 'error');
-    try {
-      await supabase.from('reports').insert({ reporter_id: user.id, reported_type: 'review', reported_id: reviewId, reason: 'Inappropriate content' });
-      addToast('Report submitted', 'success');
-    } catch { addToast('Report failed', 'error'); }
+    const { error } = await supabase.from('reports').insert({
+      reporter_id: user.id,
+      reported_id: reviewId,
+      category: 'review',
+      reason: 'Inappropriate content',
+    });
+    if (error) { addToast('Report failed', 'error'); return; }
+    addToast('Report submitted', 'success');
   };
 
   // ── Render ─────────────────────────────────────────────────────────────────
