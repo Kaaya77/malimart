@@ -198,7 +198,7 @@ export const LoginPage = () => {
       : 'We’ll email you a secure reset link.';
 
   const inputBase =
-    'peer w-full h-12 rounded-xl border border-foreground/15 bg-foreground/[0.02] pl-11 pr-4 text-sm font-medium text-foreground placeholder:text-foreground/35 outline-none transition-all focus:border-emerald-500/60 focus:ring-4 focus:ring-emerald-500/10 focus:bg-background';
+    'peer w-full h-[52px] sm:h-12 rounded-xl border border-foreground/15 bg-foreground/[0.02] pl-11 pr-4 text-base sm:text-sm font-medium text-foreground placeholder:text-foreground/35 outline-none transition-all focus:border-emerald-500/60 focus:ring-4 focus:ring-emerald-500/10 focus:bg-background';
 
   return (
     <div className="min-h-screen w-full flex font-sans bg-background">
@@ -260,15 +260,25 @@ export const LoginPage = () => {
       </div>
 
       {/* ── RIGHT FORM PANEL ── */}
-      <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-10 relative">
-        {/* Mobile logo */}
-        <div className="lg:hidden absolute top-6 left-6">
-          <Link to="/" className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-black text-lg">
+      <div
+        className="flex-1 flex flex-col items-center justify-center px-5 sm:px-10 py-8 relative"
+        style={{ paddingTop: 'max(2rem, env(safe-area-inset-top))', paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}
+      >
+        {/* Mobile hero — gives small screens brand context the side panel can't */}
+        <div className="lg:hidden w-full max-w-[400px] mb-8">
+          <Link to="/" className="flex items-center gap-2.5 mb-6">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-black text-lg shadow-lg shadow-emerald-500/25">
               M
             </div>
             <span className="font-bold text-lg tracking-tight text-foreground">MaliMart</span>
           </Link>
+          <div className="flex items-center gap-2 text-xs font-medium text-foreground/45">
+            <span className="inline-flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5 text-emerald-500" /> Secure</span>
+            <span className="opacity-30">·</span>
+            <span className="inline-flex items-center gap-1.5"><Store className="w-3.5 h-3.5 text-emerald-500" /> 12K+ sellers</span>
+            <span className="opacity-30">·</span>
+            <span className="inline-flex items-center gap-1.5"><Globe2 className="w-3.5 h-3.5 text-emerald-500" /> Tanzania</span>
+          </div>
         </div>
 
         <div className="w-full max-w-[400px]">
@@ -442,7 +452,7 @@ export const LoginPage = () => {
               type="submit"
               disabled={loading}
               whileTap={{ scale: 0.99 }}
-              className="w-full h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold shadow-lg shadow-emerald-600/20 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+              className="w-full h-[52px] sm:h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-base sm:text-sm font-semibold shadow-lg shadow-emerald-600/20 transition-colors disabled:opacity-60 flex items-center justify-center gap-2 mt-1"
             >
               {loading ? (
                 <span className="w-5 h-5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
@@ -480,8 +490,8 @@ export const LoginPage = () => {
             )}
           </div>
 
-          {/* Trust strip */}
-          <div className="mt-10 pt-6 border-t border-foreground/8 flex items-center justify-center gap-5 text-foreground/35">
+          {/* Trust strip (desktop — mobile shows the hero version up top) */}
+          <div className="mt-10 pt-6 border-t border-foreground/8 hidden lg:flex items-center justify-center gap-5 text-foreground/35">
             <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider">
               <ShieldCheck className="w-3.5 h-3.5" /> Secure
             </span>

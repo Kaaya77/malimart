@@ -197,6 +197,15 @@
   perspective: 1000px;
 }
 
+/* ─── Hide scrollbar (horizontal scrollers / mobile rails) ─── */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* ─── Animate glow pulse ─── */
 .animate-glow-pulse {
   animation: glow-pulse 3s ease-in-out infinite;

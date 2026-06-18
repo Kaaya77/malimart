@@ -426,13 +426,13 @@ export const SellerInventory = ({
             {totals?.total ?? products.length} products · {formatTZS(totals?.inventory_value ?? 0)} in stock value
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="grid grid-cols-2 sm:flex items-center gap-2">
           <button onClick={() => setShowAIInsights(true)}
-            className="h-10 px-4 rounded-xl border border-emerald-500/30 bg-emerald-500/[0.06] text-sm font-semibold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/12 transition-all flex items-center gap-2">
-            <Wand2 className="w-4 h-4" /><span className="hidden sm:inline">AI Insights</span>
+            className="h-11 sm:h-10 px-4 rounded-xl border border-emerald-500/30 bg-emerald-500/[0.06] text-sm font-semibold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/12 transition-all flex items-center justify-center gap-2">
+            <Wand2 className="w-4 h-4" />AI Insights
           </button>
           <button onClick={() => navigate('/seller/products/new')}
-            className="h-10 px-4 rounded-xl bg-emerald-600 text-white text-sm font-semibold shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 active:scale-95 transition-all flex items-center gap-2">
+            className="h-11 sm:h-10 px-4 rounded-xl bg-emerald-600 text-white text-sm font-semibold shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 active:scale-95 transition-all flex items-center justify-center gap-2">
             <Plus className="w-4 h-4" />New Product
           </button>
         </div>
@@ -543,15 +543,15 @@ export const SellerInventory = ({
           </div>
         </div>
 
-        {/* Row 2: status tabs + filters */}
-        <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-foreground/8">
+        {/* Row 2: status tabs + filters — horizontal scroll on mobile, no wrap */}
+        <div className="flex md:flex-wrap items-center gap-2 pt-3 border-t border-foreground/8 overflow-x-auto no-scrollbar -mx-1 px-1">
           {/* Status tabs */}
-          <div className="flex items-center gap-1 mt-2">
+          <div className="flex items-center gap-1 flex-shrink-0">
             {STATUS_TABS.map(tab => (
               <button
                 key={tab.value}
                 onClick={() => setStatus(tab.value)}
-                className={`relative h-8 px-3 rounded-lg text-xs font-semibold transition-all ${
+                className={`relative h-9 px-3.5 rounded-lg text-xs font-semibold transition-all flex-shrink-0 ${
                   status === tab.value
                     ? 'bg-foreground/[0.07] text-foreground'
                     : 'text-foreground/40 hover:text-foreground/70 hover:bg-foreground/[0.03]'
@@ -567,12 +567,12 @@ export const SellerInventory = ({
             ))}
           </div>
 
-          <div className="flex items-center gap-2 ml-auto mt-2">
+          <div className="flex items-center gap-2 md:ml-auto flex-shrink-0">
             {/* Category filter */}
             <select
               value={category}
               onChange={e => setCategory(e.target.value)}
-              className="h-9 px-3 rounded-xl border border-foreground/12 bg-foreground/[0.03] text-xs font-medium text-foreground outline-none focus:border-emerald-500/50 transition-colors"
+              className="h-9 px-3 rounded-xl border border-foreground/12 bg-foreground/[0.03] text-xs font-medium text-foreground outline-none focus:border-emerald-500/50 transition-colors flex-shrink-0"
             >
               <option value="All">All Categories</option>
               {Object.keys(CATEGORY_HIERARCHY).map(c => <option key={c} value={c}>{c}</option>)}
@@ -581,7 +581,7 @@ export const SellerInventory = ({
             {/* Low stock toggle */}
             <button
               onClick={() => setLowStockOnly(!lowStockOnly)}
-              className={`h-9 px-3 rounded-xl border text-xs font-semibold transition-all flex items-center gap-1.5 ${
+              className={`h-9 px-3 rounded-xl border text-xs font-semibold transition-all flex items-center gap-1.5 flex-shrink-0 ${
                 lowStockOnly
                   ? 'border-amber-400/50 bg-amber-500/10 text-amber-700 dark:text-amber-400'
                   : 'border-foreground/12 bg-foreground/[0.03] text-foreground/50 hover:bg-foreground/[0.06]'

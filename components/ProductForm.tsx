@@ -644,8 +644,8 @@ export const ProductForm = ({ initialData, onClose, onSuccess, mode = 'modal' }:
                <span className="text-foreground/50 text-xs font-medium">Quick add mode</span>
              </button>
            </div>
-           <div className="flex gap-2 flex-shrink-0">
-             <button onClick={onClose} className="hidden md:inline-flex h-11 px-5 rounded-xl text-sm font-semibold text-foreground/60 hover:bg-foreground/[0.05] transition-colors items-center">Cancel</button>
+           <div className="hidden md:flex gap-2 flex-shrink-0">
+             <button onClick={onClose} className="h-11 px-5 rounded-xl text-sm font-semibold text-foreground/60 hover:bg-foreground/[0.05] transition-colors inline-flex items-center">Cancel</button>
              <button onClick={handleSubmit} disabled={isLoading}
                className="h-11 px-6 rounded-xl bg-emerald-600 text-white text-sm font-semibold shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 active:scale-95 transition-all disabled:opacity-60 flex items-center gap-2">
                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
@@ -663,21 +663,24 @@ export const ProductForm = ({ initialData, onClose, onSuccess, mode = 'modal' }:
            {step === 'preview' && <PreviewStep />}
          </div>
 
-         {/* Footer step nav */}
-         <div className="flex items-center justify-between pt-6 border-t border-foreground/8">
+         {/* Footer step nav — sticky bottom action bar on mobile */}
+         <div
+           className="flex items-center justify-between gap-3 pt-4 mt-2 border-t border-foreground/8 sticky bottom-0 bg-background/95 backdrop-blur-md -mx-5 px-5 sm:mx-0 sm:px-0 sm:static sm:bg-transparent sm:backdrop-blur-none z-20"
+           style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
+         >
            <button onClick={() => currentStepIndex > 0 && setStep(STEPS[currentStepIndex - 1].id as any)}
              disabled={currentStepIndex === 0}
-             className="h-11 px-5 rounded-xl text-sm font-semibold text-foreground/60 hover:bg-foreground/[0.05] transition-colors disabled:opacity-30 flex items-center gap-1.5">
+             className="h-12 sm:h-11 px-4 sm:px-5 rounded-xl text-sm font-semibold text-foreground/60 hover:bg-foreground/[0.05] transition-colors disabled:opacity-30 flex items-center gap-1.5 flex-shrink-0">
              <ChevronRight className="w-4 h-4 rotate-180" />Back
            </button>
            {currentStepIndex < STEPS.length - 1 ? (
              <button onClick={() => setStep(STEPS[currentStepIndex + 1].id as any)}
-               className="h-11 px-6 rounded-xl bg-foreground/[0.06] hover:bg-foreground/[0.1] text-foreground text-sm font-semibold transition-colors flex items-center gap-1.5">
+               className="h-12 sm:h-11 flex-1 sm:flex-none px-6 rounded-xl bg-foreground/[0.06] hover:bg-foreground/[0.1] text-foreground text-sm font-semibold transition-colors flex items-center justify-center gap-1.5">
                Continue<ChevronRight className="w-4 h-4" />
              </button>
            ) : (
              <button onClick={handleSubmit} disabled={isLoading}
-               className="h-11 px-6 rounded-xl bg-emerald-600 text-white text-sm font-semibold shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 transition-all disabled:opacity-60 flex items-center gap-2">
+               className="h-12 sm:h-11 flex-1 sm:flex-none px-6 rounded-xl bg-emerald-600 text-white text-sm font-semibold shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 transition-all disabled:opacity-60 flex items-center justify-center gap-2">
                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                {initialData ? 'Save changes' : 'Publish listing'}
              </button>
