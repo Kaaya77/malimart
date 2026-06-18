@@ -523,8 +523,12 @@ export const MobileBottomNav = () => {
  const active = (path: string) => path==='/' ? location.pathname==='/' : location.pathname.startsWith(path);
  const activeIdx = tabs.findIndex(t => active(t.path));
 
- const isSellerForm = location.pathname.startsWith('/seller/products/');
- if (isSellerForm) return null;
+ // Hide the bottom tab bar on screens that own the bottom edge with their own
+ // fixed action bar (seller product form, product detail's Add-to-Bag bar) so
+ // the two don't stack/overlap on mobile.
+ const ownsBottomBar = location.pathname.startsWith('/seller/products/')
+   || /^\/product\//.test(location.pathname);
+ if (ownsBottomBar) return null;
 
  return (
  <nav role="navigation" aria-label="Mobile navigation"
