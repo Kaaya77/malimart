@@ -26,14 +26,14 @@ export const DeliveryTab = () => {
  {shippingZones.length > 0 ? (
  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
  {shippingZones.map((zone, idx) => (
- <div key={idx} className="p-3 border border-foreground/10 rounded-xl flex justify-between items-center bg-background">
+ <div key={zone.id || idx} className="p-3 border border-foreground/10 rounded-xl flex justify-between items-center bg-background">
  <div>
  <span className="font-medium text-sm block">{zone.region}</span>
  {zone.district !== 'All Districts' && <span className="text-xs text-foreground/55">{zone.district}</span>}
  </div>
  <div className="flex items-center gap-3">
  <span className="font-black font-mono text-sm">{CURRENCY} {zone.fee.toLocaleString()}</span>
- <Button variant="ghost" size="icon" className="text-red-500 h-6 w-6" onClick={() => handleRemoveZone(zone.region, zone.district)}>
+ <Button variant="ghost" size="icon" className="text-red-500 h-6 w-6" onClick={() => handleRemoveZone(zone.id)}>
  <Trash2 className="w-3 h-3" />
  </Button>
  </div>
@@ -113,7 +113,7 @@ export const DeliveryTab = () => {
  </div>
 
  <div className="flex justify-end pt-6 border-t border-foreground/8 dark:border-white/5">
- <Button variant="primary" onClick={() => handleGenericSave({ ...deliveryData, shipping_zones: shippingZones }, "Delivery settings saved")} disabled={isSaving}>
+ <Button variant="primary" onClick={() => handleGenericSave({ ...deliveryData }, "Delivery settings saved")} disabled={isSaving}>
  {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : 'Save Delivery Settings'}
  </Button>
  </div>

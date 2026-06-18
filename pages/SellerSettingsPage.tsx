@@ -42,7 +42,7 @@ export const SellerSettingsPage = ({ onBack }: { onBack?: () => void } = {}) => 
 
  // --- DELIVERY STATE ---
  const [deliveryData, setDeliveryData] = useState({ delivery_fee: 0 });
- const [shippingZones, setShippingZones] = useState<{region: string, district: string, fee: number}[]>([]);
+ const [shippingZones, setShippingZones] = useState<{id?: string, region: string, district: string, fee: number}[]>([]);
  const [newZone, setNewZone] = useState({ region: TANZANIA_REGIONS[0], district: 'All Districts', fee: 0 });
  const [calcRegion, setCalcRegion] = useState(TANZANIA_REGIONS[0]);
  const [calcDistrict, setCalcDistrict] = useState('All Districts');
@@ -84,16 +84,40 @@ export const SellerSettingsPage = ({ onBack }: { onBack?: () => void } = {}) => 
  if (vendorProfile.social_links) {
  setSocialLinks(vendorProfile.social_links);
  }
- if (vendorProfile.shipping_zones) {
- setShippingZones(vendorProfile.shipping_zones);
- }
- if (vendorProfile.payment_methods) {
- setPaymentMethods(vendorProfile.payment_methods);
- } else {
- setPaymentMethods([]);
- }
  }
  }, [vendorProfile, user]);
+
+ // Payout methods + shipping zones live in their own tables (not vendor_profiles).
+ // Load them directly so the lists reflect what's actually persisted.
+ useEffect(() => {
+ if (!user) return;
+ let cancelled = false;
+ (async () => {
+ const [{ data: payouts }, { data: zones }] = await Promise.all([
+ supabase.from('payout_methods').select('*').eq('seller_id', user.id),
+ supabase.from('shipping_zones').select('*').eq('seller_id', user.id),
+ ]);
+ if (cancelled) return;
+ if (payouts) {
+ setPaymentMethods(payouts.map((p: any) => ({
+ id: p.id,
+ type: p.method_type,
+ provider: p.details?.provider || '',
+ accountName: p.details?.accountName || '',
+ accountNumber: p.details?.accountNumber || '',
+ })));
+ }
+ if (zones) {
+ setShippingZones(zones.map((z: any) => ({
+ id: z.id,
+ region: z.name,
+ district: z.description || 'All Districts',
+ fee: Number(z.fee) || 0,
+ })));
+ }
+ })();
+ return () => { cancelled = true; };
+ }, [user]);
 
  // --- HANDLERS ---
  
@@ -138,9 +162,10 @@ export const SellerSettingsPage = ({ onBack }: { onBack?: () => void } = {}) => 
  setSocialLinks(socialLinks.filter((_, i) => i !== index));
  };
 
- const handleAddPayment = () => {
+ const handleAddPayment = async () => {
+ if (!user) return;
  if (!newPayment.accountNumber || !newPayment.accountName) return addToast("Fill all payment details", "error");
- 
+
  // Basic validation for Lipa Namba vs Bank Account
  if (newPayment.type === 'mobile' && newPayment.accountNumber.length < 5) {
  return addToast("Lipa Namba/Till Number seems too short", "error");
@@ -149,26 +174,59 @@ export const SellerSettingsPage = ({ onBack }: { onBack?: () => void } = {}) => 
  return addToast("Bank Account Number seems too short", "error");
  }
 
- setPaymentMethods([...paymentMethods, { ...newPayment, id: Date.now().toString() }]);
+ const { data, error } = await supabase.from('payout_methods').insert({
+ seller_id: user.id,
+ method_type: newPayment.type,
+ details: { provider: newPayment.provider, accountName: newPayment.accountName, accountNumber: newPayment.accountNumber },
+ is_primary: paymentMethods.length === 0,
+ }).select().single();
+
+ if (error) return addToast(error.message || "Could not save payment method", "error");
+
+ setPaymentMethods([...paymentMethods, {
+ id: data.id,
+ type: data.method_type,
+ provider: data.details?.provider || '',
+ accountName: data.details?.accountName || '',
+ accountNumber: data.details?.accountNumber || '',
+ }]);
  setNewPayment({ type: 'mobile', provider: MOBILE_MONEY_PROVIDERS[0], accountName: '', accountNumber: '' });
- addToast("Payment method added (Remember to save)", "success");
+ addToast("Payment method saved", "success");
  };
 
- const handleRemovePayment = (id: string) => {
+ const handleRemovePayment = async (id: string) => {
+ const prev = paymentMethods;
  setPaymentMethods(paymentMethods.filter(p => p.id !== id));
+ const { error } = await supabase.from('payout_methods').delete().eq('id', id);
+ if (error) { setPaymentMethods(prev); addToast("Could not remove payment method", "error"); }
  };
 
- const handleAddZone = () => {
+ const handleAddZone = async () => {
+ if (!user) return;
  const zoneKey = `${newZone.region}-${newZone.district}`;
  if (shippingZones.find(z => `${z.region}-${z.district}` === zoneKey)) {
  return addToast("This specific region/district already has a fee", "error");
  }
- setShippingZones([...shippingZones, newZone]);
+ const { data, error } = await supabase.from('shipping_zones').insert({
+ seller_id: user.id,
+ name: newZone.region,
+ description: newZone.district,
+ fee: newZone.fee,
+ }).select().single();
+
+ if (error) return addToast(error.message || "Could not save zone", "error");
+
+ setShippingZones([...shippingZones, { id: data.id, region: data.name, district: data.description || 'All Districts', fee: Number(data.fee) || 0 }]);
  setNewZone({ region: TANZANIA_REGIONS[0], district: 'All Districts', fee: 0 });
+ addToast("Shipping zone saved", "success");
  };
 
- const handleRemoveZone = (region: string, district: string) => {
- setShippingZones(shippingZones.filter(z => !(z.region === region && z.district === district)));
+ const handleRemoveZone = async (id?: string) => {
+ if (!id) return;
+ const prev = shippingZones;
+ setShippingZones(shippingZones.filter(z => z.id !== id));
+ const { error } = await supabase.from('shipping_zones').delete().eq('id', id);
+ if (error) { setShippingZones(prev); addToast("Could not remove zone", "error"); }
  };
 
  const setupProgress = useMemo(() => {

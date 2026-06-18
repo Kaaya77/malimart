@@ -107,7 +107,7 @@ export const BusinessTab = () => {
  </div>
  </div>
  <div className="flex justify-end pt-6 border-t border-foreground/8 dark:border-white/5">
- <Button variant="primary" onClick={() => handleGenericSave({ ...businessData, payment_methods: paymentMethods }, "Business info saved")} disabled={isSaving}>
+ <Button variant="primary" onClick={() => handleGenericSave(businessData, "Business info saved")} disabled={isSaving}>
  {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : 'Save Business Info'}
  </Button>
  </div>
