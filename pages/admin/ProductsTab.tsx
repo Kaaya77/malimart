@@ -12,7 +12,7 @@ export const ProductsTab = () => {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.5 }}
-                                className="bg-card rounded-3xl border border-border overflow-hidden shadow-sm"
+                                className="glass-surface rounded-3xl border border-border overflow-hidden shadow-sm"
                             >
                                 <div className="p-8 border-b border-border flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                                     <h3 className="font-sans font-bold text-lg tracking-tight">Product Moderation</h3>
@@ -73,7 +73,7 @@ export const ProductsTab = () => {
                                                         <Button 
                                                             variant="outline"
                                                             size="icon"
-                                                            className="h-8 w-8 rounded-xl bg-card border-border shadow-sm hover:shadow-md transition-all"
+                                                            className="h-8 w-8 rounded-xl glass-surface border-border shadow-sm hover:shadow-md transition-all"
                                                             onClick={() => handleMessageUser(p.seller_id, p.profiles?.full_name || 'Seller', { type: 'support', label: p.name, id: p.id })}
                                                             title="Message Seller"
                                                         >

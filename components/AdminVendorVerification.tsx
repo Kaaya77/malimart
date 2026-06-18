@@ -13,7 +13,7 @@ export const AdminVendorVerification = ({ vendor, onUpdate, onMessage }: { vendo
 
     return (
         <>
-        <Card className="p-8 rounded-3xl bg-card border border-border shadow-sm group hover:shadow-md transition-all duration-300 space-y-8">
+        <Card className="p-8 rounded-3xl glass-surface border border-border shadow-sm group hover:shadow-md transition-all duration-300 space-y-8">
             <div className="flex justify-between items-start">
                 <div className="space-y-1">
                     <h3 className="font-sans font-bold text-xl text-foreground leading-tight tracking-tight">{vendor.store_name}</h3>
@@ -126,7 +126,7 @@ export const AdminVendorVerification = ({ vendor, onUpdate, onMessage }: { vendo
                         { label: 'TIN Certificate', url: vendor.tin_url },
                         { label: 'ID Scan', url: vendor.id_scan_url }
                     ].map((doc, idx) => (
-                        <div key={idx} className="p-4 rounded-xl bg-card border border-border shadow-sm flex items-center justify-between">
+                        <div key={idx} className="p-4 rounded-xl glass-surface border border-border shadow-sm flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <FileText className="w-5 h-5 text-muted-foreground stroke-2" />
                                 <span className="text-sm font-bold text-foreground">{doc.label}</span>

@@ -180,7 +180,7 @@ const TypingBubble = () => {
     <motion.div initial={{ opacity: 0, y: 8, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: 4 }} className="flex items-end gap-2 mb-3">
       <MaliAvatar size={28} pulse />
-      <div className="px-4 py-3 bg-card border border-foreground/8 rounded-2xl rounded-bl-sm shadow-sm flex items-center gap-3 max-w-[200px]">
+      <div className="px-4 py-3 glass-surface border border-foreground/8 rounded-2xl rounded-bl-sm shadow-sm flex items-center gap-3 max-w-[200px]">
         <div className="flex gap-1">
           {[0, 0.18, 0.36].map(d => (
             <motion.span key={d} className="w-1.5 h-1.5 rounded-full bg-emerald-500"
@@ -321,7 +321,7 @@ const MessageBubble = ({ m, isFirst, products, onAdd, onSuggest }: {
           <div className={`relative px-3.5 py-2.5 rounded-2xl text-[12px] leading-relaxed shadow-sm group ${
             isUser
               ? 'bg-gradient-to-br from-foreground to-foreground/85 text-background rounded-br-[4px]'
-              : 'bg-card/80 backdrop-blur-sm border border-foreground/8 rounded-bl-[4px] text-foreground'
+              : 'glass-surface/80 backdrop-blur-sm border border-foreground/8 rounded-bl-[4px] text-foreground'
           }`}>
             {isUser ? (
               <span className="font-medium">{m.text}</span>
@@ -836,7 +836,7 @@ RESPONSE FORMAT:
                           transition={{ delay: 0.45 + i * 0.08 }}
                           whileHover={{ scale: 1.03, y: -2 }} whileTap={{ scale: 0.97 }}
                           onClick={() => handleSend(undefined, s.q)}
-                          className="flex items-center gap-2.5 p-3 bg-card/60 border border-foreground/6 rounded-2xl hover:border-emerald-500/25 hover:bg-emerald-500/4 transition-all text-left group">
+                          className="flex items-center gap-2.5 p-3 glass-surface/60 border border-foreground/6 rounded-2xl hover:border-emerald-500/25 hover:bg-emerald-500/4 transition-all text-left group">
                           <motion.span className="text-xl" whileHover={{ scale: 1.2, rotate: 10 }} transition={{ type: 'spring', stiffness: 400 }}>
                             {s.emoji}
                           </motion.span>

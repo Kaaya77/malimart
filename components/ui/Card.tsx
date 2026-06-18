@@ -2,7 +2,7 @@ import React from 'react';
 
 export const Card = ({ className = '', ...props }: any) => (
   <div
-    className={`rounded-3xl border border-foreground/8 bg-card text-foreground relative overflow-hidden shadow-sm ${className}`}
+    className={`rounded-3xl border border-foreground/8 glass-surface text-foreground relative overflow-hidden shadow-sm ${className}`}
     {...props}
   >
     <div className="relative z-10">{props.children}</div>

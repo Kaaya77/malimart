@@ -498,7 +498,7 @@ export const SellerInventory = ({
       </AnimatePresence>
 
       {/* Control toolbar */}
-      <div className="rounded-2xl border border-foreground/8 bg-card p-3 space-y-3">
+      <div className="rounded-2xl border border-foreground/8 glass-surface p-3 space-y-3">
         {/* Row 1: search + view/tools */}
         <div className="flex items-center gap-2.5">
           <div className="relative flex-1">
@@ -667,7 +667,7 @@ export const SellerInventory = ({
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.95 }}
                       transition={{ delay: idx * 0.03 }}
-                      className={`relative bg-card rounded-2xl border overflow-hidden cursor-pointer group transition-all hover:shadow-md ${
+                      className={`relative glass-surface rounded-2xl border overflow-hidden cursor-pointer group transition-all hover:shadow-md ${
                         selectedIds.has(p.id) ? 'border-emerald-500/50 ring-2 ring-emerald-500/20' : 'border-foreground/8 hover:border-foreground/15'
                       }`}
                       onClick={() => toggleSelect(p.id)}
@@ -736,7 +736,7 @@ export const SellerInventory = ({
 
       {/* Table view */}
       {viewMode === 'table' && (
-      <div className="rounded-2xl border border-foreground/8 overflow-hidden bg-card">
+      <div className="rounded-2xl border border-foreground/8 overflow-hidden glass-surface">
         {/* Table header (desktop) */}
         <div className="hidden md:grid items-center px-4 py-3 border-b border-foreground/8 bg-foreground/[0.02] text-[9px] font-black uppercase tracking-widest text-foreground/40"
           style={{ gridTemplateColumns: '28px 28px 56px 1fr 140px 180px 110px 120px' }}>

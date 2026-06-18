@@ -187,7 +187,7 @@ export const BuyerReturns: React.FC<BuyerReturnsProps> = ({ userId, onContactSel
  <ArrowLeft className="w-4 h-4"/> Back to Returns
  </button>
 
- <div className="bg-card border border-foreground/8 rounded-3xl overflow-hidden">
+ <div className="glass-surface border border-foreground/8 rounded-3xl overflow-hidden">
  <div className="p-5 border-b border-foreground/8">
  <div className="flex items-start justify-between gap-4">
  <div>
@@ -276,7 +276,7 @@ export const BuyerReturns: React.FC<BuyerReturnsProps> = ({ userId, onContactSel
  <ArrowLeft className="w-4 h-4"/> Back
  </button>
 
- <div className="bg-card border border-foreground/8 rounded-3xl overflow-hidden">
+ <div className="glass-surface border border-foreground/8 rounded-3xl overflow-hidden">
  <div className="p-5 border-b border-foreground/8">
  <h2 className="font-bold text-foreground">New Return Request</h2>
  <p className="text-xs text-foreground/45 mt-0.5">Tell us what went wrong and we'll help resolve it</p>
@@ -436,7 +436,7 @@ export const BuyerReturns: React.FC<BuyerReturnsProps> = ({ userId, onContactSel
  return (
  <motion.button key={d.id} onClick={()=>setSelected(d)}
  initial={{opacity:0,y:4}} animate={{opacity:1,y:0}}
- className="w-full text-left p-4 bg-card border border-foreground/8 rounded-2xl hover:border-foreground/20 hover:bg-foreground/[0.02] transition-all active:scale-[0.99] flex items-center gap-4">
+ className="w-full text-left p-4 glass-surface border border-foreground/8 rounded-2xl hover:border-foreground/20 hover:bg-foreground/[0.02] transition-all active:scale-[0.99] flex items-center gap-4">
  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${cfg.color}`}>
  <StatusIcon className="w-4.5 h-4.5 stroke-[2]"/>
  </div>

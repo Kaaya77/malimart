@@ -192,15 +192,15 @@ export const Button = ({ variant = 'primary', size = 'default', className = '', 
 
 export const Input = ({ className = '', ...props }: any) => (
  <div className="relative group w-full">
- <input 
- className={`flex h-14 w-full rounded-2xl border-2 border-foreground/15 bg-foreground/[0.04] px-4 text-sm font-medium text-foreground placeholder:text-foreground/35 focus:outline-none focus:border-foreground/30 focus:bg-background transition-all ${className}`} 
- {...props} 
+ <input
+ className={`glass-input flex h-14 w-full rounded-2xl px-4 text-sm font-medium text-foreground placeholder:text-foreground/35 focus:outline-none ${className}`}
+ {...props}
  />
  </div>
 );
 
 export const Textarea = ({ className = '', ...props }: any) => (
- <textarea className={`flex min-h-[120px] w-full rounded-2xl border-2 border-foreground/15 bg-foreground/[0.04] px-4 py-4 text-sm font-medium text-foreground placeholder:text-foreground/35 focus:outline-none focus:border-foreground/30 focus:bg-background transition-all resize-none ${className}`} {...props} />
+ <textarea className={`glass-input flex min-h-[120px] w-full rounded-2xl px-4 py-4 text-sm font-medium text-foreground placeholder:text-foreground/35 focus:outline-none resize-none ${className}`} {...props} />
 );
 
 export const Label = ({ className = '', ...props }: any) => (
@@ -208,8 +208,8 @@ export const Label = ({ className = '', ...props }: any) => (
 );
 
 export const Card = ({ className = '', ...props }: any) => (
- <div 
- className={`rounded-3xl border border-foreground/8 bg-card text-foreground relative overflow-hidden shadow-sm ${className}`} 
+ <div
+ className={`glass-surface rounded-3xl text-foreground relative overflow-hidden shadow-sm ${className}`}
  {...props}
  >
  <div className="relative z-10">{props.children}</div>
@@ -272,7 +272,7 @@ export const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, confi
  if (!isOpen) return null;
  return (
  <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
- <div className="bg-background w-full max-w-md p-8 rounded-3xl shadow-2xl border border-foreground/8 animate-in zoom-in-95 duration-200">
+ <div className="glass-surface w-full max-w-md p-8 rounded-3xl shadow-2xl animate-in zoom-in-95 duration-200">
  <h3 className="text-2xl font-black text-foreground/60 mb-4 tracking-tight">{title}</h3>
  <p className="text-sm font-medium text-foreground/55 mb-8">{message}</p>
  <div className="flex justify-end gap-3">
@@ -412,7 +412,7 @@ export const Modal = ({ isOpen, title, onClose, children, size = 'md' }: any) =>
  onClick={(e: any) => e.stopPropagation()}
  className={`${maxW} w-full`}
  >
- <div className="modal-scroll p-6 md:p-8 space-y-6 bg-background rounded-t-3xl md:rounded-3xl shadow-2xl max-h-[92dvh] md:max-h-[90dvh] overflow-y-auto" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
+ <div className="modal-scroll glass-surface p-6 md:p-8 space-y-6 rounded-t-3xl md:rounded-3xl shadow-2xl max-h-[92dvh] md:max-h-[90dvh] overflow-y-auto" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
  {/* Mobile drag-handle affordance */}
  <div className="md:hidden w-10 h-1 rounded-full bg-foreground/15 mx-auto -mt-2" />
  <div className="flex justify-between items-center border-b border-foreground/8 pb-6">
@@ -434,7 +434,7 @@ export const ConfirmDialog = ({ isOpen, title, message, onConfirm, onCancel, isD
  if (!isOpen) return null;
  return (
  <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-foreground/[0.05]/50 backdrop-blur-sm animate-in fade-in">
- <div className="max-w-sm w-full p-6 space-y-6 bg-background rounded-3xl shadow-2xl border border-foreground/8 animate-in zoom-in-95">
+ <div className="glass-surface max-w-sm w-full p-6 space-y-6 rounded-3xl shadow-2xl animate-in zoom-in-95">
  <div className="text-center">
  <h3 className="text-2xl font-black tracking-tight mb-4 text-foreground">{title}</h3>
  <p className="text-sm font-medium text-foreground/55 leading-relaxed">{message}</p>
@@ -542,7 +542,7 @@ export const UserProfileModal = ({ isOpen, onClose, user }: { isOpen: boolean, o
 
  return (
  <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-foreground/[0.05]/50 backdrop-blur-sm animate-in fade-in">
- <div className="bg-white dark:bg-foreground/[0.05] w-full max-w-md p-8 rounded-[2rem] relative shadow-2xl">
+ <div className="glass-surface w-full max-w-md p-8 rounded-[2rem] relative shadow-2xl">
  <button onClick={onClose} className="absolute top-6 right-6 p-2 hover:bg-foreground/[0.05] dark:hover:bg-foreground/[0.05] rounded-full transition-colors">
  <X className="w-6 h-6 stroke-[2] text-foreground/60" />
  </button>

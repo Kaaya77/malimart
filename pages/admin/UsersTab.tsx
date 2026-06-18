@@ -12,7 +12,7 @@ export const UsersTab = () => {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.5 }}
-                                className="bg-card rounded-3xl border border-border overflow-hidden shadow-sm"
+                                className="glass-surface rounded-3xl border border-border overflow-hidden shadow-sm"
                             >
                                 <div className="p-8 border-b border-border flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                                     <h3 className="font-sans font-bold text-lg tracking-tight">User Directory</h3>
@@ -67,7 +67,7 @@ export const UsersTab = () => {
                                                                 <Button 
                                                                     variant="outline"
                                                                     size="icon"
-                                                                    className="h-8 w-8 rounded-xl bg-card border-border shadow-sm hover:shadow-md transition-all"
+                                                                    className="h-8 w-8 rounded-xl glass-surface border-border shadow-sm hover:shadow-md transition-all"
                                                                     onClick={() => handleMessageUser(u.id, u.full_name)}
                                                                     title="Message User"
                                                                 >
@@ -77,7 +77,7 @@ export const UsersTab = () => {
                                                                 <Button 
                                                                     variant="outline"
                                                                     size="icon"
-                                                                    className="h-8 w-8 rounded-xl bg-card border-border shadow-sm hover:shadow-md transition-all"
+                                                                    className="h-8 w-8 rounded-xl glass-surface border-border shadow-sm hover:shadow-md transition-all"
                                                                     onClick={() => {
                                                                         const newRole = u.role === 'seller' ? 'buyer' : 'seller';
                                                                         supabase.from('profiles').update({ role: newRole }).eq('id', u.id).then(() => {
@@ -93,7 +93,7 @@ export const UsersTab = () => {
                                                                 <Button 
                                                                     variant={u.is_banned ? "default" : "outline"}
                                                                     size="icon"
-                                                                    className={`h-8 w-8 rounded-xl shadow-sm hover:shadow-md transition-all ${u.is_banned ? 'bg-primary text-white' : 'bg-card border-border'}`}
+                                                                    className={`h-8 w-8 rounded-xl shadow-sm hover:shadow-md transition-all ${u.is_banned ? 'bg-primary text-white' : 'glass-surface border-border'}`}
                                                                     onClick={() => handleToggleUserBan(u.id, u.is_banned)}
                                                                     title={u.is_banned ? 'Unban User' : 'Ban User'}
                                                                 >
@@ -103,7 +103,7 @@ export const UsersTab = () => {
                                                                 <Button 
                                                                     variant="outline"
                                                                     size="icon"
-                                                                    className="h-8 w-8 rounded-xl bg-card border-destructive/20 text-destructive hover:bg-destructive hover:text-destructive-foreground shadow-sm hover:shadow-md transition-all"
+                                                                    className="h-8 w-8 rounded-xl glass-surface border-destructive/20 text-destructive hover:bg-destructive hover:text-destructive-foreground shadow-sm hover:shadow-md transition-all"
                                                                     onClick={() => confirmDeleteUser(u.id)}
                                                                     title="Delete User"
                                                                 >

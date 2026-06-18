@@ -340,7 +340,7 @@ export const Navbar = () => {
  return (
  <>
  <header className={`fixed top-0 inset-x-0 z-50 transition-all duration-300
- ${isOnDark?'bg-transparent':'bg-background/90 backdrop-blur-xl border-b border-foreground/8'}`}>
+ ${isOnDark?'bg-transparent':'bg-background/70 backdrop-blur-2xl border-b border-foreground/8'}`}>
 
  <div className={`container mx-auto px-4 md:px-6 flex items-center justify-between transition-[height] duration-300
  ${scrolled?'h-14':'h-16 md:h-20'}`}>
@@ -530,7 +530,7 @@ export const MobileBottomNav = () => {
  <nav role="navigation" aria-label="Mobile navigation"
  className="fixed bottom-0 inset-x-0 z-40 md:hidden"
  style={{paddingBottom:'env(safe-area-inset-bottom)'}}>
- <div className="mx-2 mb-2 rounded-2xl bg-background/97 backdrop-blur-2xl ring-1 ring-foreground/8 shadow-[0_-2px_20px_-4px_rgba(0,0,0,0.12)] relative overflow-hidden">
+ <div className="mx-2 mb-2 rounded-2xl bg-background/80 backdrop-blur-2xl ring-1 ring-foreground/12 shadow-[0_-2px_20px_-4px_rgba(0,0,0,0.12)] relative overflow-hidden">
  {/* Sliding pill indicator */}
  {activeIdx >= 0 && (
    <motion.div

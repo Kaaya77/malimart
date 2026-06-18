@@ -25,7 +25,7 @@ export const StatCard = ({ title, value, sub, icon: Icon, accent = false, alert 
     : { ring: 'ring-transparent', chip: 'bg-foreground/[0.06] text-foreground/50', bar: 'bg-foreground/20', value: 'text-foreground' };
 
   return (
-    <div className={`group relative p-4 sm:p-5 rounded-2xl border border-foreground/8 bg-card ring-1 ${tone.ring} hover:border-foreground/15 hover:shadow-[0_4px_20px_-8px_rgba(0,0,0,0.12)] transition-all overflow-hidden`}>
+    <div className={`group relative p-4 sm:p-5 rounded-2xl border border-foreground/8 glass-surface ring-1 ${tone.ring} hover:border-foreground/15 hover:shadow-[0_4px_20px_-8px_rgba(0,0,0,0.12)] transition-all overflow-hidden`}>
       {/* top accent line */}
       <div className={`absolute top-0 left-4 right-4 h-px ${tone.bar} opacity-40`} />
       <div className="flex items-center justify-between mb-3.5">

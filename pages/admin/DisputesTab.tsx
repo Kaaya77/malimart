@@ -58,7 +58,7 @@ export const DisputesTab = () => {
                                     </div>
 
                                     {disputes.length === 0 ? (
-                                        <div className="text-center p-12 bg-card rounded-3xl border border-border shadow-sm">
+                                        <div className="text-center p-12 glass-surface rounded-3xl border border-border shadow-sm">
                                             <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-6">
                                                 <CheckCircle2 className="w-8 h-8 text-muted-foreground stroke-2" />
                                             </div>
@@ -67,7 +67,7 @@ export const DisputesTab = () => {
                                     ) : (
                                         <div className="grid grid-cols-1 gap-6">
                                             {disputes.map(dispute => (
-                                                <div key={dispute.id} className="group relative bg-card rounded-3xl border border-border p-8 overflow-hidden transition-all shadow-sm hover:shadow-md">
+                                                <div key={dispute.id} className="group relative glass-surface rounded-3xl border border-border p-8 overflow-hidden transition-all shadow-sm hover:shadow-md">
                                                     
                                                     <div className="relative z-10 flex flex-col lg:flex-row justify-between gap-8">
                                                         <div className="flex-1 space-y-6">

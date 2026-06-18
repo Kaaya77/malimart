@@ -14,7 +14,7 @@ export const VendorsTab = () => {
                                 className="space-y-6"
                             >
                                 {vendorsList.length === 0 ? (
-                                    <div className="text-center p-12 bg-card rounded-3xl border border-border shadow-sm">
+                                    <div className="text-center p-12 glass-surface rounded-3xl border border-border shadow-sm">
                                         <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-6">
                                             <ShieldCheck className="w-8 h-8 text-muted-foreground stroke-2" />
                                         </div>

@@ -588,7 +588,7 @@ export const ProductForm = ({ initialData, onClose, onSuccess, mode = 'modal' }:
 
        {/* Margin card */}
        <div className="px-8">
-         <div className="rounded-2xl border border-foreground/8 bg-card p-5 relative overflow-hidden">
+         <div className="rounded-2xl border border-foreground/8 glass-surface p-5 relative overflow-hidden">
            <div className="absolute top-0 left-5 right-5 h-px bg-emerald-500 opacity-40" />
            <div className="flex items-center justify-between mb-2">
              <p className="text-[11px] font-semibold uppercase tracking-wider text-foreground/40">Est. Margin</p>

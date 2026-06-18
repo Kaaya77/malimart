@@ -187,7 +187,7 @@ export const AdminModeration = () => {
  placeholder="Search everything..." 
  value={search}
  onChange={(e:any) => setSearch(e.target.value)}
- className="pl-12 h-14 text-xs rounded-[1.5rem] bg-card border-foreground/5 dark:border-white/5 shadow-xl shadow-foreground/5 dark:shadow-black/20 focus:ring-0 focus:border-foreground dark:focus:border-white transition-all placeholder:text-foreground/20 dark:placeholder:text-white/20"
+ className="pl-12 h-14 text-xs rounded-[1.5rem] glass-surface border-foreground/5 dark:border-white/5 shadow-xl shadow-foreground/5 dark:shadow-black/20 focus:ring-0 focus:border-foreground dark:focus:border-white transition-all placeholder:text-foreground/20 dark:placeholder:text-white/20"
  />
  </div>
  </div>
@@ -280,13 +280,13 @@ export const AdminModeration = () => {
  placeholder="SEARCH CONTENT..." 
  value={search}
  onChange={(e) => setSearch(e.target.value)}
- className="w-full h-12 bg-card border border-foreground/5 dark:border-white/5 rounded-2xl py-2 pl-12 pr-4 text-[10px] font-black uppercase tracking-[0.2em] focus:outline-none focus:border-foreground/20 dark:focus:border-white/20 transition-all shadow-sm" 
+ className="w-full h-12 glass-surface border border-foreground/5 dark:border-white/5 rounded-2xl py-2 pl-12 pr-4 text-[10px] font-black uppercase tracking-[0.2em] focus:outline-none focus:border-foreground/20 dark:focus:border-white/20 transition-all shadow-sm" 
  />
  </div>
  <select 
  value={filter}
  onChange={(e) => setFilter(e.target.value as any)}
- className="h-12 bg-card border border-foreground/5 dark:border-white/5 rounded-2xl px-6 text-[10px] font-black uppercase tracking-[0.2em] focus:outline-none focus:border-foreground/20 dark:focus:border-white/20 transition-all shadow-sm cursor-pointer"
+ className="h-12 glass-surface border border-foreground/5 dark:border-white/5 rounded-2xl px-6 text-[10px] font-black uppercase tracking-[0.2em] focus:outline-none focus:border-foreground/20 dark:focus:border-white/20 transition-all shadow-sm cursor-pointer"
  >
  <option value="all">All Content</option>
  <option value="pending">Pending</option>
@@ -296,7 +296,7 @@ export const AdminModeration = () => {
 
  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
  {filteredPosts.map(post => (
- <Card key={post.id} className={`p-6 rounded-3xl border flex flex-col transition-all duration-300 hover:shadow-md hover:-translate-y-1 ${selectedItems.includes(post.id) ? 'border-primary ring-1 ring-primary bg-foreground/[0.05]' : 'border-foreground/8 bg-card'}`} onClick={() => toggleSelect(post.id)}>
+ <Card key={post.id} className={`p-6 rounded-3xl border flex flex-col transition-all duration-300 hover:shadow-md hover:-translate-y-1 ${selectedItems.includes(post.id) ? 'border-primary ring-1 ring-primary bg-foreground/[0.05]' : 'border-foreground/8 glass-surface'}`} onClick={() => toggleSelect(post.id)}>
  <div className="flex justify-between items-start mb-4">
  <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full">{post.type}</Badge>
  <span className="text-xs font-medium text-foreground/50">{new Date(post.created_at).toLocaleDateString()}</span>
@@ -323,7 +323,7 @@ export const AdminModeration = () => {
  {activeTab === 'products' && (
  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
  {products.map(product => (
- <Card key={product.id} className={`p-6 rounded-3xl border flex flex-col transition-all duration-300 hover:shadow-md hover:-translate-y-1 ${selectedItems.includes(product.id) ? 'border-primary ring-1 ring-primary bg-foreground/[0.05]' : 'border-foreground/8 bg-card'}`} onClick={() => toggleSelect(product.id)}>
+ <Card key={product.id} className={`p-6 rounded-3xl border flex flex-col transition-all duration-300 hover:shadow-md hover:-translate-y-1 ${selectedItems.includes(product.id) ? 'border-primary ring-1 ring-primary bg-foreground/[0.05]' : 'border-foreground/8 glass-surface'}`} onClick={() => toggleSelect(product.id)}>
  <div className="flex justify-between items-start mb-4">
  <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full">Product</Badge>
  <Badge variant={product.status === 'active' ? 'secondary' : 'destructive'} className="text-[10px] font-bold uppercase tracking-wider rounded-full">{product.status}</Badge>
@@ -348,7 +348,7 @@ export const AdminModeration = () => {
  {activeTab === 'appeals' && (
  <div className="space-y-6">
  {appeals.map(appeal => (
- <Card key={appeal.id} className="p-6 rounded-3xl border border-foreground/8 bg-card hover:shadow-md transition-all duration-300">
+ <Card key={appeal.id} className="p-6 rounded-3xl border border-foreground/8 glass-surface hover:shadow-md transition-all duration-300">
  <div className="flex justify-between items-start mb-6">
  <div className="flex items-center gap-4">
  <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950 flex items-center justify-center">
@@ -386,7 +386,7 @@ export const AdminModeration = () => {
  {activeTab === 'reports' && (
  <div className="space-y-6">
  {reports.map(report => (
- <div key={report.id} className="p-6 rounded-3xl border border-foreground/8 bg-card hover:shadow-md transition-all duration-300 flex flex-col md:flex-row justify-between gap-8">
+ <div key={report.id} className="p-6 rounded-3xl border border-foreground/8 glass-surface hover:shadow-md transition-all duration-300 flex flex-col md:flex-row justify-between gap-8">
  <div className="flex-1 space-y-4">
  <div className="flex items-center gap-4">
  <div className="w-10 h-10 rounded-2xl bg-destructive/10 flex items-center justify-center">
@@ -422,7 +422,7 @@ export const AdminModeration = () => {
  )}
 
  {activeTab === 'users' && (
- <div className="bg-card rounded-3xl border border-foreground/8 overflow-hidden shadow-sm">
+ <div className="glass-surface rounded-3xl border border-foreground/8 overflow-hidden shadow-sm">
  <div className="overflow-x-auto">
  <table className="w-full text-left border-collapse">
  <thead>
@@ -470,7 +470,7 @@ export const AdminModeration = () => {
  {activeTab === 'vendors' && (
  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
  {vendors.map(v => (
- <Card key={v.seller_id} className="p-6 rounded-3xl border border-foreground/8 bg-card hover:shadow-md transition-all duration-300">
+ <Card key={v.seller_id} className="p-6 rounded-3xl border border-foreground/8 glass-surface hover:shadow-md transition-all duration-300">
  <div className="flex justify-between items-start mb-6">
  <div className="space-y-1">
  <h4 className="font-sans font-bold text-lg text-foreground tracking-tight">{v.store_name}</h4>
@@ -513,7 +513,7 @@ export const AdminModeration = () => {
  {activeTab === 'logs' && (
  <div className="space-y-3">
  {logs.map(log => (
- <div key={log.id} className="p-4 rounded-2xl border border-foreground/8 flex flex-col md:flex-row justify-between items-center bg-card hover:bg-foreground/[0.04] transition-all duration-300 gap-4 shadow-sm">
+ <div key={log.id} className="p-4 rounded-2xl border border-foreground/8 flex flex-col md:flex-row justify-between items-center glass-surface hover:bg-foreground/[0.04] transition-all duration-300 gap-4 shadow-sm">
  <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
  <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-wider rounded-full">{new Date(log.created_at).toLocaleString()}</Badge>
  <span className="text-xs font-bold uppercase tracking-wider text-foreground">{log.action}</span>

@@ -14,7 +14,7 @@ export const NotFound = () => {
  {/* Visual Icon */}
  <div className="relative w-32 h-32 mx-auto mb-8">
  <div className="absolute inset-0 bg-brand-500/20 rounded-full blur-3xl animate-pulse"></div>
- <div className="relative bg-card rounded-[2.5rem] w-full h-full flex items-center justify-center border-2 border-dashed border-foreground/15 shadow-xl">
+ <div className="relative glass-surface rounded-[2.5rem] w-full h-full flex items-center justify-center border-2 border-dashed border-foreground/15 shadow-xl">
  <MapPinOff className="w-12 h-12 text-foreground/40" />
  </div>
  <div className="absolute -bottom-2 -right-2 bg-red-500 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-lg">404 ERROR</div>

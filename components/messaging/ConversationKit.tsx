@@ -232,7 +232,7 @@ export const MessageBubble = ({
         <div className={`px-4 py-2.5 text-[13px] leading-relaxed shadow-sm relative
           ${isMine
             ? 'bg-foreground text-background rounded-2xl rounded-br-sm'
-            : 'bg-card text-foreground border border-foreground/[0.08] rounded-2xl rounded-bl-sm'
+            : 'glass-surface text-foreground border border-foreground/[0.08] rounded-2xl rounded-bl-sm'
           }`}
         >
           {/* Attachment */}

@@ -260,6 +260,12 @@ const AppContent = () => {
 
   return (
     <div className={`min-h-screen flex flex-col font-sans selection:bg-primary selection:text-background dark:selection:bg-background dark:selection:text-foreground transition-all duration-700 ${isDark ? 'atmosphere-dark' : 'atmosphere-light'}`}>
+      {/* Global ambient aurora — gives glass surfaces something to blur over, app-wide */}
+      <div className="fixed inset-0 -z-10 pointer-events-none overflow-hidden">
+        <div className="aurora aurora-1 w-[42rem] h-[42rem] -top-48 -left-40 bg-emerald-400/20 dark:bg-emerald-500/15" />
+        <div className="aurora aurora-2 w-[34rem] h-[34rem] top-1/4 -right-40 bg-teal-300/15 dark:bg-teal-400/12" />
+        <div className="aurora aurora-3 w-[30rem] h-[30rem] bottom-0 left-1/3 bg-violet-300/12 dark:bg-violet-500/10" />
+      </div>
       <AnimatePresence>
         {showPreloader && <Preloader />}
       </AnimatePresence>

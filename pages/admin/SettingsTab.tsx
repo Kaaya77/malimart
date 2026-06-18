@@ -12,7 +12,7 @@ export const SettingsTab = () => {
                                 transition={{ duration: 0.5 }}
                                 className="space-y-8"
                             >
-                                <div className="p-8 bg-card rounded-3xl border border-border shadow-sm">
+                                <div className="p-8 glass-surface rounded-3xl border border-border shadow-sm">
                                     <h3 className="font-sans font-bold text-2xl tracking-tight mb-8">Platform Configuration</h3>
                                     
                                     <div className="space-y-4">
