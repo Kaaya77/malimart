@@ -200,10 +200,12 @@ export const CartPage = () => {
   const { totals: srvTotals, loading: totalsLoading } = useCartTotals({
     items: cartTotalsItems,
     deliveryFee: Number(deliveryFeeTotal),
-    discount: totalDiscountAmount,
+    couponCode: appliedCoupon?.code ?? null,
   });
   const totalVAT = totalsLoading ? localVAT : srvTotals.vat_amount;
-  const total = localTotal;
+  // Show the server-authoritative total (matches what checkout charges);
+  // fall back to the local estimate only while the server figure is loading.
+  const total = totalsLoading ? localTotal : srvTotals.total;
 
   const groupedItems = useMemo(() => {
     const groups: Record<string, CartItem[]> = {};
@@ -256,7 +258,7 @@ export const CartPage = () => {
       navigate(`/login?redirect=${encodeURIComponent(location.pathname)}`);
       return;
     }
-    navigate('/checkout', { state: { total, subtotal, vat: totalVAT, discount: totalDiscountAmount } });
+    navigate('/checkout', { state: { total, subtotal, vat: totalVAT, discount: totalDiscountAmount, couponCode: appliedCoupon?.code ?? null } });
   };
 
   if (loadingVendors && cart.length > 0) return <CartSkeleton />;

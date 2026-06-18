@@ -27,17 +27,18 @@ export interface CartTotals {
 interface Args {
   items: CartLine[];
   deliveryFee?: number;
-  discount?: number;
+  /** Coupon code to apply; the server re-validates it and computes the discount. */
+  couponCode?: string | null;
 }
 
 const ZERO: CartTotals = { subtotal: 0, discount: 0, vat_amount: 0, delivery_fee: 0, total: 0 };
 
-export function useCartTotals({ items, deliveryFee = 0, discount = 0 }: Args): { totals: CartTotals; loading: boolean } {
+export function useCartTotals({ items, deliveryFee = 0, couponCode = null }: Args): { totals: CartTotals; loading: boolean } {
   const [totals, setTotals] = useState<CartTotals>(ZERO);
   const [loading, setLoading] = useState(false);
 
   // Only refetch when something that affects the price actually changes.
-  const signature = JSON.stringify({ items, deliveryFee, discount });
+  const signature = JSON.stringify({ items, deliveryFee, couponCode });
 
   useEffect(() => {
     let cancelled = false;
@@ -50,7 +51,7 @@ export function useCartTotals({ items, deliveryFee = 0, discount = 0 }: Args): {
 
     setLoading(true);
     supabase
-      .rpc('compute_cart_totals', { p_items: items, p_delivery_fee: deliveryFee, p_discount: discount })
+      .rpc('compute_cart_preview', { p_items: items, p_delivery_fee: deliveryFee, p_coupon_code: couponCode })
       .then(({ data, error }) => {
         if (cancelled) return;
         if (!error && data) setTotals(data as CartTotals);

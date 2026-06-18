@@ -1007,13 +1007,15 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
             p_payment_method: details.paymentMethod,
             p_payment_ref: details.paymentRef,
             p_delivery_fee: details.deliveryFee,
-            p_discount_amount: details.discount,
+            p_discount_amount: details.discount, // ignored server-side; kept for signature compat
             p_note: details.note,
             p_items: itemsPayload,
             p_is_gift: details.isGift,
             p_gift_message: details.giftMessage,
             p_preferred_delivery_date: details.preferredDeliveryDate,
-            p_delivery_slot: details.deliverySlot
+            p_delivery_slot: details.deliverySlot,
+            // Server re-validates and computes the real discount from this code.
+            p_coupon_code: details.couponCode || null,
         });
 
         if (error) {

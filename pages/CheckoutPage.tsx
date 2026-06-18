@@ -17,14 +17,14 @@ export const CheckoutPage = () => {
   const { cart, placeOrder, user } = useAppState();
 
   // Totals from navigation state (set by CartPage) or recalculated
-  const { total, subtotal, vat, discount } = useMemo(() => {
+  const { total, subtotal, vat, discount, couponCode } = useMemo(() => {
     if (location.state?.total !== undefined) return location.state as any;
     const sub = cart.reduce((s, i) => {
       const price = (i as any).price_at_add || i.price || 0;
       return s + price * (i.quantity || 1);
     }, 0);
     const vatAmt = sub * 0.18;
-    return { total: sub + vatAmt, subtotal: sub, vat: vatAmt, discount: 0 };
+    return { total: sub + vatAmt, subtotal: sub, vat: vatAmt, discount: 0, couponCode: null };
   }, [location.state, cart]);
 
   if (!user) { navigate('/login', { replace: true }); return null; }
@@ -40,7 +40,7 @@ export const CheckoutPage = () => {
       vat,
       subtotal,
       discount,
-      coupon: null,
+      couponCode: couponCode || null,
     });
     navigate('/order-confirmation', { state: { order: newOrder } });
   };
