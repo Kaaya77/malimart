@@ -79,17 +79,28 @@ export const useSellerStats = (sellerId: string | undefined) => {
         if (!silent) setLoading(true);
         const cacheKey = `seller:dashboard:${sellerId}`;
         try {
-            const data = await withCache(
-                cacheKey,
-                TTL.SELLER_DASHBOARD,
-                async () => {
-                    const { data, error } = await supabase.rpc('get_seller_dashboard_fast', { p_seller_id: sellerId });
-                    if (error) throw error;
-                    return data;
-                },
-                (fresh) => applyPayload(fresh)  // background refresh updates state
-            );
-            applyPayload(data);
+            const [data, pendingResult] = await Promise.all([
+                withCache(
+                    cacheKey,
+                    TTL.SELLER_DASHBOARD,
+                    async () => {
+                        const { data, error } = await supabase.rpc('get_seller_dashboard_fast', { p_seller_id: sellerId });
+                        if (error) throw error;
+                        return data;
+                    },
+                    // Background refresh triggers a silent full reload so pending is recounted too
+                    () => load(true)
+                ),
+                // Direct count bypasses the snapshot — orders table is source of truth
+                supabase
+                    .from('order_items')
+                    .select('order_id, orders!inner(status)')
+                    .eq('seller_id', sellerId)
+                    .eq('orders.status', 'pending')
+                    .is('deleted_at', null),
+            ]);
+            const truePending = new Set((pendingResult.data ?? []).map((r: any) => r.order_id)).size;
+            applyPayload({ ...data, pending: truePending });
         } catch (err: any) {
             console.error('[useSellerStats] RPC failed:', err?.message);
             setLoading(false);
