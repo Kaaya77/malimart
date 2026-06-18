@@ -540,55 +540,79 @@ export const ProductForm = ({ initialData, onClose, onSuccess, mode = 'modal' }:
    { id: 'preview',   label: 'Preview',    mobileLabel: 'Preview',  icon: Smartphone },
  ] as const;
 
+ const currentStepIndex = STEPS.findIndex(s => s.id === step);
+
  const formInner = (
-   <div className="w-full max-w-[95vw] xl:max-w-7xl h-[95dvh] md:h-[90dvh] bg-background dark:bg-background flex flex-col lg:flex-row overflow-hidden border border-foreground/10 relative shadow-2xl">
+   <div className="w-full max-w-[95vw] xl:max-w-7xl h-[95dvh] md:h-[90dvh] bg-background flex flex-col lg:flex-row overflow-hidden border border-foreground/10 rounded-3xl relative shadow-2xl">
      {mode === 'modal' && (
-       <button onClick={onClose} className="absolute top-6 right-6 z-50 p-3 bg-transparent hover:opacity-50 transition-opacity text-foreground"><X className="w-6 h-6" /></button>
+       <button onClick={onClose} className="absolute top-5 right-5 z-50 w-9 h-9 rounded-xl bg-foreground/[0.06] hover:bg-foreground/[0.12] flex items-center justify-center transition-colors text-foreground/60"><X className="w-5 h-5" /></button>
      )}
 
      {/* Left Rail — hidden on mobile, shown on lg */}
-     <div className="hidden lg:flex w-72 border-r border-foreground/8 flex-col justify-between py-8 shrink-0 bg-foreground/[0.02]">
-     <div className="px-10">
-     <div className="w-14 h-14 bg-foreground text-background flex items-center justify-center font-serif text-2xl mb-12 rounded-2xl">M</div>
-     <nav className="space-y-3">
-     {STEPS.map((s) => {
-       const done = stepComplete[s.id as keyof typeof stepComplete];
-       return (
-         <button key={s.id} onClick={() => setStep(s.id as any)} className={`w-full flex items-center justify-start gap-4 p-4 px-6 transition-all group relative ${step === s.id ? 'bg-foreground/[0.06] text-foreground font-semibold' : 'opacity-40 hover:opacity-100 text-foreground'}`}>
-           <s.icon className={`w-5 h-5 flex-shrink-0 ${step === s.id ? 'text-foreground' : 'group-hover:text-foreground'}`} />
-           <span className="text-[10px] uppercase tracking-[0.2em] flex-1 text-left">{s.label}</span>
-           {done && <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />}
-           {step === s.id && <div className="absolute left-0 top-0 bottom-0 w-1 bg-foreground"></div>}
-         </button>
-       );
-     })}
-     </nav>
-     </div>
- <div className="px-10">
- <div className="p-6 bg-foreground text-background dark:text-foreground relative overflow-hidden shadow-2xl">
- <div className="relative z-10">
- <p className="text-[10px] uppercase tracking-[0.2em] opacity-60 mb-2">Estimated Margin</p>
- <div className="flex items-baseline gap-2">
- <span className="text-3xl font-serif">{margin.toFixed(0)}%</span>
- <span className="text-[10px] opacity-60 font-serif">/ unit</span>
- </div>
- <div className="mt-4 text-[10px] font-mono bg-black/10 dark:bg-white/10 p-2 border border-background/10 dark:border-foreground/10">Profit: {profit.toLocaleString()} {CURRENCY}</div>
- </div>
- <div className="absolute bottom-0 right-0 w-24 h-20 opacity-10"><BarChart4 className="w-full h-full" /></div>
- </div>
- </div>
- </div>
+     <div className="hidden lg:flex w-72 border-r border-foreground/8 flex-col justify-between py-8 shrink-0 bg-foreground/[0.015]">
+       <div className="px-8">
+         {/* Brand */}
+         <div className="flex items-center gap-2.5 mb-10">
+           <div className="w-9 h-9 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-black text-lg shadow-lg shadow-emerald-500/25">M</div>
+           <div>
+             <p className="text-sm font-bold tracking-tight text-foreground leading-none">MaliMart</p>
+             <p className="text-[11px] text-foreground/40 mt-0.5">{initialData ? 'Editing product' : 'New listing'}</p>
+           </div>
+         </div>
 
- {/* Mobile Steps Nav */}
-     <div className="lg:hidden border-b border-foreground/8 bg-foreground/[0.02] overflow-x-auto no-scrollbar">
+         {/* Step nav with progress spine */}
+         <nav className="relative space-y-1">
+           <div className="absolute left-[18px] top-5 bottom-5 w-px bg-foreground/10" />
+           {STEPS.map((s, i) => {
+             const done = stepComplete[s.id as keyof typeof stepComplete];
+             const active = step === s.id;
+             return (
+               <button key={s.id} onClick={() => setStep(s.id as any)}
+                 className={`w-full flex items-center gap-3.5 p-2.5 rounded-xl transition-all group relative z-10 ${active ? 'bg-emerald-500/[0.08]' : 'hover:bg-foreground/[0.04]'}`}>
+                 <span className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-all ${
+                   active ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/25'
+                   : done ? 'bg-emerald-500/12 text-emerald-600'
+                   : 'bg-foreground/[0.06] text-foreground/40'
+                 }`}>
+                   {done && !active ? <CheckCircle2 className="w-4.5 h-4.5" /> : <s.icon className="w-4.5 h-4.5" />}
+                 </span>
+                 <div className="text-left flex-1 min-w-0">
+                   <p className={`text-sm font-semibold leading-tight ${active ? 'text-foreground' : 'text-foreground/55 group-hover:text-foreground/80'}`}>{s.label}</p>
+                   <p className="text-[11px] text-foreground/35">Step {i + 1}</p>
+                 </div>
+               </button>
+             );
+           })}
+         </nav>
+       </div>
+
+       {/* Margin card */}
+       <div className="px-8">
+         <div className="rounded-2xl border border-foreground/8 bg-card p-5 relative overflow-hidden">
+           <div className="absolute top-0 left-5 right-5 h-px bg-emerald-500 opacity-40" />
+           <div className="flex items-center justify-between mb-2">
+             <p className="text-[11px] font-semibold uppercase tracking-wider text-foreground/40">Est. Margin</p>
+             <div className="w-8 h-8 rounded-lg bg-emerald-500/12 text-emerald-600 flex items-center justify-center"><TrendingUp className="w-4 h-4" /></div>
+           </div>
+           <div className="flex items-baseline gap-1.5">
+             <span className="text-3xl font-bold tracking-tight text-foreground tabular-nums">{margin.toFixed(0)}%</span>
+             <span className="text-xs text-foreground/40">/ unit</span>
+           </div>
+           <p className="mt-2 text-xs font-medium text-foreground/45">Profit {profit.toLocaleString()} {CURRENCY}</p>
+         </div>
+       </div>
+     </div>
+
+     {/* Mobile Steps Nav */}
+     <div className="lg:hidden border-b border-foreground/8 bg-foreground/[0.015] overflow-x-auto no-scrollbar">
        <nav className="flex gap-2 px-4 py-3">
-         {STEPS.map((s) => {
+         {STEPS.map((s, i) => {
            const done = stepComplete[s.id as keyof typeof stepComplete];
+           const active = step === s.id;
            return (
-             <button key={s.id} onClick={() => setStep(s.id as any)} className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-[9px] uppercase tracking-[0.15em] flex-shrink-0 transition-all ${step === s.id ? 'bg-foreground text-background font-bold' : 'bg-foreground/[0.06] text-foreground opacity-60 hover:opacity-100'}`}>
-               <s.icon className="w-4 h-4" />
-               <span className="hidden xs:inline">{s.mobileLabel}</span>
-               {done && <CheckCircle2 className="w-3 h-3 text-green-400 flex-shrink-0" />}
+             <button key={s.id} onClick={() => setStep(s.id as any)} className={`flex items-center gap-1.5 px-3.5 h-9 rounded-xl text-xs font-semibold flex-shrink-0 transition-all ${active ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20' : 'bg-foreground/[0.06] text-foreground/55 hover:text-foreground'}`}>
+               {done && !active ? <CheckCircle2 className="w-4 h-4" /> : <s.icon className="w-4 h-4" />}
+               <span>{s.mobileLabel}</span>
              </button>
            );
          })}
@@ -596,32 +620,37 @@ export const ProductForm = ({ initialData, onClose, onSuccess, mode = 'modal' }:
      </div>
 
      {/* Form Main Area */}
-     <div className="flex-1 overflow-y-auto no-scrollbar bg-background dark:bg-background">
-       <div className="max-w-5xl mx-auto p-4 sm:p-6 md:p-8 lg:p-20 space-y-8 md:space-y-16">
+     <div className="flex-1 overflow-y-auto no-scrollbar bg-background">
+       <div className="max-w-3xl mx-auto p-5 sm:p-8 lg:p-12 space-y-8">
 
          {/* Draft restore banner */}
          {draftBanner && (
-           <div className="flex items-center justify-between gap-3 px-5 py-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl text-sm">
-             <span className="text-amber-800 dark:text-amber-300">You have an unsaved draft. Restore it?</span>
+           <div className="flex items-center justify-between gap-3 px-4 py-3 bg-amber-500/8 border border-amber-400/30 rounded-xl text-sm">
+             <span className="text-amber-700 dark:text-amber-300 font-medium">You have an unsaved draft. Restore it?</span>
              <div className="flex gap-2">
-               <button onClick={restoreDraft} className="px-3 py-1 rounded-lg bg-amber-600 text-white text-xs font-semibold hover:bg-amber-700 transition-colors">Restore</button>
-               <button onClick={discardDraft} className="px-3 py-1 rounded-lg bg-transparent text-amber-700 dark:text-amber-400 text-xs hover:underline">Discard</button>
+               <button onClick={restoreDraft} className="px-3 py-1.5 rounded-lg bg-amber-600 text-white text-xs font-semibold hover:bg-amber-700 transition-colors">Restore</button>
+               <button onClick={discardDraft} className="px-3 py-1.5 rounded-lg text-amber-700 dark:text-amber-400 text-xs font-medium hover:underline">Discard</button>
              </div>
            </div>
          )}
 
          {/* Header */}
-         <div className="flex justify-between items-end border-b border-foreground/10 pb-10">
+         <div className="flex justify-between items-start gap-4 pb-6 border-b border-foreground/8">
            <div>
-             <h1 className="text-4xl font-serif text-foreground tracking-wide">{initialData ? 'Edit Product' : 'New Listing'}</h1>
-             <div className="flex items-center gap-2 mt-2">
+             <p className="text-xs font-semibold uppercase tracking-wider text-emerald-600 mb-1.5">Step {currentStepIndex + 1} of {STEPS.length}</p>
+             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">{initialData ? 'Edit product' : 'New product'}</h1>
+             <button type="button" onClick={() => setIsQuickMode(!isQuickMode)} className="flex items-center gap-2 mt-3">
                <Switch checked={isQuickMode} onCheckedChange={setIsQuickMode} />
-               <span className="text-foreground opacity-60 text-[10px] uppercase tracking-[0.2em]">Quick Add Mode</span>
-             </div>
+               <span className="text-foreground/50 text-xs font-medium">Quick add mode</span>
+             </button>
            </div>
-           <div className="flex gap-3">
-             <Button variant="ghost" onClick={onClose} size="lg" className="hidden md:flex text-[10px] uppercase tracking-[0.2em]">Cancel</Button>
-             <Button onClick={handleSubmit} disabled={isLoading} className="h-12 px-8 text-[10px] uppercase tracking-[0.2em]">Publish Listing</Button>
+           <div className="flex gap-2 flex-shrink-0">
+             <button onClick={onClose} className="hidden md:inline-flex h-11 px-5 rounded-xl text-sm font-semibold text-foreground/60 hover:bg-foreground/[0.05] transition-colors items-center">Cancel</button>
+             <button onClick={handleSubmit} disabled={isLoading}
+               className="h-11 px-6 rounded-xl bg-emerald-600 text-white text-sm font-semibold shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 active:scale-95 transition-all disabled:opacity-60 flex items-center gap-2">
+               {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+               {initialData ? 'Save changes' : 'Publish'}
+             </button>
            </div>
          </div>
 
@@ -632,6 +661,27 @@ export const ProductForm = ({ initialData, onClose, onSuccess, mode = 'modal' }:
            {step === 'logistics' && <LogisticsStep />}
            {step === 'variants' && <VariantsStep />}
            {step === 'preview' && <PreviewStep />}
+         </div>
+
+         {/* Footer step nav */}
+         <div className="flex items-center justify-between pt-6 border-t border-foreground/8">
+           <button onClick={() => currentStepIndex > 0 && setStep(STEPS[currentStepIndex - 1].id as any)}
+             disabled={currentStepIndex === 0}
+             className="h-11 px-5 rounded-xl text-sm font-semibold text-foreground/60 hover:bg-foreground/[0.05] transition-colors disabled:opacity-30 flex items-center gap-1.5">
+             <ChevronRight className="w-4 h-4 rotate-180" />Back
+           </button>
+           {currentStepIndex < STEPS.length - 1 ? (
+             <button onClick={() => setStep(STEPS[currentStepIndex + 1].id as any)}
+               className="h-11 px-6 rounded-xl bg-foreground/[0.06] hover:bg-foreground/[0.1] text-foreground text-sm font-semibold transition-colors flex items-center gap-1.5">
+               Continue<ChevronRight className="w-4 h-4" />
+             </button>
+           ) : (
+             <button onClick={handleSubmit} disabled={isLoading}
+               className="h-11 px-6 rounded-xl bg-emerald-600 text-white text-sm font-semibold shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 transition-all disabled:opacity-60 flex items-center gap-2">
+               {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+               {initialData ? 'Save changes' : 'Publish listing'}
+             </button>
+           )}
          </div>
        </div>
      </div>

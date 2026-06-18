@@ -44,54 +44,42 @@ export const ProductEditPage = () => {
   }
 
   return (
-    <div
-      className="min-h-screen pt-20 md:pt-24 pb-16"
-      style={{ background: 'linear-gradient(180deg, #080b12 0%, #0b0e17 100%)' }}
-    >
-      <div className="container mx-auto max-w-5xl px-4 md:px-6">
-
-        {/* Header */}
-        <div className="flex items-center gap-4 py-6">
-          <button
-            onClick={() => navigate(backUrl)}
-            className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-105 flex-shrink-0"
-            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.09)' }}
-          >
-            <ArrowLeft className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.6)' }} />
-          </button>
-          <div>
-            <p className="text-[9px] font-black uppercase tracking-[0.25em]" style={{ color: 'rgba(245,158,11,0.65)' }}>
-              {isNew ? 'New Product' : 'Edit Product'}
-            </p>
-            <h1 className="text-xl font-black" style={{ color: '#fff' }}>
-              {isNew ? 'Add to Inventory' : (loading ? 'Loading…' : product?.name ?? 'Edit Product')}
-            </h1>
-          </div>
-        </div>
-
-        {/* Loading skeleton */}
-        {loading && (
-          <div className="space-y-4">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="h-24 rounded-2xl animate-pulse"
-                style={{ background: 'rgba(255,255,255,0.04)', animationDelay: `${i * 80}ms` }} />
-            ))}
-          </div>
-        )}
-
-        {/* Form — rendered inline (no modal overhead) */}
-        {!loading && (
-          <ProductForm
-            mode="page"
-            initialData={isNew ? null : product}
-            onClose={() => navigate(backUrl)}
-            onSuccess={() => {
-              refreshProducts();
-              navigate(backUrl);
-            }}
-          />
-        )}
+    <div className="min-h-screen bg-background pt-16 md:pt-20 pb-10">
+      {/* Slim back bar */}
+      <div className="container mx-auto max-w-7xl px-4 md:px-6">
+        <button
+          onClick={() => navigate(backUrl)}
+          className="group inline-flex items-center gap-2 h-10 pl-2 pr-4 rounded-xl text-sm font-semibold text-foreground/55 hover:text-foreground hover:bg-foreground/[0.05] transition-all my-4"
+        >
+          <span className="w-7 h-7 rounded-lg bg-foreground/[0.06] flex items-center justify-center group-hover:bg-foreground/[0.1] transition-colors">
+            <ArrowLeft className="w-4 h-4" />
+          </span>
+          Back to inventory
+        </button>
       </div>
+
+      {/* Loading skeleton */}
+      {loading && (
+        <div className="container mx-auto max-w-3xl px-4 md:px-6 space-y-4">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="h-24 rounded-2xl bg-foreground/[0.04] animate-pulse"
+              style={{ animationDelay: `${i * 80}ms` }} />
+          ))}
+        </div>
+      )}
+
+      {/* Form — rendered inline (no modal overhead) */}
+      {!loading && (
+        <ProductForm
+          mode="page"
+          initialData={isNew ? null : product}
+          onClose={() => navigate(backUrl)}
+          onSuccess={() => {
+            refreshProducts();
+            navigate(backUrl);
+          }}
+        />
+      )}
     </div>
   );
 };
