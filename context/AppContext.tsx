@@ -1130,7 +1130,8 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
             receiver_id: to,
             body: text,
             product_id: productId,
-            order_id: orderId,
+            // messages has no order_id column — keep order context in metadata (jsonb)
+            metadata: orderId ? { order_id: orderId } : null,
             attachment_url: attachment?.url,
             attachment_type: attachment?.type,
             reply_to_id: replyToId,

@@ -147,12 +147,10 @@ export const ReviewSection: React.FC<ReviewSectionProps> = ({ productId }) => {
       const { error } = await supabase.from('reviews').insert({
         product_id: productId, user_id: user.id,
         rating: form.rating, comment, images: form.images,
-        helpful_count: 0,
       });
       if (error) throw error;
-      // Best-effort rating aggregate update via RPC
-      supabase.rpc('update_product_rating', { p_product_id: productId })
-        .then(() => {}, () => {});
+      // Product rating aggregate is refreshed automatically by the
+      // trg_refresh_product_rating trigger on the reviews table.
       addToast('Review published — thank you!', 'success');
       setForm({ rating: 5, comment: '', images: [] });
       setShowForm(false);
@@ -185,18 +183,12 @@ export const ReviewSection: React.FC<ReviewSectionProps> = ({ productId }) => {
   const handleHelpful = async (review: Review) => {
     if (votedIds.has(review.id)) return;
     const newCount = (review.helpful_count || 0) + 1;
+    // NOTE: reviews has no helpful_count column in the DB, so "helpful" votes
+    // are tracked locally (per-device) rather than persisted server-side.
     setReviews(prev => prev.map(r => r.id === review.id ? { ...r, helpful_count: newCount } : r));
     const next = new Set([...votedIds, review.id]);
     setVotedIds(next);
-    try {
-      const { error } = await supabase.from('reviews').update({ helpful_count: newCount }).eq('id', review.id);
-      if (error) throw error;
-      localStorage.setItem(`mm_rv_${productId}`, JSON.stringify([...next]));
-    } catch {
-      setReviews(prev => prev.map(r => r.id === review.id ? { ...r, helpful_count: review.helpful_count || 0 } : r));
-      setVotedIds(votedIds);
-      addToast('Could not save your vote — please try again', 'error');
-    }
+    localStorage.setItem(`mm_rv_${productId}`, JSON.stringify([...next]));
   };
 
   const handleReport = async (reviewId: string) => {
