@@ -64,7 +64,7 @@ export const StoreTab = () => {
          {uploadingLogo ? <Loader2 className="w-5 h-5 text-white animate-spin" /> : <Upload className="w-5 h-5 text-white" />}
        </div>
      </div>
-     <button type="button" onClick={() => logoInputRef.current?.click()} disabled={uploadingLogo} className="text-[9px] uppercase tracking-[0.15em] text-foreground/40 hover:text-foreground/70 transition-colors">
+     <button type="button" onClick={() => logoInputRef.current?.click()} disabled={uploadingLogo} className="text-[11px] font-medium text-foreground/40 hover:text-foreground/70 transition-colors">
        {uploadingLogo ? 'Uploading…' : 'Change Logo'}
      </button>
      <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => uploadStoreImage(e.target.files![0], 'logo', setUploadingLogo, 'logo_url', logoInputRef.current)} />
@@ -77,12 +77,12 @@ export const StoreTab = () => {
      >
        {profileData.banner_url
          ? <img src={profileData.banner_url} alt="Banner" className="w-full h-full object-cover" />
-         : <div className="flex flex-col items-center gap-1 text-foreground/30"><ImageIcon className="w-6 h-6" /><span className="text-[10px] uppercase tracking-[0.1em]">Banner</span></div>}
+         : <div className="flex flex-col items-center gap-1 text-foreground/30"><ImageIcon className="w-6 h-6" /><span className="text-[11px] font-medium">Banner</span></div>}
        <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl">
          {uploadingBanner ? <Loader2 className="w-5 h-5 text-white animate-spin" /> : <><Upload className="w-4 h-4 text-white mr-1.5" /><span className="text-white text-xs font-medium">Upload Banner</span></>}
        </div>
      </div>
-     <button type="button" onClick={() => bannerInputRef.current?.click()} disabled={uploadingBanner} className="text-[9px] uppercase tracking-[0.15em] text-foreground/40 hover:text-foreground/70 transition-colors text-left">
+     <button type="button" onClick={() => bannerInputRef.current?.click()} disabled={uploadingBanner} className="text-[11px] font-medium text-foreground/40 hover:text-foreground/70 transition-colors text-left">
        {uploadingBanner ? 'Uploading…' : 'Click to change banner / cover image'}
      </button>
      <input ref={bannerInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => uploadStoreImage(e.target.files![0], 'banner', setUploadingBanner, 'banner_url', bannerInputRef.current)} />
@@ -91,15 +91,15 @@ export const StoreTab = () => {
 
  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
  <div className="space-y-1">
- <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground mb-2 block">Store Name</label>
+ <label className="text-xs font-semibold text-foreground/70 mb-1.5 block">Store Name</label>
  <Input placeholder="Store Name" value={profileData.store_name || ''} onChange={(e: any) => setProfileData({...profileData, store_name: e.target.value})} />
  </div>
  <div className="space-y-1">
- <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground mb-2 block">Contact Phone</label>
+ <label className="text-xs font-semibold text-foreground/70 mb-1.5 block">Contact Phone</label>
  <Input placeholder="Contact Phone" value={profileData.contact_phone} onChange={(e: any) => setProfileData({...profileData, contact_phone: e.target.value})} />
  </div>
  <div className="space-y-1">
- <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground mb-2 block">Region</label>
+ <label className="text-xs font-semibold text-foreground/70 mb-1.5 block">Region</label>
  <select 
  className="flex h-11 w-full rounded-xl border border-foreground/15 bg-foreground/[0.04] px-4 text-sm text-foreground focus:outline-none focus:border-foreground/30 transition-all"
  value={profileData.region}
@@ -111,7 +111,7 @@ export const StoreTab = () => {
  </select>
  </div>
  <div className="space-y-1">
- <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground mb-2 block">District</label>
+ <label className="text-xs font-semibold text-foreground/70 mb-1.5 block">District</label>
  <select 
  className="flex h-11 w-full rounded-xl border border-foreground/15 bg-foreground/[0.04] px-4 text-sm text-foreground focus:outline-none focus:border-foreground/30 transition-all disabled:opacity-50"
  value={profileData.district}
@@ -125,11 +125,11 @@ export const StoreTab = () => {
  </select>
  </div>
  <div className="md:col-span-2 space-y-1">
- <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground mb-2 block">Specific Address</label>
+ <label className="text-xs font-semibold text-foreground/70 mb-1.5 block">Specific Address</label>
  <Input placeholder="e.g., Kariakoo, Msimbazi St" value={profileData.address} onChange={(e: any) => setProfileData({...profileData, address: e.target.value})} />
  </div>
  <div className="md:col-span-2 space-y-1">
- <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground mb-2 block">Store Description</label>
+ <label className="text-xs font-semibold text-foreground/70 mb-1.5 block">Store Description</label>
  <Textarea placeholder="What do you sell?" value={profileData.description} onChange={(e: any) => setProfileData({...profileData, description: e.target.value})} />
  </div>
  </div>
@@ -149,7 +149,7 @@ export const StoreTab = () => {
  <CardContent className="space-y-5">
  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
  <div className="space-y-1">
- <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground mb-2 block">Return Policy</label>
+ <label className="text-xs font-semibold text-foreground/70 mb-1.5 block">Return Policy</label>
  <select 
  className="flex h-11 w-full rounded-xl border border-foreground/15 bg-foreground/[0.04] px-4 text-sm text-foreground focus:outline-none focus:border-foreground/30 transition-all"
  value={policiesData.return_policy}
@@ -162,7 +162,7 @@ export const StoreTab = () => {
  </select>
  </div>
  <div className="space-y-1">
- <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground mb-2 block">Processing Time</label>
+ <label className="text-xs font-semibold text-foreground/70 mb-1.5 block">Processing Time</label>
  <select 
  className="flex h-11 w-full rounded-xl border border-foreground/15 bg-foreground/[0.04] px-4 text-sm text-foreground focus:outline-none focus:border-foreground/30 transition-all"
  value={policiesData.processing_time}
@@ -175,7 +175,7 @@ export const StoreTab = () => {
  </select>
  </div>
  <div className="md:col-span-2 space-y-1">
- <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground mb-2 block">Warranty Information (Optional)</label>
+ <label className="text-xs font-semibold text-foreground/70 mb-1.5 block">Warranty Information (Optional)</label>
  <Input placeholder="e.g., 6 Months Manufacturer Warranty" value={policiesData.warranty} onChange={(e: any) => setPoliciesData({...policiesData, warranty: e.target.value})} />
  </div>
  </div>
@@ -201,7 +201,7 @@ export const StoreTab = () => {
  <div className="flex items-center gap-3">
  <Globe className="w-4 h-4 text-foreground/40" />
  <span className="font-bold text-sm text-foreground">{link.platform}</span>
- <span className="text-[10px] uppercase tracking-[0.1em] text-foreground/60 truncate max-w-[200px]">{link.url}</span>
+ <span className="text-[11px] font-medium text-foreground/60 truncate max-w-[200px]">{link.url}</span>
  </div>
  <Button variant="ghost" size="icon" className="text-red-500 h-8 w-8" onClick={() => handleRemoveSocial(idx)}>
  <Trash2 className="w-4 h-4 stroke-[1.5]" />

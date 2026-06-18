@@ -36,11 +36,11 @@ export const BusinessTab = () => {
  ))}
  </div>
  ) : (
- <p className="text-[10px] uppercase tracking-[0.2em] text-foreground/60">No payment methods added yet.</p>
+ <p className="text-sm text-foreground/50">No payment methods added yet.</p>
  )}
 
  <div className="pt-6 border-t border-foreground/10 space-y-4">
- <h4 className="text-[10px] uppercase tracking-[0.2em] text-foreground mb-2">Add New Payment Method</h4>
+ <h4 className="text-sm font-semibold text-foreground mb-2">Add New Payment Method</h4>
  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
  <select 
  className="flex h-11 w-full rounded-xl border border-foreground/15 bg-foreground/[0.04] px-4 text-sm text-foreground focus:outline-none focus:border-foreground/30 transition-all"
@@ -81,19 +81,19 @@ export const BusinessTab = () => {
  <CardContent className="space-y-6">
  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
  <div className="space-y-1">
- <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground mb-2 block">TIN Number</label>
+ <label className="text-xs font-semibold text-foreground/70 mb-1.5 block">TIN Number</label>
  <Input placeholder="TIN Number" value={businessData.tin_number} onChange={(e: any) => setBusinessData({...businessData, tin_number: e.target.value})} />
  </div>
  <div className="space-y-1">
- <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground mb-2 block">Business Registration No.</label>
+ <label className="text-xs font-semibold text-foreground/70 mb-1.5 block">Business Registration No.</label>
  <Input placeholder="Registration No." value={businessData.business_reg_no} onChange={(e: any) => setBusinessData({...businessData, business_reg_no: e.target.value})} />
  </div>
  <div className="space-y-1">
- <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground mb-2 block">VAT Registration Number (VRN)</label>
+ <label className="text-xs font-semibold text-foreground/70 mb-1.5 block">VAT Registration Number (VRN)</label>
  <Input placeholder="Optional VRN" value={businessData.vrn} onChange={(e: any) => setBusinessData({...businessData, vrn: e.target.value})} />
  </div>
  <div className="space-y-1">
- <label className="text-[10px] uppercase tracking-[0.2em] opacity-60 text-foreground mb-2 block">Payout Schedule</label>
+ <label className="text-xs font-semibold text-foreground/70 mb-1.5 block">Payout Schedule</label>
  <select 
  className="flex h-11 w-full rounded-xl border border-foreground/15 bg-foreground/[0.04] px-4 text-sm text-foreground focus:outline-none focus:border-foreground/30 transition-all"
  value={businessData.payout_schedule}

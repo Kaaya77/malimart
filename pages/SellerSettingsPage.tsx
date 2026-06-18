@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAppState } from '../context/AppContext';
 import { Button, Input, Card, CardHeader, CardContent, CardTitle, CardDescription, Textarea, useToast, Badge, Switch } from '../components/UI';
 import { Store, DollarSign, Truck, Loader2, Wallet, ArrowUpRight, Clock, CheckCircle2, XCircle, Briefcase, Settings, PlusCircle, Trash2, Globe, MapPin, Info, ShieldCheck, AlertTriangle, ChevronLeft } from 'lucide-react';
@@ -183,103 +183,148 @@ export const SellerSettingsPage = ({ onBack }: { onBack?: () => void } = {}) => 
  }, [vendorProfile, paymentMethods]);
 
  const tabs = [
- { id: 'store', label: 'Store Profile', icon: Store },
- { id: 'business', label: 'Business & Payments', icon: Briefcase },
- { id: 'delivery', label: 'Delivery & Shipping', icon: Truck },
- { id: 'preferences', label: 'Preferences', icon: Settings },
+ { id: 'store', label: 'Store Profile', desc: 'Logo, info & policies', icon: Store },
+ { id: 'business', label: 'Business & Payments', desc: 'Tax, payouts & methods', icon: Briefcase },
+ { id: 'delivery', label: 'Delivery & Shipping', desc: 'Zones & fees', icon: Truck },
+ { id: 'preferences', label: 'Preferences', desc: 'Alerts & vacation mode', icon: Settings },
  ];
   const __ctx = { addToast, businessData, calcDistrict, calcRegion, deliveryData, handleAddPayment, handleAddSocial, handleAddZone, handleGenericSave, handleRemovePayment, handleRemoveSocial, handleRemoveZone, isSaving, newPayment, newSocial, newZone, paymentMethods, policiesData, preferences, profileData, setBusinessData, setCalcDistrict, setCalcRegion, setDeliveryData, setNewPayment, setNewSocial, setNewZone, setPoliciesData, setPreferences, setProfileData, shippingZones, socialLinks, user };
 
+ const activeMeta = tabs.find(t => t.id === activeTab)!;
+ const storeName = profileData.store_name || vendorProfile?.store_name || 'Your store';
+ // circumference for the progress ring (r=18)
+ const RING = 2 * Math.PI * 18;
 
  return (
   <SellerSettingsCtx.Provider value={__ctx}>
 
- <div className="max-w-6xl mx-auto pb-12 animate-in fade-in">
- <div className="mb-5 flex items-center gap-3">
-   {onBack && (
-     <button
-       onClick={onBack}
-       className="flex items-center justify-center w-8 h-8 rounded-xl bg-foreground/[0.05] hover:bg-foreground/10 text-foreground/50 hover:text-foreground transition-all shrink-0"
-       aria-label="Back to dashboard"
-     >
-       <ChevronLeft className="w-4 h-4" />
-     </button>
-   )}
-   <div>
-     <h1 className="text-xl font-black text-foreground tracking-tight">Store Settings</h1>
-     <p className="text-xs text-foreground/40 mt-0.5">Manage your store profile, payments, and operations.</p>
+ <div className="max-w-6xl mx-auto px-4 md:px-0 pb-24 md:pb-12 animate-in fade-in">
+
+ {/* ── Hero header ── */}
+ <div className="glass-surface rounded-3xl p-5 sm:p-6 mb-5 mt-1 relative overflow-hidden">
+   {/* subtle accent wash */}
+   <div className="absolute -top-16 -right-16 w-48 h-48 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
+   <div className="relative flex items-center gap-4">
+     {onBack && (
+       <button
+         onClick={onBack}
+         className="flex items-center justify-center w-9 h-9 rounded-xl bg-foreground/[0.05] hover:bg-foreground/10 text-foreground/50 hover:text-foreground transition-all shrink-0"
+         aria-label="Back to dashboard"
+       >
+         <ChevronLeft className="w-4 h-4" />
+       </button>
+     )}
+
+     {/* Store logo */}
+     <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-foreground/[0.05] border border-foreground/10 overflow-hidden flex items-center justify-center shrink-0">
+       {profileData.logo_url
+         ? <img src={profileData.logo_url} alt={storeName} className="w-full h-full object-cover" />
+         : <Store className="w-6 h-6 text-foreground/30" />}
+     </div>
+
+     {/* Identity */}
+     <div className="min-w-0 flex-1">
+       <div className="flex items-center gap-2">
+         <h1 className="text-lg sm:text-2xl font-bold text-foreground tracking-tight truncate">{storeName}</h1>
+         {vendorProfile?.is_verified && (
+           <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 shrink-0" />
+         )}
+       </div>
+       <p className="text-xs sm:text-sm text-foreground/45 mt-0.5">Store settings & operations</p>
+     </div>
+
+     {/* Setup progress ring */}
+     {setupProgress < 100 && (
+       <div className="relative w-14 h-14 shrink-0" title={`${setupProgress}% complete`}>
+         <svg className="w-14 h-14 -rotate-90" viewBox="0 0 44 44">
+           <circle cx="22" cy="22" r="18" fill="none" strokeWidth="4" className="stroke-foreground/10" />
+           <circle
+             cx="22" cy="22" r="18" fill="none" strokeWidth="4" strokeLinecap="round"
+             className="stroke-emerald-500 transition-all duration-1000"
+             strokeDasharray={RING}
+             strokeDashoffset={RING - (RING * setupProgress) / 100}
+           />
+         </svg>
+         <span className="absolute inset-0 flex items-center justify-center text-[11px] font-bold text-foreground tabular-nums">
+           {setupProgress}%
+         </span>
+       </div>
+     )}
    </div>
+
+   {/* Setup hint */}
+   {setupProgress < 100 && (
+     <p className="relative text-[11px] text-foreground/45 mt-3 sm:ml-20">
+       Complete your store setup to start attracting more buyers.
+     </p>
+   )}
  </div>
 
- <div className="flex flex-col md:flex-row gap-8">
+ <div className="flex flex-col md:flex-row gap-5 md:gap-8">
  {/* Sidebar Navigation */}
- <aside className="w-full md:w-64 shrink-0">
- <motion.nav 
+ <aside className="w-full md:w-72 shrink-0">
+ <motion.nav
  initial="hidden"
  animate="visible"
- variants={{
- hidden: { opacity: 0, y: 10 },
- visible: {
- opacity: 1,
- y: 0,
- transition: { staggerChildren: 0.05 }
- }
- }}
- className="flex flex-row md:flex-col gap-1 overflow-x-auto no-scrollbar pb-2 md:pb-0"
+ variants={{ hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0, transition: { staggerChildren: 0.04 } } }}
+ className="flex flex-row md:flex-col gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 md:mx-0 md:px-0 pb-1 md:pb-0"
  >
- {tabs.map(tab => (
+ {tabs.map(tab => {
+ const active = activeTab === tab.id;
+ return (
  <motion.button
  key={tab.id}
- variants={{
- hidden: { opacity: 0, x: -10 },
- visible: { opacity: 1, x: 0, transition: { duration: 0.3 } }
- }}
+ variants={{ hidden: { opacity: 0, y: 6 }, visible: { opacity: 1, y: 0 } }}
  onClick={() => setActiveTab(tab.id)}
- className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[10px] uppercase tracking-[0.15em] transition-colors whitespace-nowrap ${
- activeTab === tab.id 
- ? 'bg-emerald-600 text-white' 
- : 'text-foreground/60 hover:bg-foreground/[0.04]'
+ className={`group flex items-center gap-3 rounded-2xl text-left transition-all shrink-0 md:w-full
+ px-3.5 py-2.5 md:px-4 md:py-3.5 ${
+ active
+ ? 'glass-surface ring-1 ring-emerald-500/30 shadow-sm'
+ : 'text-foreground/60 hover:bg-foreground/[0.04] border border-transparent'
  }`}
  >
- <tab.icon className="w-4 h-4 stroke-[1.5]" />
- {tab.label}
+ <span className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+ active ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/25' : 'bg-foreground/[0.06] text-foreground/45 group-hover:text-foreground/70'
+ }`}>
+ <tab.icon className="w-4 h-4 stroke-[2]" />
+ </span>
+ <span className="min-w-0">
+ <span className={`block text-sm font-semibold leading-tight whitespace-nowrap md:whitespace-normal ${active ? 'text-foreground' : ''}`}>{tab.label}</span>
+ <span className="hidden md:block text-[11px] text-foreground/40 mt-0.5">{tab.desc}</span>
+ </span>
  </motion.button>
- ))}
+ );
+ })}
  </motion.nav>
-
- {/* Store Setup Progress */}
- {setupProgress < 100 && (
- <div className="mt-8 hidden md:block">
- <Card className="bg-primary/5 dark:bg-background/5 border-none shadow-none">
- <CardContent className="p-6">
- <div className="flex items-center justify-between mb-3">
- <h3 className="text-[10px] uppercase tracking-[0.2em] text-foreground">Setup Progress</h3>
- <span className="text-base font-black text-foreground">{setupProgress}%</span>
- </div>
- <div className="w-full h-1.5 bg-foreground/10 rounded-full overflow-hidden">
- <div className="h-full bg-emerald-500 rounded-full transition-all duration-1000" style={{ width: `${setupProgress}%` }}></div>
- </div>
- </CardContent>
- </Card>
- </div>
- )}
  </aside>
 
  {/* Main Content Area */}
- <main className="flex-1 space-y-6">
+ <main className="flex-1 min-w-0 space-y-6">
+ <AnimatePresence mode="wait">
+ <motion.div
+ key={activeTab}
+ initial={{ opacity: 0, y: 8 }}
+ animate={{ opacity: 1, y: 0 }}
+ exit={{ opacity: 0, y: -8 }}
+ transition={{ duration: 0.25 }}
+ >
+ {/* Section heading */}
+ <div className="flex items-center gap-3 mb-5">
+ <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
+ <activeMeta.icon className="w-5 h-5 stroke-[2]" />
+ </div>
+ <div>
+ <h2 className="text-lg font-bold text-foreground tracking-tight leading-tight">{activeMeta.label}</h2>
+ <p className="text-xs text-foreground/45">{activeMeta.desc}</p>
+ </div>
+ </div>
 
- {/* STORE PROFILE TAB */}
  {activeTab === 'store' && <StoreTab />}
-
- {/* BUSINESS & PAYMENTS TAB */}
  {activeTab === 'business' && <BusinessTab />}
-
- {/* DELIVERY & SHIPPING TAB */}
  {activeTab === 'delivery' && <DeliveryTab />}
-
- {/* PREFERENCES TAB */}
  {activeTab === 'preferences' && <PreferencesTab />}
-
+ </motion.div>
+ </AnimatePresence>
  </main>
  </div>
  </div>
