@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Copy, Check, Share2, MessageCircle, Twitter, Facebook, Link2, Instagram, Loader2, QrCode, Download } from 'lucide-react';
+import { X, Copy, Check, Share2, MessageCircle, Twitter, Facebook, Link2, Instagram, Loader2, QrCode, Download, ImageIcon, ChevronRight } from 'lucide-react';
 import { useToast } from './UI';
 import { Product } from '../types';
 import { formatTZS, CURRENCY } from '../constants';
+import { SharePoster } from './SharePoster';
 
 interface ProductShareProps {
   product: Product;
@@ -62,7 +63,7 @@ const SHARE_CHANNELS = [
 export const ProductShare: React.FC<ProductShareProps> = ({ product, isOpen, onClose }) => {
   const { addToast } = useToast();
   const [copied, setCopied] = useState(false);
-  const [showQR, setShowQR] = useState(false);
+  const [showPoster, setShowPoster] = useState(false);
 
   const productUrl = `${window.location.origin}/product/${product.id}`;
   const shareText = `🛒 Check out ${product.name} on MaliMart — ${formatTZS(product.price)} ${CURRENCY}\nAuthentic Tanzanian product, verified seller.`;
@@ -88,6 +89,8 @@ export const ProductShare: React.FC<ProductShareProps> = ({ product, isOpen, onC
   if (!isOpen) return null;
 
   return createPortal(
+    <>
+    <SharePoster product={product} isOpen={showPoster} onClose={() => setShowPoster(false)} />
     <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }}
@@ -126,6 +129,19 @@ export const ProductShare: React.FC<ProductShareProps> = ({ product, isOpen, onC
           </div>
 
           <div className="p-5 space-y-5">
+            {/* Create poster — the headline action */}
+            <button onClick={() => setShowPoster(true)}
+              className="w-full flex items-center gap-3 p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 hover:bg-emerald-500/15 transition-colors active:scale-[0.98] text-left">
+              <div className="w-11 h-11 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-lg shadow-emerald-600/20">
+                <ImageIcon className="w-5 h-5 stroke-[2]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-foreground">Create a poster</p>
+                <p className="text-xs text-foreground/50">Beautiful image with QR — perfect for Stories & status</p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-emerald-600/60 shrink-0" />
+            </button>
+
             {/* Native share (mobile) */}
             {navigator.share && (
               <button onClick={handleNativeShare}
@@ -169,7 +185,8 @@ export const ProductShare: React.FC<ProductShareProps> = ({ product, isOpen, onC
           </div>
         </motion.div>
       </motion.div>
-    </AnimatePresence>,
+    </AnimatePresence>
+    </>,
     document.body
   );
 };
