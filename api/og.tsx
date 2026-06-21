@@ -46,6 +46,27 @@ export default async function handler(req: Request) {
   const onSale = p?.sale_price && p.sale_price < p.price;
   const price = p ? tzs(onSale ? p.sale_price : p.price) : '';
 
+  const kitenge = 'repeating-linear-gradient(-45deg,#059669 0 24px,#f59e0b 24px 36px,#0c4a6e 36px 60px,#f59e0b 60px 72px)';
+
+  // ── Generic brand card (homepage / unknown product) ──
+  if (!p) {
+    return new ImageResponse(
+      (
+        <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: cream, fontFamily: 'sans-serif', position: 'relative' }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 16, display: 'flex', background: kitenge }} />
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 16, display: 'flex', background: kitenge }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
+            <div style={{ width: 132, height: 132, borderRadius: 36, background: emerald, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 88, fontWeight: 900 }}>M</div>
+            <div style={{ fontSize: 104, fontWeight: 900, letterSpacing: '-0.03em', color: ink }}>MaliMart</div>
+          </div>
+          <div style={{ fontSize: 40, fontWeight: 700, color: ink, marginTop: 28, display: 'flex' }}>Tanzania’s Marketplace</div>
+          <div style={{ fontSize: 28, fontWeight: 600, color: muted, marginTop: 14, display: 'flex' }}>Verified sellers · Secure payments · Nationwide delivery</div>
+        </div>
+      ),
+      { width: 1200, height: 630 }
+    );
+  }
+
   return new ImageResponse(
     (
       <div style={{ width: '100%', height: '100%', display: 'flex', background: cream, fontFamily: 'sans-serif', position: 'relative' }}>
