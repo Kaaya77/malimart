@@ -25,6 +25,7 @@ import {
   Tooltip, ResponsiveContainer, Cell, PieChart, Pie
 } from 'recharts';
 import { formatTZS } from '../constants';
+import { ORDER_STATUS_CONFIG } from './orderStatusConfig';
 import { Sk as _Sk } from './DashboardShell';
 
 // ─── Animated Counter ──────────────────────────────────────────────────────
@@ -280,25 +281,15 @@ const TopProducts = ({ data, loading }: { data: { name: string; count: number; r
 
 // ─── Order Status Donut ───────────────────────────────────────────────────
 const StatusDonut = ({ data, loading }: { data: Record<string, number>; loading: boolean }) => {
-  const STATUS_COLORS: Record<string, string> = {
-    pending: '#f59e0b',
-    processing: '#3b82f6',
-    confirmed: '#3b82f6',
-    in_transit: '#8b5cf6',
-    shipped: '#8b5cf6',
-    delivered: '#10b981',
-    cancelled: '#ef4444',
-    refunded: '#f97316',
-  };
-  const STATUS_LABELS: Record<string, string> = {
-    pending: 'Pending', processing: 'Confirmed', confirmed: 'Confirmed',
-    in_transit: 'Shipped', shipped: 'Shipped', delivered: 'Delivered',
-    cancelled: 'Cancelled', refunded: 'Refunded',
-  };
-
+  // Labels + hex colors from the shared status config so the donut always
+  // agrees with the chips in BuyerOrders/SellerOrders. Unknown statuses keep
+  // their raw key and render gray rather than masquerading as 'pending'.
   const chartData = Object.entries(data)
     .filter(([_, v]) => v > 0)
-    .map(([k, v]) => ({ name: STATUS_LABELS[k] ?? k, value: v, color: STATUS_COLORS[k] ?? '#94a3b8' }));
+    .map(([k, v]) => {
+      const cfg = ORDER_STATUS_CONFIG[k];
+      return { name: cfg?.label ?? k, value: v, color: cfg?.hex ?? '#94a3b8' };
+    });
 
   const total = chartData.reduce((s, d) => s + d.value, 0);
 

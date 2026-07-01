@@ -1,5 +1,5 @@
-import { Package, Clock, CheckCircle2, XCircle, Truck, RefreshCw } from 'lucide-react';
 import React from 'react';
+import { ORDER_STATUS_CONFIG } from '../orderStatusConfig';
 
 export const timeAgo = (d?: string): string => {
   if (!d) return '—';
@@ -25,15 +25,11 @@ export const getLoyaltyTier = (points: number) => {
   return TIERS[0] as any;
 };
 
-export const STATUS_CFG: Record<string, { label: string; color: string; icon: React.ElementType }> = {
-  pending:    { label: 'Pending',    color: '#f59e0b', icon: Clock },
-  processing: { label: 'Processing', color: '#3b82f6', icon: Package },
-  confirmed:  { label: 'Confirmed',  color: '#3b82f6', icon: Package },
-  in_transit: { label: 'Shipped',    color: '#8b5cf6', icon: Truck },
-  shipped:    { label: 'Shipped',    color: '#8b5cf6', icon: Truck },
-  delivered:  { label: 'Delivered',  color: '#10b981', icon: CheckCircle2 },
-  cancelled:  { label: 'Cancelled',  color: '#ef4444', icon: XCircle },
-  refunded:   { label: 'Refunded',   color: '#f97316', icon: RefreshCw },
-};
+// Derived view of the shared ORDER_STATUS_CONFIG (label + chart hex + icon).
+// Kept as its own export so buyer-dashboard consumers keep their shape.
+export const STATUS_CFG: Record<string, { label: string; color: string; icon: React.ElementType }> =
+  Object.fromEntries(
+    Object.entries(ORDER_STATUS_CONFIG).map(([k, c]) => [k, { label: c.label, color: c.hex, icon: c.icon }])
+  );
 
 export const CHART_COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#06b6d4'];

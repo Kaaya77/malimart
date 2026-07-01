@@ -14,27 +14,12 @@ import { formatTZS } from '../constants';
 import { rateLimit } from '../src/security';
 import { withCache, invalidate } from '../services/queryCache';
 import { motion, AnimatePresence } from 'framer-motion';
+import { orderStatus } from './orderStatusConfig';
 
 type OrderStatus = 'pending'|'processing'|'confirmed'|'in_transit'|'shipped'|'delivered'|'cancelled'|'refunded'|'disputed'|'failed';
 
-const STATUS: Record<string, {
-  label: string; color: string; bg: string; ring: string;
-  dot: string; icon: React.ElementType; next?: string; nextLabel?: string; nextColor?: string;
-}> = {
-  pending:    { label:'Pending',   color:'text-amber-600',   bg:'bg-amber-50 dark:bg-amber-900/20',    ring:'ring-amber-300/40 dark:ring-amber-700/30', dot:'bg-amber-400',  icon:Clock,         next:'processing',  nextLabel:'Confirm Order',    nextColor:'bg-emerald-600 hover:bg-emerald-700' },
-  processing: { label:'Confirmed', color:'text-blue-600',    bg:'bg-blue-50 dark:bg-blue-900/20',      ring:'ring-blue-300/40 dark:ring-blue-700/30',   dot:'bg-blue-500',   icon:Package,       next:'in_transit',  nextLabel:'Mark as Shipped',  nextColor:'bg-blue-600 hover:bg-blue-700' },
-  confirmed:  { label:'Confirmed', color:'text-blue-600',    bg:'bg-blue-50 dark:bg-blue-900/20',      ring:'ring-blue-300/40 dark:ring-blue-700/30',   dot:'bg-blue-500',   icon:Package,       next:'in_transit',  nextLabel:'Mark as Shipped',  nextColor:'bg-blue-600 hover:bg-blue-700' },
-  in_transit: { label:'Shipped',   color:'text-violet-600',  bg:'bg-violet-50 dark:bg-violet-900/20',  ring:'ring-violet-300/40',                       dot:'bg-violet-500', icon:Truck,         next:'delivered',   nextLabel:'Mark Delivered',   nextColor:'bg-violet-600 hover:bg-violet-700' },
-  shipped:    { label:'Shipped',   color:'text-violet-600',  bg:'bg-violet-50 dark:bg-violet-900/20',  ring:'ring-violet-300/40',                       dot:'bg-violet-500', icon:Truck,         next:'delivered',   nextLabel:'Mark Delivered',   nextColor:'bg-violet-600 hover:bg-violet-700' },
-  delivered:  { label:'Delivered', color:'text-emerald-600', bg:'bg-emerald-50 dark:bg-emerald-900/20',ring:'ring-emerald-300/40',                      dot:'bg-emerald-500',icon:CheckCircle2 },
-  cancelled:  { label:'Cancelled', color:'text-red-500',     bg:'bg-red-50 dark:bg-red-900/20',        ring:'ring-red-200/40',                          dot:'bg-red-400',    icon:XCircle },
-  refunded:   { label:'Refunded',  color:'text-orange-500',  bg:'bg-orange-50 dark:bg-orange-900/20',  ring:'ring-orange-200/40',                       dot:'bg-orange-400', icon:RefreshCw },
-  disputed:   { label:'Disputed',  color:'text-red-700',     bg:'bg-red-100 dark:bg-red-900/30',       ring:'ring-red-300/40',                          dot:'bg-red-600',    icon:AlertCircle },
-  failed:     { label:'Failed',    color:'text-slate-500',   bg:'bg-slate-50 dark:bg-slate-900/20',    ring:'ring-slate-200/40',                        dot:'bg-slate-400',  icon:XCircle },
-};
-
 const StatusBadge = ({ status }: { status: string }) => {
-  const cfg = STATUS[status] || STATUS.pending;
+  const cfg = orderStatus(status);
   const Icon = cfg.icon;
   return (
     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wide ${cfg.bg} ${cfg.color}`}>
@@ -148,7 +133,7 @@ const OrderDetailModal = ({ order, onClose, onStatus, onMessage, updating }: {
   onMessage: (buyerId: string, orderId: string) => void;
   updating: boolean;
 }) => {
-  const cfg = STATUS[order.status] || STATUS.pending;
+  const cfg = orderStatus(order.status);
   const addr = order.shipping_address || {};
   const dateStr = new Date(order.created_at).toLocaleDateString('en-TZ', { weekday:'short', day:'numeric', month:'long', year:'numeric' });
   const timeStr = new Date(order.created_at).toLocaleTimeString('en-TZ', { hour:'2-digit', minute:'2-digit' });
@@ -363,7 +348,7 @@ const OrderCard = ({ order, onOpen, onQuickConfirm, updating }: {
   onQuickConfirm: (id: string) => void;
   updating: boolean;
 }) => {
-  const cfg = STATUS[order.status] || STATUS.pending;
+  const cfg = orderStatus(order.status);
   const isPending = order.status === 'pending';
   const firstImg = order.items[0]?.product_images?.[0];
   const extraItems = order.items.length - 1;

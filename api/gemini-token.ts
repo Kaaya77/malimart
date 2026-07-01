@@ -4,6 +4,18 @@
 
 export const config = { runtime: 'edge' };
 
+// Voice tokens grant direct (un-proxied) API access, making this the most
+// abusable endpoint — apply origin + per-IP checks before minting anything.
+const RL = new Map<string, { n: number; reset: number }>();
+function rateLimited(ip: string, max = 5, windowMs = 60_000): boolean {
+  const now = Date.now();
+  const b = RL.get(ip);
+  if (!b || now > b.reset) { RL.set(ip, { n: 1, reset: now + windowMs }); return false; }
+  b.n += 1;
+  if (RL.size > 10_000) RL.clear();
+  return b.n > max;
+}
+
 export default async function handler(req: Request): Promise<Response> {
   if (req.method !== 'POST') {
     return new Response('Method not allowed', { status: 405 });
@@ -13,6 +25,19 @@ export default async function handler(req: Request): Promise<Response> {
     return new Response(JSON.stringify({ error: 'AI service not configured' }), {
       status: 503,
       headers: { 'content-type': 'application/json' },
+    });
+  }
+
+  const origin = req.headers.get('origin');
+  if (origin && origin !== new URL(req.url).origin) {
+    return new Response(JSON.stringify({ error: 'Forbidden' }), {
+      status: 403, headers: { 'content-type': 'application/json' },
+    });
+  }
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  if (rateLimited(ip)) {
+    return new Response(JSON.stringify({ error: 'Too many requests' }), {
+      status: 429, headers: { 'content-type': 'application/json' },
     });
   }
 

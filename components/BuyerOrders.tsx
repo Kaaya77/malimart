@@ -10,6 +10,7 @@ import { formatTZS } from '../constants';
 import { Order, VendorProfile } from '../types';
 import { CancelOrderModal } from './CancelOrderModal';
 import { OrderTracking } from './CheckoutComponents';
+import { orderStatus } from './orderStatusConfig';
 
 /**
  * BuyerOrders — completely field-safe rewrite.
@@ -19,22 +20,8 @@ import { OrderTracking } from './CheckoutComponents';
 
 const getItemProduct = (item: any) => item.products || item.product || {};
 
-const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
-  pending:           { label: 'Pending',    color: 'text-amber-600',   bg: 'bg-amber-50 dark:bg-amber-900/20',    icon: Clock },
-  processing:        { label: 'Confirmed',  color: 'text-blue-600',    bg: 'bg-blue-50 dark:bg-blue-900/20',      icon: Package },
-  confirmed:         { label: 'Confirmed',  color: 'text-blue-600',    bg: 'bg-blue-50 dark:bg-blue-900/20',      icon: Package },
-  in_transit:        { label: 'Shipped',    color: 'text-purple-600',  bg: 'bg-purple-50 dark:bg-purple-900/20',  icon: Truck },
-  shipped:           { label: 'Shipped',    color: 'text-purple-600',  bg: 'bg-purple-50 dark:bg-purple-900/20',  icon: Truck },
-  delivered:         { label: 'Delivered',  color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20',icon: CheckCircle2 },
-  cancelled:         { label: 'Cancelled',  color: 'text-red-500',     bg: 'bg-red-50 dark:bg-red-900/20',        icon: XCircle },
-  refunded:          { label: 'Refunded',   color: 'text-orange-500',  bg: 'bg-orange-50 dark:bg-orange-900/20',  icon: RefreshCw },
-  disputed:          { label: 'Disputed',   color: 'text-red-700',     bg: 'bg-red-100 dark:bg-red-900/30',       icon: AlertCircle },
-  failed:            { label: 'Failed',     color: 'text-gray-500',    bg: 'bg-gray-50 dark:bg-gray-900/20',      icon: XCircle },
-  ready_for_pickup:  { label: 'Ready',      color: 'text-teal-600',    bg: 'bg-teal-50 dark:bg-teal-900/20',      icon: Package },
-};
-
 const StatusChip: React.FC<{ status: string; size?: 'sm' | 'md' }> = ({ status, size = 'md' }) => {
-  const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
+  const cfg = orderStatus(status);
   const Icon = cfg.icon;
   return (
     <span className={`inline-flex items-center gap-1 rounded-full font-bold ${cfg.bg} ${cfg.color} ${size === 'sm' ? 'px-2 py-0.5 text-[9px]' : 'px-2.5 py-1 text-[10px]'}`}>

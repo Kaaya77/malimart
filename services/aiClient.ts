@@ -24,14 +24,3 @@ export const getLiveAI = async (): Promise<GoogleGenAI> => {
   const token = data.name || data.token;
   return new GoogleGenAI({ apiKey: token, httpOptions: { apiVersion: 'v1alpha' } });
 };
-
-// For raw media downloads (e.g. generated video URIs) that normally need ?key=
-export const proxiedMediaUrl = (uri: string): string => {
-  try {
-    const u = new URL(uri);
-    u.searchParams.delete('key');
-    return `${window.location.origin}/api/gemini${u.pathname}${u.search}`;
-  } catch {
-    return uri;
-  }
-};
