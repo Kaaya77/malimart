@@ -28,6 +28,83 @@ import fs from 'node:fs';
 export const LENSES = ['security', 'ai-integration', 'design-ux', 'migration', 'verify', 'build'];
 export const SEVERITIES = ['blocking', 'advisory'];
 
+// ---- structured-output schemas ----------------------------------------------
+// Passed to the model adapter's `schema` option (output_config.format) so the
+// model is constrained to return valid JSON in exactly these shapes. Structured
+// outputs require additionalProperties:false and no min/max constraints.
+
+/** The scout picks which files the builder needs to read before editing. */
+export const SCOUT_SCHEMA = {
+  type: 'object',
+  properties: {
+    files: { type: 'array', items: { type: 'string' } },
+    notes: { type: 'string' },
+  },
+  required: ['files', 'notes'],
+  additionalProperties: false,
+};
+
+/** The builder's edit plan. Unused string fields are "" (e.g. oldText on create). */
+export const EDITS_SCHEMA = {
+  type: 'object',
+  properties: {
+    edits: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          op: { type: 'string', enum: ['edit', 'create', 'delete', 'migration'] },
+          file: { type: 'string' },
+          oldText: { type: 'string' },
+          newText: { type: 'string' },
+        },
+        required: ['op', 'file', 'oldText', 'newText'],
+        additionalProperties: false,
+      },
+    },
+    touchedFiles: { type: 'array', items: { type: 'string' } },
+    notes: { type: 'string' },
+  },
+  required: ['edits', 'touchedFiles', 'notes'],
+  additionalProperties: false,
+};
+
+/** A review lens's findings, wrapped in an object (structured outputs want an object root). */
+export const FINDINGS_SCHEMA = {
+  type: 'object',
+  properties: {
+    findings: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          lens: { type: 'string', enum: ['security', 'ai-integration', 'design-ux', 'migration'] },
+          severity: { type: 'string', enum: ['blocking', 'advisory'] },
+          title: { type: 'string' },
+          location: {
+            type: 'object',
+            properties: {
+              file: { type: 'string' },
+              line: { type: ['integer', 'null'] },
+              symbol: { type: ['string', 'null'] },
+            },
+            required: ['file', 'line', 'symbol'],
+            additionalProperties: false,
+          },
+          rationale: { type: 'string' },
+          fix: { type: 'string' },
+          ruleId: { type: ['string', 'null'] },
+        },
+        required: ['id', 'lens', 'severity', 'title', 'location', 'rationale', 'fix', 'ruleId'],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: ['findings'],
+  additionalProperties: false,
+};
+
 /**
  * The blocking bar. A finding may ONLY be `blocking` if it is one of these.
  * Everything else – naming, polish, micro-perf, preference – is `advisory`.

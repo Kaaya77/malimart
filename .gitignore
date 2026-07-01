@@ -32,3 +32,8 @@ dist-ssr
 
 # Vercel
 .vercel
+
+# Agent system artifacts (regenerate with scripts/generate-repo-map.mjs)
+agent-out/
+repo-map.json
+repo-map.md
