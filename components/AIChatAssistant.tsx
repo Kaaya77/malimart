@@ -10,7 +10,7 @@ import { useToast } from './UI';
 import { useAppState } from '../context/AppContext';
 import { formatTZS } from '../constants';
 import { LiveServerMessage, Modality } from '@google/genai';
-import { MaliAnimalAvatar, AnimalPicker, useAnimalAvatar, MaliConfetti, randomEmote, isEmote, EMOTE_KEYS, type EmoteType } from './MaliAnimalAvatar';
+import { MaliAnimalAvatar, AnimalPicker, useAnimalAvatar, MaliConfetti, isEmote, EMOTE_KEYS, type EmoteType } from './MaliAnimalAvatar';
 import {
   MALI_BACKSTORY, getDailyMethali, getTimeGreeting, getTimeOfDay,
   detectEasterEgg, detectUserMood, getMoodResponse, detectPurchase, isLateNight,
@@ -364,10 +364,6 @@ const MessageBubble = ({ m, isFirst, products, onAdd, onSuggest }: {
 };
 
 // â”€â”€ Main component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// Emote pools for spontaneous personality moments
-const FAB_POOL: EmoteType[] = ['waving', 'happy', 'excited', 'love', 'wink', 'partyFace', 'heartHands', 'dancing', 'sparkles', 'peeking', 'giggle', 'callMe'];
-const IDLE_POOL: EmoteType[] = ['wink', 'smirk', 'catSmile', 'relieved', 'sparkles', 'glowingStar', 'giggle', 'searching', 'yum', 'dizzyStar', 'shush', 'catSmirk'];
-
 export const AIChatAssistant = () => {
   const { products, addToCart, user } = useAppState();
   const { addToast } = useToast();
@@ -392,7 +388,6 @@ export const AIChatAssistant = () => {
 
   const [isOpen, setIsOpen]         = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
-  const [fabEmote, setFabEmote]     = useState<EmoteType>('idle');
   const [messages, setMessages]     = useState<Msg[]>([
     { id: '0', role: 'assistant', text: greeting, type: 'text', ts: Date.now() }
   ]);
@@ -401,7 +396,7 @@ export const AIChatAssistant = () => {
   const [isLive, setIsLive]         = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isTyping, setIsTyping]     = useState(false);
-  const [avatarEmote, setAvatarEmote] = useState<EmoteType>('waving');
+  const [avatarEmote, setAvatarEmote] = useState<EmoteType>('idle');
   const [showAnimalPicker, setShowAnimalPicker] = useState(false);
   const [personalityMode, setPersonalityMode] = useState<PersonalityMode>(
     () => (localStorage.getItem('mali_personality') as PersonalityMode) ?? 'calm'
@@ -441,27 +436,9 @@ export const AIChatAssistant = () => {
     if (isOpen && !methaliSeen) { setTimeout(() => setShowMethali(true), 1200); }
   }, [isOpen]);
 
-  // While the FAB is showing, the companion occasionally does something fun —
-  // a living creature on the button invites the tap far better than a static icon.
-  useEffect(() => {
-    if (isOpen) return;
-    const id = setInterval(() => {
-      setFabEmote(randomEmote(FAB_POOL));
-      setTimeout(() => setFabEmote('idle'), 2600);
-    }, 11_000);
-    return () => clearInterval(id);
-  }, [isOpen]);
-
-  // Idle flourishes while chatting — every ~25s the companion winks/smirks/
-  // sparkles, but only from a resting face so it never clobbers a real emote.
-  useEffect(() => {
-    if (!isOpen || isMinimized || isTyping || isLive) return;
-    const id = setInterval(() => {
-      setAvatarEmote(prev => prev === 'idle' ? randomEmote(IDLE_POOL) : prev);
-      setTimeout(() => setAvatarEmote(prev => IDLE_POOL.includes(prev) ? 'idle' : prev), 2400);
-    }, 25_000);
-    return () => clearInterval(id);
-  }, [isOpen, isMinimized, isTyping, isLive]);
+  // Deliberate-emote policy: the companion stays its calm animated self at all
+  // times. Reactions play ONLY on real occasions — the AI's chosen emote per
+  // reply, thinking while it works, purchase celebrations, mood empathy.
 
   const clearChat = () => {
     if (isLive) stopLiveSession();
@@ -707,8 +684,6 @@ RESPONSE FORMAT:
       <motion.button initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 300, damping: 18, delay: 0.3 }}
         whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.9 }}
-        onHoverStart={() => setFabEmote(randomEmote(FAB_POOL))}
-        onHoverEnd={() => setFabEmote('idle')}
         onClick={() => setIsOpen(true)}
         className="relative w-14 h-14 rounded-[18px]"
       >
@@ -726,11 +701,10 @@ RESPONSE FORMAT:
           </motion.div>
         ))}
 
-        {/* Button surface — the user's chosen companion IS the button.
-            Idle shows the animated animal; hover and a periodic timer play
-            playful emotes so it feels alive rather than iconographic. */}
+        {/* Button surface — the user's chosen companion IS the button, always
+            its own animated self, no emote takeovers. */}
         <div className="absolute inset-0 rounded-[18px] flex items-center justify-center shadow-xl overflow-visible">
-          <MaliAnimalAvatar size={56} pulse={fabEmote === 'idle'} emote={fabEmote} />
+          <MaliAnimalAvatar size={56} pulse emote="idle" />
         </div>
       </motion.button>
     </div>
@@ -768,10 +742,6 @@ RESPONSE FORMAT:
             <div className="flex items-center gap-3">
               <div className="relative">
                 <motion.button whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.93 }}
-                  onHoverStart={() => {
-                    setAvatarEmote(prev => prev === 'idle' ? randomEmote(IDLE_POOL) : prev);
-                    setTimeout(() => setAvatarEmote(prev => IDLE_POOL.includes(prev) ? 'idle' : prev), 2000);
-                  }}
                   onClick={() => setShowAnimalPicker(v => !v)} title="Change companion">
                   <MaliAvatar size={38} rings={isLive} emote={avatarEmote} />
                 </motion.button>
@@ -812,7 +782,7 @@ RESPONSE FORMAT:
                 onClick={() => {
                   const next: PersonalityMode = personalityMode === 'calm' ? 'sass' : 'calm';
                   setPersonalityMode(next); localStorage.setItem('mali_personality', next);
-                  setAvatarEmote(next === 'sass' ? 'cool' : 'waving');
+                  setAvatarEmote(next === 'sass' ? 'cool' : 'angel');
                   setTimeout(() => setAvatarEmote('idle'), 1800);
                 }}
                 className={`p-1.5 rounded-xl transition-all text-[11px] ${personalityMode === 'sass' ? 'bg-rose-500/10 text-rose-500' : 'text-foreground/30 hover:bg-foreground/6'}`}>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export type AnimalType = 'fox' | 'cat' | 'panda' | 'bunny' | 'bear' | 'lion' | 'owl' | 'parrot';
@@ -190,18 +190,29 @@ export const AnimatedEmoji = ({ emoji, size, className = '' }: { emoji: string; 
 
 const STORAGE_KEY = 'mali_animal';
 
-export function useAnimalAvatar() {
-  const [animal, setAnimalState] = useState<AnimalType>(() => {
+// Shared reactive store — previously each useAnimalAvatar() call held its own
+// useState copy, so picking a new companion updated the picker but NOT the
+// header avatar or FAB until a remount. One module-level value + subscribers
+// keeps every surface in sync instantly.
+let _animal: AnimalType = (() => {
+  try {
     const saved = localStorage.getItem(STORAGE_KEY) as AnimalType;
     return saved && ANIMALS[saved] ? saved : 'fox';
-  });
+  } catch { return 'fox'; }
+})();
+const animalListeners = new Set<() => void>();
+const subscribeAnimal = (cb: () => void) => { animalListeners.add(cb); return () => { animalListeners.delete(cb); }; };
 
-  const setAnimal = useCallback((a: AnimalType) => {
-    setAnimalState(a);
-    localStorage.setItem(STORAGE_KEY, a);
-  }, []);
+export function setGlobalAnimal(a: AnimalType) {
+  if (!ANIMALS[a]) return;
+  _animal = a;
+  try { localStorage.setItem(STORAGE_KEY, a); } catch {}
+  animalListeners.forEach(l => l());
+}
 
-  return { animal, setAnimal, animalInfo: ANIMALS[animal] };
+export function useAnimalAvatar() {
+  const animal = React.useSyncExternalStore(subscribeAnimal, () => _animal);
+  return { animal, setAnimal: setGlobalAnimal, animalInfo: ANIMALS[animal] };
 }
 
 interface MaliAnimalAvatarProps {
@@ -249,37 +260,37 @@ export const MaliAnimalAvatar = ({
           : { duration: 0.6, ease: 'easeInOut' }
         }
       >
-        {/* Animal face (3D animated when Noto has it) — fades back while emoting */}
-        <motion.div
-          style={{ position: 'relative', zIndex: 1 }}
-          animate={{ opacity: emote !== 'idle' && emoteInfo.overlay ? 0.18 : 1 }}
-          transition={{ duration: 0.25 }}
-        >
+        {/* The companion — ALWAYS the face, never dimmed or replaced. Its body
+            performs the emote's motion preset; the expression itself appears
+            as a reaction bubble beside it (memoji grammar: one character,
+            emotions happen around it). */}
+        <div style={{ position: 'relative', zIndex: 1 }}>
           <AnimatedEmoji emoji={info.emoji} size={size * 0.62} />
-        </motion.div>
-
-        {/* Facial expression — fills the face area when emoting */}
-        <AnimatePresence>
-          {emote !== 'idle' && emoteInfo.overlay && (
-            <motion.div
-              key={emote}
-              className="absolute inset-0 flex items-center justify-center"
-              style={{ zIndex: 2 }}
-              initial={{ scale: 0.4, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.4, opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 380, damping: 22 }}
-            >
-              <AnimatedEmoji emoji={emoteInfo.overlay} size={size * 0.66} />
-            </motion.div>
-          )}
-        </AnimatePresence>
+        </div>
 
         <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-white/15 pointer-events-none" style={{ borderRadius: br, zIndex: 3 }} />
       </motion.div>
 
-      {/* Corner badge for non-face action emotes (👋 waving, 🕺 dancing, etc.)
-          kept small so the main face expression is dominant */}
+      {/* Reaction bubble — the companion's expression, floating beside its
+          head like a memoji sticker. Springs in only on real occasions. */}
+      <AnimatePresence>
+        {emote !== 'idle' && emoteInfo.overlay && (
+          <motion.div
+            key={emote}
+            className="absolute flex items-center justify-center bg-background border border-foreground/10 shadow-lg rounded-full"
+            style={{
+              width: size * 0.58, height: size * 0.58,
+              top: -size * 0.22, right: -size * 0.22, zIndex: 4,
+            }}
+            initial={{ scale: 0, opacity: 0, rotate: -20 }}
+            animate={{ scale: 1, opacity: 1, rotate: 0 }}
+            exit={{ scale: 0, opacity: 0, rotate: 12 }}
+            transition={{ type: 'spring', stiffness: 420, damping: 20 }}
+          >
+            <AnimatedEmoji emoji={emoteInfo.overlay} size={size * 0.42} />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Emote label */}
       <AnimatePresence>
@@ -342,22 +353,37 @@ export const AnimalPicker = ({ onClose }: AnimalPickerProps) => {
     >
       <p className="text-[10px] font-black uppercase tracking-widest text-foreground/40 mb-3">Choose your companion</p>
       <div className="grid grid-cols-4 gap-2">
-        {(Object.entries(ANIMALS) as [AnimalType, typeof ANIMALS[AnimalType]][]).map(([key, info]) => (
-          <motion.button
-            key={key}
-            whileHover={{ scale: 1.12, y: -2 }}
-            whileTap={{ scale: 0.92 }}
-            onClick={() => { setAnimal(key); onClose?.(); }}
-            className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${
-              animal === key
-                ? 'bg-emerald-500/15 ring-2 ring-emerald-500/40'
-                : 'hover:bg-foreground/5'
-            }`}
-          >
-            <AnimatedEmoji emoji={info.emoji} size={26} />
-            <span className="text-[8px] font-bold text-foreground/50">{info.name}</span>
-          </motion.button>
-        ))}
+        {(Object.entries(ANIMALS) as [AnimalType, typeof ANIMALS[AnimalType]][]).map(([key, info]) => {
+          const selected = animal === key;
+          return (
+            <motion.button
+              key={key}
+              whileHover={{ scale: 1.12, y: -2 }}
+              whileTap={{ scale: 0.92 }}
+              onClick={() => { setAnimal(key); onClose?.(); }}
+              aria-pressed={selected}
+              className={`relative flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${
+                selected
+                  ? 'bg-emerald-500/15 ring-2 ring-emerald-500'
+                  : 'hover:bg-foreground/5 ring-1 ring-transparent'
+              }`}
+            >
+              {selected && (
+                <motion.span
+                  initial={{ scale: 0 }} animate={{ scale: 1 }}
+                  transition={{ type: 'spring', stiffness: 500, damping: 18 }}
+                  className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-sm z-10"
+                >
+                  <svg width="9" height="9" viewBox="0 0 10 10" fill="none">
+                    <path d="M1.5 5.5L4 8L8.5 2.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </motion.span>
+              )}
+              <AnimatedEmoji emoji={info.emoji} size={26} />
+              <span className={`text-[8px] font-bold ${selected ? 'text-emerald-600' : 'text-foreground/50'}`}>{info.name}</span>
+            </motion.button>
+          );
+        })}
       </div>
       <p className="text-[9px] text-foreground/30 text-center mt-3">Your Mali companion follows you everywhere ✨</p>
     </motion.div>
