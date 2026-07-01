@@ -737,22 +737,36 @@ RESPONSE FORMAT:
             {showMethali && <MethaliToast methali={getDailyMethali()} onClose={() => setShowMethali(false)} />}
           </AnimatePresence>
 
+          {/* Companion picker — rendered at the panel root, NOT inside the
+              header: the header's stacking context (z-10 + backdrop-blur) let
+              the messages area paint over the popover and steal its clicks. */}
+          <AnimatePresence>
+            {showAnimalPicker && (
+              <>
+                <motion.div
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  className="absolute inset-0 z-40 bg-black/25 backdrop-blur-[2px]"
+                  onClick={() => setShowAnimalPicker(false)}
+                />
+                <div className="absolute top-16 left-3 z-50">
+                  <AnimalPicker onClose={() => setShowAnimalPicker(false)} />
+                </div>
+              </>
+            )}
+          </AnimatePresence>
+
           {/* â”€â”€ Header â”€â”€ */}
           <div className="relative z-10 px-4 py-3 border-b border-foreground/6 flex items-center justify-between flex-shrink-0 bg-background/80 backdrop-blur-sm">
             <div className="flex items-center gap-3">
-              <div className="relative">
-                <motion.button whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.93 }}
-                  onClick={() => setShowAnimalPicker(v => !v)} title="Change companion">
-                  <MaliAvatar size={38} rings={isLive} emote={avatarEmote} />
-                </motion.button>
-                <AnimatePresence>
-                  {showAnimalPicker && (
-                    <div className="absolute top-12 left-0 z-50">
-                      <AnimalPicker onClose={() => setShowAnimalPicker(false)} />
-                    </div>
-                  )}
-                </AnimatePresence>
-              </div>
+              <motion.button whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.93 }}
+                onClick={() => {
+                  // Expand first if minimised — a 64px-tall panel would clip the popover
+                  if (isMinimized) setIsMinimized(false);
+                  setShowAnimalPicker(v => !v);
+                }}
+                title="Change companion">
+                <MaliAvatar size={38} rings={isLive} emote={avatarEmote} />
+              </motion.button>
               <div>
                 <p className="font-black text-sm bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">{animalInfo.name}</p>
                 <div className="flex items-center gap-1.5">
