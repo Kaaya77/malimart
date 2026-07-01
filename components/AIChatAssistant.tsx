@@ -10,7 +10,7 @@ import { useToast } from './UI';
 import { useAppState } from '../context/AppContext';
 import { formatTZS } from '../constants';
 import { LiveServerMessage, Modality } from '@google/genai';
-import { MaliAnimalAvatar, AnimalPicker, useAnimalAvatar, MaliConfetti, type EmoteType } from './MaliAnimalAvatar';
+import { MaliAnimalAvatar, AnimalPicker, useAnimalAvatar, MaliConfetti, randomEmote, isEmote, EMOTE_KEYS, type EmoteType } from './MaliAnimalAvatar';
 import {
   MALI_BACKSTORY, getDailyMethali, getTimeGreeting, getTimeOfDay,
   detectEasterEgg, detectUserMood, getMoodResponse, detectPurchase, isLateNight,
@@ -364,6 +364,10 @@ const MessageBubble = ({ m, isFirst, products, onAdd, onSuggest }: {
 };
 
 // â”€â”€ Main component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Emote pools for spontaneous personality moments
+const FAB_POOL: EmoteType[] = ['waving', 'happy', 'excited', 'love', 'wink', 'partyFace', 'heartHands', 'dancing', 'sparkles', 'peeking', 'giggle', 'callMe'];
+const IDLE_POOL: EmoteType[] = ['wink', 'smirk', 'catSmile', 'relieved', 'sparkles', 'glowingStar', 'giggle', 'searching', 'yum', 'dizzyStar', 'shush', 'catSmirk'];
+
 export const AIChatAssistant = () => {
   const { products, addToCart, user } = useAppState();
   const { addToast } = useToast();
@@ -388,6 +392,7 @@ export const AIChatAssistant = () => {
 
   const [isOpen, setIsOpen]         = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [fabEmote, setFabEmote]     = useState<EmoteType>('idle');
   const [messages, setMessages]     = useState<Msg[]>([
     { id: '0', role: 'assistant', text: greeting, type: 'text', ts: Date.now() }
   ]);
@@ -436,6 +441,28 @@ export const AIChatAssistant = () => {
     if (isOpen && !methaliSeen) { setTimeout(() => setShowMethali(true), 1200); }
   }, [isOpen]);
 
+  // While the FAB is showing, the companion occasionally does something fun —
+  // a living creature on the button invites the tap far better than a static icon.
+  useEffect(() => {
+    if (isOpen) return;
+    const id = setInterval(() => {
+      setFabEmote(randomEmote(FAB_POOL));
+      setTimeout(() => setFabEmote('idle'), 2600);
+    }, 11_000);
+    return () => clearInterval(id);
+  }, [isOpen]);
+
+  // Idle flourishes while chatting — every ~25s the companion winks/smirks/
+  // sparkles, but only from a resting face so it never clobbers a real emote.
+  useEffect(() => {
+    if (!isOpen || isMinimized || isTyping || isLive) return;
+    const id = setInterval(() => {
+      setAvatarEmote(prev => prev === 'idle' ? randomEmote(IDLE_POOL) : prev);
+      setTimeout(() => setAvatarEmote(prev => IDLE_POOL.includes(prev) ? 'idle' : prev), 2400);
+    }, 25_000);
+    return () => clearInterval(id);
+  }, [isOpen, isMinimized, isTyping, isLive]);
+
   const clearChat = () => {
     if (isLive) stopLiveSession();
     setMessages([{ id: '0', role: 'assistant', text: greeting, type: 'text', ts: Date.now() }]);
@@ -467,8 +494,10 @@ RESPONSE FORMAT:
 1. Answer in 2-4 sentences max unless detail is requested — respect people's time
 2. Use [PRODUCT:id] tags when recommending specific products (can include multiple)
 3. At the END of every response add exactly this JSON (and nothing else after it):
-   {"suggestions":["short follow-up 1","short follow-up 2","short follow-up 3"]}
-   Keep suggestions to 5 words or less each
+   {"suggestions":["short follow-up 1","short follow-up 2","short follow-up 3"],"emote":"emoteName"}
+   Keep suggestions to 5 words or less each. "emote" is the facial expression your avatar
+   performs with this reply — pick the one that best matches your mood from:
+   ${EMOTE_KEYS.join(', ')}
 4. Be specific and human: "This kanzu would be perfect for a Zanzibar ceremony" beats "Nice formal wear"
 5. If asked about something not in catalog — say so honestly and suggest the closest match`;
   };
@@ -609,12 +638,20 @@ RESPONSE FORMAT:
         setMessages(prev => prev.map(m => m.id === aid ? { ...m, text: full } : m));
       }
 
-      // Extract suggestions JSON
-      const suggestMatch = full.match(/\{"suggestions"\s*:\s*\[[^\]]+\]\s*\}/);
+      // Extract trailing JSON: suggestions + the emote the model chose to perform
+      const suggestMatch = full.match(/\{[^{}]*"suggestions"\s*:\s*\[[^\]]*\][^{}]*\}/);
       let suggestions: string[] = [];
       let cleanText = full;
       if (suggestMatch) {
-        try { suggestions = JSON.parse(suggestMatch[0]).suggestions?.slice(0, 3) || []; } catch {}
+        try {
+          const parsed = JSON.parse(suggestMatch[0]);
+          suggestions = parsed.suggestions?.slice(0, 3) || [];
+          if (typeof parsed.emote === 'string' && isEmote(parsed.emote) && parsed.emote !== 'idle') {
+            const chosen = parsed.emote;
+            setAvatarEmote(chosen);
+            setTimeout(() => setAvatarEmote(prev => prev === chosen ? 'idle' : prev), 4200);
+          }
+        } catch {}
         cleanText = full.replace(suggestMatch[0], '').trim();
       }
 
@@ -670,6 +707,8 @@ RESPONSE FORMAT:
       <motion.button initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 300, damping: 18, delay: 0.3 }}
         whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.9 }}
+        onHoverStart={() => setFabEmote(randomEmote(FAB_POOL))}
+        onHoverEnd={() => setFabEmote('idle')}
         onClick={() => setIsOpen(true)}
         className="relative w-14 h-14 rounded-[18px]"
       >
@@ -687,9 +726,11 @@ RESPONSE FORMAT:
           </motion.div>
         ))}
 
-        {/* Button surface -- shows user's chosen animal */}
+        {/* Button surface — the user's chosen companion IS the button.
+            Idle shows the animated animal; hover and a periodic timer play
+            playful emotes so it feels alive rather than iconographic. */}
         <div className="absolute inset-0 rounded-[18px] flex items-center justify-center shadow-xl overflow-visible">
-          <MaliAnimalAvatar size={56} pulse emote="waving" />
+          <MaliAnimalAvatar size={56} pulse={fabEmote === 'idle'} emote={fabEmote} />
         </div>
       </motion.button>
     </div>
@@ -727,6 +768,10 @@ RESPONSE FORMAT:
             <div className="flex items-center gap-3">
               <div className="relative">
                 <motion.button whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.93 }}
+                  onHoverStart={() => {
+                    setAvatarEmote(prev => prev === 'idle' ? randomEmote(IDLE_POOL) : prev);
+                    setTimeout(() => setAvatarEmote(prev => IDLE_POOL.includes(prev) ? 'idle' : prev), 2000);
+                  }}
                   onClick={() => setShowAnimalPicker(v => !v)} title="Change companion">
                   <MaliAvatar size={38} rings={isLive} emote={avatarEmote} />
                 </motion.button>

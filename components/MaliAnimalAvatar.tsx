@@ -2,13 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export type AnimalType = 'fox' | 'cat' | 'panda' | 'bunny' | 'bear' | 'lion' | 'owl' | 'parrot';
-export type EmoteType =
-  | 'idle' | 'happy' | 'thinking' | 'excited' | 'surprised' | 'love'
-  | 'sleeping' | 'dancing' | 'waving' | 'cool' | 'sad'
-  // expanded set
-  | 'searching' | 'lightbulb' | 'catalog' | 'gifting' | 'mindblown'
-  | 'facepalm' | 'shrug' | 'heartEyes' | 'clapping' | 'sleepy'
-  | 'shy' | 'flexing' | 'celebrating' | 'tanzanian' | 'counting';
+// EmoteType is derived from the EMOTES registry below — add an entry there
+// and every consumer (including the AI's emote vocabulary) picks it up.
+export type EmoteType = keyof typeof EMOTES;
 
 export const ANIMALS: Record<AnimalType, { emoji: string; name: string; gradient: string; accent: string }> = {
   fox:    { emoji: '🦊', name: 'Hadithi',  gradient: 'from-orange-400 via-red-400 to-orange-600',   accent: 'orange' },
@@ -21,35 +17,120 @@ export const ANIMALS: Record<AnimalType, { emoji: string; name: string; gradient
   parrot: { emoji: '🐦', name: 'Kelele',   gradient: 'from-emerald-400 via-green-400 to-teal-500',   accent: 'emerald'},
 };
 
-const EMOTES: Record<EmoteType, { overlay: string; animation: object; label: string }> = {
-  // Core
+// Motion presets for the avatar container while an emote plays
+const POP    = { scale: [1, 1.18, 1], rotate: [0, -6, 6, 0] };
+const BOUNCE = { y: [0, -5, 0], scale: [1, 1.06, 1] };
+const WIGGLE = { rotate: [0, -8, 8, -4, 0] };
+const ZOOM   = { scale: [1, 1.25, 0.95, 1] };
+const SHAKE  = { x: [-3, 3, -3, 3, 0] };
+const e = (overlay: string, label: string, animation: object = POP) => ({ overlay, animation, label });
+
+// Every overlay below is verified available as a Google Noto ANIMATED emoji
+// (checked against fonts.gstatic.com) except 🇹🇿, which falls back to a glyph.
+const EMOTES = {
+  // ── Core (hand-tuned motion) ──────────────────────────────────────────────
   idle:        { overlay: '',   animation: {}, label: '' },
-  happy:       { overlay: '😊', animation: { rotate: [0, -8, 8, 0] }, label: 'Happy!' },
-  thinking:    { overlay: '🤔', animation: { y: [0, -3, 0] }, label: 'Thinking…' },
-  excited:     { overlay: '🤩', animation: { scale: [1, 1.15, 1], rotate: [0, 5, -5, 0] }, label: 'Woah!' },
-  surprised:   { overlay: '😲', animation: { scale: [1, 1.2, 0.95, 1] }, label: 'Whoa!' },
-  love:        { overlay: '😍', animation: { scale: [1, 1.1, 1], y: [0, -4, 0] }, label: 'Love it!' },
-  sleeping:    { overlay: '😴', animation: { rotate: [0, 3, -3, 0] }, label: 'Zzzz…' },
-  dancing:     { overlay: '💃', animation: { x: [-4, 4, -4], rotate: [-5, 5, -5] }, label: 'Yay!' },
-  waving:      { overlay: '👋', animation: { rotate: [0, 15, -5, 15, 0] }, label: 'Hi!' },
-  cool:        { overlay: '😎', animation: { scale: [1, 1.05, 1] }, label: 'Cool!' },
-  sad:         { overlay: '😢', animation: { y: [0, 3, 0], rotate: [-3, 3, -3] }, label: 'Oops…' },
-  // Expanded — shopping & helping
-  searching:   { overlay: '🧐', animation: { x: [-3, 3, -3, 3, 0], rotate: [-8, 8, -8, 0] }, label: 'Searching…' },
-  lightbulb:   { overlay: '💡', animation: { scale: [1, 1.3, 1], y: [0, -6, 0] }, label: 'Aha!' },
-  catalog:     { overlay: '👀', animation: { rotate: [0, -5, 5, 0], y: [0, -2, 0] }, label: 'Checking…' },
-  gifting:     { overlay: '🎁', animation: { scale: [1, 1.15, 1], rotate: [-8, 8, 0] }, label: 'Gift!' },
-  mindblown:   { overlay: '🤯', animation: { scale: [1, 1.25, 0.9, 1.1, 1], rotate: [0, -10, 10, 0] }, label: 'Mind blown!' },
-  facepalm:    { overlay: '😅', animation: { y: [0, 4, 0], rotate: [0, -5, 0] }, label: 'Oops!' },
-  shrug:       { overlay: '😕', animation: { rotate: [-5, 5, -5, 0], y: [0, -2, 0] }, label: 'Dunno!' },
-  heartEyes:   { overlay: '😻', animation: { scale: [1, 1.12, 1], rotate: [0, -6, 6, 0] }, label: 'In love!' },
-  clapping:    { overlay: '👏', animation: { scale: [1, 1.08, 1, 1.08, 1], rotate: [-3, 3, -3, 0] }, label: 'Bravo!' },
-  sleepy:      { overlay: '😪', animation: { y: [0, -2, 0], rotate: [0, 5, 0] }, label: 'Late night…' },
-  shy:         { overlay: '🙈', animation: { scale: [1, 0.9, 1], rotate: [-8, 0] }, label: 'Aw shucks!' },
-  flexing:     { overlay: '💪', animation: { scale: [1, 1.15, 1], rotate: [0, -5, 5, 0] }, label: 'Got you!' },
-  celebrating: { overlay: '🎉', animation: { scale: [1, 1.2, 0.95, 1.1, 1], x: [-3, 3, -3, 0], rotate: [-5, 5, 0] }, label: 'Woohoo!' },
-  tanzanian:   { overlay: '🇹🇿', animation: { scale: [1, 1.1, 1], y: [0, -4, 0] }, label: 'Tanzanian pride!' },
-  counting:    { overlay: '🪙', animation: { rotate: [0, 15, 0, -10, 0], y: [0, -3, 0] }, label: 'Counting coins…' },
+  happy:       e('😊', 'Happy!', WIGGLE),
+  thinking:    e('🤔', 'Thinking…', BOUNCE),
+  excited:     e('🤩', 'Woah!', ZOOM),
+  surprised:   e('😲', 'Whoa!', ZOOM),
+  love:        e('😍', 'Love it!', BOUNCE),
+  sleeping:    e('😴', 'Zzzz…', { rotate: [0, 3, -3, 0] }),
+  dancing:     e('💃', 'Yay!', { x: [-4, 4, -4], rotate: [-5, 5, -5] }),
+  waving:      e('👋', 'Hi!', { rotate: [0, 15, -5, 15, 0] }),
+  cool:        e('😎', 'Cool!'),
+  sad:         e('😢', 'Oops…', { y: [0, 3, 0], rotate: [-3, 3, -3] }),
+  searching:   e('🧐', 'Searching…', SHAKE),
+  lightbulb:   e('💡', 'Aha!', { scale: [1, 1.3, 1], y: [0, -6, 0] }),
+  catalog:     e('👀', 'Checking…', WIGGLE),
+  gifting:     e('🎁', 'Gift!'),
+  mindblown:   e('🤯', 'Mind blown!', ZOOM),
+  facepalm:    e('😅', 'Oops!', BOUNCE),
+  shrug:       e('😕', 'Dunno!', WIGGLE),
+  heartEyes:   e('😻', 'In love!'),
+  clapping:    e('👏', 'Bravo!'),
+  sleepy:      e('😪', 'Late night…', BOUNCE),
+  shy:         e('🙈', 'Aw shucks!', { scale: [1, 0.9, 1], rotate: [-8, 0] }),
+  flexing:     e('💪', 'Got you!'),
+  celebrating: e('🎉', 'Woohoo!', ZOOM),
+  tanzanian:   e('🇹🇿', 'Tanzanian pride!', BOUNCE),
+  counting:    e('🪙', 'Counting coins…', WIGGLE),
+  // ── Joy & laughter ────────────────────────────────────────────────────────
+  grin:        e('😀', 'Heee!'),          beam:        e('😄', 'So good!'),
+  laugh:       e('😆', 'Haha!', WIGGLE),  joy:         e('😂', 'Dying! 😂', WIGGLE),
+  rofl:        e('🤣', "Can't breathe!", WIGGLE), wink: e('😉', 'You know it 😉'),
+  angel:       e('😇', 'Innocent!', BOUNCE), smitten:  e('🥰', 'Adorable!', BOUNCE),
+  yum:         e('😋', 'Tamu sana!'),     tongueOut:   e('😛', 'Bleh!'),
+  playful:     e('😜', 'Just playing!'),  zany:        e('🤪', 'Wild!', ZOOM),
+  giggle:      e('🤭', 'Hehe…', BOUNCE),  hug:         e('🤗', 'Big hug!', BOUNCE),
+  // ── Money & deals ─────────────────────────────────────────────────────────
+  moneyFace:   e('🤑', 'Deal alert!', ZOOM), gem:      e('💎', 'Premium!', BOUNCE),
+  fire:        e('🔥', 'Hot deal!', ZOOM),   bullseye: e('🎯', 'Perfect match!'),
+  trophy:      e('🏆', 'Winner!', BOUNCE),   goldMedal: e('🥇', 'Top pick!', BOUNCE),
+  rocket:      e('🚀', 'To the moon!', { y: [0, -8, 0], scale: [1, 1.1, 1] }),
+  // ── Reactions ─────────────────────────────────────────────────────────────
+  shush:       e('🤫', 'Secret…', BOUNCE), neutral:    e('😐', 'Hmm.'),
+  unamused:    e('😒', 'Really?'),         eyeRoll:    e('🙄', 'Oh please…', WIGGLE),
+  grimace:     e('😬', 'Yikes!', SHAKE),   relieved:   e('😌', 'Phew!', BOUNCE),
+  pensive:     e('😔', 'Thinking it over…'), drool:    e('🤤', 'Want it…', BOUNCE),
+  cowboy:      e('🤠', 'Yeehaw!', WIGGLE), partyFace:  e('🥳', 'Party time!', ZOOM),
+  disguised:   e('🥸', 'Incognito!'),      worried:    e('😟', 'Hmm, careful…'),
+  frowning:    e('🙁', 'Aww…'),            openMouth:  e('😮', 'Oh!', ZOOM),
+  hushed:      e('😯', 'Really?!'),        flushed:    e('😳', 'Oh my!', ZOOM),
+  pleading:    e('🥺', 'Please?', BOUNCE), fearful:    e('😨', 'Scary!', SHAKE),
+  coldSweat:   e('😰', 'Close call!', SHAKE), bawling: e('😭', 'Nooo!', SHAKE),
+  screaming:   e('😱', 'WHAT!', ZOOM),     confounded: e('😖', 'Ugh!', SHAKE),
+  persevering: e('😣', 'Hang on…'),        disappointed: e('😞', 'Sorry…'),
+  downcast:    e('😓', 'My bad…'),         weary:      e('😩', 'So tired…'),
+  exhausted:   e('😫', 'Whew!'),           yawning:    e('🥱', 'Sleepy time…', BOUNCE),
+  triumphant:  e('😤', 'Nailed it!', ZOOM), enraged:   e('😡', 'Grrr!', SHAKE),
+  angry:       e('😠', 'Not cool!', SHAKE), cursing:   e('🤬', '@#$%!', SHAKE),
+  smirk:       e('😏', 'I know things…'),  saluting:   e('🫡', 'On it, boss!', BOUNCE),
+  melting:     e('🫠', 'Melting…', { y: [0, 4, 0], scale: [1, 0.95, 1] }),
+  peeking:     e('🫣', "Can't look!"),     holdingTears: e('🥹', 'So touching…', BOUNCE),
+  kissing:     e('😘', 'Mwah!', BOUNCE),   kissingClosed: e('😚', 'Asante!', BOUNCE),
+  // ── Sick day / weather ────────────────────────────────────────────────────
+  masked:      e('😷', 'Stay safe!'),      fever:      e('🤒', 'Not feeling it…'),
+  bandaged:    e('🤕', 'Ouch!'),           nauseated:  e('🤢', 'Eww…', SHAKE),
+  sneezing:    e('🤧', 'Achoo!', SHAKE),   overheated: e('🥵', 'So hot!', SHAKE),
+  freezing:    e('🥶', 'Brrr!', SHAKE),    woozy:      e('🥴', 'Dizzy…', WIGGLE),
+  dizzy:       e('😵', 'Whoa…', WIGGLE),
+  // ── Characters ────────────────────────────────────────────────────────────
+  devilish:    e('😈', 'Mischief!', WIGGLE), imp:      e('👿', 'Grr!', SHAKE),
+  skull:       e('💀', "I'm dead 💀", WIGGLE), stinky: e('💩', 'Oops!', BOUNCE),
+  clown:       e('🤡', 'Silly me!', WIGGLE), ghost:    e('👻', 'Boo!', { y: [0, -6, 0], x: [-2, 2, 0] }),
+  alien:       e('👽', 'Out of this world!'), robot:   e('🤖', 'Beep boop!', SHAKE),
+  // ── Cat moods ─────────────────────────────────────────────────────────────
+  catGrin:     e('😺', 'Purrfect!'),       catJoy:     e('😹', 'Hilarious!', WIGGLE),
+  catSmile:    e('😸', 'Happy cat!'),      catSmirk:   e('😼', 'Sneaky…'),
+  catShock:    e('🙀', 'Gasp!', ZOOM),     catCry:     e('😿', 'Sad kitty…'),
+  hearNoEvil:  e('🙉', 'Not listening!'),  speakNoEvil: e('🙊', 'My lips are sealed!'),
+  // ── Hearts & sparkle ──────────────────────────────────────────────────────
+  redHeart:    e('❤️', 'Love!', BOUNCE),   brokenHeart: e('💔', 'Heartbreak…'),
+  sparklingHeart: e('💖', 'Sparkles!', ZOOM), growingHeart: e('💗', 'More love!', ZOOM),
+  beatingHeart: e('💓', 'Heartbeat!', { scale: [1, 1.15, 1, 1.15, 1] }),
+  twoHearts:   e('💕', 'Double love!', BOUNCE),
+  star:        e('⭐', 'Star!', WIGGLE),   glowingStar: e('🌟', 'Shining!', ZOOM),
+  dizzyStar:   e('💫', 'Wheee!', WIGGLE),  sparkles:    e('✨', 'Magic!', ZOOM),
+  confettiBall: e('🎊', 'Confetti!', ZOOM), balloon:    e('🎈', 'Fun!', { y: [0, -6, 0] }),
+  birthday:    e('🎂', 'Celebrate!', BOUNCE), rainbow:  e('🌈', 'Beautiful!', BOUNCE),
+  bolt:        e('⚡', 'Fast!', SHAKE),
+  // ── Hands ─────────────────────────────────────────────────────────────────
+  handshake:   e('🤝', 'Deal!', BOUNCE),   praying:    e('🙏', 'Asante sana!', BOUNCE),
+  thumbsUp:    e('👍', 'Approved!'),       thumbsDown: e('👎', 'Skip it.'),
+  okHand:      e('👌', 'Perfect!'),        victory:    e('✌️', 'Victory!'),
+  crossedFingers: e('🤞', 'Fingers crossed!'), loveYou: e('🤟', 'Love you!'),
+  rockOn:      e('🤘', 'Rock on!', WIGGLE), callMe:    e('🤙', 'Call me!', WIGGLE),
+  fistBump:    e('✊', 'Respect!', BOUNCE), punch:     e('👊', 'Boom!', ZOOM),
+  heartHands:  e('🫶', 'Heart hands!', BOUNCE),
+} satisfies Record<string, { overlay: string; animation: object; label: string }>;
+
+// All playable emote names (excludes idle) — the AI picks from this list.
+export const EMOTE_KEYS = Object.keys(EMOTES).filter(k => k !== 'idle') as EmoteType[];
+export const isEmote = (s: string): s is EmoteType => s in EMOTES;
+export const randomEmote = (pool?: readonly EmoteType[]): EmoteType => {
+  const src = pool?.length ? pool : EMOTE_KEYS;
+  return src[Math.floor(Math.random() * src.length)];
 };
 
 // ── Animated 3D emoji (Google Noto Animated Emoji) ───────────────────────────
