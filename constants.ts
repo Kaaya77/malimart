@@ -5,6 +5,17 @@ import { Product } from './types';
 export const APP_NAME = "MaliMart";
 export const CURRENCY = "TZS";
 
+/**
+ * Role-aware path for "message this seller". Buyers get the rich inbox
+ * (MessagingHub with product/order context); sellers and admins go to the
+ * unified /messages thread — sending a seller to /buyer just bounces them
+ * off the role guard and loses the intent.
+ */
+export const messageSellerPath = (role: string | undefined | null, sellerId: string) =>
+  role === 'buyer' || !role
+    ? `/buyer?tab=inbox&sellerId=${sellerId}`
+    : `/messages/${sellerId}`;
+
 // Formatter
 export const formatTZS = (amount: number | null | undefined) =>
   (amount || 0).toLocaleString('sw-TZ', {

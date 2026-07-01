@@ -5,11 +5,12 @@ import {
  X, Heart, Star, Shield, Truck, MapPin, Plus, Minus,
  Share2, Package, ShoppingBag, ChevronUp, ChevronDown,
  ChevronLeft, ChevronRight, ArrowRight, Sparkles, ZoomIn, ExternalLink,
+ MessageCircle, Store,
 } from 'lucide-react';
 import { Product } from '../types';
 import { useAppState } from '../context/AppContext';
 import { useToast, VerifiedBadge } from './UI';
-import { CURRENCY } from '../constants';
+import { CURRENCY, messageSellerPath } from '../constants';
 import { ReviewSection } from './ReviewSection';
 import { useProductPricing } from '../hooks/useProductPricing';
 import { useVariantSelection } from '../hooks/useVariantSelection';
@@ -31,7 +32,7 @@ interface ProductModalProps {
  * Rules of Hooks: all hooks called unconditionally before any early return.
  */
 export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onClose }) => {
- const { addToCart, toggleWishlist, isInWishlist } = useAppState();
+ const { addToCart, toggleWishlist, isInWishlist, user } = useAppState();
  const { addToast } = useToast();
  const navigate = useNavigate();
 
@@ -189,8 +190,8 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
  onClick={() => setSelectedOptions({ ...selectedOptions, [attr.name]: val })}
  className={`px-3.5 py-2 rounded-lg text-[13px] font-semibold transition-all active:scale-95 min-h-[40px]
  ${isSel
- ? 'bg-foreground text-background'
- : 'bg-transparent text-foreground/70 ring-1 ring-foreground/15 hover:ring-foreground/40'}`}
+ ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/25'
+ : 'bg-transparent text-foreground/70 ring-1 ring-foreground/15 hover:ring-emerald-500/50'}`}
  >
  {val}
  </button>
@@ -209,12 +210,45 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
  { icon: Shield, label: 'Protected', value: 'Full refund' },
  { icon: Package, label: 'Stock', value: stats.isOut ? 'Out of stock' : (product.stock != null ? `${product.stock} left` : 'In stock') },
  ].map(item => (
- <div key={item.label} className={`flex flex-col gap-1 ${compact ? 'p-2.5' : 'p-3'} rounded-xl bg-foreground/[0.03] ring-1 ring-foreground/[0.05]`}>
- <item.icon className="w-3.5 h-3.5 text-foreground/50" />
+ <div key={item.label} className={`relative overflow-hidden flex flex-col gap-1 ${compact ? 'p-2.5' : 'p-3'} rounded-xl bg-foreground/[0.03] border border-emerald-500/12`}>
+ <div className="absolute -top-6 -right-6 w-16 h-16 rounded-full blur-2xl opacity-15 bg-emerald-500 pointer-events-none" />
+ <item.icon className="w-3.5 h-3.5 text-emerald-600/70" />
  <span className="text-[9px] font-bold uppercase tracking-wider text-foreground/40 leading-none">{item.label}</span>
  <span className={`${compact ? 'text-[11px]' : 'text-[12px]'} font-semibold text-foreground leading-tight`}>{item.value}</span>
  </div>
  ))}
+ </div>
+ );
+
+ // Seller card — the "message seller" affordance the modal never had.
+ const handleMessageSeller = () => {
+ if (!user) { onClose(); navigate(`/login?redirect=${encodeURIComponent(`/product/${product.id}`)}`); return; }
+ if (user.id === product.seller_id) { addToast('This is your own product', 'info'); return; }
+ onClose();
+ navigate(messageSellerPath(user.role, product.seller_id));
+ };
+ const SellerCard = () => (
+ <div className="relative overflow-hidden flex items-center gap-3 p-4 rounded-2xl border border-emerald-500/15 bg-emerald-500/[0.03] shadow-[0_0_24px_-10px_rgba(16,185,129,0.35)]">
+ <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full blur-2xl opacity-20 bg-emerald-500 pointer-events-none" />
+ <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center font-black text-sm shrink-0">
+ {(product.seller_name || 'S')[0].toUpperCase()}
+ </div>
+ <div className="flex-1 min-w-0">
+ <p className="flex items-center gap-1 text-[13px] font-bold text-foreground truncate">
+ {product.seller_name || 'MaliMart seller'}
+ {product.is_verified && <VerifiedBadge className="scale-[0.6] origin-left -ml-0.5" />}
+ </p>
+ <p className="text-[11px] text-foreground/40 truncate">{sellerLocation || 'Tanzania'}</p>
+ </div>
+ <button onClick={() => { onClose(); navigate(`/store/${product.seller_id}`); }}
+ aria-label="View store"
+ className="h-9 w-9 rounded-xl bg-foreground/[0.05] ring-1 ring-foreground/10 text-foreground/60 hover:text-foreground flex items-center justify-center transition-colors shrink-0">
+ <Store className="w-4 h-4 stroke-[2]" />
+ </button>
+ <button onClick={handleMessageSeller}
+ className="h-9 px-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-bold flex items-center gap-1.5 transition-colors shadow-md shadow-emerald-600/25 shrink-0">
+ <MessageCircle className="w-3.5 h-3.5 stroke-[2.2]" /> Message
+ </button>
  </div>
  );
 
@@ -249,7 +283,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
  dragElastic={{ top: 0, bottom: 0.5 }}
  onDragEnd={handleDragEnd}
  className="relative z-50 w-full bg-background text-foreground
- rounded-t-[24px] overflow-hidden shadow-2xl
+ rounded-t-[24px] overflow-hidden shadow-2xl ring-1 ring-emerald-500/15
  flex flex-col h-[97dvh] md:hidden"
  >
  {/* Drag pill */}
@@ -371,6 +405,8 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
 
  <div className="mb-5"><TrustBadges compact /></div>
 
+ <div className="mb-5"><SellerCard /></div>
+
  {product.description && (
  <div className="mb-5">
  <p className={`text-[14px] text-foreground/65 leading-relaxed whitespace-pre-line ${!descExpanded ? 'line-clamp-3' : ''}`}>
@@ -420,7 +456,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
  className={`flex-1 h-[52px] rounded-xl flex items-center justify-center gap-2 text-[15px] font-semibold transition-all
  ${stats.isOut
  ? 'bg-foreground/10 text-foreground/40 cursor-not-allowed'
- : 'bg-foreground text-background active:bg-foreground/90'}`}
+ : 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/25 active:bg-emerald-700'}`}
  >
  {isAdding ? (
  <span className="opacity-70">Addingâ€¦</span>
@@ -448,7 +484,8 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
  exit={{ opacity: 0, scale: 0.97, y: 20 }}
  transition={{ type: 'spring', damping: 30, stiffness: 300 }}
  className="relative z-50 w-full max-w-[1080px] bg-background text-foreground
- rounded-3xl overflow-hidden shadow-2xl ring-1 ring-foreground/8
+ rounded-3xl overflow-hidden ring-1 ring-emerald-500/15
+ shadow-[0_25px_80px_-20px_rgba(0,0,0,0.5),0_0_60px_-15px_rgba(16,185,129,0.35)]
  hidden md:flex flex-row"
  style={{ maxHeight: '92vh' }}
  >
@@ -595,6 +632,8 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
 
  <div className="mb-7"><TrustBadges /></div>
 
+ <div className="mb-7"><SellerCard /></div>
+
  {product.description && (
  <div className="mb-7">
  <p className={`text-[14px] text-foreground/65 leading-relaxed whitespace-pre-line ${!descExpanded ? 'line-clamp-4' : ''}`}>
@@ -652,7 +691,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
  className={`flex-1 h-12 rounded-xl flex items-center justify-center gap-2 text-[15px] font-semibold transition-all
  ${stats.isOut
  ? 'bg-foreground/10 text-foreground/40 cursor-not-allowed'
- : 'bg-foreground text-background hover:bg-foreground/90'}`}
+ : 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/25 hover:bg-emerald-700'}`}
  >
  {isAdding ? 'Addingâ€¦' : stats.isOut ? 'Out of stock' : (
  <>

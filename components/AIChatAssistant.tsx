@@ -440,6 +440,26 @@ export const AIChatAssistant = () => {
   // times. Reactions play ONLY on real occasions — the AI's chosen emote per
   // reply, thinking while it works, purchase celebrations, mood empathy.
 
+  // Cross-component handoff: anywhere in the app can dispatch
+  // `new CustomEvent('mali:ask', { detail: { q } })` to open the assistant
+  // pre-loaded with a question (used by the search modal's "Ask Mali" row).
+  useEffect(() => {
+    const ask = (q: unknown) => {
+      if (typeof q !== 'string' || !q.trim()) return;
+      (window as any).__maliPendingAsk = null; // consumed — don't replay on remount
+      setIsOpen(true);
+      setIsMinimized(false);
+      setTimeout(() => handleSend(undefined, q.trim()), 350); // let the panel mount
+    };
+    const onAsk = (e: Event) => ask((e as CustomEvent).detail?.q);
+    window.addEventListener('mali:ask', onAsk);
+    // The assistant mounts lazily (post-idle) — consume any ask dispatched
+    // before the listener existed.
+    const pending = (window as any).__maliPendingAsk;
+    if (pending) { (window as any).__maliPendingAsk = null; ask(pending); }
+    return () => window.removeEventListener('mali:ask', onAsk);
+  });
+
   const clearChat = () => {
     if (isLive) stopLiveSession();
     setMessages([{ id: '0', role: 'assistant', text: greeting, type: 'text', ts: Date.now() }]);

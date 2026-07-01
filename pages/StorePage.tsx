@@ -13,7 +13,7 @@ import { VendorProfile, Product } from '../types';
 import { ProductCard } from '../components/ProductCard';
 import { ReviewSection } from '../components/ReviewSection';
 import { useToast } from '../components/UI';
-import { formatTZS } from '../constants';
+import { formatTZS, messageSellerPath } from '../constants';
 import { usePresence } from '../hooks/usePresence';
 
 type Tab = 'collection' | 'about' | 'reviews';
@@ -115,7 +115,9 @@ export const StorePage: React.FC = () => {
 
   const handleMessage = () => {
     if (!user) { navigate('/login?redirect=' + encodeURIComponent(window.location.pathname)); return; }
-    navigate(`/buyer?tab=inbox&sellerId=${id}`);
+    if (user.id === id) { addToast("This is your own store", 'info'); return; }
+    // Role-aware: sellers/admins can't enter /buyer (role guard bounces them)
+    navigate(messageSellerPath(user.role, id!));
   };
 
   const following = id ? isFollowing(id) : false;

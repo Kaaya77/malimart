@@ -74,10 +74,24 @@ const withImageModelFallback = async <T>(
                 lastError = e;
                 continue; // try next model
             }
-            throw e; // non-429 error — surface immediately
+            // Model retired/renamed (Google shuts image models down regularly —
+            // see aiModels.ts): rotate to the next model instead of dying here.
+            if (e?.status === 404 || msg.includes('not found')) {
+                console.warn(`[AI] ${model} not found — trying next in chain`);
+                lastError = e;
+                continue;
+            }
+            throw e; // other errors — surface immediately
         }
     }
-    // All models blocked
+    // All models failed. Distinguish "plan has no image quota" (billing issue,
+    // waiting won't help) from a genuine temporary rate limit.
+    const lastMsg = lastError?.message || '';
+    if (lastMsg.includes('quota') || lastMsg.includes('billing')) {
+        const err = new Error('Image generation is out of quota on the current Gemini plan. Text AI still works — enable billing for the API key in Google AI Studio, or try again after the daily reset.');
+        err.name = 'RateLimitError'; // callers already route this name to a toast
+        throw err;
+    }
     const soonest = Math.min(...IMAGE_MODEL_CHAIN.map(m => blockedFor(m)).filter(s => s > 0));
     throw new RateLimitError('image', isFinite(soonest) ? soonest : 60);
 };

@@ -188,6 +188,26 @@ export const SearchModal = ({
  setIsSearchOpen(false);
  };
 
+ // Hand the query to the Mali AI assistant (listens for 'mali:ask')
+ const askMali = () => {
+ const q = searchQuery.trim();
+ if (!q) return;
+ pushRecent(q);
+ setIsSearchOpen(false);
+ // Buffer too — the assistant mounts lazily and may not be listening yet
+ (window as any).__maliPendingAsk = q;
+ window.dispatchEvent(new CustomEvent('mali:ask', { detail: { q } }));
+ };
+
+ const AskMaliRow = () => (
+ <button onClick={askMali}
+ className="relative overflow-hidden w-full mt-3 h-12 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.05] hover:bg-emerald-500/[0.09] shadow-[0_0_20px_-8px_rgba(16,185,129,0.4)] text-sm font-semibold text-emerald-700 dark:text-emerald-400 flex items-center justify-center gap-2 transition-colors">
+ <span className="absolute -top-6 -left-6 w-20 h-20 rounded-full blur-2xl opacity-20 bg-emerald-500 pointer-events-none" />
+ <Sparkles className="w-4 h-4" />
+ Ask Mali AI about "{searchQuery.trim().slice(0, 40)}"
+ </button>
+ );
+
  return (
  <AnimatePresence>
  {isSearchOpen && (
@@ -253,6 +273,7 @@ export const SearchModal = ({
  <p className="text-sm text-foreground/55">
  No results for <span className="font-semibold text-foreground">"{searchQuery}"</span>.
  </p>
+ <AskMaliRow />
  <button
  onClick={() => goToShop(searchQuery)}
  className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
@@ -306,6 +327,7 @@ export const SearchModal = ({
  See all results for "{searchQuery}"
  <ArrowRight className="w-4 h-4 stroke-[2.2]" />
  </button>
+ <AskMaliRow />
  </>
  )}
  </div>
