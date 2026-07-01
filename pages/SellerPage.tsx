@@ -8,7 +8,7 @@ import {
   Menu, Shield, Activity, Clock
 } from 'lucide-react';
 import { useAppState } from '../context/AppContext';
-import { useSellerStats } from '../src/hooks/useSellerStats';
+import { useSellerPendingOrders } from '../hooks/useSellerDashboard';
 import { SellerDashboard } from '../components/SellerDashboard';
 import { SellerInventory } from '../components/SellerInventory';
 import { SellerOffers } from '../components/SellerOffers';
@@ -267,13 +267,15 @@ export const SellerPage = () => {
   const [selectedChatUser, setSelectedChatUser] = useState<string | null>(searchParams.get('chat'));
   const [selectedProductId, setSelectedProductId] = useState<string | null>(searchParams.get('productId'));
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(searchParams.get('orderId'));
-  const { stats } = useSellerStats(user?.id);
+  // Same query key as the dashboard's pending panel — every "pending" badge on
+  // this page and inside SellerDashboard reads one shared TanStack cache entry.
+  const { data: livePending = [] } = useSellerPendingOrders(user?.id);
 
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' }); }, [tab]);
 
   const myProducts = products.filter(p => p.seller_id === user?.id);
   const lowStock = myProducts.filter(p => typeof p.stock === 'number' && p.stock > 0 && p.stock <= 5).length;
-  const pendingOrders = stats.pending;
+  const pendingOrders = livePending.length;
 
   const switchToMessages = (buyerId: string, productId?: string | null, orderId?: string | null) => {
     setTab('messages');

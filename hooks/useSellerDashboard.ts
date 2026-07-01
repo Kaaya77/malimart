@@ -53,33 +53,50 @@ export function useSellerFullStats(sellerId: string | undefined) {
     });
 }
 
-/** Lightweight fetch of pending orders for inline dashboard actions */
+export const SELLER_PENDING_KEY = (sellerId: string) => ['seller', 'pending-orders', sellerId];
+
+/**
+ * Pending (unconfirmed) orders for this seller — the single source of truth
+ * for every "N orders awaiting confirmation" surface (page banner, sidebar
+ * badge, KPI card, action panel).
+ *
+ * Goes through the get_seller_orders RPC: the orders table has no seller_id
+ * column (sellers are linked via order_items.seller_id) and RLS blocks direct
+ * seller reads, so a plain .from('orders') query errors out. The RPC returns
+ * one row per order ITEM, so rows are de-duplicated by order_id.
+ */
 export function useSellerPendingOrders(sellerId: string | undefined) {
     return useQuery({
-        queryKey:  ['seller', 'pending-orders', sellerId],
+        queryKey:  SELLER_PENDING_KEY(sellerId ?? ''),
         queryFn:   async () => {
-            const { data, error } = await supabase
-                .from('orders')
-                .select('id, total, created_at, status, profiles:user_id(display_name, full_name)')
-                .eq('seller_id', sellerId!)
-                .in('status', ['pending', 'processing', 'confirmed'])
-                .order('created_at', { ascending: true })
-                .limit(5);
+            const { data, error } = await supabase.rpc('get_seller_orders', {
+                p_seller_id: sellerId, p_limit: 100, p_offset: 0, p_status: 'pending',
+            });
             if (error) throw error;
-            return (data ?? []).map((o: any) => ({
-                id: o.id,
-                total: o.total,
-                status: o.status,
-                created_at: o.created_at,
-                buyer_name: o.profiles?.display_name || o.profiles?.full_name || 'Customer',
-            }));
+            const byOrder = new Map<string, any>();
+            for (const row of (data as any[]) ?? []) {
+                if (!byOrder.has(row.order_id)) {
+                    byOrder.set(row.order_id, {
+                        id: row.order_id,
+                        total: row.total,
+                        status: row.order_status,
+                        created_at: row.order_created_at,
+                        buyer_name: row.buyer_name || 'Customer',
+                    });
+                }
+            }
+            // Oldest first — sellers should clear the longest-waiting order first
+            return [...byOrder.values()].sort((a, b) =>
+                new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
         },
         enabled:   !!sellerId,
         staleTime: 20_000,
     });
 }
 
-/** Today vs yesterday stats for the top-of-dashboard strip */
+/** Today vs yesterday stats for the top-of-dashboard strip.
+ *  Uses get_seller_orders (orders has no seller_id column — see note above);
+ *  the RPC returns item-level rows newest-first, de-duplicated by order_id. */
 export function useSellerTodayStats(sellerId: string | undefined) {
     return useQuery({
         queryKey: ['seller', 'today', sellerId],
@@ -89,21 +106,27 @@ export function useSellerTodayStats(sellerId: string | undefined) {
             const yesterdayStart = new Date(todayStart);
             yesterdayStart.setDate(yesterdayStart.getDate() - 1);
 
-            const { data, error } = await supabase
-                .from('orders')
-                .select('total, created_at')
-                .eq('seller_id', sellerId!)
-                .gte('created_at', yesterdayStart.toISOString())
-                .not('status', 'in', '(cancelled,refunded)');
+            const { data, error } = await supabase.rpc('get_seller_orders', {
+                p_seller_id: sellerId, p_limit: 200, p_offset: 0,
+            });
             if (error) throw error;
 
-            const today = (data ?? []).filter(o => new Date(o.created_at) >= todayStart);
-            const yesterday = (data ?? []).filter(o => new Date(o.created_at) < todayStart);
+            const byOrder = new Map<string, { total: number; created_at: string }>();
+            for (const row of (data as any[]) ?? []) {
+                if (['cancelled', 'refunded'].includes(row.order_status)) continue;
+                if (new Date(row.order_created_at) < yesterdayStart) continue;
+                if (!byOrder.has(row.order_id)) {
+                    byOrder.set(row.order_id, { total: Number(row.total) || 0, created_at: row.order_created_at });
+                }
+            }
+            const orders = [...byOrder.values()];
+            const today = orders.filter(o => new Date(o.created_at) >= todayStart);
+            const yesterday = orders.filter(o => new Date(o.created_at) < todayStart);
             return {
                 todayOrders:      today.length,
-                todayRevenue:     today.reduce((s, o) => s + Number(o.total), 0),
+                todayRevenue:     today.reduce((s, o) => s + o.total, 0),
                 yesterdayOrders:  yesterday.length,
-                yesterdayRevenue: yesterday.reduce((s, o) => s + Number(o.total), 0),
+                yesterdayRevenue: yesterday.reduce((s, o) => s + o.total, 0),
             };
         },
         enabled: !!sellerId,
@@ -128,6 +151,7 @@ export function useSellerDashboardRealtime(sellerId: string | undefined) {
                 () => {
                     qc.invalidateQueries({ queryKey: SELLER_SNAPSHOT_KEY(sellerId) });
                     qc.invalidateQueries({ queryKey: SELLER_FULL_KEY(sellerId) });
+                    qc.invalidateQueries({ queryKey: SELLER_PENDING_KEY(sellerId) });
                 })
             .on('postgres_changes',
                 { event: '*', schema: 'public', table: 'products', filter: `seller_id=eq.${sellerId}` },

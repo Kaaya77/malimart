@@ -254,45 +254,73 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     }, [wishlist, user]);
 
     useEffect(() => {
+        // Fetch (or create) the profile row for a session, with one retry and a
+        // session-metadata fallback. A transient network/SW hiccup on the profile
+        // SELECT must never leave `user` null — RouteGuard would bounce a fully
+        // authenticated session to /login the moment isLoading clears.
+        const resolveProfile = async (sessionUser: any): Promise<any | null> => {
+            for (let attempt = 0; attempt < 2; attempt++) {
+                const { data: profile, error: pErr } = await supabase
+                    .from('profiles').select('*').eq('id', sessionUser.id).single();
+                if (profile) return profile;
+                if (pErr && pErr.code === 'PGRST116') {
+                    const { data: np } = await supabase.from('profiles').insert({
+                        id: sessionUser.id,
+                        full_name: sessionUser.user_metadata.full_name || 'User',
+                        role: sessionUser.user_metadata.role || 'buyer',
+                        email: sessionUser.email
+                    }).select().single();
+                    return np;
+                }
+                // Transient failure — brief backoff, then retry once
+                if (attempt === 0) await new Promise(r => setTimeout(r, 800));
+            }
+            // Both attempts failed: keep the user signed in with a minimal profile
+            // from session metadata. RLS remains authoritative server-side; the
+            // profiles realtime subscription hydrates the full row when it recovers.
+            console.warn('[auth] profile fetch failed — using session metadata fallback');
+            return {
+                id: sessionUser.id,
+                full_name: sessionUser.user_metadata.full_name || 'User',
+                role: sessionUser.user_metadata.role || 'buyer',
+                email: sessionUser.email,
+            };
+        };
+
+        // Shared hydration path for init() and SIGNED_IN
+        const hydrateSession = async (session: any, eager: boolean) => {
+            const profile = await resolveProfile(session.user);
+            if (!profile) return;
+            setUser({ ...profile, name: profile.full_name || 'User', email: session.user.email } as User);
+            applyTheme(profile as any); // saved theme_mode/accent/motion/contrast follow the user
+            supabase.from('profiles').update({ last_seen_at: new Date().toISOString() }).eq('id', session.user.id)
+                .then(() => {}, () => {});
+            // 🚀 Single RPC for ALL user data (+ public data on init) in parallel
+            await Promise.all([
+                applyDashboardRpc(session.user.email || '', profile),
+                eager ? fetchPublicData() : Promise.resolve(),
+            ]);
+            // 🚀 Eager role-specific preload — data ready before user navigates
+            if (profile.role === 'seller') {
+                fetchSellerData(profile.id);
+            } else if (profile.role === 'buyer') {
+                fetchBuyerReturns(profile.id);
+                if (!eager) fetchPreloadedMessages();
+            }
+        };
+
         const init = async () => {
             initRunningRef.current = true;
             setIsLoading(true);
             // Guarantee isLoading is cleared even if a Supabase call hangs forever
             const loadingTimer = setTimeout(() => { initRunningRef.current = false; setIsLoading(false); }, 12_000);
             try {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session?.user) {
-                // Ensure profile row exists
-                let { data: profile, error: pErr } = await supabase
-                    .from('profiles').select('*').eq('id', session.user.id).single();
-                if (pErr && pErr.code === 'PGRST116') {
-                    const { data: np } = await supabase.from('profiles').insert({
-                        id: session.user.id,
-                        full_name: session.user.user_metadata.full_name || 'User',
-                        role: session.user.user_metadata.role || 'buyer',
-                        email: session.user.email
-                    }).select().single();
-                    profile = np;
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session?.user) {
+                    await hydrateSession(session, true);
+                } else {
+                    try { await fetchPublicData(); } catch(e) { console.error('fetchPublicData:', e); }
                 }
-                if (profile) {
-                    setUser({ ...profile, name: profile.full_name || 'User', email: session.user.email } as User);
-                    applyTheme(profile as any); // saved theme_mode/accent/motion/contrast follow the user
-                    await supabase.from('profiles').update({ last_seen_at: new Date().toISOString() }).eq('id', session.user.id);
-                    // 🚀 Single RPC for ALL user data + public data in parallel
-                    await Promise.all([
-                        applyDashboardRpc(session.user.email || '', profile),
-                        fetchPublicData()
-                    ]);
-                    // 🚀 Eager role-specific preload — data ready before user navigates
-                    if (profile.role === 'seller') {
-                        fetchSellerData(profile.id);
-                    } else if (profile.role === 'buyer') {
-                        fetchBuyerReturns(profile.id);
-                    }
-                }
-            } else {
-                try { await fetchPublicData(); } catch(e) { console.error('fetchPublicData:', e); }
-            }
             } catch (e) {
                 console.error('[init] Uncaught error:', e);
             } finally {
@@ -303,31 +331,14 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         };
         init();
 
-        const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+        // DEADLOCK GUARD: supabase-js dispatches onAuthStateChange while holding its
+        // internal auth lock. Any awaited supabase call inside the callback needs
+        // getSession() → the same lock → every request in the app hangs until the
+        // lock times out. Keep the callback synchronous and defer real work to a
+        // macrotask so the lock is released first.
+        const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
             if (event === 'SIGNED_IN' && session?.user) {
-                let { data: profile, error: pErr } = await supabase
-                    .from('profiles').select('*').eq('id', session.user.id).single();
-                if (pErr && pErr.code === 'PGRST116') {
-                    const { data: np } = await supabase.from('profiles').insert({
-                        id: session.user.id,
-                        full_name: session.user.user_metadata.full_name || 'User',
-                        role: session.user.user_metadata.role || 'buyer',
-                        email: session.user.email
-                    }).select().single();
-                    profile = np;
-                }
-                if (profile) {
-                    setUser({ ...profile, name: profile.full_name || 'User', email: session.user.email } as User);
-                    applyTheme(profile as any); // saved theme_mode/accent/motion/contrast follow the user
-                    await supabase.from('profiles').update({ last_seen_at: new Date().toISOString() }).eq('id', session.user.id);
-                    // 🚀 One RPC replaces 10+ sequential queries on every sign-in
-                    await applyDashboardRpc(session.user.email || '', profile);
-                    if (profile.role === 'seller') fetchSellerData(profile.id);
-                    else if (profile.role === 'buyer') {
-                        fetchBuyerReturns(profile.id);
-                        fetchPreloadedMessages();
-                    }
-                }
+                setTimeout(() => { hydrateSession(session, false); }, 0);
             } else if (event === 'SIGNED_OUT') {
                 // Skip SIGNED_OUT while init() is resolving — a Supabase token refresh
                 // can fire SIGNED_OUT then SIGNED_IN in quick succession; acting on the
@@ -336,16 +347,13 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
                 // Skip spurious SIGNED_OUT for guests who were never signed in —
                 // Supabase fires this event on session expiry probes even with no active user,
                 // which was clearing the in-memory guest cart on navigation.
-                if (!user) return;
-                // Briefly set isLoading so RouteGuard shows a spinner rather than
-                // painting protected page content for one frame before the redirect fires.
-                setIsLoading(true);
+                // (Read via ref: this closure runs with [] deps, `user` is frozen at null.)
+                if (!userRef.current) return;
                 setUser(null);
                 setCart([]);
                 setWishlist([]);
                 setOrders([]);
                 setNotifications([]);
-                setIsLoading(false);
             }
         });
 
@@ -402,6 +410,10 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     // Guards onAuthStateChange: while init() is in flight, ignore SIGNED_OUT
     // events so a mid-load token refresh doesn't bounce authenticated users to /login.
     const initRunningRef = React.useRef(true);
+    // Live mirror of `user` for the auth listener — its effect runs with [] deps,
+    // so reading `user` directly there would always see the initial null.
+    const userRef = React.useRef<User | null>(null);
+    useEffect(() => { userRef.current = user; }, [user]);
 
         const applyDashboardRpc = useCallback(async (email: string, profile: any) => {
         try {

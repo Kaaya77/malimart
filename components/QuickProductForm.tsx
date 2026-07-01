@@ -30,12 +30,19 @@ export const QuickProductForm = ({ onClose, onSuccess }: QuickProductFormProps) 
  setIsLoading(true);
  try {
  let url: string;
- if (typeof fileOrUrl === 'string') {
+ if (typeof fileOrUrl === 'string' && !fileOrUrl.startsWith('data:')) {
  url = fileOrUrl;
  } else {
- const fileExt = fileOrUrl.name.split('.').pop();
- const fileName = `${Math.random()}.${fileExt}`;
- const { error: uploadError } = await supabase.storage.from('mali-mart-uploads').upload(fileName, await compressImage(fileOrUrl), { cacheControl: IMMUTABLE_CACHE });
+ // Files AND data-URIs both go through Storage. A data-URI stored verbatim
+ // in products.images ships megabytes of base64 with every catalog query
+ // and can never be CDN-cached.
+ const blob = typeof fileOrUrl === 'string'
+ ? await (await fetch(fileOrUrl)).blob()
+ : fileOrUrl;
+ const compressed = await compressImage(blob);
+ const ext = compressed.type.split('/')[1] === 'jpeg' ? 'jpg' : (compressed.type.split('/')[1] || 'webp');
+ const fileName = `${Math.random()}.${ext}`;
+ const { error: uploadError } = await supabase.storage.from('mali-mart-uploads').upload(fileName, compressed, { cacheControl: IMMUTABLE_CACHE, contentType: compressed.type });
  if (uploadError) throw uploadError;
  const { data: publicUrlData } = supabase.storage.from('mali-mart-uploads').getPublicUrl(fileName);
  url = publicUrlData.publicUrl;

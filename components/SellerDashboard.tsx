@@ -160,22 +160,24 @@ const KpiCard = ({ label, value, format = 'number', decimals, trend, icon: Icon,
   );
 };
 
-// Fill a sparse date series so the x-axis is always continuous (no jumped gaps)
+// Fill a sparse date series so the x-axis is always continuous (no jumped gaps).
+// Day keys are computed in Africa/Dar_es_Salaam to match the RPC's bucketing
+// (revenue_trend groups by created_at AT TIME ZONE 'Africa/Dar_es_Salaam').
+const EAT_DAY = new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Dar_es_Salaam' }); // en-CA → YYYY-MM-DD
 function fillDateGaps(data: { date: string; revenue: number }[], days = 30): { date: string; revenue: number }[] {
   const byDate: Record<string, number> = {};
-  for (const d of data) byDate[d.date.slice(0, 10)] = d.revenue;
+  for (const d of data) byDate[d.date.slice(0, 10)] = Number(d.revenue) || 0;
   const result: { date: string; revenue: number }[] = [];
   for (let i = days - 1; i >= 0; i--) {
-    const dt = new Date(Date.now() - i * 86_400_000);
-    const key = dt.toISOString().slice(0, 10);
+    const key = EAT_DAY.format(new Date(Date.now() - i * 86_400_000));
     result.push({ date: key, revenue: byDate[key] ?? 0 });
   }
   return result;
 }
 
 // ─── Revenue Chart ────────────────────────────────────────────────────────
-const RevenueChart = ({ data, loading }: { data: { date: string; revenue: number }[]; loading: boolean }) => {
-  data = React.useMemo(() => fillDateGaps(data), [data]);
+const RevenueChart = ({ data, loading, days = 30 }: { data: { date: string; revenue: number }[]; loading: boolean; days?: number }) => {
+  data = React.useMemo(() => fillDateGaps(data, days), [data, days]);
   const fmt = (v: number) => v >= 1_000_000 ? `${(v/1_000_000).toFixed(1)}M` : v >= 1000 ? `${(v/1000).toFixed(0)}K` : String(v);
 
   if (loading) return (
@@ -407,7 +409,11 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({
   // snap is a raw JSONB object from get_seller_snapshot; cast to any for nested access.
   const s = snap as any;
   const revenue = full?.revenue ?? s?.revenue ?? 0;
-  const pending = full?.pending ?? s?.pending ?? 0;
+  // Pending count comes from the live pending-orders query — the same source
+  // that feeds the action panel — so every surface shows the same number.
+  // (full.pending is windowed to 30 days and snap.pending is a stale snapshot;
+  // the two can disagree with each other and with the panel.)
+  const pending = pendingOrders.length;
   const listings = full?.listings ?? s?.products?.active_products ?? 0;
   const aov = full?.aov ?? s?.aov ?? 0;
   const revTrend = full?.revTrend7 ?? 0;
@@ -600,7 +606,8 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({
             </div>
           </div>
           <RevenueChart
-            data={(full?.revenueTrend ?? []).slice(-chartPeriod)}
+            data={full?.revenueTrend ?? []}
+            days={chartPeriod}
             loading={fullLoading}
           />
         </motion.div>

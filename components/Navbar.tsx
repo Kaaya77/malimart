@@ -501,7 +501,7 @@ export const Navbar = () => {
 
 // ─── Mobile bottom nav ────────────────────────────────────────────────────────
 export const MobileBottomNav = () => {
- const { user } = useAuth();
+ const { user, isLoading } = useAuth();
  const { cart } = useCart();
  const { notifications } = useComms();
  const navigate = useNavigate();
@@ -509,15 +509,19 @@ export const MobileBottomNav = () => {
  const cartCount = cart.reduce((a,i)=>a+(i.quantity||1),0);
  const unread = notifications?.filter((n:any)=>!n.read).length||0;
 
+ // While the session is rehydrating, keep showing "Account" (pointing at
+ // /profile, whose DashboardRedirect waits for auth) instead of flashing
+ // "Sign in" at logged-in users on every hard refresh.
  const accountPath = user
- ? (user.role==='admin'?'/admin':user.role==='seller'?'/seller':'/buyer') : '/login';
+ ? (user.role==='admin'?'/admin':user.role==='seller'?'/seller':'/buyer')
+ : isLoading ? '/profile' : '/login';
 
  const tabs = [
  { id:'home', label:'Home', icon:Home, path:'/' },
  { id:'shop', label:'Shop', icon:Store, path:'/shop' },
  { id:'cats', label:'Explore', icon:LayoutGrid,path:'/categories' },
  { id:'cart', label:'Bag', icon:ShoppingBag,path:'/cart', badge:cartCount },
- { id:'me', label:user?'Account':'Sign in', icon:UserCircle, path:accountPath, badge:unread },
+ { id:'me', label:(user||isLoading)?'Account':'Sign in', icon:UserCircle, path:accountPath, badge:unread },
  ];
 
  const active = (path: string) => path==='/' ? location.pathname==='/' : location.pathname.startsWith(path);
