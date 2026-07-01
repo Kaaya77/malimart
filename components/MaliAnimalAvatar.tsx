@@ -14,11 +14,11 @@ export const ANIMALS: Record<AnimalType, { emoji: string; name: string; gradient
   fox:    { emoji: '🦊', name: 'Hadithi',  gradient: 'from-orange-400 via-red-400 to-orange-600',   accent: 'orange' },
   cat:    { emoji: '🐱', name: 'Paka',     gradient: 'from-violet-400 via-purple-400 to-indigo-500', accent: 'purple' },
   panda:  { emoji: '🐼', name: 'Nguvu',    gradient: 'from-slate-300 via-gray-400 to-slate-600',     accent: 'slate'  },
-  bunny:  { emoji: '🐰', name: 'Haraka',   gradient: 'from-pink-300 via-rose-400 to-pink-500',       accent: 'pink'   },
+  bunny:  { emoji: '🐇', name: 'Haraka',   gradient: 'from-pink-300 via-rose-400 to-pink-500',       accent: 'pink'   },
   bear:   { emoji: '🐻', name: 'Simba',    gradient: 'from-amber-500 via-orange-500 to-amber-700',   accent: 'amber'  },
   lion:   { emoji: '🦁', name: 'Mfalme',   gradient: 'from-yellow-400 via-amber-400 to-yellow-600',  accent: 'yellow' },
   owl:    { emoji: '🦉', name: 'Akili',    gradient: 'from-teal-400 via-cyan-400 to-teal-600',       accent: 'teal'   },
-  parrot: { emoji: '🦜', name: 'Kelele',   gradient: 'from-emerald-400 via-green-400 to-teal-500',   accent: 'emerald'},
+  parrot: { emoji: '🐦', name: 'Kelele',   gradient: 'from-emerald-400 via-green-400 to-teal-500',   accent: 'emerald'},
 };
 
 const EMOTES: Record<EmoteType, { overlay: string; animation: object; label: string }> = {
@@ -30,26 +30,81 @@ const EMOTES: Record<EmoteType, { overlay: string; animation: object; label: str
   surprised:   { overlay: '😲', animation: { scale: [1, 1.2, 0.95, 1] }, label: 'Whoa!' },
   love:        { overlay: '😍', animation: { scale: [1, 1.1, 1], y: [0, -4, 0] }, label: 'Love it!' },
   sleeping:    { overlay: '😴', animation: { rotate: [0, 3, -3, 0] }, label: 'Zzzz…' },
-  dancing:     { overlay: '🕺', animation: { x: [-4, 4, -4], rotate: [-5, 5, -5] }, label: 'Yay!' },
+  dancing:     { overlay: '💃', animation: { x: [-4, 4, -4], rotate: [-5, 5, -5] }, label: 'Yay!' },
   waving:      { overlay: '👋', animation: { rotate: [0, 15, -5, 15, 0] }, label: 'Hi!' },
   cool:        { overlay: '😎', animation: { scale: [1, 1.05, 1] }, label: 'Cool!' },
   sad:         { overlay: '😢', animation: { y: [0, 3, 0], rotate: [-3, 3, -3] }, label: 'Oops…' },
   // Expanded — shopping & helping
-  searching:   { overlay: '🔍', animation: { x: [-3, 3, -3, 3, 0], rotate: [-8, 8, -8, 0] }, label: 'Searching…' },
+  searching:   { overlay: '🧐', animation: { x: [-3, 3, -3, 3, 0], rotate: [-8, 8, -8, 0] }, label: 'Searching…' },
   lightbulb:   { overlay: '💡', animation: { scale: [1, 1.3, 1], y: [0, -6, 0] }, label: 'Aha!' },
-  catalog:     { overlay: '📋', animation: { rotate: [0, -5, 5, 0], y: [0, -2, 0] }, label: 'Checking…' },
+  catalog:     { overlay: '👀', animation: { rotate: [0, -5, 5, 0], y: [0, -2, 0] }, label: 'Checking…' },
   gifting:     { overlay: '🎁', animation: { scale: [1, 1.15, 1], rotate: [-8, 8, 0] }, label: 'Gift!' },
   mindblown:   { overlay: '🤯', animation: { scale: [1, 1.25, 0.9, 1.1, 1], rotate: [0, -10, 10, 0] }, label: 'Mind blown!' },
-  facepalm:    { overlay: '🤦', animation: { y: [0, 4, 0], rotate: [0, -5, 0] }, label: 'Oops!' },
-  shrug:       { overlay: '🤷', animation: { rotate: [-5, 5, -5, 0], y: [0, -2, 0] }, label: 'Dunno!' },
+  facepalm:    { overlay: '😅', animation: { y: [0, 4, 0], rotate: [0, -5, 0] }, label: 'Oops!' },
+  shrug:       { overlay: '😕', animation: { rotate: [-5, 5, -5, 0], y: [0, -2, 0] }, label: 'Dunno!' },
   heartEyes:   { overlay: '😻', animation: { scale: [1, 1.12, 1], rotate: [0, -6, 6, 0] }, label: 'In love!' },
   clapping:    { overlay: '👏', animation: { scale: [1, 1.08, 1, 1.08, 1], rotate: [-3, 3, -3, 0] }, label: 'Bravo!' },
-  sleepy:      { overlay: '💤', animation: { y: [0, -2, 0], rotate: [0, 5, 0] }, label: 'Late night…' },
+  sleepy:      { overlay: '😪', animation: { y: [0, -2, 0], rotate: [0, 5, 0] }, label: 'Late night…' },
   shy:         { overlay: '🙈', animation: { scale: [1, 0.9, 1], rotate: [-8, 0] }, label: 'Aw shucks!' },
   flexing:     { overlay: '💪', animation: { scale: [1, 1.15, 1], rotate: [0, -5, 5, 0] }, label: 'Got you!' },
   celebrating: { overlay: '🎉', animation: { scale: [1, 1.2, 0.95, 1.1, 1], x: [-3, 3, -3, 0], rotate: [-5, 5, 0] }, label: 'Woohoo!' },
   tanzanian:   { overlay: '🇹🇿', animation: { scale: [1, 1.1, 1], y: [0, -4, 0] }, label: 'Tanzanian pride!' },
   counting:    { overlay: '🪙', animation: { rotate: [0, 15, 0, -10, 0], y: [0, -3, 0] }, label: 'Counting coins…' },
+};
+
+// ── Animated 3D emoji (Google Noto Animated Emoji) ───────────────────────────
+// Served as animated WebP from fonts.gstatic.com — already covered by the CSP
+// img-src and the service worker's google-fonts cache (1-year SWR), so this
+// costs zero new dependencies and zero CSP changes. Any emoji Google hasn't
+// animated (or a reduced-motion preference) falls back to the plain glyph.
+const notoUrl = (emoji: string) => {
+  const cps = [...emoji]
+    .map(c => c.codePointAt(0)!.toString(16))
+    .filter(cp => cp !== 'fe0f'); // Noto URLs omit variation selectors
+  return `https://fonts.gstatic.com/s/e/notoemoji/latest/${cps.join('_')}/512.webp`;
+};
+
+// Remember which emoji 404'd so remounts don't re-request broken URLs.
+const notoMisses = new Set<string>();
+const prefersStill = typeof window !== 'undefined'
+  && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+export const AnimatedEmoji = ({ emoji, size, className = '' }: { emoji: string; size: number; className?: string }) => {
+  const [failed, setFailed] = useState(() => prefersStill || notoMisses.has(emoji));
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => {
+    setFailed(prefersStill || notoMisses.has(emoji));
+    setLoaded(false);
+  }, [emoji]);
+
+  if (failed) {
+    return (
+      <span className={`select-none ${className}`} style={{ fontSize: size, lineHeight: 1 }}>
+        {emoji}
+      </span>
+    );
+  }
+  // Glyph sits underneath until the WebP arrives — no blank flash on first load.
+  return (
+    <span className={`relative inline-flex items-center justify-center select-none ${className}`}
+      style={{ width: size, height: size }}>
+      {!loaded && (
+        <span aria-hidden style={{ fontSize: size * 0.92, lineHeight: 1, position: 'absolute' }}>
+          {emoji}
+        </span>
+      )}
+      <img
+        src={notoUrl(emoji)}
+        width={size} height={size}
+        alt="" aria-hidden draggable={false}
+        decoding="async"
+        className="pointer-events-none relative"
+        style={{ width: size, height: size, objectFit: 'contain', opacity: loaded ? 1 : 0, transition: 'opacity 150ms' }}
+        onLoad={() => setLoaded(true)}
+        onError={() => { notoMisses.add(emoji); setFailed(true); }}
+      />
+    </span>
+  );
 };
 
 const STORAGE_KEY = 'mali_animal';
@@ -113,30 +168,29 @@ export const MaliAnimalAvatar = ({
           : { duration: 0.6, ease: 'easeInOut' }
         }
       >
-        {/* Animal emoji — fades back when an expression is active */}
-        <motion.span
-          style={{ fontSize: size * 0.58, lineHeight: 1, position: 'relative', zIndex: 1 }}
-          className="select-none"
+        {/* Animal face (3D animated when Noto has it) — fades back while emoting */}
+        <motion.div
+          style={{ position: 'relative', zIndex: 1 }}
           animate={{ opacity: emote !== 'idle' && emoteInfo.overlay ? 0.18 : 1 }}
           transition={{ duration: 0.25 }}
         >
-          {info.emoji}
-        </motion.span>
+          <AnimatedEmoji emoji={info.emoji} size={size * 0.62} />
+        </motion.div>
 
         {/* Facial expression — fills the face area when emoting */}
         <AnimatePresence>
           {emote !== 'idle' && emoteInfo.overlay && (
-            <motion.span
+            <motion.div
               key={emote}
-              className="absolute inset-0 flex items-center justify-center select-none"
-              style={{ fontSize: size * 0.62, lineHeight: 1, zIndex: 2 }}
+              className="absolute inset-0 flex items-center justify-center"
+              style={{ zIndex: 2 }}
               initial={{ scale: 0.4, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.4, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 380, damping: 22 }}
             >
-              {emoteInfo.overlay}
-            </motion.span>
+              <AnimatedEmoji emoji={emoteInfo.overlay} size={size * 0.66} />
+            </motion.div>
           )}
         </AnimatePresence>
 
@@ -219,7 +273,7 @@ export const AnimalPicker = ({ onClose }: AnimalPickerProps) => {
                 : 'hover:bg-foreground/5'
             }`}
           >
-            <span style={{ fontSize: 24 }}>{info.emoji}</span>
+            <AnimatedEmoji emoji={info.emoji} size={26} />
             <span className="text-[8px] font-bold text-foreground/50">{info.name}</span>
           </motion.button>
         ))}
