@@ -1,5 +1,3 @@
-import { useWebVitals } from './src/hooks/usePerformance';
-import { detectAnomaly, getCsrfToken } from './src/security';
 import React, { ReactNode, useEffect, useState, PropsWithChildren, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, Link } from 'react-router-dom';
 import { 

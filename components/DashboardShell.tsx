@@ -16,9 +16,13 @@
 import React from 'react';
 import { ChevronLeft, RefreshCw, Search, Loader2 } from 'lucide-react';
 
-// ── Sk — reusable pulse skeleton block ───────────────────────────────────────
+// ── Sk — reusable skeleton block ─────────────────────────────────────────────
+// Same shimmer treatment as the UI-kit Skeleton (components/UI.tsx) so every
+// loading state in the app sweeps identically.
 export const Sk = ({ w = 'w-full', h = 'h-4', r = 'rounded-lg' }: { w?: string; h?: string; r?: string }) => (
-  <div className={`${w} ${h} ${r} bg-foreground/[0.06] animate-pulse`} />
+  <div className={`${w} ${h} ${r} relative overflow-hidden bg-foreground/[0.06]`}>
+    <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/50 dark:via-white/10 to-transparent" />
+  </div>
 );
 
 // ── SectionHeader ────────────────────────────────────────────────────────────

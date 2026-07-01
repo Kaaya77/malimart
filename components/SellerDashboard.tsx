@@ -18,8 +18,8 @@ import {
   TrendingUp, TrendingDown, Package, ShoppingBag, Clock,
   Wallet, BarChart3, Users, Zap, AlertTriangle, ArrowRight,
   RefreshCw, Star, Eye, Target, Activity, CheckCircle2, X,
-  RotateCcw, Tag, MessageSquare
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis,
   Tooltip, ResponsiveContainer, Cell, PieChart, Pie
@@ -762,28 +762,29 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({
         </motion.div>
       )}
 
-      {/* ── Quick Actions ────────────────────────────────────────────── */}
+      {/* ── Primary CTA ──────────────────────────────────────────────────
+          One real action instead of the old 5-button row: Orders/Messages/
+          Returns/Promotions merely duplicated the nav (sidebar + tab bar).
+          "Add Product" is the daily seller action, so it jumps straight into
+          the product wizard rather than parking on the inventory list. */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="grid grid-cols-3 sm:grid-cols-5 gap-3"
       >
-        {[
-          { label: 'Add Product', icon: Package,      color: 'text-emerald-600 bg-emerald-500/10', action: onGoInventory },
-          { label: 'Orders',      icon: ShoppingBag,  color: 'text-blue-600 bg-blue-500/10',       action: onGoOrders },
-          { label: 'Messages',    icon: MessageSquare,color: 'text-violet-600 bg-violet-500/10',   action: onGoMessages || onGoOrders },
-          { label: 'Returns',     icon: RotateCcw,    color: 'text-orange-600 bg-orange-500/10',   action: onGoReturns || onGoOrders },
-          { label: 'Promotions',  icon: Tag,          color: 'text-pink-600 bg-pink-500/10',       action: onGoPromotions || onGoOrders },
-        ].map(({ label, icon: Icon, color, action }) => (
-          <button key={label} onClick={action}
-            className="flex flex-col items-center gap-2.5 p-4 rounded-2xl bg-foreground/[0.02] border border-foreground/[0.08] hover:bg-foreground/[0.05] hover:border-foreground/15 transition-all active:scale-[0.97]">
-            <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${color}`}>
-              <Icon className="w-4 h-4 stroke-[2]" />
+        <Link to="/seller/products/new"
+          className="group flex items-center justify-between gap-4 p-5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 transition-colors active:scale-[0.99]">
+          <div className="flex items-center gap-3.5 min-w-0">
+            <span className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center shrink-0">
+              <Package className="w-5 h-5 text-white" strokeWidth={2} />
+            </span>
+            <div className="min-w-0">
+              <p className="text-sm font-black text-white leading-tight">Add a new product</p>
+              <p className="text-[11px] text-white/70 mt-0.5 truncate">Photos, variants and pricing — live in minutes</p>
             </div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/60">{label}</span>
-          </button>
-        ))}
+          </div>
+          <ArrowRight className="w-5 h-5 text-white/80 shrink-0 group-hover:translate-x-1 transition-transform" />
+        </Link>
       </motion.div>
     </div>
   );

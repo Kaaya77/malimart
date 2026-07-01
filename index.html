@@ -107,8 +107,10 @@
       /* Safe area handled per-component to avoid double-padding on notched devices */
     </style>
 
-  <!-- DNS prefetch for Supabase (will be replaced by actual URL at build) -->
-  <link rel="dns-prefetch" href="https://supabase.co">
+  <!-- Preconnect to the Supabase project host — warms DNS+TLS+TCP before the
+       first auth/data call. crossorigin required for CORS fetch connection reuse. -->
+  <link rel="preconnect" href="https://ubpapxdmqlepynonhaeo.supabase.co" crossorigin>
+  <link rel="dns-prefetch" href="https://ubpapxdmqlepynonhaeo.supabase.co">
 </head>
   <body class="bg-background text-foreground transition-colors duration-500 overflow-x-hidden antialiased">
     <div class="bg-noise"></div>

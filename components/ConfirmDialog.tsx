@@ -55,10 +55,10 @@ export default function ConfirmDialog({
       <div
         ref={ref}
         role="alertdialog" aria-modal="true" aria-label={title}
-        className="w-full max-w-md rounded-2xl bg-white dark:bg-neutral-900 p-6 shadow-2xl"
+        className="w-full max-w-md rounded-3xl bg-background border border-foreground/10 p-6 shadow-2xl"
       >
-        <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">{title}</h2>
-        <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-300">{description}</p>
+        <h2 className="text-lg font-black tracking-tight text-foreground">{title}</h2>
+        <p className="mt-2 text-sm font-medium text-foreground/55">{description}</p>
 
         {requireReason && (
           <textarea
@@ -67,14 +67,14 @@ export default function ConfirmDialog({
             placeholder={reasonPlaceholder}
             rows={3}
             maxLength={500}
-            className="mt-4 w-full rounded-xl border border-neutral-200 dark:border-neutral-700
-                       bg-transparent p-3 text-sm focus:outline-none focus:ring-2
-                       focus:ring-[var(--mm-accent)]"
+            className="mt-4 w-full rounded-xl border border-foreground/[0.12] bg-foreground/[0.04]
+                       p-3 text-sm text-foreground placeholder:text-foreground/35
+                       focus:outline-none focus:ring-2 focus:ring-foreground/25"
           />
         )}
 
         {error && (
-          <p className="mt-3 rounded-lg bg-red-50 dark:bg-red-950/40 px-3 py-2 text-sm text-red-700 dark:text-red-300">
+          <p className="mt-3 rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400">
             {error}
           </p>
         )}
@@ -82,16 +82,16 @@ export default function ConfirmDialog({
         <div className="mt-5 flex gap-3">
           <button
             onClick={onClose} disabled={busy}
-            className="flex-1 rounded-xl border border-neutral-200 dark:border-neutral-700
-                       py-2.5 text-sm font-medium hover:bg-neutral-50 dark:hover:bg-neutral-800"
+            className="flex-1 rounded-xl border border-foreground/[0.12] py-2.5 text-sm font-bold
+                       text-foreground/70 hover:bg-foreground/[0.05] transition-colors disabled:opacity-60"
           >
             Keep it
           </button>
           <button
             onClick={confirm} disabled={busy}
-            className={`flex-1 rounded-xl py-2.5 text-sm font-semibold text-white disabled:opacity-60
+            className={`flex-1 rounded-xl py-2.5 text-sm font-bold text-white transition-colors disabled:opacity-60
               ${tone === "danger" ? "bg-red-600 hover:bg-red-700"
-                                  : "bg-[var(--mm-accent)] hover:opacity-90"}`}
+                                  : "bg-emerald-600 hover:bg-emerald-700"}`}
           >
             {busy ? "Working…" : confirmLabel}
           </button>

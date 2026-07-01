@@ -351,11 +351,17 @@ export const SellerPage = () => {
               </div>
             </div>
 
-            {/* Alert pills */}
-            <AlertPills
-              pending={pendingOrders} lowStock={lowStock}
-              onOrders={() => setTab('orders')} onInventory={() => setTab('products')}
-            />
+            {/* Alert pills — mobile only (desktop header shows the same chips),
+                and never on the dashboard tab, which renders its own richer
+                AlertBanner + pending-orders action panel. */}
+            {tab !== 'dashboard' && (
+              <div className="lg:hidden">
+                <AlertPills
+                  pending={pendingOrders} lowStock={lowStock}
+                  onOrders={() => setTab('orders')} onInventory={() => setTab('products')}
+                />
+              </div>
+            )}
 
             {/* Tab content */}
             <AnimatePresence mode="wait">

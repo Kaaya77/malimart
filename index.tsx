@@ -41,8 +41,19 @@ if (SENTRY_DSN) {
 // until a hard reset.
 const updateSW = registerSW({
   onNeedRefresh() {
-    // Safe to reload now: new SW is waiting with full new cache ready.
-    updateSW(true);
+    // A new SW is waiting — but reloading immediately would destroy any
+    // in-progress form input (product wizard, checkout, chat drafts).
+    // Apply the update only when the tab is hidden; until then the old SW
+    // keeps serving its own consistent set of cached chunks, so waiting is safe.
+    const apply = () => updateSW(true);
+    if (document.visibilityState === 'hidden') { apply(); return; }
+    const onHide = () => {
+      if (document.visibilityState === 'hidden') {
+        document.removeEventListener('visibilitychange', onHide);
+        apply();
+      }
+    };
+    document.addEventListener('visibilitychange', onHide);
   },
   onOfflineReady() {},
   onRegisteredSW(_url, registration) {
