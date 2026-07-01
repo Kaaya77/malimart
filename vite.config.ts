@@ -1,8 +1,75 @@
 import path from 'path';
-import { defineConfig, loadEnv } from 'vite';
+import { defineConfig, loadEnv, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
+
+// Dev-only implementation of the two Vercel edge functions (api/gemini.ts,
+// api/gemini-token.ts). `vite dev` doesn't run Vercel functions, so without
+// this every AI feature (chat, image generation, descriptions) 404s locally.
+const geminiDevApi = (apiKey: string): Plugin => ({
+  name: 'gemini-dev-api',
+  configureServer(server) {
+    server.middlewares.use(async (req, res, next) => {
+      if (!req.url?.startsWith('/api/gemini')) return next();
+      const fail = (status: number, error: string) => {
+        res.statusCode = status;
+        res.setHeader('content-type', 'application/json');
+        res.end(JSON.stringify({ error }));
+      };
+      if (!apiKey) return fail(503, 'GEMINI_API_KEY not set in .env.local');
+      try {
+        // Ephemeral token minting for the Live (voice) API
+        if (req.url.startsWith('/api/gemini-token')) {
+          const r = await fetch('https://generativelanguage.googleapis.com/v1alpha/auth_tokens', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json', 'x-goog-api-key': apiKey },
+            body: JSON.stringify({
+              uses: 1,
+              expireTime: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+              newSessionExpireTime: new Date(Date.now() + 2 * 60 * 1000).toISOString(),
+            }),
+          });
+          res.statusCode = r.status;
+          res.setHeader('content-type', 'application/json');
+          res.end(await r.text());
+          return;
+        }
+        // Generic proxy: /api/gemini/<upstream path>?<qs>
+        const url = new URL(req.url, 'http://localhost');
+        const gpath = url.pathname.replace(/^\/api\/gemini\/?/, '');
+        const upstream = new URL(`https://generativelanguage.googleapis.com/${gpath}`);
+        url.searchParams.forEach((v, k) => { if (k.toLowerCase() !== 'key') upstream.searchParams.set(k, v); });
+        upstream.searchParams.set('key', apiKey);
+
+        const chunks: Buffer[] = [];
+        for await (const c of req) chunks.push(c as Buffer);
+        const r = await fetch(upstream, {
+          method: req.method,
+          headers: {
+            'content-type': String(req.headers['content-type'] || 'application/json'),
+            'x-goog-api-key': apiKey,
+          },
+          body: ['GET', 'HEAD'].includes(req.method || '') ? undefined : Buffer.concat(chunks),
+        });
+        res.statusCode = r.status;
+        res.setHeader('content-type', r.headers.get('content-type') || 'application/json');
+        // Stream through — chat uses SSE (streamGenerateContent?alt=sse)
+        const reader = r.body?.getReader();
+        if (reader) {
+          for (;;) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            res.write(Buffer.from(value));
+          }
+        }
+        res.end();
+      } catch (e: any) {
+        fail(500, e?.message || 'proxy error');
+      }
+    });
+  },
+});
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
@@ -23,6 +90,7 @@ export default defineConfig(({ mode }) => {
     server: { port: 3000, host: '0.0.0.0' },
 
     plugins: [
+      geminiDevApi(pick('GEMINI_API_KEY')),
       react({
         // Faster JSX transform — no React import needed
         jsxRuntime: 'automatic',

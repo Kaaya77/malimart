@@ -62,9 +62,9 @@ export const VariantsStep = () => {
  </div>
  </div>
  
- <div className="overflow-hidden border border-foreground/10 shadow-sm">
+ <div className="overflow-x-auto rounded-2xl border border-foreground/10 shadow-sm">
  <table className="w-full text-left">
- <thead className="bg-primary/5 text-[10px] uppercase tracking-[0.2em] text-foreground opacity-60">
+ <thead className="bg-foreground/[0.04] text-[10px] uppercase tracking-[0.2em] text-foreground/60">
  <tr>
  <th className="p-5 w-20 text-center">Img</th>
  <th className="p-5">Configuration</th>

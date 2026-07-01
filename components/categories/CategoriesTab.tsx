@@ -19,21 +19,7 @@ export const CategoriesTab: React.FC<CategoriesTabProps> = ({
   onSearchChange, onExpandCat, onViewDeals,
 }) => (
   <motion.div key="cats" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-6">
-    <div className="relative max-w-md">
-      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/30 stroke-[2]" />
-      <input
-        value={searchQ}
-        onChange={e => onSearchChange(e.target.value)}
-        placeholder="Search categories & styles…"
-        className="w-full h-11 pl-10 pr-10 rounded-xl bg-foreground/[0.04] text-foreground text-sm placeholder:text-foreground/35 focus:outline-none focus:bg-foreground/[0.07] transition-colors"
-      />
-      {searchQ && (
-        <button onClick={() => onSearchChange('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground/30 hover:text-foreground">
-          <X className="w-4 h-4" />
-        </button>
-      )}
-    </div>
-
+    {/* Search lives in the page hero — one input, one state, no duplicate box */}
     {visibleCategories.length === 0 ? (
       <div className="flex flex-col items-center py-16 border border-dashed border-foreground/15 rounded-3xl text-foreground/35">
         <LayoutGrid className="w-10 h-10 mb-3 opacity-20" />

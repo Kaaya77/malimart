@@ -392,16 +392,15 @@ export const ProductForm = ({ initialData, onClose, onSuccess, mode = 'modal' }:
  };
 
  const handleBulkApply = () => {
+ const price = Number(bulkPrice);
+ const stock = Number(bulkStock);
+ // Guard NaN/negatives — Number('abc') is NaN and would silently poison every variant
+ if (bulkPrice && (!Number.isFinite(price) || price <= 0)) return addToast("Bulk price must be a number greater than 0", "error");
+ if (bulkStock && (!Number.isInteger(stock) || stock < 0)) return addToast("Bulk stock must be a whole number ≥ 0", "error");
  const n = [...variants];
  let changed = false;
- if (bulkPrice) {
- n.forEach(v => v.base_price = Number(bulkPrice));
- changed = true;
- }
- if (bulkStock) {
- n.forEach(v => v.stock = Number(bulkStock));
- changed = true;
- }
+ if (bulkPrice) { n.forEach(v => v.base_price = price); changed = true; }
+ if (bulkStock) { n.forEach(v => v.stock = stock); changed = true; }
  if (changed) {
  setVariants(n);
  addToast("Bulk updates applied", "success");
@@ -423,10 +422,21 @@ export const ProductForm = ({ initialData, onClose, onSuccess, mode = 'modal' }:
 
  const handleSubmit = async () => {
  if (!user) return;
- if (!formData.name || (formData.price === undefined || formData.price < 0)) return addToast("Name and a valid Price are required", "error");
- if ((formData.cost_price !== undefined && formData.cost_price < 0) || 
+ if (!formData.name?.trim()) { setStep('details'); return addToast("Product name is required", "error"); }
+ if (!formData.category) { setStep('details'); return addToast("Pick a category so buyers can find this product", "error"); }
+ // Price must be a real positive amount (0 or negative both reject) unless variants carry pricing
+ if (variants.length === 0 && (!formData.price || formData.price <= 0)) {
+ setStep('details'); return addToast("Set a selling price greater than 0", "error");
+ }
+ if (formData.sale_price != null && formData.price != null && formData.sale_price >= formData.price) {
+ setStep('details'); return addToast("Sale price must be lower than the selling price", "error");
+ }
+ if ((formData.images?.length ?? 0) === 0) {
+ setStep('media'); return addToast("Add at least one product photo", "error");
+ }
+ if ((formData.cost_price !== undefined && formData.cost_price < 0) ||
  (formData.sale_price !== undefined && formData.sale_price < 0) ||
- (formData.stock !== undefined && formData.stock < 0) || 
+ (formData.stock !== undefined && formData.stock < 0) ||
  (formData.vat_rate !== undefined && formData.vat_rate < 0) ||
  (formData.weight !== undefined && formData.weight < 0) ||
  (formData.dimensions?.length !== undefined && formData.dimensions.length < 0) ||
@@ -435,10 +445,21 @@ export const ProductForm = ({ initialData, onClose, onSuccess, mode = 'modal' }:
  return addToast("Numeric fields must be non-negative", "error");
  }
 
- // Validate variants
+ // Validate variants: non-negative numbers, positive price, unique SKUs
+ const seenSkus = new Set<string>();
  for (const v of variants) {
- if (v.base_price < 0 || v.stock < 0 || (v.sale_price !== undefined && v.sale_price < 0)) {
- return addToast("Variant price, stock, and sale price must be non-negative", "error");
+ if (!v.base_price || v.base_price <= 0) {
+ setStep('variants'); return addToast("Every variant needs a price greater than 0", "error");
+ }
+ if (v.stock < 0 || (v.sale_price !== undefined && v.sale_price !== null && v.sale_price < 0)) {
+ setStep('variants'); return addToast("Variant stock and sale price must be non-negative", "error");
+ }
+ if (v.sku) {
+ const key = v.sku.trim().toLowerCase();
+ if (seenSkus.has(key)) {
+ setStep('variants'); return addToast(`Duplicate variant SKU: ${v.sku}`, "error");
+ }
+ seenSkus.add(key);
  }
  }
 
@@ -465,6 +486,7 @@ export const ProductForm = ({ initialData, onClose, onSuccess, mode = 'modal' }:
       if (!moderation.isFlagged) {
         addToast("Product published successfully!", "success");
       }
+      clearDraftOnSave(); // saved for real — stop offering the stale draft next time
       onSuccess();
       onClose();
     } catch (e: any) {
@@ -532,13 +554,23 @@ export const ProductForm = ({ initialData, onClose, onSuccess, mode = 'modal' }:
 
  const pf = { step, setStep, isQuickMode, setIsQuickMode, isLoading, setIsLoading, visionLoading, setVisionLoading, aiLoading, setAiLoading, refurbishingIdx, setRefurbishingIdx, includeVat, setIncludeVat, showGenImage, setShowGenImage, showRefineImage, setShowRefineImage, genPrompt, setGenPrompt, refinePrompt, setRefinePrompt, hoveredVariant, setHoveredVariant, isMagicFilling, setIsMagicFilling, bulkPrice, setBulkPrice, bulkStock, setBulkStock, formData, setFormData, attributes, setAttributes, variants, setVariants, tagInput, setTagInput, handleMagicFill, handleVisionAnalyze, uploadFileOrDataUrl, downloadImage, handleImageUpload, handleVariantImageUpload, handleRefurbishVariant, generateMagicDescription, handleSuggestPrice, handleTranslate, handleEnhanceDescription, handleSuggestAttributes, handleGenerateSKU, handleGenerateImage, handleRefineImage, toggleVat, generateVariants, handleBulkApply, handleAutoSkuVariants, handleSubmit, margin, profit, initialData, onClose, stepComplete, clearDraftOnSave };
 
- const STEPS = [
+ const ALL_STEPS = [
    { id: 'details',   label: 'Essentials', mobileLabel: 'Details',  icon: Package },
    { id: 'media',     label: 'Visuals',    mobileLabel: 'Media',    icon: ImageIcon },
    { id: 'logistics', label: 'Logistics',  mobileLabel: 'Shipping', icon: Truck },
    { id: 'variants',  label: 'Matrix',     mobileLabel: 'Options',  icon: LayoutGrid },
    { id: 'preview',   label: 'Preview',    mobileLabel: 'Preview',  icon: Smartphone },
  ] as const;
+
+ // Quick add mode: just the essentials — details, photos, publish. Stock
+ // defaults server-side; logistics/variants can be added later via Edit.
+ const QUICK_STEP_IDS = ['details', 'media', 'preview'];
+ const STEPS = isQuickMode ? ALL_STEPS.filter(s => QUICK_STEP_IDS.includes(s.id)) : ALL_STEPS;
+
+ // If quick mode hides the step we're standing on, snap back to details
+ useEffect(() => {
+   if (isQuickMode && !QUICK_STEP_IDS.includes(step)) setStep('details');
+ }, [isQuickMode]);
 
  const currentStepIndex = STEPS.findIndex(s => s.id === step);
 
@@ -641,7 +673,7 @@ export const ProductForm = ({ initialData, onClose, onSuccess, mode = 'modal' }:
              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">{initialData ? 'Edit product' : 'New product'}</h1>
              <button type="button" onClick={() => setIsQuickMode(!isQuickMode)} className="flex items-center gap-2 mt-3">
                <Switch checked={isQuickMode} onCheckedChange={setIsQuickMode} />
-               <span className="text-foreground/50 text-xs font-medium">Quick add mode</span>
+               <span className="text-foreground/50 text-xs font-medium">Quick add — details &amp; photos only</span>
              </button>
            </div>
            <div className="hidden md:flex gap-2 flex-shrink-0">

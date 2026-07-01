@@ -2,33 +2,42 @@ import React from 'react';
 import { Button, Input, Label, Textarea, Switch } from '../UI';
 import { Product } from '../../types';
 import { CATEGORY_HIERARCHY, formatTZS } from '../../constants';
-import { DollarSign, Languages, Loader2, MapPin, Sparkles, Wand2, X as XIcon } from 'lucide-react';
+import { DollarSign, Languages, Loader2, MapPin, Sparkles, Wand2, X as XIcon, Check } from 'lucide-react';
 import { useToast } from '../UI';
+import { useCatalog } from '../../context/AppContext';
 import { usePF } from './FormContext';
+
+const CONDITIONS = ['New', 'Like New', 'Used — Good', 'Used — Fair', 'Refurbished'];
 
 export const DetailsStep = () => {
     const { aiLoading, includeVat, isMagicFilling, formData, setFormData, variants, tagInput, setTagInput, handleMagicFill, generateMagicDescription, handleSuggestPrice, handleTranslate, handleEnhanceDescription, toggleVat } = usePF();
     const { addToast } = useToast();
+    // Live categories from the DB (top-level only); static hierarchy as fallback
+    const { categories } = useCatalog();
+    const categoryOptions = React.useMemo(() => {
+      const db = (categories || []).filter((c: any) => !c.parent_id && c.is_active !== false).map((c: any) => c.name);
+      return db.length >= 2 ? db : Object.keys(CATEGORY_HIERARCHY);
+    }, [categories]);
     return (
  <div className="space-y-10">
- <div className="flex items-center justify-between bg-foreground p-6 text-background dark:text-foreground">
- <div className="flex items-center gap-4">
- <div className="w-10 h-10 border border-background/20 dark:border-foreground/20 flex items-center justify-center">
+ <div className="flex items-center justify-between gap-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 p-5 text-white shadow-lg shadow-emerald-600/15">
+ <div className="flex items-center gap-4 min-w-0">
+ <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center shrink-0">
  <Sparkles className="w-5 h-5" />
  </div>
- <div>
- <p className="text-[10px] uppercase tracking-[0.2em]">AI-Powered Listing</p>
- <p className="text-[9px] opacity-60 uppercase tracking-[0.1em]">Let Gemini analyze your photo and fill the details.</p>
+ <div className="min-w-0">
+ <p className="text-xs font-black uppercase tracking-[0.15em]">AI-Powered Listing</p>
+ <p className="text-[11px] text-white/70 mt-0.5">Upload a photo, then let AI fill name, category and description.</p>
  </div>
  </div>
- <Button 
- variant="ghost" 
- onClick={handleMagicFill} 
+ <button
+ onClick={handleMagicFill}
  disabled={isMagicFilling || !formData.images?.length}
- className="bg-background/10 dark:bg-foreground/[0.06] hover:bg-background/20 dark:hover:bg-primary/20 text-background dark:text-foreground"
+ title={formData.images?.length ? undefined : 'Add a photo in the Visuals step first'}
+ className="h-10 px-4 rounded-xl bg-white text-emerald-700 text-xs font-black uppercase tracking-wide hover:bg-white/90 active:scale-95 transition-all disabled:opacity-50 shrink-0"
  >
  {isMagicFilling ? <Loader2 className="w-4 h-4 animate-spin" /> : "Magic Fill"}
- </Button>
+ </button>
  </div>
 
  <div className="space-y-6">
@@ -44,13 +53,20 @@ export const DetailsStep = () => {
  <Input value={formData.brand || ''} onChange={(e: any) => setFormData({...formData, brand: e.target.value})} placeholder="e.g. MaliMart Coffee Co." className="h-12" />
  </div>
  <div>
- <Label>Category</Label>
- <select value={formData.category || ''} onChange={(e) => setFormData({...formData, category: e.target.value})} className="w-full h-12 bg-foreground/[0.03] border border-foreground/10 px-4 text-sm outline-none text-foreground rounded-none">
- {Object.keys(CATEGORY_HIERARCHY).map(c => <option key={c} value={c}>{c}</option>)}
+ <Label>Category <span className="text-red-500">*</span></Label>
+ <select value={formData.category || ''} onChange={(e) => setFormData({...formData, category: e.target.value})} className="w-full h-12 rounded-xl bg-foreground/[0.04] border border-foreground/[0.12] focus:border-foreground/30 px-4 text-sm outline-none text-foreground transition-colors">
+ <option value="" disabled>Select a category…</option>
+ {categoryOptions.map((c: string) => <option key={c} value={c}>{c}</option>)}
  </select>
  </div>
  <div><Label>Subcategory</Label><Input value={formData.subcategory || ''} onChange={(e: any) => setFormData({...formData, subcategory: e.target.value})} className="h-12" placeholder="e.g. Beans" /></div>
- <div><Label>Condition</Label><Input value={formData.condition || ''} onChange={(e: any) => setFormData({...formData, condition: e.target.value})} className="h-12" placeholder="e.g. New, Used" /></div>
+ <div>
+ <Label>Condition</Label>
+ <select value={formData.condition || ''} onChange={(e) => setFormData({...formData, condition: e.target.value})} className="w-full h-12 rounded-xl bg-foreground/[0.04] border border-foreground/[0.12] focus:border-foreground/30 px-4 text-sm outline-none text-foreground transition-colors">
+ <option value="">Not specified</option>
+ {CONDITIONS.map(c => <option key={c} value={c}>{c}</option>)}
+ </select>
+ </div>
  <div><Label>Warranty Period</Label><Input value={formData.warranty_period || ''} onChange={(e: any) => setFormData({...formData, warranty_period: e.target.value})} className="h-12" placeholder="e.g. 1 Year" /></div>
  <div className="col-span-2 md:col-span-1">
  <Label>Location</Label>
@@ -84,6 +100,11 @@ export const DetailsStep = () => {
  <MapPin className="w-4 h-4" />
  </Button>
  </div>
+ {formData.latitude != null && formData.longitude != null && (
+ <p className="flex items-center gap-1 mt-1.5 text-[10px] font-semibold text-emerald-600">
+ <Check className="w-3 h-3" /> GPS pinned ({Number(formData.latitude).toFixed(3)}, {Number(formData.longitude).toFixed(3)}) — buyers nearby will find you first
+ </p>
+ )}
  </div>
  
  <div className="col-span-2">
@@ -148,70 +169,66 @@ export const DetailsStep = () => {
          }
          setTagInput('');
        }}
-       className="h-10 px-4 bg-foreground/[0.06] border border-foreground/10 text-foreground text-xs uppercase tracking-[0.1em] hover:bg-foreground/[0.12] transition-colors"
+       className="h-10 px-4 rounded-xl bg-foreground/[0.06] border border-foreground/10 text-foreground text-xs font-bold uppercase tracking-[0.1em] hover:bg-foreground/[0.12] transition-colors"
      >Add</button>
    </div>
  </div>
 
- <div className="col-span-2 p-10 bg-foreground/[0.03] border border-foreground/10">
- <div className="flex items-center justify-between mb-8">
+ <div className="col-span-2 p-6 sm:p-8 rounded-2xl bg-foreground/[0.02] border border-foreground/[0.08]">
+ <div className="flex items-center justify-between mb-6">
  <div className="flex items-center gap-3">
- <DollarSign className="w-5 h-5 opacity-40" />
- <h3 className="text-[10px] uppercase tracking-[0.3em] font-bold">Pricing Strategy</h3>
+ <span className="w-9 h-9 rounded-xl bg-emerald-500/12 text-emerald-600 flex items-center justify-center"><DollarSign className="w-4 h-4" /></span>
+ <h3 className="text-xs uppercase tracking-[0.2em] font-black text-foreground/70">Pricing</h3>
  </div>
- <button onClick={handleSuggestPrice} disabled={aiLoading} className="text-[9px] text-foreground uppercase tracking-[0.2em] hover:opacity-50 transition-opacity flex items-center gap-2">
+ <button onClick={handleSuggestPrice} disabled={aiLoading} className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest hover:opacity-70 transition-opacity flex items-center gap-1.5">
  <Sparkles className="w-3 h-3" /> Magic Price
  </button>
  </div>
- 
- <div className="grid md:grid-cols-3 gap-8 mb-10">
- <div className="space-y-3">
- <Label className="text-[9px] uppercase tracking-[0.1em] opacity-60">Selling Price</Label>
+
+ <div className="grid md:grid-cols-3 gap-5 mb-8">
+ <div className="space-y-2">
+ <Label className="text-[10px] uppercase tracking-wider text-foreground/50">Selling Price <span className="text-red-500">*</span></Label>
  {variants.length > 0 ? (
- <div className="h-14 flex items-center px-5 bg-white dark:bg-black/20 border border-foreground/10 text-xs font-mono text-foreground">
- {formatTZS(Math.min(...variants.map(v => v.base_price || 0)))} - {formatTZS(Math.max(...variants.map(v => v.base_price || 0)))}
+ <div className="h-14 flex items-center px-5 rounded-xl bg-foreground/[0.04] border border-foreground/[0.12] text-xs font-mono text-foreground/70">
+ {formatTZS(Math.min(...variants.map(v => v.base_price || 0)))} – {formatTZS(Math.max(...variants.map(v => v.base_price || 0)))} (from variants)
  </div>
  ) : (
  <div className="relative">
- <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[10px] opacity-40">TZS</span>
- <Input type="number" value={formData.price || ''} onChange={(e: any) => setFormData({...formData, price: e.target.value === '' ? null : Number(e.target.value)})} className="h-14 pl-12 font-mono bg-white dark:bg-black/20" />
- <button
- type="button"
- onClick={handleSuggestPrice}
- disabled={aiLoading}
- className="absolute right-2 top-1/2 -translate-y-1/2 h-10 px-3 bg-primary text-background dark:bg-background dark:text-foreground text-[9px] uppercase tracking-[0.1em] hover:opacity-90 transition-opacity"
- >
- {aiLoading ? <Loader2 className="w-3 h-3 animate-spin"/> : "AI Suggest"}
- </button>
+ <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-foreground/35">TZS</span>
+ <Input type="number" min={1} value={formData.price || ''} onChange={(e: any) => setFormData({...formData, price: e.target.value === '' ? null : Number(e.target.value)})} className="h-14 pl-12 font-mono rounded-xl bg-foreground/[0.04]" />
  </div>
  )}
  </div>
- <div className="space-y-3">
- <Label className="text-[9px] uppercase tracking-[0.1em] opacity-60">Cost Price</Label>
+ <div className="space-y-2">
+ <Label className="text-[10px] uppercase tracking-wider text-foreground/50">Cost Price</Label>
  <div className="relative">
- <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[10px] opacity-40">TZS</span>
- <Input type="number" value={formData.cost_price || ''} onChange={(e: any) => setFormData({...formData, cost_price: e.target.value === '' ? null : Number(e.target.value)})} className="h-14 pl-12 font-mono bg-white dark:bg-black/20" />
+ <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-foreground/35">TZS</span>
+ <Input type="number" min={0} value={formData.cost_price || ''} onChange={(e: any) => setFormData({...formData, cost_price: e.target.value === '' ? null : Number(e.target.value)})} className="h-14 pl-12 font-mono rounded-xl bg-foreground/[0.04]" />
  </div>
+ <p className="text-[10px] text-foreground/35">What it costs you — used for your margin, never shown to buyers</p>
  </div>
- <div className="space-y-3">
- <Label className="text-[9px] uppercase tracking-[0.1em] opacity-60">Sale Price</Label>
+ <div className="space-y-2">
+ <Label className="text-[10px] uppercase tracking-wider text-foreground/50">Sale Price</Label>
  <div className="relative">
- <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[10px] opacity-40">TZS</span>
- <Input type="number" value={formData.sale_price || ''} onChange={(e: any) => setFormData({...formData, sale_price: e.target.value === '' ? null : Number(e.target.value)})} className="h-14 pl-12 font-mono bg-white dark:bg-black/20 border-dashed" />
+ <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-foreground/35">TZS</span>
+ <Input type="number" min={0} value={formData.sale_price || ''} onChange={(e: any) => setFormData({...formData, sale_price: e.target.value === '' ? null : Number(e.target.value)})} className="h-14 pl-12 font-mono rounded-xl bg-foreground/[0.04] border-dashed" />
  </div>
+ {formData.sale_price != null && formData.price != null && formData.sale_price >= formData.price && (
+ <p className="text-[10px] font-semibold text-red-500">Must be lower than the selling price</p>
+ )}
  </div>
  </div>
 
- <div className="space-y-6 pt-8 border-t border-foreground/10">
- <div className="flex items-center justify-between">
- <Label>VAT Status</Label>
+ <div className="space-y-4 pt-6 border-t border-foreground/[0.08]">
+ <div className="flex items-center justify-between flex-wrap gap-3">
+ <Label className="mb-0">VAT Status</Label>
  <div className="flex gap-2">
  {[{l: 'Standard (18%)', v: 0.18}, {l: 'Exempt (0%)', v: 0}].map(opt => (
- <button 
+ <button
  key={opt.v}
- type="button" 
+ type="button"
  onClick={() => setFormData({...formData, vat_rate: opt.v})}
- className={`px-4 h-10 text-[9px] uppercase tracking-[0.2em] border transition-all ${formData.vat_rate === opt.v ? 'bg-primary text-background dark:bg-background dark:text-foreground border-transparent' : 'bg-transparent border-foreground/10 text-foreground'}`}
+ className={`px-4 h-10 rounded-xl text-[10px] font-bold uppercase tracking-widest border transition-all ${formData.vat_rate === opt.v ? 'bg-emerald-600 text-white border-transparent' : 'bg-transparent border-foreground/[0.12] text-foreground/60 hover:border-foreground/30'}`}
  >
  {opt.l}
  </button>
@@ -219,8 +236,8 @@ export const DetailsStep = () => {
  </div>
  </div>
  {formData.vat_rate === 0.18 && (
- <div className="flex items-center justify-between p-4 border border-foreground/10">
- <Label className="mb-0">Apply 18% VAT Adjustment (Shift to Consumer)</Label>
+ <div className="flex items-center justify-between gap-3 p-4 rounded-xl bg-foreground/[0.03] border border-foreground/[0.08]">
+ <Label className="mb-0 text-xs">Add 18% VAT on top of the price (buyer pays it)</Label>
  <Switch checked={includeVat} onCheckedChange={toggleVat} />
  </div>
  )}

@@ -38,10 +38,15 @@ export const CategoriesPage = () => {
   const [serverTrending, setServerTrending] = useState<any[] | null>(null);
 
   useEffect(() => {
-    categoryCountsServer().then(setServerCounts);
-    trendingProductsServer(16).then(setServerTrending);
+    // Server data is an enhancement — on failure the client-side fallbacks
+    // below take over instead of leaving the tab stuck on nulls.
+    categoryCountsServer().then(setServerCounts).catch(() => setServerCounts(null));
+    trendingProductsServer(16).then(setServerTrending).catch(() => setServerTrending(null));
   }, []);
 
+  const VENDOR_PAGE = 24;
+  const [vendorPage, setVendorPage] = useState(1);
+  const [hasMoreVendors, setHasMoreVendors] = useState(false);
   useEffect(() => {
     if (tab !== 'stores') return;
     setLoadingVendors(true);
@@ -50,9 +55,14 @@ export const CategoriesPage = () => {
       .select('*')
       .eq('is_active', true)
       .order('total_sales', { ascending: false })
-      .limit(60)
-      .then(({ data }) => { setVendors(data as VendorProfile[] || []); setLoadingVendors(false); });
-  }, [tab]);
+      .range(0, vendorPage * VENDOR_PAGE) // one extra row = "has more" probe
+      .then(({ data }) => {
+        const rows = (data as VendorProfile[]) || [];
+        setHasMoreVendors(rows.length > vendorPage * VENDOR_PAGE);
+        setVendors(rows.slice(0, vendorPage * VENDOR_PAGE));
+        setLoadingVendors(false);
+      });
+  }, [tab, vendorPage]);
 
   // ── Derived data ─────────────────────────────────────────────────────────
   const categoryCounts = useMemo(() => {
@@ -183,8 +193,8 @@ export const CategoriesPage = () => {
         </div>
       </div>
 
-      {/* Tab navigation */}
-      <div className="sticky top-[60px] z-20 bg-background/95 backdrop-blur-xl border-b border-foreground/8">
+      {/* Tab navigation — sticky offset matches the fixed navbar height (h-16 / md:h-20) */}
+      <div className="sticky top-16 md:top-20 z-20 bg-background/95 backdrop-blur-xl border-b border-foreground/8">
         <div className="container mx-auto max-w-7xl px-4 md:px-8">
           <div className="flex gap-1 overflow-x-auto no-scrollbar py-2">
             {TABS.map(t => {
@@ -221,21 +231,31 @@ export const CategoriesPage = () => {
             />
           )}
           {tab === 'stores' && (
-            <StoresTab
-              filteredVendors={filteredVendors}
-              loadingVendors={loadingVendors}
-              searchQ={searchQ}
-              storeFilter={storeFilter}
-              regionFilter={regionFilter}
-              storeRegions={storeRegions}
-              isFollowing={isFollowing}
-              followSeller={followSeller}
-              unfollowSeller={unfollowSeller}
-              user={user}
-              onSearchChange={setSearchQ}
-              onStoreFilterChange={setStoreFilter}
-              onRegionChange={setRegionFilter}
-            />
+            <div>
+              <StoresTab
+                filteredVendors={filteredVendors}
+                loadingVendors={loadingVendors}
+                searchQ={searchQ}
+                storeFilter={storeFilter}
+                regionFilter={regionFilter}
+                storeRegions={storeRegions}
+                isFollowing={isFollowing}
+                followSeller={followSeller}
+                unfollowSeller={unfollowSeller}
+                user={user}
+                onSearchChange={setSearchQ}
+                onStoreFilterChange={setStoreFilter}
+                onRegionChange={setRegionFilter}
+              />
+              {hasMoreVendors && !loadingVendors && (
+                <div className="flex justify-center mt-8">
+                  <button onClick={() => setVendorPage(p => p + 1)}
+                    className="h-11 px-8 rounded-xl bg-foreground/[0.06] hover:bg-foreground/[0.1] text-foreground text-sm font-bold transition-colors">
+                    Load more stores
+                  </button>
+                </div>
+              )}
+            </div>
           )}
           {tab === 'trending' && (
             <TrendingTab

@@ -9,10 +9,10 @@ export const PhonePreview = ({ data, variant, activeImage }: { data: Partial<Pro
  const discount = salePrice && data.price ? Math.round(((data.price - salePrice) / data.price) * 100) : 0;
 
  return (
- <div className="w-[280px] h-[560px] xl:w-[300px] xl:h-[600px] bg-foreground border-8 border-foreground dark:border-background shadow-2xl relative overflow-hidden flex flex-col pointer-events-none select-none mx-auto transform transition-all duration-300 origin-center scale-90 md:scale-100">
+ <div className="w-[280px] h-[560px] xl:w-[300px] xl:h-[600px] rounded-[40px] bg-foreground border-8 border-foreground/90 ring-1 ring-foreground/20 shadow-2xl relative overflow-hidden flex flex-col pointer-events-none select-none mx-auto transform transition-all duration-300 origin-center scale-90 md:scale-100">
  {/* Dynamic Island */}
  <div className="absolute top-0 left-0 right-0 h-6 z-30 flex justify-center pt-2">
- <div className="w-20 h-5 bg-black rounded-none"></div>
+ <div className="w-20 h-5 bg-black rounded-full"></div>
  </div>
  
  {/* Content */}
