@@ -267,7 +267,7 @@ export const EmptyState = ({ icon: Icon, title, subtitle, action, className = ''
 // Nav/tab count badge. `urgent` = needs action (red); default = informational.
 export const CountBadge = ({ count, urgent = false, className = '' }: { count: number, urgent?: boolean, className?: string }) => (
  count > 0 ? (
- <span className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-black tabular-nums ${urgent ? 'bg-red-500 text-white' : 'bg-foreground/10 text-foreground/70'} ${className}`}>
+ <span className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-black tabular-nums ${urgent ? 'bg-red-500 dark:bg-red-600 text-white ring-1 ring-background/40' : 'bg-foreground/10 text-foreground/70'} ${className}`}>
  {count > 99 ? '99+' : count}
  </span>
  ) : null

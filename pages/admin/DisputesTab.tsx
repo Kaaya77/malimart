@@ -1,12 +1,12 @@
 import React from 'react';
-import { Badge, Button, PremiumStatCard } from '../../components/UI';
+import { Badge, Button, EmptyState, PremiumStatCard } from '../../components/UI';
 import { formatTZS } from '../../constants';
 import { motion } from 'framer-motion';
-import { Activity, AlertTriangle, CheckCircle2, MessageSquare, Sparkles, Users } from 'lucide-react';
+import { Activity, AlertTriangle, CheckCircle2, MessageSquare, RotateCcw, Sparkles, Store, Users } from 'lucide-react';
 import { useAdmin } from './context';
 
 export const DisputesTab = () => {
-    const { addToast, disputes, handleAnalyzeDispute, handleMessageUser, handleResolveDispute, status } = useAdmin();
+    const { addToast, disputes, handleAnalyzeDispute, handleMessageUser, handleResolveDispute } = useAdmin();
     return (
                             <motion.div 
                                 initial={{ opacity: 0, y: 20 }}
@@ -38,7 +38,7 @@ export const DisputesTab = () => {
 
                                 <div className="space-y-8">
                                     <div className="flex items-center justify-between pb-6">
-                                        <h3 className="font-sans font-bold text-2xl tracking-tight">Pending Resolutions</h3>
+                                        <h3 className="font-sans font-black text-xl tracking-tight">Pending Resolutions</h3>
                                         <div className="flex gap-2">
                                             <Button variant="outline" size="sm" onClick={() => {
                                                 if (!disputes.length) { addToast('No disputes to export', 'info'); return; }
@@ -53,35 +53,36 @@ export const DisputesTab = () => {
                                                 a.href = url; a.download = `disputes-${new Date().toISOString().slice(0,10)}.csv`;
                                                 a.click(); URL.revokeObjectURL(url);
                                                 addToast('Disputes exported', 'success');
-                                            }} className="text-[10px] font-bold uppercase tracking-wider rounded-xl">Export CSV</Button>
+                                            }} className="text-[10px] font-bold uppercase tracking-widest rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40" aria-label="Export disputes as CSV">Export CSV</Button>
                                         </div>
                                     </div>
 
                                     {disputes.length === 0 ? (
-                                        <div className="text-center p-12 glass-surface rounded-3xl border border-border shadow-sm">
-                                            <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-6">
-                                                <CheckCircle2 className="w-8 h-8 text-muted-foreground stroke-2" />
-                                            </div>
-                                            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">All clear. No active disputes.</p>
+                                        <div className="glass-surface rounded-3xl border border-border shadow-sm">
+                                            <EmptyState
+                                                icon={CheckCircle2}
+                                                title="All clear"
+                                                subtitle="No active disputes right now."
+                                            />
                                         </div>
                                     ) : (
                                         <div className="grid grid-cols-1 gap-6">
                                             {disputes.map(dispute => (
-                                                <div key={dispute.id} className="group relative glass-surface rounded-3xl border border-border p-8 overflow-hidden transition-all shadow-sm hover:shadow-md">
-                                                    
-                                                    <div className="relative z-10 flex flex-col lg:flex-row justify-between gap-8">
-                                                        <div className="flex-1 space-y-6">
+                                                <div key={dispute.id} className="group relative glass-surface rounded-3xl border border-border p-6 overflow-hidden transition-all shadow-sm hover:shadow-md">
+
+                                                    <div className="relative z-10 flex flex-col lg:flex-row justify-between gap-6">
+                                                        <div className="flex-1 space-y-4">
                                                             <div className="flex flex-wrap items-center gap-3">
-                                                                <Badge variant="secondary" className="px-3 py-1 font-bold text-xs rounded-full shadow-sm">
+                                                                <Badge variant="secondary" className="px-3 py-1 font-bold text-xs rounded-full">
                                                                     Order #{dispute.order_id.slice(0,8)}
                                                                 </Badge>
-                                                                <Badge variant="destructive" className="px-3 py-1 font-bold text-[10px] uppercase tracking-wider rounded-full shadow-sm bg-destructive/10 text-destructive hover:bg-destructive/20 border-none">
+                                                                <Badge variant="danger" className="px-3 py-1 font-bold text-[10px] uppercase tracking-widest rounded-full">
                                                                     High Priority
                                                                 </Badge>
                                                             </div>
 
                                                             <div className="space-y-2">
-                                                                <h4 className="text-2xl font-sans font-bold tracking-tight text-foreground">
+                                                                <h4 className="text-lg font-sans font-black tracking-tight text-foreground capitalize">
                                                                     {dispute.reason.replace(/_/g, ' ')}
                                                                 </h4>
                                                                 <div className="flex items-center gap-3 text-xs font-medium text-muted-foreground">
@@ -91,45 +92,49 @@ export const DisputesTab = () => {
                                                                 </div>
                                                             </div>
 
-                                                            <div className="p-6 bg-muted/30 rounded-2xl border border-border text-sm text-foreground/80 leading-relaxed font-medium">
+                                                            <div className="p-5 bg-muted/30 rounded-2xl border border-border text-sm text-foreground/80 leading-relaxed font-medium">
                                                                 "{dispute.description}"
                                                             </div>
                                                         </div>
 
-                                                        <div className="lg:w-80 space-y-6">
-                                                            <div className="p-6 bg-muted/30 rounded-2xl border border-border">
-                                                                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Disputed Value</p>
-                                                                <p className="text-3xl font-mono font-bold text-destructive tracking-tight">{formatTZS(dispute.orders?.total)}</p>
+                                                        <div className="lg:w-80 space-y-4">
+                                                            <div className="p-5 bg-muted/30 rounded-2xl border border-border">
+                                                                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">Disputed Value</p>
+                                                                <p className="text-2xl font-mono font-bold text-destructive tracking-tight">{formatTZS(dispute.orders?.total)}</p>
                                                             </div>
 
                                                             <div className="grid grid-cols-2 gap-3">
-                                                                <Button 
-                                                                    variant="outline"
-                                                                    className="h-12 w-full rounded-xl text-[10px] font-bold uppercase tracking-wider"
+                                                                <Button
+                                                                    variant="secondary"
+                                                                    className="col-span-2 h-12 w-full rounded-2xl text-[11px] font-bold uppercase tracking-widest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+                                                                    onClick={() => handleResolveDispute(dispute.id, dispute.order_id, 'release_funds')}
+                                                                    aria-label="Rule for seller and release funds"
+                                                                >
+                                                                    <Store className="w-4 h-4 mr-2" /> Rule for Seller
+                                                                </Button>
+                                                                <Button
+                                                                    variant="secondary"
+                                                                    className="col-span-2 h-12 w-full rounded-2xl text-[11px] font-bold uppercase tracking-widest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+                                                                    onClick={() => handleResolveDispute(dispute.id, dispute.order_id, 'refund_buyer')}
+                                                                    aria-label="Rule for buyer and refund the order"
+                                                                >
+                                                                    <RotateCcw className="w-4 h-4 mr-2" /> Rule for Buyer (Refund)
+                                                                </Button>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    className="w-full rounded-xl text-[10px] font-bold uppercase tracking-widest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
                                                                     onClick={() => handleAnalyzeDispute(dispute)}
                                                                 >
                                                                     <Sparkles className="w-4 h-4 mr-2" /> AI Analyze
                                                                 </Button>
-                                                                <Button 
-                                                                    variant="outline"
-                                                                    className="h-12 w-full rounded-xl text-[10px] font-bold uppercase tracking-wider"
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    className="w-full rounded-xl text-[10px] font-bold uppercase tracking-widest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
                                                                     onClick={() => handleMessageUser(dispute.buyer_id, dispute.profiles?.full_name, { type: 'return', id: dispute.id, label: `Order #${dispute.order_id.slice(0,8)}` })}
                                                                 >
                                                                     <MessageSquare className="w-4 h-4 mr-2" /> Message
-                                                                </Button>
-                                                                <Button 
-                                                                    variant="default"
-                                                                    className="col-span-2 h-12 w-full rounded-xl text-[10px] font-bold uppercase tracking-wider bg-emerald-600 hover:bg-emerald-700"
-                                                                    onClick={() => handleResolveDispute(dispute.id, dispute.order_id, 'release_funds')}
-                                                                >
-                                                                    Rule for Seller
-                                                                </Button>
-                                                                <Button 
-                                                                    variant="outline"
-                                                                    className="col-span-2 h-12 w-full rounded-xl text-[10px] font-bold uppercase tracking-wider border-destructive/20 text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                                                                    onClick={() => handleResolveDispute(dispute.id, dispute.order_id, 'refund_buyer')}
-                                                                >
-                                                                    Rule for Buyer (Refund)
                                                                 </Button>
                                                             </div>
                                                         </div>

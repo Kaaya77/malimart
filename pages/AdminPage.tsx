@@ -1,4 +1,4 @@
-import { SecurityMonitor } from '../components/SecurityMonitor';
+﻿import { SecurityMonitor } from '../components/SecurityMonitor';
 import { assertRole, rateLimit } from '../src/security';
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
@@ -88,7 +88,7 @@ export const AdminPage = () => {
     const fetchAdminData = async () => {
         setIsLoading(true);
         try {
-            // ð All 8 admin queries run in parallel â was sequential (1.5s+), now ~200ms
+            // Ã°ÂŸÂšÂ€ All 8 admin queries run in parallel Ã¢Â€Â” was sequential (1.5s+), now ~200ms
             const [
                 statsRes,
                 vendorsRes,
@@ -124,7 +124,7 @@ export const AdminPage = () => {
                     .order('created_at', { ascending: false })
                     .limit(50),
                 supabase.from('platform_settings').select('*').eq('id', 1).single(),
-                // Revenue trend derived from orders â no separate table needed
+                // Revenue trend derived from orders Ã¢Â€Â” no separate table needed
                 supabase.from('orders')
                     .select('total, created_at')
                     .in('status', ['paid','shipped','delivered'])
@@ -328,7 +328,7 @@ export const AdminPage = () => {
     if (user.role !== 'admin') {
         return <Navigate to="/" replace />;
     }
-  const __ctx = { addToast, confirmDeleteUser, disputes, fetchAdminData, filteredProducts, filteredUsers, handleAnalyzeDispute, handleApprovePayout, handleMessageUser, handleResolveDispute, handleSaveSettings, handleToggleProductStatus, handleToggleUserBan, name, payouts, platformSettings, productSearch, products, selectedMessageUser, setActiveTab, setPlatformSettings, setProductSearch, setUserSearch, stats, status, userSearch, vendorsList };
+  const __ctx = { addToast, confirmDeleteUser, disputes, fetchAdminData, filteredProducts, filteredUsers, handleAnalyzeDispute, handleApprovePayout, handleMessageUser, handleResolveDispute, handleSaveSettings, handleToggleProductStatus, handleToggleUserBan, payouts, platformSettings, productSearch, products, selectedMessageUser, setActiveTab, setPlatformSettings, setProductSearch, setUserSearch, stats, userSearch, vendorsList };
 
 
     return (
@@ -365,7 +365,7 @@ export const AdminPage = () => {
                             <span className="text-[10px] uppercase tracking-widest font-black">Refresh</span>
                         </Button>
                         <div className="text-right hidden md:block border-l border-foreground/10 dark:border-white/10 pl-6">
-                            <p className="text-[9px] uppercase tracking-widest text-foreground/40 dark:text-white/40 font-black mb-1">SERVER TIME</p>
+                            <p className="text-[10px] uppercase tracking-widest text-foreground/40 dark:text-white/40 font-black mb-1">SERVER TIME</p>
                             <p className="text-xs font-sans font-bold tracking-widest text-foreground dark:text-white">{new Date().toISOString().replace('T', ' ').slice(0, 19)} UTC</p>
                         </div>
                     </div>
@@ -382,38 +382,40 @@ export const AdminPage = () => {
                             transition: { duration: 0.6, delay: 0.1, ease: [0.22, 1, 0.36, 1], staggerChildren: 0.05 }
                         }
                     }}
-                    className="flex overflow-x-auto p-1.5 md:p-2 bg-foreground/[0.06] dark:bg-zinc-900 rounded-full mb-12 no-scrollbar border border-foreground/5 shadow-inner"
+                    role="tablist"
+                    aria-label="Admin sections"
+                    className="flex overflow-x-auto gap-1.5 p-1.5 md:p-2 bg-foreground/[0.03] rounded-full mb-12 no-scrollbar border border-foreground/8 shadow-inner"
                 >
                     {[
                         { id: 'overview', label: 'Nexus', icon: Activity },
                         { id: 'users', label: 'Citizens', icon: Users },
-                        { id: 'vendors', label: 'Merchants', icon: Store, count: vendorsList.filter(v => !v.is_verified).length },
+                        { id: 'vendors', label: 'Merchants', icon: Store, count: vendorsList.filter(v => !v.is_verified).length, urgent: false },
                         { id: 'products', label: 'Products', icon: Package },
-                        { id: 'disputes', label: 'Disputes', icon: AlertTriangle, count: disputes.length },
-                        { id: 'payouts', label: 'Payouts', icon: DollarSign, count: payouts.length },
+                        { id: 'disputes', label: 'Disputes', icon: AlertTriangle, count: disputes.length, urgent: true },
+                        { id: 'payouts', label: 'Payouts', icon: DollarSign, count: payouts.length, urgent: true },
                         { id: 'moderation', label: 'Moderation', icon: ShieldAlert },
                         { id: 'growth', label: 'Growth', icon: TrendingUp },
-                        { id: 'messages', label: 'Intelligence', icon: MessageSquare, count: unreadMessagesCount },
+                        { id: 'messages', label: 'Intelligence', icon: MessageSquare, count: unreadMessagesCount, urgent: true },
                         { id: 'ai-hero', label: 'AI Core', icon: Sparkles },
                         { id: 'settings', label: 'Protocol', icon: SettingsIcon }
                     ].map(tab => (
-                        <motion.button 
-                            key={tab.id} 
+                        <motion.button
+                            key={tab.id}
                             variants={{
                                 hidden: { opacity: 0, x: -10 },
                                 visible: { opacity: 1, x: 0, transition: { duration: 0.3 } }
                             }}
-                            onClick={() => setActiveTab(tab.id as any)} 
-                            className={`flex-shrink-0 flex items-center gap-2 py-3 px-6 rounded-full text-xs font-black uppercase tracking-wider transition-all duration-300 ${activeTab === tab.id 
-                                ? 'bg-white dark:bg-black text-foreground shadow-md' 
-                                : 'text-foreground/40 dark:text-white/40 hover:text-foreground dark:hover:text-white hover:bg-white/50 dark:hover:bg-black/50'}`}
+                            onClick={() => setActiveTab(tab.id as any)}
+                            role="tab"
+                            aria-selected={activeTab === tab.id}
+                            className={`flex-shrink-0 flex items-center gap-2 min-h-[44px] py-2.5 px-5 rounded-full text-xs font-black uppercase tracking-wider transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 ${activeTab === tab.id
+                                ? 'bg-foreground text-background shadow-md'
+                                : 'bg-foreground/[0.05] text-foreground/60 hover:bg-foreground/[0.1]'}`}
                         >
-                            <tab.icon className={`w-4 h-4 stroke-[2.5] ${activeTab === tab.id ? 'text-primary scale-110' : ''} transition-all`} /> 
+                            <tab.icon className="w-4 h-4 stroke-[2.5] transition-all" />
                             <span className="whitespace-nowrap">{tab.label}</span>
-                            {tab.count !== undefined && tab.count > 0 && (
-                                <span className={`ml-1 px-1.5 rounded-full flex items-center justify-center text-[10px] font-black tracking-normal ${activeTab === tab.id ? 'bg-primary text-white' : 'bg-primary/20 text-primary'}`}>
-                                    {tab.count}
-                                </span>
+                            {tab.count !== undefined && (
+                                <CountBadge count={tab.count} urgent={tab.urgent} />
                             )}
                         </motion.button>
                     ))}

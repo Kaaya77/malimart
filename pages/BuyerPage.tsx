@@ -117,11 +117,11 @@ const BuyerOffers = () => {
  </div>
  <div className="text-right">
  <p className="text-2xl font-black text-white leading-none">{offer.type==='percentage'?`${offer.value}%`:formatTZS(offer.value)}</p>
- <p className="text-[9px] text-white/70 uppercase font-bold">{offer.type==='percentage'?'off':'save'}</p>
+ <p className="text-[10px] text-white/70 uppercase tracking-widest font-bold">{offer.type==='percentage'?'off':'save'}</p>
  </div>
  </div>
  {/* Content */}
- <div className="p-4 flex-1 flex flex-col">
+ <div className="p-5 flex-1 flex flex-col">
  <h3 className="font-semibold text-foreground text-sm mb-1">{offer.title}</h3>
  <p className="text-[10px] text-foreground/45 mb-3">{offer.min_order_value>0?`Min. spend ${formatTZS(offer.min_order_value)}`:'No minimum order'}</p>
  <div className="flex items-center justify-between text-[10px] text-foreground/40 mb-3">
@@ -129,10 +129,10 @@ const BuyerOffers = () => {
  <span className="flex items-center gap-1"><Tag className="w-3 h-3"/>Storewide</span>
  </div>
  {/* Copy button */}
- <button onClick={()=>handleCopy(offer.code)}
- className="mt-auto h-11 w-full rounded-2xl border-2 border-dashed border-foreground/15 flex items-center justify-between px-3 hover:border-foreground/35 hover:bg-foreground/[0.03] transition-all group cursor-copy active:scale-[0.98]">
+ <button onClick={()=>handleCopy(offer.code)} aria-label="Copy code"
+ className="mt-auto h-11 w-full rounded-2xl border border-foreground/8 bg-foreground/[0.04] flex items-center justify-between px-3.5 hover:bg-foreground/[0.08] transition-all group cursor-copy active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40">
  <span className="font-mono text-sm font-bold text-foreground tracking-wider">{offer.code}</span>
- <span className={`flex items-center gap-1 text-[10px] font-bold transition-all ${copied===offer.code?'text-emerald-500':'text-foreground/40 group-hover:text-foreground'}`}>
+ <span className={`flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest transition-all ${copied===offer.code?'text-emerald-500':'text-foreground/40 group-hover:text-foreground'}`}>
  {copied===offer.code?<><Check className="w-3.5 h-3.5 stroke-[3]"/>Copied!</>:<><Copy className="w-3.5 h-3.5"/>Copy</>}
  </span>
  </button>
@@ -163,12 +163,9 @@ const BuyerFollows = ({ followers, unfollowSeller, navigate }: { followers:any[]
 
  if (loading) return <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{[1,2,3].map(i=><div key={i} className="h-48 rounded-3xl shimmer"/>)}</div>;
  if (!vendors.length) return (
- <div className="flex flex-col items-center py-20 text-foreground/35 border border-dashed border-foreground/15 rounded-3xl">
- <Store className="w-12 h-12 mb-3 opacity-20"/>
- <p className="font-semibold text-sm">No followed stores yet</p>
- <p className="text-xs mt-1">Follow sellers to see their updates here</p>
- <button onClick={()=>navigate('/shop')} className="mt-4 h-10 px-5 rounded-full bg-foreground text-background text-xs font-bold">Browse Stores</button>
- </div>
+ <EmptyState icon={Store} title="No followed stores yet" subtitle="Follow sellers to see their updates here"
+ className="rounded-3xl border border-foreground/8 bg-foreground/[0.02]"
+ action={<Button size="sm" onClick={()=>navigate('/shop')} className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40">Browse Stores</Button>}/>
  );
 
  return (
@@ -225,7 +222,7 @@ export const BuyerPage = () => {
     </div>
     <button
       onClick={() => navigate('/auth')}
-      className="px-8 py-3 rounded-2xl bg-foreground text-background text-sm font-semibold active:scale-95 transition-transform"
+      className="min-h-[44px] px-8 py-3 rounded-2xl bg-foreground text-background text-sm font-semibold active:scale-95 transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
     >
       Sign In
     </button>
@@ -254,19 +251,19 @@ export const BuyerPage = () => {
  </h1>
  </div>
  </div>
- <button onClick={()=>changeTab('settings')} className="w-10 h-10 rounded-2xl bg-foreground/[0.06] flex items-center justify-center hover:bg-foreground/10 transition-colors">
+ <button onClick={()=>changeTab('settings')} aria-label="Account settings" className="w-11 h-11 rounded-2xl bg-foreground/[0.06] flex items-center justify-center hover:bg-foreground/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40">
  <Settings className="w-4 h-4 text-foreground/60 stroke-[2]"/>
  </button>
  </motion.div>
 
  {/* ââ Tab strip âââââââââââââââââââââââââââââââââââââââââ */}
- <div className="flex gap-1 overflow-x-auto no-scrollbar bg-foreground/[0.04] p-1.5 rounded-2xl mb-6 sticky top-[60px] z-20 border border-foreground/8 backdrop-blur-xl">
+ <div role="tablist" aria-label="Account sections" className="flex gap-1 overflow-x-auto no-scrollbar bg-background/90 backdrop-blur-xl p-1.5 rounded-2xl mb-6 sticky top-[60px] z-20 border border-foreground/8">
  {TABS.map(t=>{
  const Icon=t.icon;
  const active=tab===t.id;
  return (
- <button key={t.id} onClick={()=>changeTab(t.id)}
- className={`flex-shrink-0 flex items-center gap-2 px-3 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all duration-200 whitespace-nowrap ${active?'bg-background text-foreground shadow-sm':'text-foreground/40 hover:text-foreground/65'}`}>
+ <button key={t.id} onClick={()=>changeTab(t.id)} role="tab" aria-selected={active}
+ className={`flex-shrink-0 flex items-center gap-2 min-h-[44px] px-3.5 rounded-2xl text-[10px] font-bold uppercase tracking-widest transition-all duration-200 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 ${active?'bg-foreground text-background shadow-sm':'text-foreground/40 hover:text-foreground/65'}`}>
  <Icon className={`w-3.5 h-3.5 stroke-[2] ${active?'':'opacity-70'}`}/>
  {t.label}
  </button>
@@ -313,38 +310,37 @@ export const BuyerPage = () => {
  <div className="flex items-center justify-between">
  <h2 className="text-xl font-bold text-foreground">Wishlist <span className="text-foreground/35 font-normal">({wishlist.length})</span></h2>
  {wishlist.length > 0 && (
-   <div className="flex items-center gap-3">
-     <button
+   <div className="flex items-center gap-2">
+     <Button
+       variant="ghost" size="sm"
        onClick={() => {
          const ids = wishlist.map(p => p.id).join(',');
          const url = `${window.location.origin}/shop?giftlist=${encodeURIComponent(ids)}`;
          navigator.clipboard.writeText(url).then(() => addToast('Gift list link copied! 🎁 Share it with anyone.', 'success'));
        }}
-       className="flex items-center gap-1 text-xs font-bold text-foreground/45 hover:text-foreground transition-colors"
+       className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
      >
-       <Gift className="w-3.5 h-3.5" /> Share list
-     </button>
-     <button
+       <Gift className="w-3.5 h-3.5 mr-1.5" /> Share list
+     </Button>
+     <Button variant="ghost" size="sm" onClick={() => navigate('/shop')} className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40">Add more</Button>
+     <Button
+       variant="primary" size="sm"
        onClick={() => {
          const canAdd = wishlist.filter(p => !p.variants?.length);
          canAdd.forEach(p => addToCart(p));
          if (canAdd.length) addToast(`${canAdd.length} item${canAdd.length > 1 ? 's' : ''} added to bag`, 'success');
        }}
-       className="text-xs font-bold text-emerald-600 hover:text-emerald-500 transition-colors"
+       className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
      >
        Add all to bag
-     </button>
-     <button onClick={() => navigate('/shop')} className="text-xs font-bold text-foreground/45 hover:text-foreground transition-colors">Add more</button>
+     </Button>
    </div>
  )}
  </div>
  {wishlist.length===0 ? (
- <div className="flex flex-col items-center py-20 border border-dashed border-foreground/15 rounded-3xl text-foreground/35">
- <Heart className="w-12 h-12 mb-3 opacity-20"/>
- <p className="font-semibold text-sm">Your wishlist is empty</p>
- <p className="text-xs mt-1">Tap the heart on any product to save it</p>
- <button onClick={()=>navigate('/shop')} className="mt-5 h-10 px-5 rounded-full bg-foreground text-background text-xs font-bold">Browse Products</button>
- </div>
+ <EmptyState icon={Heart} title="Your wishlist is empty" subtitle="Tap the heart on any product to save it"
+ className="rounded-3xl border border-foreground/8 bg-foreground/[0.02]"
+ action={<Button size="sm" onClick={()=>navigate('/shop')} className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40">Browse Products</Button>}/>
  ) : (
  <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-3 gap-y-8 md:gap-x-4">
  {wishlist.map((p,i)=><ProductCard key={p.id} product={p} index={i} onClick={()=>navigate(`/product/${p.id}`)}/>)}

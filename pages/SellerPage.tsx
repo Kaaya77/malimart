@@ -190,7 +190,7 @@ const MobileTabBar = ({ tab, setTab, tabs, pending, lowStock, unread }: any) => 
         })}
         {/* More menu */}
         <MobileMore tab={tab} setTab={setTab} tabs={tabs.slice(5)} />
-      </div>
+      </nav>
     </div>
   );
 };
@@ -201,9 +201,11 @@ const MobileMore = ({ tab, setTab, tabs }: any) => {
   return (
     <>
       <button onClick={() => setOpen(true)}
-        className="flex-1 flex flex-col items-center justify-center gap-1 py-3">
-        <Menu className={`w-5 h-5 ${hasActive ? 'text-foreground' : 'text-foreground/30'}`} strokeWidth={hasActive ? 2.5 : 1.5} />
-        <span className={`text-[9px] font-bold tracking-wide ${hasActive ? 'text-foreground' : 'text-foreground/30'}`}>More</span>
+        aria-label="More sections" aria-haspopup="dialog" aria-expanded={open}
+        aria-current={hasActive ? 'page' : undefined}
+        className={`flex-1 flex flex-col items-center justify-center gap-1 py-2.5 min-h-[56px] ${FOCUS_RING}`}>
+        <Menu className={`w-5 h-5 ${hasActive ? 'text-foreground' : 'text-foreground/50'}`} strokeWidth={hasActive ? 2.5 : 1.5} />
+        <span className={`text-[10px] font-bold tracking-wide ${hasActive ? 'text-foreground' : 'text-foreground/50'}`}>More</span>
       </button>
       <AnimatePresence>
         {open && (
@@ -220,14 +222,16 @@ const MobileMore = ({ tab, setTab, tabs }: any) => {
                   const active = tab === t.id;
                   return (
                     <button key={t.id} onClick={() => { setTab(t.id); setOpen(false); }}
-                      className={`flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all ${
-                        active ? 'border-foreground/20 bg-foreground/[0.06]' : 'border-foreground/[0.07] bg-foreground/[0.02]'
+                      aria-current={active ? 'page' : undefined}
+                      className={`flex flex-col items-center gap-2 p-4 min-h-11 rounded-2xl border transition-all ${FOCUS_RING} ${
+                        active ? 'border-emerald-500/40 bg-emerald-500/[0.06]' : 'border-foreground/[0.07] bg-foreground/[0.02]'
                       }`}>
-                      <span className="w-10 h-10 rounded-xl flex items-center justify-center"
-                        style={{ background: `${t.color}18`, color: t.color }}>
+                      <span className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                        active ? 'bg-emerald-500 text-white' : 'bg-foreground/[0.05] text-foreground/60'
+                      }`}>
                         <Icon className="w-5 h-5" />
                       </span>
-                      <span className="text-[10px] font-bold text-foreground/60">{t.shortLabel}</span>
+                      <span className={`text-[10px] font-bold ${active ? 'text-foreground' : 'text-foreground/60'}`}>{t.label}</span>
                     </button>
                   );
                 })}
@@ -248,13 +252,12 @@ const PageHeader = ({ activeTab, storeName }: { activeTab: any; storeName: strin
       initial={{ opacity: 0, x: -8 }}
       animate={{ opacity: 1, x: 0 }}
       className="flex items-center gap-3 mb-6 lg:mb-8">
-      <span className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-        style={{ background: `${activeTab.color}18`, color: activeTab.color }}>
+      <span className="w-9 h-9 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0">
         <Icon className="w-4.5 h-4.5" strokeWidth={2} />
       </span>
       <div>
         <h1 className="text-lg font-black text-foreground tracking-tight leading-none">{activeTab.label}</h1>
-        <p className="text-[10px] text-foreground/35 mt-0.5 font-medium">{activeTab.desc}</p>
+        <p className="text-xs text-foreground/40 mt-0.5 font-medium">{activeTab.desc}</p>
       </div>
     </motion.div>
   );
@@ -321,41 +324,28 @@ export const SellerPage = () => {
               <PageHeader activeTab={activeTab} storeName={storeName} />
             </div>
 
-            {/* Desktop header — store banner + active section */}
-            <div className="hidden lg:flex items-center justify-between mb-8">
-              <div className="flex items-center gap-3">
-                <span className="w-8 h-8 rounded-xl flex items-center justify-center"
-                  style={{ background: `${activeTab.color}15`, color: activeTab.color }}>
+            {/* Desktop header — active section + storefront shortcut.
+                Pending/low-stock counts live on the SideNav badges only, so the
+                header stays compact instead of collapsing when alerts clear. */}
+            <div className="hidden lg:flex items-center justify-between gap-4 mb-8">
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="w-9 h-9 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0">
                   <activeTab.icon className="w-4 h-4" strokeWidth={2} />
                 </span>
-                <div>
-                  <h1 className="text-xl font-black text-foreground tracking-tight leading-none">{activeTab.label}</h1>
-                  <p className="text-[10px] text-foreground/35 mt-0.5 font-medium">{activeTab.desc}</p>
+                <div className="min-w-0">
+                  <h1 className="text-xl font-black text-foreground tracking-tight leading-none truncate">{activeTab.label}</h1>
+                  <p className="text-xs text-foreground/40 mt-0.5 font-medium truncate">{activeTab.desc}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                {pendingOrders > 0 && (
-                  <button onClick={() => setTab('orders')}
-                    className="flex items-center gap-1.5 h-8 px-3 rounded-xl bg-amber-500/10 text-amber-700 dark:text-amber-400 text-[10px] font-black uppercase tracking-wide hover:bg-amber-500/15 transition-colors">
-                    <Clock className="w-3 h-3" /> {pendingOrders} pending
-                  </button>
-                )}
-                {lowStock > 0 && (
-                  <button onClick={() => setTab('products')}
-                    className="flex items-center gap-1.5 h-8 px-3 rounded-xl bg-rose-500/10 text-rose-700 dark:text-rose-400 text-[10px] font-black uppercase tracking-wide hover:bg-rose-500/15 transition-colors">
-                    <AlertCircle className="w-3 h-3" /> {lowStock} low stock
-                  </button>
-                )}
-                <a href={storeHref} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 h-8 px-3 rounded-xl bg-foreground/[0.05] text-foreground/50 text-[10px] font-black uppercase tracking-wide hover:bg-foreground/[0.09] hover:text-foreground transition-all">
-                  <ExternalLink className="w-3 h-3" /> Storefront
-                </a>
-              </div>
+              <a href={storeHref} target="_blank" rel="noopener noreferrer"
+                className={`flex items-center gap-1.5 h-9 px-4 shrink-0 rounded-2xl bg-foreground/[0.05] text-foreground/50 text-[10px] font-black uppercase tracking-widest hover:bg-foreground/[0.09] hover:text-foreground transition-all ${FOCUS_RING}`}>
+                <ExternalLink className="w-3 h-3" /> Storefront
+              </a>
             </div>
 
-            {/* Alert pills — mobile only (desktop header shows the same chips),
-                and never on the dashboard tab, which renders its own richer
-                AlertBanner + pending-orders action panel. */}
+            {/* Alert pills — mobile-only actionable shortcuts (desktop relies on
+                the SideNav badges), and never on the dashboard tab, which renders
+                its own richer AlertBanner + pending-orders action panel. */}
             {tab !== 'dashboard' && (
               <div className="lg:hidden">
                 <AlertPills
