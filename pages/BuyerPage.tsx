@@ -8,7 +8,7 @@ import {
  ChevronRight, Repeat, Sparkles, Search, ZapOff, Gift, Eye
 } from 'lucide-react';
 import { useAppState } from '../context/AppContext';
-import { Button, Card, Badge, Input, useToast, PremiumStatCard, ModernFollowCard, GraphicalTag } from '../components/UI';
+import { Button, Card, Badge, Input, useToast, PremiumStatCard, ModernFollowCard, GraphicalTag, EmptyState } from '../components/UI';
 import { supabase } from '../services/supabaseClient';
 import { OrderTracking } from '../components/CheckoutComponents';
 import { formatTZS, CURRENCY } from '../constants';
@@ -87,10 +87,10 @@ const BuyerOffers = () => {
  <h2 className="text-xl font-bold text-foreground">Rewards & Vouchers</h2>
  <p className="text-xs text-foreground/45 mt-0.5">Exclusive offers curated for you Â· {filtered.length} active</p>
  </div>
- <div className="flex p-1 bg-foreground/[0.05] rounded-xl gap-1 self-start sm:self-auto">
+ <div className="flex gap-1.5 self-start sm:self-auto">
  {(['all','high_value','expiring'] as const).map(f=>(
- <button key={f} onClick={()=>setFilter(f)}
- className={`px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${filter===f?'bg-background text-foreground shadow-sm':'text-foreground/45 hover:text-foreground/70'}`}>
+ <button key={f} onClick={()=>setFilter(f)} aria-pressed={filter===f}
+ className={`h-11 px-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 ${filter===f?'bg-foreground text-background shadow-sm':'bg-foreground/[0.05] text-foreground/60 hover:text-foreground'}`}>
  {f==='high_value'?'Best Value':f==='expiring'?'Expiring Soon':'All'}
  </button>
  ))}

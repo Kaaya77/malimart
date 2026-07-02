@@ -16,18 +16,31 @@ import { SellerOrders } from '../components/SellerOrders';
 import { MessagingHub } from '../components/messaging/MessagingHub';
 import { SellerSettingsPage } from './SellerSettingsPage';
 import { SellerReturns } from '../components/SellerReturns';
+import { CountBadge } from '../components/UI';
 import { supabase } from '../services/supabaseClient';
 
 // ─── Tab definitions ─────────────────────────────────────────────────────────
+// One name per tab, used on both desktop sidebar and mobile tab bar.
 const TABS = [
-  { id: 'dashboard', label: 'Overview',   shortLabel: 'Home',   icon: LayoutGrid,    color: '#10b981', desc: 'Performance at a glance' },
-  { id: 'products',  label: 'Inventory',  shortLabel: 'Stock',  icon: Package,       color: '#3b82f6', desc: 'Manage your products' },
-  { id: 'orders',    label: 'Orders',     shortLabel: 'Orders', icon: ShoppingBag,   color: '#f59e0b', desc: 'Fulfil & track orders' },
-  { id: 'messages',  label: 'Inbox',      shortLabel: 'Inbox',  icon: MessageSquare, color: '#8b5cf6', desc: 'Buyer conversations' },
-  { id: 'offers',    label: 'Campaigns',  shortLabel: 'Offers', icon: Percent,       color: '#ec4899', desc: 'Discounts & promotions' },
-  { id: 'returns',   label: 'Returns',    shortLabel: 'Returns',icon: RotateCcw,     color: '#ef4444', desc: 'Disputes & refunds' },
-  { id: 'settings',  label: 'Settings',   shortLabel: 'Setup',  icon: Settings,      color: '#94a3b8', desc: 'Store configuration' },
+  { id: 'dashboard', label: 'Overview',  icon: LayoutGrid,    desc: 'Performance at a glance' },
+  { id: 'products',  label: 'Inventory', icon: Package,       desc: 'Manage your products' },
+  { id: 'orders',    label: 'Orders',    icon: ShoppingBag,   desc: 'Fulfil & track orders' },
+  { id: 'messages',  label: 'Inbox',     icon: MessageSquare, desc: 'Buyer conversations' },
+  { id: 'offers',    label: 'Campaigns', icon: Percent,       desc: 'Discounts & promotions' },
+  { id: 'returns',   label: 'Returns',   icon: RotateCcw,     desc: 'Disputes & refunds' },
+  { id: 'settings',  label: 'Settings',  icon: Settings,      desc: 'Store configuration' },
 ];
+
+// Shared focus-ring treatment for every interactive element on this page.
+const FOCUS_RING = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40';
+
+// One place to decide which nav badge a tab shows, and whether it demands action.
+const tabBadge = (tabId: string, pending: number, lowStock: number, unread: number): { count: number; urgent: boolean } => {
+  if (tabId === 'orders') return { count: pending, urgent: true };
+  if (tabId === 'products') return { count: lowStock, urgent: true };
+  if (tabId === 'messages') return { count: unread, urgent: false };
+  return { count: 0, urgent: false };
+};
 
 // ─── Floating alert pill ──────────────────────────────────────────────────────
 const AlertPills = ({ pending, lowStock, onOrders, onInventory }: {
@@ -63,11 +76,12 @@ const AlertPills = ({ pending, lowStock, onOrders, onInventory }: {
               </span>
               <p className="flex-1 text-xs font-semibold text-foreground/70">{item.text}</p>
               <button onClick={item.action}
-                className="text-[10px] font-black uppercase tracking-widest text-foreground/50 hover:text-foreground px-2 py-1 rounded-lg hover:bg-foreground/[0.05] transition-all">
+                className={`min-h-11 text-[10px] font-black uppercase tracking-widest text-foreground/50 hover:text-foreground px-3 py-1 rounded-xl hover:bg-foreground/[0.05] transition-all ${FOCUS_RING}`}>
                 {item.label}
               </button>
               <button onClick={() => setDismissed(p => new Set(p).add(item.key))}
-                className="w-5 h-5 rounded-full flex items-center justify-center hover:bg-foreground/10 transition-colors">
+                aria-label="Dismiss alert"
+                className={`w-11 h-11 -mr-2 rounded-full flex items-center justify-center hover:bg-foreground/10 transition-colors ${FOCUS_RING}`}>
                 <X className="w-3 h-3 text-foreground/30" />
               </button>
             </motion.div>

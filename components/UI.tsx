@@ -250,6 +250,29 @@ export const VerifiedBadge = ({ className = '' }: { className?: string }) => (
  </div>
 );
 
+// Shared empty state for dashboard tabs — keeps icon/copy/action treatment consistent.
+export const EmptyState = ({ icon: Icon, title, subtitle, action, className = '' }: { icon?: any, title: string, subtitle?: string, action?: ReactNode, className?: string }) => (
+ <div className={`flex flex-col items-center justify-center text-center py-16 px-6 ${className}`}>
+ {Icon && (
+ <div className="w-14 h-14 rounded-3xl bg-foreground/[0.05] flex items-center justify-center mb-4">
+ <Icon className="w-6 h-6 text-foreground/30 stroke-[1.5]" />
+ </div>
+ )}
+ <p className="text-sm font-bold text-foreground">{title}</p>
+ {subtitle && <p className="text-xs font-medium text-foreground/45 mt-1 max-w-xs leading-relaxed">{subtitle}</p>}
+ {action && <div className="mt-5">{action}</div>}
+ </div>
+);
+
+// Nav/tab count badge. `urgent` = needs action (red); default = informational.
+export const CountBadge = ({ count, urgent = false, className = '' }: { count: number, urgent?: boolean, className?: string }) => (
+ count > 0 ? (
+ <span className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-black tabular-nums ${urgent ? 'bg-red-500 text-white' : 'bg-foreground/10 text-foreground/70'} ${className}`}>
+ {count > 99 ? '99+' : count}
+ </span>
+ ) : null
+);
+
 export const Switch = ({ checked, onCheckedChange, className = '' }: any) => (
  <button 
  type="button" 
