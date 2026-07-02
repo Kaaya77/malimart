@@ -10,7 +10,7 @@ import {
     BarChart3, RefreshCw, Trash2, MessageSquare, ArrowUpCircle, ArrowDownCircle, Sparkles, AlertCircle
 } from 'lucide-react';
 import { useAppState } from '../context/AppContext';
-import { Card, Badge, Button, Input, useToast, Skeleton, Switch, ConfirmModal, PremiumStatCard, GraphicalTag } from '../components/UI';
+import { Card, Badge, Button, Input, useToast, Skeleton, Switch, ConfirmModal, PremiumStatCard, GraphicalTag, CountBadge } from '../components/UI';
 import { supabase } from '../services/supabaseClient';
 import { formatTZS } from '../constants';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
@@ -349,14 +349,21 @@ export const AdminPage = () => {
                             </div>
                             <p className="text-[10px] uppercase tracking-widest font-black text-foreground/40 dark:text-white/40">Nexus Control</p>
                          </div>
-                         <h1 className="text-4xl md:text-6xl font-sans font-extrabold text-foreground dark:text-white tracking-tight leading-none">
+                         <h1 className="text-2xl md:text-3xl font-sans font-extrabold text-foreground dark:text-white tracking-tight leading-none">
                              System Overview
                          </h1>
                     </div>
-                    <div className="flex items-center gap-6">
-                        <button onClick={fetchAdminData} className="flex items-center text-[10px] uppercase tracking-[0.2em] font-black hover:opacity-50 transition-opacity">
-                            <RefreshCw className={`w-3.5 h-3.5 mr-2 stroke-[2.5] ${isLoading ? 'animate-spin' : ''}`} /> Refresh
-                        </button>
+                    <div className="flex items-center gap-4">
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={fetchAdminData}
+                            aria-label="Refresh data"
+                            className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+                        >
+                            <RefreshCw className={`w-3.5 h-3.5 mr-2 stroke-[2.5] ${isLoading ? 'animate-spin' : ''}`} />
+                            <span className="text-[10px] uppercase tracking-widest font-black">Refresh</span>
+                        </Button>
                         <div className="text-right hidden md:block border-l border-foreground/10 dark:border-white/10 pl-6">
                             <p className="text-[9px] uppercase tracking-widest text-foreground/40 dark:text-white/40 font-black mb-1">SERVER TIME</p>
                             <p className="text-xs font-sans font-bold tracking-widest text-foreground dark:text-white">{new Date().toISOString().replace('T', ' ').slice(0, 19)} UTC</p>

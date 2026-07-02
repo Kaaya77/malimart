@@ -105,44 +105,38 @@ const SideNav = ({ tab, setTab, tabs, pending, lowStock, storeName, logoUrl, sto
         </div>
       )}
       <div className="min-w-0">
-        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/30">Store</p>
+        <p className="text-[10px] font-black uppercase tracking-widest text-foreground/30">Store</p>
         <p className="text-xs font-bold text-foreground truncate">{storeName}</p>
       </div>
     </div>
 
     {/* Nav items */}
-    <nav className="flex flex-col gap-0.5">
+    <nav aria-label="Seller dashboard sections" className="flex flex-col gap-0.5">
       {tabs.map((t: any) => {
         const Icon = t.icon;
         const active = tab === t.id;
-        const badge = t.id === 'orders' && pending > 0 ? pending
-          : t.id === 'products' && lowStock > 0 ? lowStock
-          : t.id === 'messages' && unread > 0 ? unread : 0;
+        const { count, urgent } = tabBadge(t.id, pending, lowStock, unread);
         return (
           <button key={t.id} onClick={() => setTab(t.id)}
-            className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all duration-200 ${
+            aria-current={active ? 'page' : undefined}
+            className={`group relative flex items-center gap-3 px-3 py-2.5 min-h-11 rounded-2xl text-left transition-all duration-200 ${FOCUS_RING} ${
               active
-                ? 'bg-foreground/[0.07] text-foreground'
-                : 'text-foreground/45 hover:text-foreground/75 hover:bg-foreground/[0.04]'
+                ? 'bg-foreground/[0.06] text-foreground'
+                : 'text-foreground/50 hover:text-foreground hover:bg-foreground/[0.04]'
             }`}
           >
             {active && (
               <motion.span layoutId="sidebar-pill"
-                className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-r-full"
-                style={{ background: t.color }}
+                className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-r-full bg-emerald-500"
               />
             )}
-            <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors"
-              style={active ? { background: `${t.color}18`, color: t.color } : {}}>
+            <span className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
+              active ? 'bg-emerald-500 text-white' : 'bg-foreground/[0.04] text-foreground/50 group-hover:text-foreground'
+            }`}>
               <Icon className="w-3.5 h-3.5" strokeWidth={2} />
             </span>
             <span className="flex-1 text-[11px] font-bold tracking-wide">{t.label}</span>
-            {badge > 0 && (
-              <span className="min-w-[18px] h-[18px] px-1 rounded-full text-[9px] font-black flex items-center justify-center text-white"
-                style={{ background: t.id === 'products' ? '#ef4444' : t.color }}>
-                {badge > 99 ? '99+' : badge}
-              </span>
-            )}
+            <CountBadge count={count} urgent={urgent} />
           </button>
         );
       })}
@@ -151,7 +145,7 @@ const SideNav = ({ tab, setTab, tabs, pending, lowStock, storeName, logoUrl, sto
     {/* Footer links */}
     <div className="mt-auto pt-6 border-t border-foreground/[0.06] flex flex-col gap-1">
       <a href={storeHref} target="_blank" rel="noopener noreferrer"
-        className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-foreground/40 hover:text-foreground/70 hover:bg-foreground/[0.04] transition-all text-[11px] font-semibold">
+        className={`flex items-center gap-2.5 px-3 py-2 min-h-11 rounded-2xl text-foreground/40 hover:text-foreground/70 hover:bg-foreground/[0.04] transition-all text-[11px] font-semibold ${FOCUS_RING}`}>
         <ExternalLink className="w-3.5 h-3.5" />
         View storefront
       </a>
@@ -169,33 +163,27 @@ const MobileTabBar = ({ tab, setTab, tabs, pending, lowStock, unread }: any) => 
   return (
     <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 pb-[env(safe-area-inset-bottom)]
       bg-background/80 backdrop-blur-2xl border-t border-foreground/[0.08]">
-      <div className="flex">
+      <nav aria-label="Seller dashboard sections" className="flex">
         {primary.map((t: any) => {
           const Icon = t.icon;
           const active = tab === t.id;
-          const badge = t.id === 'orders' && pending > 0 ? pending
-            : t.id === 'products' && lowStock > 0 ? lowStock
-            : t.id === 'messages' && unread > 0 ? unread : 0;
+          const { count, urgent } = tabBadge(t.id, pending, lowStock, unread);
           return (
             <button key={t.id} onClick={() => setTab(t.id)}
-              className="flex-1 flex flex-col items-center justify-center gap-1 py-3 relative transition-colors">
+              aria-current={active ? 'page' : undefined}
+              className={`flex-1 flex flex-col items-center justify-center gap-1 py-2.5 min-h-[56px] relative transition-colors ${FOCUS_RING}`}>
               {active && (
                 <motion.span layoutId="mobile-indicator"
-                  className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-0.5 rounded-full"
-                  style={{ background: t.color }}
+                  className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-0.5 rounded-full bg-emerald-500"
                 />
               )}
               <span className="relative">
-                <Icon className={`w-5 h-5 transition-colors ${active ? 'text-foreground' : 'text-foreground/30'}`}
+                <Icon className={`w-5 h-5 transition-colors ${active ? 'text-foreground' : 'text-foreground/50'}`}
                   strokeWidth={active ? 2.5 : 1.5} />
-                {badge > 0 && (
-                  <span className="absolute -top-1 -right-1.5 min-w-[14px] h-3.5 px-0.5 rounded-full bg-rose-500 text-white text-[8px] font-black flex items-center justify-center">
-                    {badge > 9 ? '9+' : badge}
-                  </span>
-                )}
+                <CountBadge count={count} urgent={urgent} className="absolute -top-2.5 -right-3 scale-[0.8] origin-bottom-left" />
               </span>
-              <span className={`text-[9px] font-bold tracking-wide transition-colors ${active ? 'text-foreground' : 'text-foreground/30'}`}>
-                {t.shortLabel}
+              <span className={`text-[10px] font-bold tracking-wide transition-colors ${active ? 'text-foreground' : 'text-foreground/50'}`}>
+                {t.label}
               </span>
             </button>
           );

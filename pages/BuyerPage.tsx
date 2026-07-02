@@ -98,17 +98,13 @@ const BuyerOffers = () => {
  </div>
 
  {filtered.length===0 ? (
- <div className="flex flex-col items-center justify-center py-20 border border-dashed border-foreground/15 rounded-3xl text-foreground/35">
- <Ticket className="w-12 h-12 mb-3 opacity-20"/>
- <p className="text-sm font-semibold">No offers in this category</p>
- <p className="text-xs mt-1">Check back soon for new deals</p>
- </div>
+ <EmptyState icon={Ticket} title="No offers in this category" subtitle="Check back soon for new deals" className="rounded-3xl border border-foreground/8 bg-foreground/[0.02]"/>
  ) : (
  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
  {filtered.map(offer=>(
- <div key={offer.id} className="bg-background rounded-3xl border border-foreground/8 overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col">
+ <div key={offer.id} className="bg-foreground/[0.02] rounded-3xl border border-foreground/8 overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col">
  {/* Gradient header */}
- <div className={`h-20 bg-gradient-to-br ${gradient(offer)} p-4 relative overflow-hidden flex justify-between items-start`}>
+ <div className={`h-20 bg-gradient-to-br ${gradient(offer)} p-5 relative overflow-hidden flex justify-between items-start`}>
  <div className="absolute -right-6 -bottom-6 w-20 h-20 bg-white/10 rounded-full blur-xl"/>
  <div className="flex items-center gap-2">
  <div className="w-9 h-9 rounded-xl bg-background/90 overflow-hidden shrink-0 shadow">
@@ -116,7 +112,7 @@ const BuyerOffers = () => {
  </div>
  <div>
  <p className="text-[10px] text-white/80 font-semibold leading-none">{(offer as any).vendor?.store_name}</p>
- {(offer as any).vendor?.is_verified && <p className="text-[8px] text-white/60 mt-0.5 flex items-center gap-0.5"><BadgeCheck className="w-2.5 h-2.5"/> Verified</p>}
+ {(offer as any).vendor?.is_verified && <p className="text-[10px] text-white/60 mt-0.5 flex items-center gap-0.5"><BadgeCheck className="w-2.5 h-2.5"/> Verified</p>}
  </div>
  </div>
  <div className="text-right">
