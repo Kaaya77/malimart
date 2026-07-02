@@ -11,7 +11,7 @@
  */
 import { supabase } from './supabaseClient';
 import { withCache } from './queryCache';
-import type { Product } from '../types';
+import type { Product, VendorProfile } from '../types';
 
 export interface ShopFilters {
   query?: string;
@@ -33,6 +33,36 @@ export interface ShopResult {
 }
 
 let rpcAvailable = true;
+
+/** Single public product with variants, for the product detail page. Never throws. */
+export async function fetchProductById(id: string): Promise<Product | null> {
+  try {
+    const { data } = await supabase
+      .from('products')
+      .select('*, variants:product_variants(*)')
+      .eq('id', id)
+      // No status filter: RLS (products_select_active) hides inactive products from
+      // buyers while still letting sellers preview their own drafts on this page.
+      .single();
+    return (data as Product) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** Public storefront profile for a seller. Never throws. */
+export async function fetchVendorProfile(sellerId: string): Promise<VendorProfile | null> {
+  try {
+    const { data } = await supabase
+      .from('public_vendor_profiles')
+      .select('seller_id, store_name, description, logo_url, banner_url, region, district, is_verified, trust_score, total_sales, verification_level, rating, delivery_fee, return_policy, shipping_policy, processing_time, warranty, vacation_mode, opening_hours, instagram_url, facebook_url, website_url, social_links')
+      .eq('seller_id', sellerId)
+      .single();
+    return (data as VendorProfile) ?? null;
+  } catch {
+    return null;
+  }
+}
 
 const SHOP_CACHE_TTL = 60_000; // 1 min — shop results can be slightly stale
 
