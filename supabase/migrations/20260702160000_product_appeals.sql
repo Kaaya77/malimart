@@ -21,11 +21,20 @@
 -- All statements are idempotent (IF NOT EXISTS / OR REPLACE / DROP IF EXISTS).
 -- ═══════════════════════════════════════════════════════════════════════════
 
--- ─── 1. products: takedown_reason column ────────────────────────────────────
+-- ─── 1. products: takedown_reason column + 'suspended' status ────────────────
 -- No existing column records why a product was taken down (checked: products
--- has no reason/moderation column). 'suspended' needs no enum/CHECK change:
--- products.status is plain TEXT with no CHECK constraint.
+-- has no reason/moderation column).
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS takedown_reason TEXT;
+
+-- CORRECTION: products.status IS constrained by products_status_check, which
+-- (verified against production) only allows active/inactive/out_of_stock. The
+-- new 'suspended' value would violate it — the same stale-CHECK class of bug
+-- that had deadlocked orders. Widen the constraint to include the statuses the
+-- code actually uses (draft/archived are set by set_product_status) plus
+-- 'suspended'. No existing row can violate a strict superset, so it validates.
+ALTER TABLE public.products DROP CONSTRAINT IF EXISTS products_status_check;
+ALTER TABLE public.products ADD CONSTRAINT products_status_check
+  CHECK (status = ANY (ARRAY['active','inactive','out_of_stock','draft','archived','suspended']));
 
 -- ─── 2. product_appeals table ────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.product_appeals (

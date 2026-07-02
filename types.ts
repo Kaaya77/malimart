@@ -192,7 +192,7 @@ export interface Address {
     geo?: { lat: number, lng: number };
 }
 
-export type OrderStatus = 'pending' | 'placed' | 'processing' | 'confirmed' | 'paid' | 'ready_for_pickup' | 'shipped' | 'in_transit' | 'delivered' | 'cancelled' | 'refunded' | 'failed';
+export type OrderStatus = 'pending' | 'placed' | 'processing' | 'confirmed' | 'paid' | 'ready_for_pickup' | 'shipped' | 'in_transit' | 'delivered' | 'cancelled' | 'refunded' | 'failed' | 'disputed';
 
 export interface OrderItem {
     id: string;
