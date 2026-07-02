@@ -39,7 +39,11 @@ import { MessagesTab } from './admin/MessagesTab';
 export const AdminPage = () => {
     const { user } = useAppState();
     const { addToast } = useToast();
-    const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'vendors' | 'products' | 'disputes' | 'payouts' | 'settings' | 'moderation' | 'growth' | 'messages' | 'ai-hero'>('overview');
+    type AdminTab = 'overview' | 'users' | 'vendors' | 'products' | 'disputes' | 'payouts' | 'settings' | 'moderation' | 'growth' | 'messages' | 'ai-hero';
+    const ADMIN_TABS: AdminTab[] = ['overview', 'users', 'vendors', 'products', 'disputes', 'payouts', 'settings', 'moderation', 'growth', 'messages', 'ai-hero'];
+    // Honor ?tab= deep links (e.g. the /messages redirect sends admins to /admin?tab=messages).
+    const initialTab = new URLSearchParams(window.location.search).get('tab') as AdminTab | null;
+    const [activeTab, setActiveTab] = useState<AdminTab>(initialTab && ADMIN_TABS.includes(initialTab) ? initialTab : 'overview');
     const [selectedMessageUser, setSelectedMessageUser] = useState<{id: string, name: string, context?: { type: 'order' | 'return' | 'support', id: string, label: string }} | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 

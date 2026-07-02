@@ -398,10 +398,11 @@ export const BuyerSettingsPage = () => {
                     visible: { opacity: 1, x: 0, transition: { duration: 0.3 } }
                 }}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors whitespace-nowrap ${
-                  activeTab === tab.id 
-                    ? 'bg-foreground text-background' 
-                    : 'text-slate-600 hover:bg-foreground/[0.06] dark:text-foreground/40 dark:hover:bg-white/5'
+                aria-current={activeTab === tab.id ? 'page' : undefined}
+                className={`flex items-center gap-3 px-4 py-3 min-h-11 rounded-2xl text-sm font-bold transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 ${
+                  activeTab === tab.id
+                    ? 'bg-foreground text-background'
+                    : 'text-foreground/50 hover:text-foreground hover:bg-foreground/[0.06]'
                 }`}
               >
                 <tab.icon className="w-4 h-4" />
@@ -441,8 +442,9 @@ export const BuyerSettingsPage = () => {
                         <Input placeholder="Label" value={editingAddress.label || ''} onChange={(e: any) => setEditingAddress({...editingAddress, label: e.target.value})} />
                         <Input placeholder="Street" value={editingAddress.street || ''} onChange={(e: any) => setEditingAddress({...editingAddress, street: e.target.value})} />
                         <div className="grid grid-cols-2 gap-4">
-                            <select 
-                                className="w-full h-10 bg-background border border-foreground/10 rounded-xl px-3 text-sm outline-none text-foreground focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all"
+                            <select
+                                aria-label="Region or city"
+                                className="w-full h-12 bg-background border border-foreground/10 rounded-2xl px-3 text-sm font-medium outline-none text-foreground focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/50 transition-all"
                                 value={editingAddress.city || ''}
                                 onChange={(e: any) => setEditingAddress({...editingAddress, city: e.target.value, district: TANZANIA_DISTRICTS[e.target.value]?.[0] || ''})}
                                 required
@@ -452,8 +454,9 @@ export const BuyerSettingsPage = () => {
                                     <option key={region} value={region}>{region}</option>
                                 ))}
                             </select>
-                            <select 
-                                className="w-full h-10 bg-background border border-foreground/10 rounded-xl px-3 text-sm outline-none text-foreground focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all disabled:opacity-50"
+                            <select
+                                aria-label="District"
+                                className="w-full h-12 bg-background border border-foreground/10 rounded-2xl px-3 text-sm font-medium outline-none text-foreground focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/50 transition-all disabled:opacity-50"
                                 value={editingAddress.district || ''}
                                 onChange={(e: any) => setEditingAddress({...editingAddress, district: e.target.value})}
                                 disabled={!editingAddress.city || !TANZANIA_DISTRICTS[editingAddress.city]}

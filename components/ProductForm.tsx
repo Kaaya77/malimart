@@ -600,7 +600,9 @@ export const ProductForm = ({ initialData, onClose, onSuccess, mode = 'modal' }:
              const active = step === s.id;
              return (
                <button key={s.id} onClick={() => setStep(s.id as any)}
-                 className={`w-full flex items-center gap-3.5 p-2.5 rounded-xl transition-all group relative z-10 ${active ? 'bg-emerald-500/[0.08]' : 'hover:bg-foreground/[0.04]'}`}>
+                 aria-current={active ? 'step' : undefined}
+                 aria-label={`Step ${i + 1} of ${STEPS.length}: ${s.label}${active ? ', current' : done ? ', completed' : ''}`}
+                 className={`w-full flex items-center gap-3.5 p-2.5 min-h-11 rounded-xl transition-all group relative z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 ${active ? 'bg-emerald-500/[0.08]' : 'hover:bg-foreground/[0.04]'}`}>
                  <span className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-all ${
                    active ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/25'
                    : done ? 'bg-emerald-500/12 text-emerald-600'
@@ -610,7 +612,7 @@ export const ProductForm = ({ initialData, onClose, onSuccess, mode = 'modal' }:
                  </span>
                  <div className="text-left flex-1 min-w-0">
                    <p className={`text-sm font-semibold leading-tight ${active ? 'text-foreground' : 'text-foreground/55 group-hover:text-foreground/80'}`}>{s.label}</p>
-                   <p className="text-[11px] text-foreground/35">Step {i + 1}</p>
+                   <p className="text-[11px] text-foreground/35">Step {i + 1}{done && !active ? ' · Done' : ''}</p>
                  </div>
                </button>
              );
@@ -642,7 +644,10 @@ export const ProductForm = ({ initialData, onClose, onSuccess, mode = 'modal' }:
            const done = stepComplete[s.id as keyof typeof stepComplete];
            const active = step === s.id;
            return (
-             <button key={s.id} onClick={() => setStep(s.id as any)} className={`flex items-center gap-1.5 px-3.5 h-9 rounded-xl text-xs font-semibold flex-shrink-0 transition-all ${active ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20' : 'bg-foreground/[0.06] text-foreground/55 hover:text-foreground'}`}>
+             <button key={s.id} onClick={() => setStep(s.id as any)}
+               aria-current={active ? 'step' : undefined}
+               aria-label={`Step ${i + 1} of ${STEPS.length}: ${s.label}${active ? ', current' : done ? ', completed' : ''}`}
+               className={`flex items-center gap-1.5 px-3.5 min-h-11 rounded-xl text-xs font-semibold flex-shrink-0 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 ${active ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20' : 'bg-foreground/[0.06] text-foreground/55 hover:text-foreground'}`}>
                {done && !active ? <CheckCircle2 className="w-4 h-4" /> : <s.icon className="w-4 h-4" />}
                <span>{s.mobileLabel}</span>
              </button>
@@ -657,11 +662,11 @@ export const ProductForm = ({ initialData, onClose, onSuccess, mode = 'modal' }:
 
          {/* Draft restore banner */}
          {draftBanner && (
-           <div className="flex items-center justify-between gap-3 px-4 py-3 bg-amber-500/8 border border-amber-400/30 rounded-xl text-sm">
+           <div className="flex items-center justify-between gap-3 px-4 py-3 bg-amber-500/[0.06] border border-amber-400/30 rounded-2xl text-sm">
              <span className="text-amber-700 dark:text-amber-300 font-medium">You have an unsaved draft. Restore it?</span>
              <div className="flex gap-2">
-               <button onClick={restoreDraft} className="px-3 py-1.5 rounded-lg bg-amber-600 text-white text-xs font-semibold hover:bg-amber-700 transition-colors">Restore</button>
-               <button onClick={discardDraft} className="px-3 py-1.5 rounded-lg text-amber-700 dark:text-amber-400 text-xs font-medium hover:underline">Discard</button>
+               <button onClick={restoreDraft} className="px-4 min-h-10 rounded-xl bg-amber-600 text-white text-xs font-bold hover:bg-amber-700 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40">Restore</button>
+               <button onClick={discardDraft} className="px-4 min-h-10 rounded-xl text-amber-700 dark:text-amber-400 text-xs font-bold hover:bg-amber-500/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40">Discard</button>
              </div>
            </div>
          )}

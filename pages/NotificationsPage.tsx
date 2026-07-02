@@ -5,6 +5,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { SwipeableRow } from '../components/SwipeableRow';
 import { BackButton } from '../components/BackButton';
+import { EmptyState } from '../components/UI';
+
+const FOCUS_RING = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40';
 
 const TYPE_CONFIG: Record<string, { icon: React.ElementType; color: string; bg: string }> = {
   order:       { icon: ShoppingBag, color: 'text-blue-500',   bg: 'bg-blue-50 dark:bg-blue-900/20' },
@@ -68,7 +71,7 @@ export const NotificationsPage = () => {
           {unreadCount > 0 && (
             <button
               onClick={markAllNotificationsRead}
-              className="flex items-center gap-1.5 h-8 px-4 rounded-xl border border-foreground/12 text-[9px] font-black uppercase tracking-wider text-foreground/50 hover:text-foreground hover:border-foreground/25 transition-all"
+              className={`flex items-center gap-1.5 min-h-11 px-4 rounded-2xl border border-foreground/12 text-[10px] font-black uppercase tracking-widest text-foreground/50 hover:text-foreground hover:border-foreground/25 transition-all ${FOCUS_RING}`}
             >
               <CheckCheck className="w-3.5 h-3.5" /> Mark All Read
             </button>
@@ -80,12 +83,12 @@ export const NotificationsPage = () => {
           {FILTERS.map(f => {
             const count = f === 'all' ? notifications.length : notifications.filter(n => (n.type || 'system') === f).length;
             return (
-              <button key={f} onClick={() => setFilter(f)}
-                className={`flex items-center gap-1.5 px-3 h-8 rounded-full text-[9px] font-black uppercase tracking-wider flex-shrink-0 transition-all ${filter === f ? 'bg-foreground text-background' : 'bg-foreground/[0.04] text-foreground/40 hover:bg-foreground/[0.08]'}`}
+              <button key={f} onClick={() => setFilter(f)} aria-pressed={filter === f}
+                className={`flex items-center gap-1.5 px-4 min-h-11 rounded-2xl text-[10px] font-black uppercase tracking-widest flex-shrink-0 transition-all ${FOCUS_RING} ${filter === f ? 'bg-foreground text-background' : 'bg-foreground/[0.05] text-foreground/50 hover:bg-foreground/[0.08] hover:text-foreground'}`}
               >
                 {f}
                 {count > 0 && (
-                  <span className={`text-[8px] font-black px-1 rounded-full ${filter === f ? 'bg-background/20 text-background' : 'bg-foreground/10 text-foreground/50'}`}>{count}</span>
+                  <span className={`text-[10px] font-black px-1.5 rounded-full tabular-nums ${filter === f ? 'bg-background/20 text-background' : 'bg-foreground/10 text-foreground/50'}`}>{count}</span>
                 )}
               </button>
             );
@@ -94,15 +97,13 @@ export const NotificationsPage = () => {
 
         {/* Empty state */}
         {filtered.length === 0 && (
-          <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }}
-            className="flex flex-col items-center justify-center py-20 border border-dashed border-foreground/10 rounded-2xl"
-          >
-            <div className="w-14 h-14 rounded-full bg-foreground/[0.04] flex items-center justify-center mb-4">
-              <Bell className="w-6 h-6 text-foreground/20" />
-            </div>
-            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground/30">
-              {filter === 'all' ? "You're all caught up" : `No ${filter} notifications`}
-            </p>
+          <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }}>
+            <EmptyState
+              icon={Bell}
+              title={filter === 'all' ? "You're all caught up" : `No ${filter} notifications`}
+              subtitle={filter === 'all' ? 'New order updates, messages and offers will appear here.' : 'Try another category or check back later.'}
+              className="rounded-3xl border border-foreground/8 bg-foreground/[0.02]"
+            />
           </motion.div>
         )}
 
@@ -151,11 +152,11 @@ export const NotificationsPage = () => {
                           {notif.message}
                         </p>
                         <div className="flex items-center gap-3 mt-2">
-                          <span className="text-[9px] font-bold text-foreground/30 uppercase tracking-wider">
+                          <span className="text-[10px] font-bold text-foreground/30 uppercase tracking-widest">
                             {timeAgo(notif.created_at)}
                           </span>
                           {(notif.link || notif.payload?.action_link) && (
-                            <span className="text-[9px] font-black uppercase tracking-wider text-foreground/40 hover:text-foreground transition-colors">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-foreground/40 hover:text-foreground transition-colors">
                               {notif.payload?.action_label || 'View →'}
                             </span>
                           )}
@@ -165,10 +166,10 @@ export const NotificationsPage = () => {
                       {/* Dismiss (desktop hover) */}
                       <button
                         onClick={e => { e.stopPropagation(); dismissNotification(notif.id); }}
-                        className="absolute top-3 right-3 w-5 h-5 hidden md:flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 bg-foreground/[0.06] hover:bg-foreground/15 transition-all"
-                        aria-label="Dismiss"
+                        className={`absolute top-2 right-2 w-8 h-8 hidden md:flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 focus-visible:opacity-100 bg-foreground/[0.06] hover:bg-foreground/15 transition-all ${FOCUS_RING}`}
+                        aria-label="Dismiss notification"
                       >
-                        <X className="w-2.5 h-2.5 text-foreground/50" />
+                        <X className="w-3 h-3 text-foreground/50" />
                       </button>
                     </div>
                   </SwipeableRow>

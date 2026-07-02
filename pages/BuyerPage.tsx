@@ -8,7 +8,7 @@ import {
  ChevronRight, Repeat, Sparkles, Search, ZapOff, Gift, Eye
 } from 'lucide-react';
 import { useAppState } from '../context/AppContext';
-import { Button, Card, Badge, Input, useToast, PremiumStatCard, ModernFollowCard, GraphicalTag, EmptyState } from '../components/UI';
+import { Button, Card, Badge, Input, useToast, PremiumStatCard, ModernFollowCard, GraphicalTag, EmptyState, CountBadge } from '../components/UI';
 import { supabase } from '../services/supabaseClient';
 import { OrderTracking } from '../components/CheckoutComponents';
 import { formatTZS, CURRENCY } from '../constants';
@@ -181,25 +181,204 @@ const BuyerFollows = ({ followers, unfollowSeller, navigate }: { followers:any[]
 };
 
 // âââ Main page ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// Same dashboard shell as SellerPage: desktop sidebar + mobile bottom tab bar.
+// One name per tab, used everywhere. First five feed the mobile bar; the rest
+// live in the More sheet.
 const TABS = [
- { id:'dashboard',label:'Overview', icon:LayoutGrid },
- { id:'orders', label:'Orders', icon:ShoppingBag },
- { id:'wishlist', label:'Wishlist', icon:Heart },
- { id:'follows', label:'Following', icon:Store },
- { id:'inbox', label:'Messages', icon:MessageSquare },
- { id:'offers', label:'Rewards', icon:Ticket },
- { id:'returns', label:'Returns', icon:RotateCcw },
- { id:'settings', label:'Account', icon:Settings },
+ { id:'dashboard',label:'Overview', icon:LayoutGrid, desc:'Your activity at a glance' },
+ { id:'orders', label:'Orders', icon:ShoppingBag, desc:'Track & manage purchases' },
+ { id:'inbox', label:'Messages', icon:MessageSquare, desc:'Chat with sellers' },
+ { id:'wishlist', label:'Wishlist', icon:Heart, desc:'Products you saved' },
+ { id:'offers', label:'Rewards', icon:Ticket, desc:'Vouchers & deals for you' },
+ { id:'follows', label:'Following', icon:Store, desc:'Stores you follow' },
+ { id:'returns', label:'Returns', icon:RotateCcw, desc:'Refunds & disputes' },
+ { id:'settings', label:'Account', icon:Settings, desc:'Profile & preferences' },
 ];
 
+const FOCUS_RING = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40';
+
+const tabBadge = (tabId: string, unread: number): { count: number; urgent: boolean } => {
+ if (tabId === 'inbox') return { count: unread, urgent: false };
+ return { count: 0, urgent: false };
+};
+
+// Vertical sidebar nav (desktop) — mirrors SellerPage's SideNav.
+const SideNav = ({ tab, setTab, unread, user, onShop }: any) => (
+ <aside className="hidden lg:flex flex-col w-[220px] shrink-0 sticky top-[80px] self-start max-h-[calc(100vh-100px)] overflow-y-auto pr-2">
+ {/* Account identity */}
+ <div className="flex items-center gap-3 px-3 py-3 mb-4 rounded-2xl bg-foreground/[0.03] border border-foreground/[0.06]">
+ {user.avatar_url ? (
+ <img src={user.avatar_url} alt="" className="w-9 h-9 rounded-xl object-cover ring-1 ring-foreground/10" />
+ ) : (
+ <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center shrink-0">
+ <span className="text-white font-black text-sm">{(user.name||user.email||'U')[0].toUpperCase()}</span>
+ </div>
+ )}
+ <div className="min-w-0">
+ <p className="text-[10px] font-black uppercase tracking-widest text-foreground/30">Account</p>
+ <p className="text-xs font-bold text-foreground truncate">{user.name?.split(' ')[0] || 'My account'}</p>
+ </div>
+ </div>
+
+ {/* Nav items */}
+ <nav aria-label="Buyer account sections" className="flex flex-col gap-0.5">
+ {TABS.map((t: any) => {
+ const Icon = t.icon;
+ const active = tab === t.id;
+ const { count, urgent } = tabBadge(t.id, unread);
+ return (
+ <button key={t.id} onClick={() => setTab(t.id)}
+ aria-current={active ? 'page' : undefined}
+ className={`group relative flex items-center gap-3 px-3 py-2.5 min-h-11 rounded-2xl text-left transition-all duration-200 ${FOCUS_RING} ${
+ active ? 'bg-foreground/[0.06] text-foreground' : 'text-foreground/50 hover:text-foreground hover:bg-foreground/[0.04]'
+ }`}
+ >
+ {active && (
+ <motion.span layoutId="buyer-sidebar-pill"
+ className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-r-full bg-emerald-500"
+ />
+ )}
+ <span className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
+ active ? 'bg-emerald-500 text-white' : 'bg-foreground/[0.04] text-foreground/50 group-hover:text-foreground'
+ }`}>
+ <Icon className="w-3.5 h-3.5" strokeWidth={2} />
+ </span>
+ <span className="flex-1 text-[11px] font-bold tracking-wide">{t.label}</span>
+ <CountBadge count={count} urgent={urgent} />
+ </button>
+ );
+ })}
+ </nav>
+
+ {/* Footer links */}
+ <div className="mt-auto pt-6 border-t border-foreground/[0.06] flex flex-col gap-1">
+ <button onClick={onShop}
+ className={`flex items-center gap-2.5 px-3 py-2 min-h-11 rounded-2xl text-foreground/40 hover:text-foreground/70 hover:bg-foreground/[0.04] transition-all text-[11px] font-semibold text-left ${FOCUS_RING}`}>
+ <Search className="w-3.5 h-3.5" />
+ Continue shopping
+ </button>
+ <div className="flex items-center gap-2.5 px-3 py-2 text-foreground/25 text-[10px] font-semibold">
+ <BadgeCheck className="w-3 h-3" />
+ Secured by MaliMart
+ </div>
+ </div>
+ </aside>
+);
+
+// Bottom tab bar (mobile) — mirrors SellerPage's MobileTabBar.
+const MobileTabBar = ({ tab, setTab, unread }: any) => {
+ const primary = TABS.slice(0, 5);
+ return (
+ <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 pb-[env(safe-area-inset-bottom)]
+ bg-background/80 backdrop-blur-2xl border-t border-foreground/[0.08]">
+ <nav aria-label="Buyer account sections" className="flex">
+ {primary.map((t: any) => {
+ const Icon = t.icon;
+ const active = tab === t.id;
+ const { count, urgent } = tabBadge(t.id, unread);
+ return (
+ <button key={t.id} onClick={() => setTab(t.id)}
+ aria-current={active ? 'page' : undefined}
+ className={`flex-1 flex flex-col items-center justify-center gap-1 py-2.5 min-h-[56px] relative transition-colors ${FOCUS_RING}`}>
+ {active && (
+ <motion.span layoutId="buyer-mobile-indicator"
+ className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-0.5 rounded-full bg-emerald-500"
+ />
+ )}
+ <span className="relative">
+ <Icon className={`w-5 h-5 transition-colors ${active ? 'text-foreground' : 'text-foreground/50'}`}
+ strokeWidth={active ? 2.5 : 1.5} />
+ <CountBadge count={count} urgent={urgent} className="absolute -top-2.5 -right-3 scale-[0.8] origin-bottom-left" />
+ </span>
+ <span className={`text-[10px] font-bold tracking-wide transition-colors ${active ? 'text-foreground' : 'text-foreground/50'}`}>
+ {t.label}
+ </span>
+ </button>
+ );
+ })}
+ <MobileMore tab={tab} setTab={setTab} tabs={TABS.slice(5)} />
+ </nav>
+ </div>
+ );
+};
+
+const MobileMore = ({ tab, setTab, tabs }: any) => {
+ const [open, setOpen] = useState(false);
+ const hasActive = tabs.some((t: any) => t.id === tab);
+ return (
+ <>
+ <button onClick={() => setOpen(true)}
+ aria-label="More sections" aria-haspopup="dialog" aria-expanded={open}
+ aria-current={hasActive ? 'page' : undefined}
+ className={`flex-1 flex flex-col items-center justify-center gap-1 py-2.5 min-h-[56px] ${FOCUS_RING}`}>
+ <Plus className={`w-5 h-5 ${hasActive ? 'text-foreground' : 'text-foreground/50'}`} strokeWidth={hasActive ? 2.5 : 1.5} />
+ <span className={`text-[10px] font-bold tracking-wide ${hasActive ? 'text-foreground' : 'text-foreground/50'}`}>More</span>
+ </button>
+ <AnimatePresence>
+ {open && (
+ <>
+ <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+ className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" onClick={() => setOpen(false)} />
+ <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+ transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+ className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-foreground/10 rounded-t-3xl pb-[env(safe-area-inset-bottom)]">
+ <div className="w-10 h-1 bg-foreground/15 rounded-full mx-auto mt-3 mb-4" />
+ <div className="px-4 pb-6 grid grid-cols-3 gap-3">
+ {tabs.map((t: any) => {
+ const Icon = t.icon;
+ const active = tab === t.id;
+ return (
+ <button key={t.id} onClick={() => { setTab(t.id); setOpen(false); }}
+ aria-current={active ? 'page' : undefined}
+ className={`flex flex-col items-center gap-2 p-4 min-h-11 rounded-2xl border transition-all ${FOCUS_RING} ${
+ active ? 'border-emerald-500/40 bg-emerald-500/[0.06]' : 'border-foreground/[0.07] bg-foreground/[0.02]'
+ }`}>
+ <span className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+ active ? 'bg-emerald-500 text-white' : 'bg-foreground/[0.05] text-foreground/60'
+ }`}>
+ <Icon className="w-5 h-5" />
+ </span>
+ <span className={`text-[10px] font-bold ${active ? 'text-foreground' : 'text-foreground/60'}`}>{t.label}</span>
+ </button>
+ );
+ })}
+ </div>
+ </motion.div>
+ </>
+ )}
+ </AnimatePresence>
+ </>
+ );
+};
+
+// Page header — matches SellerPage's PageHeader treatment.
+const PageHeader = ({ activeTab }: { activeTab: any }) => {
+ const Icon = activeTab.icon;
+ return (
+ <motion.div key={activeTab.id}
+ initial={{ opacity: 0, x: -8 }}
+ animate={{ opacity: 1, x: 0 }}
+ className="flex items-center gap-3 mb-6 lg:mb-8">
+ <span className="w-9 h-9 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0">
+ <Icon className="w-4 h-4" strokeWidth={2} />
+ </span>
+ <div>
+ <h1 className="text-lg font-black text-foreground tracking-tight leading-none">{activeTab.label}</h1>
+ <p className="text-xs text-foreground/40 mt-0.5 font-medium">{activeTab.desc}</p>
+ </div>
+ </motion.div>
+ );
+};
+
 export const BuyerPage = () => {
- const { user, orders, cancelOrder, deleteOrder, addToCart, fetchVendorProfile, wishlist, toggleWishlist, followers, unfollowSeller } = useAppState();
+ const { user, orders, cancelOrder, deleteOrder, addToCart, fetchVendorProfile, wishlist, toggleWishlist, followers, unfollowSeller, unreadMessages } = useAppState();
  const { addToast } = useToast();
  const [searchParams, setSearchParams] = useSearchParams();
  const navigate = useNavigate();
  const [tab, setTab] = useState<string>((searchParams.get('tab'))||'dashboard');
 
  useEffect(()=>{ const t=searchParams.get('tab'); if(t) setTab(t); },[searchParams]);
+ useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior }); }, [tab]);
 
  const changeTab = (t: string) => {
  setTab(t);
@@ -229,46 +408,39 @@ export const BuyerPage = () => {
   </div>
  );
 
+ const activeTabDef = TABS.find(t => t.id === tab) || TABS[0];
+
  return (
- <div className="min-h-screen bg-background font-sans pb-[calc(5rem+env(safe-area-inset-bottom))] pt-20 md:pt-24">
+ <div className="min-h-screen bg-background font-sans pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:pb-8 pt-[72px] lg:pt-[80px]">
  <div className="container mx-auto max-w-7xl px-4 md:px-6">
+ <div className="flex gap-8 pt-6">
 
- {/* ââ Page header âââââââââââââââââââââââââââââââââââââââ */}
- <motion.div initial={{opacity:0,y:12}} animate={{opacity:1,y:0}} transition={{duration:0.4}}
- className="flex items-center justify-between py-6 md:py-8">
- <div className="flex items-center gap-3.5">
- {user.avatar_url ? (
- <img src={user.avatar_url} alt="" className="w-12 h-12 rounded-2xl object-cover ring-2 ring-foreground/10 shadow-md" loading="lazy" decoding="async"/>
- ) : (
- <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-foreground to-foreground/80 flex items-center justify-center shadow-md shrink-0">
- <span className="text-background font-black text-lg">{(user.name||user.email||'U')[0].toUpperCase()}</span>
- </div>
- )}
- <div>
- <p className="text-[10px] text-foreground/35 uppercase tracking-[0.2em] font-bold">Buyer Account</p>
- <h1 className="text-xl md:text-2xl font-bold text-foreground tracking-tight leading-tight">
- Hello, {user.name?.split(' ')[0]||'there'} ð
- </h1>
- </div>
- </div>
- <button onClick={()=>changeTab('settings')} aria-label="Account settings" className="w-11 h-11 rounded-2xl bg-foreground/[0.06] flex items-center justify-center hover:bg-foreground/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40">
- <Settings className="w-4 h-4 text-foreground/60 stroke-[2]"/>
- </button>
- </motion.div>
+ {/* Desktop sidebar */}
+ <SideNav tab={tab} setTab={changeTab} unread={unreadMessages} user={user} onShop={() => navigate('/shop')} />
 
- {/* ââ Tab strip âââââââââââââââââââââââââââââââââââââââââ */}
- <div role="tablist" aria-label="Account sections" className="flex gap-1 overflow-x-auto no-scrollbar bg-background/90 backdrop-blur-xl p-1.5 rounded-2xl mb-6 sticky top-[60px] z-20 border border-foreground/8">
- {TABS.map(t=>{
- const Icon=t.icon;
- const active=tab===t.id;
- return (
- <button key={t.id} onClick={()=>changeTab(t.id)} role="tab" aria-selected={active}
- className={`flex-shrink-0 flex items-center gap-2 min-h-[44px] px-3.5 rounded-2xl text-[10px] font-bold uppercase tracking-widest transition-all duration-200 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 ${active?'bg-foreground text-background shadow-sm':'text-foreground/40 hover:text-foreground/65'}`}>
- <Icon className={`w-3.5 h-3.5 stroke-[2] ${active?'':'opacity-70'}`}/>
- {t.label}
+ {/* Main content */}
+ <main className="flex-1 min-w-0">
+
+ {/* Mobile header */}
+ <div className="lg:hidden">
+ <PageHeader activeTab={activeTabDef} />
+ </div>
+
+ {/* Desktop header — active section + shop shortcut */}
+ <div className="hidden lg:flex items-center justify-between gap-4 mb-8">
+ <div className="flex items-center gap-3 min-w-0">
+ <span className="w-9 h-9 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0">
+ <activeTabDef.icon className="w-4 h-4" strokeWidth={2} />
+ </span>
+ <div className="min-w-0">
+ <h1 className="text-xl font-black text-foreground tracking-tight leading-none truncate">{activeTabDef.label}</h1>
+ <p className="text-xs text-foreground/40 mt-0.5 font-medium truncate">{activeTabDef.desc}</p>
+ </div>
+ </div>
+ <button onClick={() => navigate('/shop')}
+ className={`flex items-center gap-1.5 h-9 px-4 shrink-0 rounded-2xl bg-foreground/[0.05] text-foreground/50 text-[10px] font-black uppercase tracking-widest hover:bg-foreground/[0.09] hover:text-foreground transition-all ${FOCUS_RING}`}>
+ <Search className="w-3 h-3" /> Shop
  </button>
- );
- })}
  </div>
 
  {/* ââ Tab content âââââââââââââââââââââââââââââââââââââââ */}
@@ -366,7 +538,12 @@ export const BuyerPage = () => {
  {tab==='settings' && <BuyerSettingsPage/>}
  </motion.div>
  </AnimatePresence>
+ </main>
  </div>
+ </div>
+
+ {/* Mobile bottom nav */}
+ <MobileTabBar tab={tab} setTab={changeTab} unread={unreadMessages} />
  </div>
  );
 };

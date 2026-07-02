@@ -54,7 +54,7 @@ export const BillingTab = () => {
                           </div>
                           <div className="md:col-span-1">
                               <select 
-                                  className="w-full h-10 bg-background border border-foreground/10 rounded-xl px-3 text-sm outline-none text-foreground focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all"
+                                  className="w-full h-10 bg-background border border-foreground/10 rounded-xl px-3 text-sm outline-none text-foreground focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/50 transition-all"
                                   value={addressData.city}
                                   onChange={(e: any) => setAddressData({...addressData, city: e.target.value, district: TANZANIA_DISTRICTS[e.target.value]?.[0] || ''})}
                                   required
@@ -67,7 +67,7 @@ export const BillingTab = () => {
                           </div>
                           <div className="md:col-span-1">
                               <select 
-                                  className="w-full h-10 bg-background border border-foreground/10 rounded-xl px-3 text-sm outline-none text-foreground focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all disabled:opacity-50"
+                                  className="w-full h-10 bg-background border border-foreground/10 rounded-xl px-3 text-sm outline-none text-foreground focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/50 transition-all disabled:opacity-50"
                                   value={addressData.district}
                                   onChange={(e: any) => setAddressData({...addressData, district: e.target.value})}
                                   disabled={!addressData.city || !TANZANIA_DISTRICTS[addressData.city]}
@@ -118,20 +118,20 @@ export const BillingTab = () => {
                         <h4 className="font-semibold text-sm mb-4">Add Payment Method</h4>
                         <form onSubmit={handleAddPaymentMethod} className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <select className="h-10 bg-background rounded-xl border border-foreground/10 px-3 text-sm outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white" value={paymentData.type} onChange={(e) => setPaymentData({...paymentData, type: e.target.value, provider: e.target.value === 'visa' ? 'visa' : (e.target.value === 'mobile' ? MOBILE_MONEY_PROVIDERS[0] : BANK_PROVIDERS[0])})}>
+                                <select className="h-10 bg-background rounded-xl border border-foreground/10 px-3 text-sm outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/50" value={paymentData.type} onChange={(e) => setPaymentData({...paymentData, type: e.target.value, provider: e.target.value === 'visa' ? 'visa' : (e.target.value === 'mobile' ? MOBILE_MONEY_PROVIDERS[0] : BANK_PROVIDERS[0])})}>
                                     <option value="visa">Card (Visa/Mastercard)</option>
                                     <option value="mobile">Mobile Money</option>
                                     <option value="bank">Bank Account</option>
                                 </select>
                                 {paymentData.type === 'mobile' && (
-                                    <select className="h-10 bg-background rounded-xl border border-foreground/10 px-3 text-sm outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white" value={paymentData.provider} onChange={(e) => setPaymentData({...paymentData, provider: e.target.value})}>
+                                    <select className="h-10 bg-background rounded-xl border border-foreground/10 px-3 text-sm outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/50" value={paymentData.provider} onChange={(e) => setPaymentData({...paymentData, provider: e.target.value})}>
                                         {MOBILE_MONEY_PROVIDERS.map(provider => (
                                             <option key={provider} value={provider}>{provider}</option>
                                         ))}
                                     </select>
                                 )}
                                 {paymentData.type === 'bank' && (
-                                    <select className="h-10 bg-background rounded-xl border border-foreground/10 px-3 text-sm outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white" value={paymentData.provider} onChange={(e) => setPaymentData({...paymentData, provider: e.target.value})}>
+                                    <select className="h-10 bg-background rounded-xl border border-foreground/10 px-3 text-sm outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/50" value={paymentData.provider} onChange={(e) => setPaymentData({...paymentData, provider: e.target.value})}>
                                         {BANK_PROVIDERS.map(provider => (
                                             <option key={provider} value={provider}>{provider}</option>
                                         ))}

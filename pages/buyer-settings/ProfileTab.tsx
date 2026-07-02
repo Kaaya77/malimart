@@ -121,7 +121,7 @@ export const ProfileTab = () => {
                           <div className="relative">
                               <Home className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40" />
                               <select 
-                                  className="w-full h-10 bg-background border border-foreground/10 rounded-xl pl-10 pr-4 text-sm outline-none text-foreground appearance-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all"
+                                  className="w-full h-10 bg-background border border-foreground/10 rounded-xl pl-10 pr-4 text-sm outline-none text-foreground appearance-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/50 transition-all"
                                   value={profileData.region || ''}
                                   onChange={(e: any) => setProfileData({ ...profileData, region: e.target.value })}
                               >
@@ -141,7 +141,7 @@ export const ProfileTab = () => {
                         </div>
                         <div className="space-y-1">
                           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Greeting Style</label>
-                          <select className="w-full h-10 bg-background border border-foreground/10 rounded-xl px-4 text-sm outline-none text-foreground appearance-none" value={profileData.greeting_style || 'karibu'} onChange={(e: any) => setProfileData({ ...profileData, greeting_style: e.target.value })}>
+                          <select className="w-full h-10 bg-background border border-foreground/10 rounded-xl px-4 text-sm outline-none text-foreground appearance-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/50 transition-all" value={profileData.greeting_style || 'karibu'} onChange={(e: any) => setProfileData({ ...profileData, greeting_style: e.target.value })}>
                             <option value="karibu">Karibu (Welcome)</option>
                             <option value="habari">Habari (How are you?)</option>
                             <option value="hello">Hello (English)</option>
@@ -150,12 +150,12 @@ export const ProfileTab = () => {
                         </div>
                         <div className="space-y-1 md:col-span-2">
                           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Bio</label>
-                          <textarea placeholder="Tell people a little about yourself..." value={profileData.bio || ''} onChange={(e: any) => setProfileData({ ...profileData, bio: e.target.value })} maxLength={500} rows={3} className="w-full bg-background border border-foreground/10 rounded-xl px-4 py-3 text-sm outline-none text-foreground focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all resize-none" />
+                          <textarea placeholder="Tell people a little about yourself..." value={profileData.bio || ''} onChange={(e: any) => setProfileData({ ...profileData, bio: e.target.value })} maxLength={500} rows={3} className="w-full bg-background border border-foreground/10 rounded-xl px-4 py-3 text-sm outline-none text-foreground focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/50 transition-all resize-none" />
                           <p className="text-xs text-muted-foreground text-right">{(profileData.bio || '').length}/500</p>
                         </div>
                         <div className="space-y-1">
                           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Timezone</label>
-                          <select className="w-full h-10 bg-background border border-foreground/10 rounded-xl px-4 text-sm outline-none text-foreground appearance-none" value={profileData.timezone || 'Africa/Dar_es_Salaam'} onChange={(e: any) => setProfileData({ ...profileData, timezone: e.target.value })}>
+                          <select className="w-full h-10 bg-background border border-foreground/10 rounded-xl px-4 text-sm outline-none text-foreground appearance-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/50 transition-all" value={profileData.timezone || 'Africa/Dar_es_Salaam'} onChange={(e: any) => setProfileData({ ...profileData, timezone: e.target.value })}>
                             <option value="Africa/Dar_es_Salaam">East Africa Time (Dar es Salaam)</option>
                             <option value="Africa/Nairobi">East Africa Time (Nairobi)</option>
                             <option value="UTC">UTC</option>
@@ -200,7 +200,7 @@ export const ProfileTab = () => {
                         <div className="relative">
                             <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40" />
                             <select 
-                                className="w-full h-10 bg-background border border-foreground/10 rounded-xl pl-10 pr-4 text-sm outline-none text-foreground appearance-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all"
+                                className="w-full h-10 bg-background border border-foreground/10 rounded-xl pl-10 pr-4 text-sm outline-none text-foreground appearance-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/50 transition-all"
                                 value={preferences.language}
                                 onChange={handleLanguageChange}
                             >
@@ -215,7 +215,7 @@ export const ProfileTab = () => {
                         <div className="relative">
                             <Wallet className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40" />
                             <select 
-                                className="w-full h-10 bg-background border border-foreground/10 rounded-xl pl-10 pr-4 text-sm outline-none text-foreground appearance-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-white transition-all"
+                                className="w-full h-10 bg-background border border-foreground/10 rounded-xl pl-10 pr-4 text-sm outline-none text-foreground appearance-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/50 transition-all"
                                 value={preferences.defaultCurrency}
                                 onChange={(e) => {
                                     setPreferences({...preferences, defaultCurrency: e.target.value});
