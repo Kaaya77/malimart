@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAppState } from '../context/AppContext';
 import { Button, Input, Card, CardHeader, CardContent, CardTitle, CardDescription, ConfirmDialog, useToast, Switch, ConfirmModal, Badge } from '../components/UI';
-import { User as UserIcon, Mail, Phone, Home, PlusCircle, Trash2, Edit, Loader2, Wallet, Gift, Copy, ArrowUpRight, ArrowDownLeft, Bell, Shield, Globe, CreditCard, Download, LogOut, CheckCircle2, MapPin, Settings, Lock, Activity } from 'lucide-react';
+import { User as UserIcon, Mail, Phone, Home, PlusCircle, Trash2, Edit, Wallet, Gift, Copy, ArrowUpRight, ArrowDownLeft, Bell, Shield, Globe, CreditCard, Download, LogOut, CheckCircle2, MapPin, Settings, Lock, Activity } from 'lucide-react';
 import { BackButton } from '../components/BackButton';
 import { CURRENCY, TANZANIA_REGIONS, TANZANIA_DISTRICTS, MOBILE_MONEY_PROVIDERS, BANK_PROVIDERS, isValidTanzanianPhone } from '../constants';
 import { supabase } from '../services/supabaseClient';
@@ -439,8 +439,14 @@ export const BuyerSettingsPage = () => {
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleUpdateAddress} className="space-y-4">
-                        <Input placeholder="Label" value={editingAddress.label || ''} onChange={(e: any) => setEditingAddress({...editingAddress, label: e.target.value})} />
-                        <Input placeholder="Street" value={editingAddress.street || ''} onChange={(e: any) => setEditingAddress({...editingAddress, street: e.target.value})} />
+                        <div className="space-y-1">
+                            <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">Label</label>
+                            <Input placeholder="Label (e.g., Home, Office)" value={editingAddress.label || ''} onChange={(e: any) => setEditingAddress({...editingAddress, label: e.target.value})} />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">Street</label>
+                            <Input placeholder="Street" value={editingAddress.street || ''} onChange={(e: any) => setEditingAddress({...editingAddress, street: e.target.value})} />
+                        </div>
                         <div className="grid grid-cols-2 gap-4">
                             <select
                                 aria-label="Region or city"
@@ -467,11 +473,14 @@ export const BuyerSettingsPage = () => {
                                 ))}
                             </select>
                         </div>
-                        <Input placeholder="Phone" value={editingAddress.phone || ''} onChange={(e: any) => setEditingAddress({...editingAddress, phone: e.target.value})} />
+                        <div className="space-y-1">
+                            <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">Phone</label>
+                            <Input placeholder="Phone" value={editingAddress.phone || ''} onChange={(e: any) => setEditingAddress({...editingAddress, phone: e.target.value})} />
+                        </div>
                         <div className="flex gap-3 pt-4">
                             <Button variant="secondary" type="button" onClick={() => setEditingAddress(null)} className="flex-1">Cancel</Button>
-                            <Button variant="primary" type="submit" className="flex-1" disabled={isUpdatingAddress}>
-                                {isUpdatingAddress ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</> : 'Save Changes'}
+                            <Button variant="primary" type="submit" className="flex-1" isLoading={isUpdatingAddress}>
+                                {isUpdatingAddress ? 'Saving...' : 'Save Changes'}
                             </Button>
                         </div>
                     </form>
@@ -487,6 +496,7 @@ export const BuyerSettingsPage = () => {
         onConfirm={handleDeleteAddress}
         onCancel={() => setIsConfirmOpen(false)}
         isDangerous
+        isLoading={isDeletingAddress}
       />
       <ConfirmDialog
         isOpen={isConfirmDeletePaymentOpen}
@@ -495,6 +505,7 @@ export const BuyerSettingsPage = () => {
         onConfirm={handleDeletePayment}
         onCancel={() => setIsConfirmDeletePaymentOpen(false)}
         isDangerous
+        isLoading={isDeletingPayment}
       />
       <ConfirmModal 
         isOpen={isConfirmAccountDeleteOpen}

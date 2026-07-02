@@ -16,6 +16,7 @@ import { useProductPricing } from '../hooks/useProductPricing';
 import { useVariantSelection } from '../hooks/useVariantSelection';
 import { getAI } from '../services/aiClient';
 import { MODELS } from '../services/aiModels';
+import { ProductShare } from './ProductShare';
 
 interface ProductModalProps {
  product: Product | null;
@@ -42,6 +43,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
  const [descExpanded, setDescExpanded] = useState(false);
  const [aiPitch, setAiPitch] = useState('');
  const [zoomedImg, setZoomedImg] = useState<string | null>(null);
+ const [shareOpen, setShareOpen] = useState(false);
  const scrollRef = useRef<HTMLDivElement>(null);
  const imgScrollRef = useRef<HTMLDivElement>(null);
 
@@ -143,15 +145,8 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
  }, 700);
  };
 
- const handleShare = async () => {
- const url = `${window.location.origin}/product/${product.id}`;
- if (navigator.share) {
- try { await navigator.share({ title: product.name, url }); } catch { /* cancelled */ }
- } else {
- await navigator.clipboard.writeText(url);
- addToast('Link copied', 'success');
- }
- };
+ // Unified share experience: open the ProductShare sheet (channels + poster).
+ const handleShare = () => setShareOpen(true);
 
  const scrollToImg = (idx: number) => {
  setSelectedImg(idx);
@@ -750,6 +745,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
      </motion.div>
    )}
  </AnimatePresence>
+ <ProductShare product={product} isOpen={isOpen && shareOpen} onClose={() => setShareOpen(false)} />
  </AnimatePresence>
  );
 };

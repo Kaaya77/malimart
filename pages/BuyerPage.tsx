@@ -19,6 +19,7 @@ import { MessagingHub } from '../components/messaging/MessagingHub';
 import { ProductCard } from '../components/ProductCard';
 import { BuyerSettingsPage } from './BuyerSettingsPage';
 import { BuyerReturns } from '../components/BuyerReturns';
+import { ProductShare } from '../components/ProductShare';
 import { BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts';
 
 // âââ Tooltip âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
@@ -376,6 +377,7 @@ export const BuyerPage = () => {
  const [searchParams, setSearchParams] = useSearchParams();
  const navigate = useNavigate();
  const [tab, setTab] = useState<string>((searchParams.get('tab'))||'dashboard');
+ const [giftShareOpen, setGiftShareOpen] = useState(false);
 
  useEffect(()=>{ const t=searchParams.get('tab'); if(t) setTab(t); },[searchParams]);
  useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior }); }, [tab]);
@@ -387,9 +389,14 @@ export const BuyerPage = () => {
  setSearchParams(p);
  };
 
- const handleContactSeller = (sellerId: string) => {
+ const handleContactSeller = (sellerId: string, context?: { type: string; id: string; label?: string }) => {
  const p = new URLSearchParams(searchParams);
  p.set('tab','inbox'); p.set('sellerId',sellerId);
+ ['productId','orderId','contextType','contextId','contextLabel'].forEach(k => p.delete(k));
+ if (context?.id) {
+  if (context.type === 'product') p.set('productId', context.id);
+  else { p.set('contextType', context.type); p.set('contextId', context.id); if (context.label) p.set('contextLabel', context.label); }
+ }
  setSearchParams(p); setTab('inbox');
  };
 
@@ -400,7 +407,7 @@ export const BuyerPage = () => {
       <p className="text-foreground/50 text-sm">Your wishlist, orders, and account details are waiting for you.</p>
     </div>
     <button
-      onClick={() => navigate('/auth')}
+      onClick={() => navigate('/login?redirect=%2Fbuyer')}
       className="min-h-[44px] px-8 py-3 rounded-2xl bg-foreground text-background text-sm font-semibold active:scale-95 transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
     >
       Sign In
@@ -485,15 +492,24 @@ export const BuyerPage = () => {
    <div className="flex items-center gap-2">
      <Button
        variant="ghost" size="sm"
-       onClick={() => {
-         const ids = wishlist.map(p => p.id).join(',');
-         const url = `${window.location.origin}/shop?giftlist=${encodeURIComponent(ids)}`;
-         navigator.clipboard.writeText(url).then(() => addToast('Gift list link copied! 🎁 Share it with anyone.', 'success'));
-       }}
+       onClick={() => setGiftShareOpen(true)}
+       aria-label="Share your gift list"
        className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
      >
        <Gift className="w-3.5 h-3.5 mr-1.5" /> Share list
      </Button>
+     {/* Unified share sheet for the gift list (no poster) */}
+     <ProductShare
+       share={{
+         title: 'My MaliMart gift list 🎁',
+         url: `${window.location.origin}/shop?giftlist=${encodeURIComponent(wishlist.map(p => p.id).join(','))}`,
+         text: `My MaliMart gift list 🎁 — ${wishlist.length} item${wishlist.length > 1 ? 's' : ''} I'd love. Take a look!`,
+         image: wishlist[0]?.images?.[0],
+         subtitle: `${wishlist.length} item${wishlist.length > 1 ? 's' : ''}`,
+       }}
+       isOpen={giftShareOpen}
+       onClose={() => setGiftShareOpen(false)}
+     />
      <Button variant="ghost" size="sm" onClick={() => navigate('/shop')} className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40">Add more</Button>
      <Button
        variant="primary" size="sm"
@@ -526,7 +542,8 @@ export const BuyerPage = () => {
  )}
 
  {tab==='inbox' && (
- <MessagingHub userId={user.id} initialSellerId={searchParams.get('sellerId')} />
+ <MessagingHub userId={user.id} initialSellerId={searchParams.get('sellerId')}
+ initialProductId={searchParams.get('productId')} initialOrderId={searchParams.get('orderId')} />
  )}
 
  {tab==='offers' && <BuyerOffers/>}

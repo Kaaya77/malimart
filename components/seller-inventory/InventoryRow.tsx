@@ -21,6 +21,7 @@ import { STATUS_CFG, REASON_LABELS, timeAgo } from './config';
 import type { InventoryProduct, InventoryMovement } from './config';
 
 import { MovementHistory } from './MovementHistory';
+import { ProductShare } from '../ProductShare';
 
 export const InventoryRow = ({
   product, isSelected, onSelect, onEdit, onArchive, onRestore,
@@ -47,6 +48,7 @@ export const InventoryRow = ({
 }) => {
   const [showHistory, setShowHistory] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const { addToast } = useToast();
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -77,15 +79,11 @@ export const InventoryRow = ({
     }
   };
 
+  // Unified share experience: open the ProductShare sheet (channels + poster).
   const handleShare = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const url = `${window.location.origin}/product/${product.id}`;
-    if (navigator.share) {
-      navigator.share({ title: product.name, url });
-    } else {
-      navigator.clipboard.writeText(url);
-      addToast('Product link copied', 'success');
-    }
+    setMenuOpen(false);
+    setShareOpen(true);
   };
 
   return (
@@ -357,6 +355,9 @@ export const InventoryRow = ({
       {showHistory && (
         <MovementHistory movements={product.recent_movements || []} />
       )}
+
+      {/* Unified share sheet (channels + poster) */}
+      <ProductShare product={product} isOpen={shareOpen} onClose={() => setShareOpen(false)} />
     </motion.div>
   );
 };

@@ -64,6 +64,27 @@ export async function fetchVendorProfile(sellerId: string): Promise<VendorProfil
   }
 }
 
+/**
+ * Public storefront profiles for several sellers at once (cart grouping,
+ * order confirmation). Reads the RLS-safe `public_vendor_profiles` view —
+ * the base `vendor_profiles` table is owner/admin-only. Never throws.
+ */
+export async function fetchVendorProfiles(sellerIds: string[]): Promise<Record<string, VendorProfile>> {
+  const ids = Array.from(new Set(sellerIds.filter(Boolean)));
+  if (ids.length === 0) return {};
+  try {
+    const { data } = await supabase
+      .from('public_vendor_profiles')
+      .select('seller_id, store_name, logo_url, region, is_verified, delivery_fee, rating, trust_score')
+      .in('seller_id', ids);
+    const map: Record<string, VendorProfile> = {};
+    (data || []).forEach((v: any) => { map[v.seller_id] = v as VendorProfile; });
+    return map;
+  } catch {
+    return {};
+  }
+}
+
 const SHOP_CACHE_TTL = 60_000; // 1 min — shop results can be slightly stale
 
 export async function shopProductsServer(f: ShopFilters): Promise<ShopResult | null> {

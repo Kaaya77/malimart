@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { ShoppingCart } from 'lucide-react';
+import { Gift, Zap } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAppState } from '../context/AppContext';
-import { Button, useToast } from '../components/UI';
+import { useToast, CountBadge } from '../components/UI';
 import { CURRENCY, formatTZS, getEffectiveUnitPrice, calculateVatIncluded, normalizeVatRate } from '../constants';
 import { Product, Offer, Address, CartItem } from '../types';
 import { supabase } from '../services/supabaseClient';
+import { fetchVendorProfiles } from '../services/shopService';
 import { useCartTotals } from '../hooks/useCartTotals';
 import { UpsellBanner } from '../components/cart/UpsellBanner';
 import { VendorGroup } from '../components/cart/VendorGroup';
@@ -51,23 +52,29 @@ export const CartPage = () => {
   useEffect(() => { refreshProducts(); }, [refreshProducts]);
 
   useEffect(() => {
+    let cancelled = false;
     const fetchVendors = async () => {
-      const sellerIds = Array.from(new Set(cart.map(i => i.seller_id)));
+      const sellerIds = Array.from(new Set(cart.map(i => i.seller_id).filter(Boolean)));
       if (sellerIds.length === 0) { setLoadingVendors(false); return; }
-      const { data } = await supabase
-        .from('vendor_profiles')
-        .select('seller_id, store_name, delivery_fee, is_verified')
-        .in('seller_id', sellerIds);
-      if (data) {
-        const map: Record<string, any> = {};
-        data.forEach((v: any) => {
-          map[v.seller_id] = { name: v.store_name, fee: Number(v.delivery_fee || 0), verified: v.is_verified };
-        });
-        setVendorMap(map);
-      }
+      // Buyers can't read the base vendor_profiles table (RLS: owner/admin only) —
+      // go through the public_vendor_profiles view via the shop service.
+      const profiles = await fetchVendorProfiles(sellerIds);
+      if (cancelled) return;
+      const map: Record<string, { name: string; fee: number; verified: boolean }> = {};
+      sellerIds.forEach(sid => {
+        const p = profiles[sid];
+        // Fall back to the seller name embedded on the cart item so the group
+        // header never sticks on a loading label if the profile is missing.
+        const fallbackName = cart.find(i => i.seller_id === sid)?.seller_name || 'MaliMart Seller';
+        map[sid] = p
+          ? { name: p.store_name || fallbackName, fee: Number(p.delivery_fee || 0), verified: !!p.is_verified }
+          : { name: fallbackName, fee: 0, verified: false };
+      });
+      setVendorMap(map);
       setLoadingVendors(false);
     };
     fetchVendors();
+    return () => { cancelled = true; };
   }, [cart]);
 
   const handleRemove = (item: CartItem, variantId?: string) => {
@@ -131,7 +138,7 @@ export const CartPage = () => {
             title: 'Free Item Unlocked!',
             msg: `You qualify for ${itemOffer.get_quantity} FREE ${item.name}!`,
             action: () => updateQuantity(item.id, itemOffer.get_quantity!, item.variant_id),
-            icon: require('lucide-react').Gift,
+            icon: Gift,
           };
         }
       }
@@ -145,7 +152,7 @@ export const CartPage = () => {
         title: 'So Close!',
         msg: `Add ${formatTZS(best.min_order_value! - subtotal)} to unlock ${best.title} (${best.code})`,
         action: () => navigate('/shop'),
-        icon: require('lucide-react').Zap,
+        icon: Zap,
       };
     }
     return null;
@@ -287,9 +294,15 @@ export const CartPage = () => {
           <div className="flex-1 space-y-10">
             <div className="flex justify-between items-end pb-6 border-b border-foreground/8">
               <div>
-                <h1 className="text-3xl md:text-4xl font-black text-foreground font-display uppercase tracking-tight">Shopping Bag</h1>
-                <p className="text-foreground/50 text-sm font-bold mt-1 uppercase tracking-wider">
+                <div className="flex items-center gap-3">
+                  <h1 className="text-3xl md:text-4xl font-black text-foreground font-display uppercase tracking-tight">Shopping Bag</h1>
+                  <CountBadge count={cart.length} />
+                </div>
+                <p className="text-foreground/50 text-sm font-bold mt-1 uppercase tracking-wider" aria-live="polite">
                   {cart.length} {cart.length === 1 ? 'Product' : 'Products'} selected
+                  {Object.keys(groupedItems).length > 1 && (
+                    <span className="text-foreground/35"> · {Object.keys(groupedItems).length} sellers</span>
+                  )}
                 </p>
               </div>
             </div>

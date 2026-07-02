@@ -12,6 +12,7 @@ import { supabase } from '../services/supabaseClient';
 import { VendorProfile, Product } from '../types';
 import { ProductCard } from '../components/ProductCard';
 import { ReviewSection } from '../components/ReviewSection';
+import { ProductShare } from '../components/ProductShare';
 import { useToast } from '../components/UI';
 import { formatTZS, messageSellerPath } from '../constants';
 import { usePresence } from '../hooks/usePresence';
@@ -56,6 +57,7 @@ export const StorePage: React.FC = () => {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [showSort, setShowSort]       = useState(false);
   const [msgOpen, setMsgOpen]         = useState(false);
+  const [shareOpen, setShareOpen]     = useState(false);
   const [reviewProduct, setReviewProduct] = useState<string | null>(null);
 
   useEffect(() => {
@@ -102,16 +104,8 @@ export const StorePage: React.FC = () => {
     [storeProducts]
   );
 
-  const handleShare = async () => {
-    const url = window.location.href;
-    const text = `Check out ${vendor?.store_name} on MaliMart — ${storeProducts.length} products, authentic Tanzanian seller. ${url}`;
-    if (navigator.share) {
-      await navigator.share({ title: vendor?.store_name, text, url }).catch(() => {});
-    } else {
-      await navigator.clipboard.writeText(url);
-      addToast('Store link copied!', 'success');
-    }
-  };
+  // Unified share experience: open the shared bottom-sheet (channels + copy link).
+  const handleShare = () => setShareOpen(true);
 
   const handleMessage = () => {
     if (!user) { navigate('/login?redirect=' + encodeURIComponent(window.location.pathname)); return; }
@@ -260,8 +254,8 @@ export const StorePage: React.FC = () => {
                 className="flex items-center gap-2 h-10 px-4 rounded-2xl bg-foreground/[0.06] text-foreground text-sm font-semibold hover:bg-foreground/10 transition-colors active:scale-95">
                 <MessageSquare className="w-4 h-4 stroke-[2]"/> Message
               </button>
-              <button onClick={handleShare}
-                className="w-10 h-10 rounded-2xl bg-foreground/[0.06] flex items-center justify-center text-foreground/50 hover:bg-foreground/10 transition-colors active:scale-90">
+              <button onClick={handleShare} aria-label="Share this store"
+                className="w-11 h-11 rounded-2xl bg-foreground/[0.06] flex items-center justify-center text-foreground/50 hover:bg-foreground/10 transition-colors active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40">
                 <Share2 className="w-4 h-4 stroke-[2]"/>
               </button>
             </div>
@@ -456,6 +450,19 @@ export const StorePage: React.FC = () => {
           </motion.div>
         </AnimatePresence>
       </div>
+
+      {/* Unified share sheet (store link — no poster) */}
+      <ProductShare
+        share={{
+          title: vendor?.store_name || 'MaliMart store',
+          url: window.location.href,
+          text: `Check out ${vendor?.store_name} on MaliMart — ${storeProducts.length} products, authentic Tanzanian seller.`,
+          image: vendor?.logo_url,
+          subtitle: `${storeProducts.length} products`,
+        }}
+        isOpen={shareOpen}
+        onClose={() => setShareOpen(false)}
+      />
     </div>
   );
 };

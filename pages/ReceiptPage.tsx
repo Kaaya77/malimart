@@ -7,7 +7,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import { supabase } from '../services/supabaseClient';
+import { fetchOrderReceipt } from '../services/orderApi';
 import { ReceiptModal } from '../components/ReceiptModal';
 import { Order, VendorProfile } from '../types';
 import { useAppState } from '../context/AppContext';
@@ -27,26 +27,15 @@ export const ReceiptPage = () => {
     if (order) return;
     if (!id) { navigate(-1); return; }
 
-    supabase
-      .from('orders')
-      .select('*, items:order_items(*, products(*))')
-      .eq('id', id)
-      .single()
-      .then(({ data, error }) => {
-        if (error || !data) { navigate(-1); return; }
-        setOrder(data as Order);
-        // Fetch seller profile for first item
-        const sellerId = (data as any).items?.[0]?.products?.seller_id;
-        if (sellerId) {
-          supabase
-            .from('vendor_profiles')
-            .select('*')
-            .eq('seller_id', sellerId)
-            .single()
-            .then(({ data: vp }) => { if (vp) setSeller(vp as VendorProfile); });
-        }
-        setLoading(false);
-      });
+    // Old code read `vendor_profiles` (owner-only under RLS, so buyers always got
+    // an empty seller) and only the FIRST item's seller. fetchOrderReceipt reads
+    // the public storefront view and covers every seller in the order.
+    fetchOrderReceipt(id).then(receipt => {
+      if (!receipt) { navigate(-1); return; }
+      setOrder(receipt.order);
+      if (receipt.primarySeller) setSeller(receipt.primarySeller);
+      setLoading(false);
+    });
   }, [id]);
 
   if (!user) { navigate('/login', { replace: true }); return null; }

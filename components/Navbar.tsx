@@ -532,6 +532,7 @@ export const MobileBottomNav = () => {
  // the product form has an action bar, product detail has an Add-to-Bag bar)
  // so two bars never stack/overlap on mobile.
  const ownsBottomBar = location.pathname.startsWith('/seller')
+   || location.pathname.startsWith('/buyer')  // buyer dashboard now has its own MobileTabBar
    || /^\/product\//.test(location.pathname);
  if (ownsBottomBar) return null;
 

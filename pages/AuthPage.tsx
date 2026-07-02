@@ -355,7 +355,7 @@ export const LoginPage = () => {
             <p className="text-sm text-white/55">
               {mode === 'login' ? 'New to MaliMart? ' : 'Already have an account? '}
               <button
-                onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setError(''); }}
+                onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setError(''); setFormData((f: any) => ({ ...f, password: '' })); }}
                 className="font-semibold text-emerald-300 hover:text-emerald-200"
               >
                 {mode === 'login' ? 'Create an account' : 'Sign in'}

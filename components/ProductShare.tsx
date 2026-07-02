@@ -7,8 +7,21 @@ import { Product } from '../types';
 import { formatTZS, CURRENCY } from '../constants';
 import { SharePoster } from './SharePoster';
 
+/** Generic payload for non-product shares (store pages, gift lists, …). */
+export interface ShareData {
+  title: string;
+  url: string;
+  /** Message prepended to the link in WhatsApp/SMS/etc. Defaults to the title. */
+  text?: string;
+  image?: string;
+  subtitle?: string;
+}
+
 interface ProductShareProps {
-  product: Product;
+  /** Product share — enables the poster flow. */
+  product?: Product;
+  /** Generic share — poster flow hidden. Ignored when `product` is set. */
+  share?: ShareData;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -60,16 +73,21 @@ const SHARE_CHANNELS = [
   },
 ];
 
-export const ProductShare: React.FC<ProductShareProps> = ({ product, isOpen, onClose }) => {
+export const ProductShare: React.FC<ProductShareProps> = ({ product, share, isOpen, onClose }) => {
   const { addToast } = useToast();
   const [copied, setCopied] = useState(false);
   const [showPoster, setShowPoster] = useState(false);
 
-  const productUrl = `${window.location.origin}/product/${product.id}`;
-  const shareText = `🛒 Check out ${product.name} on MaliMart — ${formatTZS(product.price)} ${CURRENCY}\nAuthentic Tanzanian product, verified seller.`;
+  const shareUrl = product ? `${window.location.origin}/product/${product.id}` : share?.url || '';
+  const shareText = product
+    ? `🛒 Check out ${product.name} on MaliMart — ${formatTZS(product.price)} ${CURRENCY}\nAuthentic Tanzanian product, verified seller.`
+    : share?.text || share?.title || '';
+  const headerTitle = product ? product.name : share?.title || '';
+  const headerSubtitle = product ? formatTZS(product.price) : share?.subtitle;
+  const headerImage = product ? product.images?.[0] : share?.image;
 
   const copyLink = async () => {
-    await navigator.clipboard.writeText(productUrl);
+    await navigator.clipboard.writeText(shareUrl);
     setCopied(true);
     addToast('Link copied!', 'success');
     setTimeout(() => setCopied(false), 2500);
@@ -79,18 +97,18 @@ export const ProductShare: React.FC<ProductShareProps> = ({ product, isOpen, onC
     if (!navigator.share) return;
     try {
       await navigator.share({
-        title: product.name,
+        title: headerTitle,
         text: shareText,
-        url: productUrl,
+        url: shareUrl,
       });
     } catch {}
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || (!product && !share)) return null;
 
   return createPortal(
     <>
-    <SharePoster product={product} isOpen={showPoster} onClose={() => setShowPoster(false)} />
+    {product && <SharePoster product={product} isOpen={showPoster} onClose={() => setShowPoster(false)} />}
     <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }}
@@ -104,6 +122,7 @@ export const ProductShare: React.FC<ProductShareProps> = ({ product, isOpen, onC
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 60, opacity: 0 }}
           transition={{ type: 'spring', damping: 30, stiffness: 280 }}
+          role="dialog" aria-modal="true" aria-label={`Share ${headerTitle}`}
           className="w-full max-w-sm bg-background rounded-t-3xl md:rounded-3xl shadow-2xl border border-foreground/8 overflow-hidden"
           style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
         >
@@ -115,21 +134,25 @@ export const ProductShare: React.FC<ProductShareProps> = ({ product, isOpen, onC
           {/* Header */}
           <div className="flex items-center justify-between px-5 py-4 border-b border-foreground/8">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-2xl overflow-hidden bg-foreground/[0.04] shrink-0">
-                {product.images?.[0] && <img src={product.images[0]} className="w-full h-full object-cover" alt="" loading="lazy" decoding="async"/>}
+              <div className="w-11 h-11 rounded-2xl overflow-hidden bg-foreground/[0.04] shrink-0 flex items-center justify-center">
+                {headerImage
+                  ? <img src={headerImage} className="w-full h-full object-cover" alt="" loading="lazy" decoding="async"/>
+                  : <Share2 className="w-5 h-5 text-emerald-600 stroke-[2]"/>}
               </div>
               <div>
-                <p className="font-bold text-foreground text-sm truncate max-w-[180px]">{product.name}</p>
-                <p className="text-xs text-emerald-600 font-semibold">{formatTZS(product.price)}</p>
+                <p className="font-bold text-foreground text-sm truncate max-w-[180px]">{headerTitle}</p>
+                {headerSubtitle && <p className="text-xs text-emerald-600 font-semibold">{headerSubtitle}</p>}
               </div>
             </div>
-            <button onClick={onClose} className="w-8 h-8 rounded-full bg-foreground/[0.06] flex items-center justify-center text-foreground/50 hover:bg-foreground/10 transition-colors">
+            <button onClick={onClose} aria-label="Close share dialog"
+              className="w-11 h-11 -m-1.5 rounded-full flex items-center justify-center text-foreground/50 hover:bg-foreground/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40">
               <X className="w-4 h-4 stroke-[2.5]"/>
             </button>
           </div>
 
           <div className="p-5 space-y-5">
-            {/* Create poster — the headline action */}
+            {/* Create poster — the headline action (product shares only) */}
+            {product && (
             <button onClick={() => setShowPoster(true)}
               className="w-full flex items-center gap-3 p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 hover:bg-emerald-500/15 transition-colors active:scale-[0.98] text-left">
               <div className="w-11 h-11 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-lg shadow-emerald-600/20">
@@ -141,6 +164,7 @@ export const ProductShare: React.FC<ProductShareProps> = ({ product, isOpen, onC
               </div>
               <ChevronRight className="w-4 h-4 text-emerald-600/60 shrink-0" />
             </button>
+            )}
 
             {/* Native share (mobile) */}
             {navigator.share && (
@@ -156,7 +180,7 @@ export const ProductShare: React.FC<ProductShareProps> = ({ product, isOpen, onC
               <div className="grid grid-cols-5 gap-2">
                 {SHARE_CHANNELS.map(ch => {
                   const Icon = ch.icon;
-                  const url = ch.build(productUrl, shareText);
+                  const url = ch.build(shareUrl, shareText);
                   return (
                     <a key={ch.id} href={url} target="_blank" rel="noopener noreferrer"
                       className="flex flex-col items-center gap-1.5 group active:scale-90 transition-transform">
@@ -175,7 +199,7 @@ export const ProductShare: React.FC<ProductShareProps> = ({ product, isOpen, onC
               <p className="text-[10px] font-bold uppercase tracking-widest text-foreground/35 mb-2">Direct link</p>
               <div className="flex items-center gap-2 p-3 bg-foreground/[0.04] rounded-2xl border border-foreground/8">
                 <Link2 className="w-4 h-4 text-foreground/30 shrink-0 stroke-[2]"/>
-                <p className="flex-1 text-xs font-mono text-foreground/50 truncate">{productUrl}</p>
+                <p className="flex-1 text-xs font-mono text-foreground/50 truncate">{shareUrl}</p>
                 <button onClick={copyLink}
                   className={`flex items-center gap-1.5 h-8 px-3 rounded-xl text-xs font-bold transition-all shrink-0 ${copied ? 'bg-emerald-500 text-white' : 'bg-foreground text-background hover:bg-foreground/85'}`}>
                   {copied ? <><Check className="w-3.5 h-3.5 stroke-[3]"/> Copied!</> : <><Copy className="w-3.5 h-3.5 stroke-[2.5]"/> Copy</>}

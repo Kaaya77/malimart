@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Switch } from '../../components/UI';
-import { CheckCircle2, Download, KeyRound, Loader2, LogOut, Mail } from 'lucide-react';
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, EmptyState, Switch } from '../../components/UI';
+import { Activity, CheckCircle2, Download, LogOut, Mail } from 'lucide-react';
 import { supabase } from '../../services/supabaseClient';
 import { useBuyerSettings } from './context';
 
@@ -31,26 +31,26 @@ export const SecurityTab = () => {
                       <CardDescription>Control how we contact you.</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                      <div className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-white/5">
+                      <div className="flex items-center justify-between py-3 border-b border-foreground/[0.06]">
                           <div>
                               <p className="font-medium text-sm text-foreground">Email Notifications</p>
                               <p className="text-xs text-muted-foreground">Order updates and promotions</p>
                           </div>
-                          <Switch checked={preferences.emailNotifications} onChange={() => togglePreference('emailNotifications')} />
+                          <Switch checked={preferences.emailNotifications} onCheckedChange={() => togglePreference('emailNotifications')} className="focus-visible:ring-2 focus-visible:ring-emerald-500/40" />
                       </div>
-                      <div className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-white/5">
+                      <div className="flex items-center justify-between py-3 border-b border-foreground/[0.06]">
                           <div>
                               <p className="font-medium text-sm text-foreground">SMS Updates</p>
                               <p className="text-xs text-muted-foreground">Delivery tracking and alerts</p>
                           </div>
-                          <Switch checked={preferences.smsNotifications} onChange={() => togglePreference('smsNotifications')} />
+                          <Switch checked={preferences.smsNotifications} onCheckedChange={() => togglePreference('smsNotifications')} className="focus-visible:ring-2 focus-visible:ring-emerald-500/40" />
                       </div>
                       <div className="flex items-center justify-between py-3">
                           <div>
                               <p className="font-medium text-sm text-foreground">Newsletter</p>
                               <p className="text-xs text-muted-foreground">Weekly deals and platform news</p>
                           </div>
-                          <Switch checked={preferences.newsletter} onChange={() => togglePreference('newsletter')} />
+                          <Switch checked={preferences.newsletter} onCheckedChange={() => togglePreference('newsletter')} className="focus-visible:ring-2 focus-visible:ring-emerald-500/40" />
                       </div>
                   </CardContent>
               </Card>
@@ -62,36 +62,36 @@ export const SecurityTab = () => {
                   </CardHeader>
                   <CardContent className="space-y-4">
                       {/* Password reset */}
-                      <div className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-white/5">
+                      <div className="flex items-center justify-between py-3 border-b border-foreground/[0.06]">
                           <div>
                               <p className="font-medium text-sm text-foreground">Password</p>
                               <p className="text-xs text-muted-foreground">We'll email you a secure reset link</p>
                           </div>
-                          <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5" onClick={handlePasswordReset} disabled={sendingReset}>
-                              {sendingReset ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
+                          <Button variant="outline" size="sm" className="text-xs gap-1.5 shrink-0" onClick={handlePasswordReset} isLoading={sendingReset}>
+                              {!sendingReset && <Mail className="w-3.5 h-3.5" />}
                               {sendingReset ? 'Sending…' : 'Send Reset Email'}
                           </Button>
                       </div>
-                      <div className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-white/5">
+                      <div className="flex items-center justify-between py-3 border-b border-foreground/[0.06]">
                           <div>
                               <p className="font-medium text-sm text-foreground">Two-Factor Authentication (2FA)</p>
                               <p className="text-xs text-muted-foreground">Add an extra layer of security</p>
                           </div>
-                          <Switch checked={preferences.twoFactorAuth} onChange={() => togglePreference('twoFactorAuth')} />
+                          <Switch checked={preferences.twoFactorAuth} onCheckedChange={() => togglePreference('twoFactorAuth')} className="focus-visible:ring-2 focus-visible:ring-emerald-500/40" />
                       </div>
-                      <div className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-white/5">
+                      <div className="flex items-center justify-between py-3 border-b border-foreground/[0.06]">
                           <div>
                               <p className="font-medium text-sm text-foreground">Public Profile</p>
                               <p className="text-xs text-muted-foreground">Allow others to see your reviews</p>
                           </div>
-                          <Switch checked={preferences.profileVisibility} onChange={() => togglePreference('profileVisibility')} />
+                          <Switch checked={preferences.profileVisibility} onCheckedChange={() => togglePreference('profileVisibility')} className="focus-visible:ring-2 focus-visible:ring-emerald-500/40" />
                       </div>
                       <div className="flex items-center justify-between py-3">
                           <div>
                               <p className="font-medium text-sm text-foreground">Opt-out of Analytics</p>
                               <p className="text-xs text-muted-foreground">Do not track my usage data</p>
                           </div>
-                          <Switch checked={preferences.optOutAnalytics} onChange={() => togglePreference('optOutAnalytics')} />
+                          <Switch checked={preferences.optOutAnalytics} onCheckedChange={() => togglePreference('optOutAnalytics')} className="focus-visible:ring-2 focus-visible:ring-emerald-500/40" />
                       </div>
                   </CardContent>
               </Card>
@@ -106,7 +106,7 @@ export const SecurityTab = () => {
                           {['google', 'facebook'].map(provider => {
                               const account = connectedAccounts.find(a => a.provider === provider);
                               return (
-                                  <div key={provider} className="flex items-center justify-between p-4 border border-foreground/10 rounded-xl bg-foreground/[0.03] ">
+                                  <div key={provider} className="flex items-center justify-between p-4 border border-foreground/10 rounded-2xl bg-foreground/[0.02]">
                                       <div className="flex items-center gap-3">
                                           <div className={`w-8 h-8 rounded-full flex items-center justify-center shadow-sm ${provider === 'google' ? 'bg-white' : 'bg-[#1877F2]'}`}>
                                               {provider === 'google' ? (
@@ -120,7 +120,7 @@ export const SecurityTab = () => {
                                       {account ? (
                                           <span className="text-xs font-semibold text-emerald-500 flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5"/> Connected</span>
                                       ) : (
-                                          <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => handleConnectAccount(provider)}>Connect</Button>
+                                          <Button variant="outline" size="sm" className="text-xs" aria-label={`Connect ${provider}`} onClick={() => handleConnectAccount(provider)}>Connect</Button>
                                       )}
                                   </div>
                               );
@@ -132,15 +132,17 @@ export const SecurityTab = () => {
               <Card>
                   <CardHeader>
                       <CardTitle>Data & Account Management</CardTitle>
+                      <CardDescription>Download your data or close your account.</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                      <div className="flex items-center justify-between p-4 bg-foreground/[0.03]  rounded-xl">
+                      <div className="flex items-center justify-between gap-4 p-4 bg-foreground/[0.03] rounded-2xl">
                           <div>
                               <p className="font-medium text-sm text-foreground">Export Format</p>
                               <p className="text-xs text-muted-foreground">Preferred format for data exports</p>
                           </div>
-                          <select 
-                              className="h-9 bg-background border border-foreground/10 rounded-lg px-3 text-sm outline-none"
+                          <select
+                              aria-label="Export format"
+                              className="h-11 bg-background border border-foreground/10 rounded-xl px-3 text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/50 transition-all"
                               value={preferences.exportFormat}
                               onChange={(e) => {
                                   setPreferences({...preferences, exportFormat: e.target.value});
@@ -153,13 +155,21 @@ export const SecurityTab = () => {
                           </select>
                       </div>
 
-                      <div className="flex flex-col md:flex-row gap-4">
-                          <Button variant="secondary" className="flex-1" onClick={handleExportData} disabled={isExporting}>
-                              {isExporting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Exporting...</> : <><Download className="w-4 h-4 mr-2" /> Export Data</>}
-                          </Button>
-                          <Button variant="outline" className="flex-1 border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 dark:border-red-900/50" onClick={confirmRequestAccountDeletion}>
-                              <LogOut className="w-4 h-4 mr-2" /> Delete Account
-                          </Button>
+                      <Button variant="secondary" className="w-full" onClick={handleExportData} isLoading={isExporting}>
+                          {isExporting ? 'Exporting...' : <><Download className="w-4 h-4 mr-2" /> Export Data</>}
+                      </Button>
+
+                      <div className="p-5 rounded-2xl border border-red-200/60 dark:border-red-900/40 bg-red-50/50 dark:bg-red-900/10">
+                          <p className="text-[11px] font-semibold uppercase tracking-widest text-red-600 dark:text-red-400">Danger Zone</p>
+                          <div className="mt-3 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                              <div>
+                                  <p className="font-medium text-sm text-foreground">Delete Account</p>
+                                  <p className="text-xs text-muted-foreground">Permanently request deletion of your account and data. This cannot be undone.</p>
+                              </div>
+                              <Button variant="danger" className="shrink-0" onClick={confirmRequestAccountDeletion}>
+                                  <LogOut className="w-4 h-4 mr-2" /> Delete Account
+                              </Button>
+                          </div>
                       </div>
                   </CardContent>
               </Card>
@@ -167,16 +177,22 @@ export const SecurityTab = () => {
               <Card>
                   <CardHeader>
                       <CardTitle>Recent Logins</CardTitle>
+                      <CardDescription>Devices that recently signed in to your account.</CardDescription>
                   </CardHeader>
                   <CardContent>
                       <div className="space-y-2">
                           {loginHistory.length === 0 ? (
-                              <p className="text-sm text-muted-foreground">No recent logins found.</p>
+                              <EmptyState
+                                  icon={Activity}
+                                  title="No recent logins"
+                                  subtitle="Sign-in activity on your account will be listed here."
+                                  className="py-10"
+                              />
                           ) : (
                               loginHistory.map((login, idx) => (
-                                  <div key={idx} className="flex justify-between items-center py-3 border-b border-slate-100 dark:border-white/5 last:border-0 last:pb-0">
+                                  <div key={idx} className="flex justify-between items-center py-3 border-b border-foreground/[0.06] last:border-0 last:pb-0">
                                       <div>
-                                          <p className="text-sm font-medium">{login.device_info || 'Unknown Device'}</p>
+                                          <p className="text-sm font-medium text-foreground">{login.device_info || 'Unknown Device'}</p>
                                           <p className="text-xs text-muted-foreground">{login.ip_address || 'Unknown IP'}</p>
                                       </div>
                                       <p className="text-xs text-muted-foreground">{new Date(login.login_time).toLocaleString()}</p>

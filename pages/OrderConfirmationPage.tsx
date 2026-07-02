@@ -1,11 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, Package, ShoppingBag, MapPin, CreditCard, Clock, Share2, Download, ChevronRight, Sparkles, Truck, ArrowRight } from 'lucide-react';
+import { CheckCircle2, Package, ShoppingBag, MapPin, CreditCard, Clock, Share2, Download, ChevronRight, Sparkles, Truck, ArrowRight, Store } from 'lucide-react';
 import { useAppState } from '../context/AppContext';
-import { Order, Address } from '../types';
+import { Order, Address, VendorProfile } from '../types';
 import { formatTZS } from '../constants';
 import { OrderTracking } from '../components/CheckoutComponents';
+import { fetchVendorProfile } from '../services/shopService';
+import { ProductShare } from '../components/ProductShare';
 
 // Animated confetti effect
 const ConfettiParticle = ({ delay, x, color }: { delay: number, x: number, color: string }) => (
@@ -41,11 +43,45 @@ export const OrderConfirmationPage = () => {
   const { orders, user } = useAppState();
   const orderId = location.state?.order?.id || location.state?.id;
   const [showConfetti, setShowConfetti] = useState(true);
+  const [sellerProfiles, setSellerProfiles] = useState<Record<string, VendorProfile | null>>({});
 
   // Find the confirmed order from context (loaded via RPC after placing)
   const confirmedOrder = orderId
     ? (orders as any[]).find((o: any) => o.id === orderId) || null
     : (orders as any[])[0] || null;
+
+  // Sellers are per ITEM (orders has no seller_id column) — group the order's
+  // items by order_items.seller_id, keeping the seller name/logo the RPC embeds
+  // on each item as a fallback if the public profile fetch fails.
+  const sellerGroups = useMemo(() => {
+    const items = ((confirmedOrder as any)?.items || []) as any[];
+    const groups: Record<string, { name: string; logo: string | null; items: any[] }> = {};
+    items.forEach(it => {
+      const product = it.products || it.product;
+      const sid = it.seller_id || product?.seller_id || 'unknown';
+      if (!groups[sid]) {
+        groups[sid] = {
+          name: it.seller?.store_name || product?.seller_name || 'MaliMart Seller',
+          logo: it.seller?.logo_url || null,
+          items: [],
+        };
+      }
+      groups[sid].items.push(it);
+    });
+    return groups;
+  }, [confirmedOrder]);
+
+  const sellerCount = Object.keys(sellerGroups).length;
+
+  // Enrich with the public vendor profile (store name, logo, region, verified)
+  useEffect(() => {
+    const ids = Object.keys(sellerGroups).filter(id => id !== 'unknown');
+    if (ids.length === 0) return;
+    let cancelled = false;
+    Promise.all(ids.map(async id => [id, await fetchVendorProfile(id)] as const))
+      .then(entries => { if (!cancelled) setSellerProfiles(Object.fromEntries(entries)); });
+    return () => { cancelled = true; };
+  }, [sellerGroups]);
 
   useEffect(() => {
     if (!orderId && orders.length === 0) {
@@ -55,13 +91,9 @@ export const OrderConfirmationPage = () => {
     return () => clearTimeout(t);
   }, [orderId, orders, navigate]);
 
-  const handleShare = () => {
-    if (navigator.share) {
-      navigator.share({ title: 'My MaliMart Order', text: `Order #${confirmedOrder?.id.slice(0, 8)} placed successfully!`, url: window.location.href });
-    } else {
-      navigator.clipboard.writeText(confirmedOrder?.id || '');
-    }
-  };
+  // Unified share sheet (same popup as product/store shares).
+  const [shareOpen, setShareOpen] = useState(false);
+  const handleShare = () => setShareOpen(true);
 
   if (!confirmedOrder) {
     return (
@@ -142,6 +174,85 @@ export const OrderConfirmationPage = () => {
             </div>
           </div>
         </motion.div>
+
+        {/* ── Items & sellers ── */}
+        {sellerCount > 0 && (
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }} className="mb-6">
+            <div className="bg-background border border-foreground/10 rounded-2xl overflow-hidden">
+              <div className="px-5 py-4 border-b border-foreground/8 flex items-center justify-between">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/60">Your Items</p>
+                {sellerCount > 1 && (
+                  <span className="text-[10px] font-black uppercase tracking-wider text-foreground/40">{sellerCount} Sellers</span>
+                )}
+              </div>
+
+              {Object.entries(sellerGroups).map(([sid, group]) => {
+                const profile = sid !== 'unknown' ? sellerProfiles[sid] : null;
+                const storeName = profile?.store_name || group.name;
+                const logo = profile?.logo_url || group.logo;
+                const header = (
+                  <>
+                    {logo ? (
+                      <img src={logo} alt="" className="w-9 h-9 rounded-xl object-cover border border-foreground/10 flex-shrink-0" loading="lazy" />
+                    ) : (
+                      <div className="w-9 h-9 rounded-xl bg-foreground/[0.05] flex items-center justify-center flex-shrink-0">
+                        <Store className="w-4 h-4 text-foreground/40" />
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="font-black text-sm text-foreground truncate flex items-center gap-1.5">
+                        {storeName}
+                        {profile?.is_verified && <CheckCircle2 className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />}
+                      </p>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-foreground/40">
+                        {profile?.region ? `${profile.region} · ` : ''}Sold by this store
+                      </p>
+                    </div>
+                  </>
+                );
+                return (
+                  <div key={sid} className="border-b last:border-b-0 border-foreground/8">
+                    {sid !== 'unknown' ? (
+                      <Link
+                        to={`/store/${sid}`}
+                        aria-label={`Visit ${storeName} store`}
+                        className="px-5 pt-4 pb-3 flex items-center gap-3 min-h-[44px] hover:bg-foreground/[0.02] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-lg"
+                      >
+                        {header}
+                      </Link>
+                    ) : (
+                      <div className="px-5 pt-4 pb-3 flex items-center gap-3">{header}</div>
+                    )}
+                    <div className="px-5 pb-4 space-y-2">
+                      {group.items.map((it: any) => {
+                        const product = it.products || it.product;
+                        return (
+                          <div key={it.id} className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg overflow-hidden bg-foreground/[0.06] border border-foreground/8 flex-shrink-0">
+                              {product?.images?.[0] ? (
+                                <img src={product.images[0]} alt={product?.name || 'Product'} className="w-full h-full object-cover" loading="lazy" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <Package className="w-4 h-4 text-foreground/25" />
+                                </div>
+                              )}
+                            </div>
+                            <p className="flex-1 min-w-0 text-[11px] font-bold text-foreground/70 truncate">
+                              {product?.name || 'Item'}
+                            </p>
+                            <p className="text-[11px] font-black text-foreground/50 tabular-nums whitespace-nowrap">
+                              {it.quantity} × {formatTZS(it.price_at_purchase || 0)}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
 
         {/* ── Order summary ── */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="mb-6">
@@ -241,6 +352,16 @@ export const OrderConfirmationPage = () => {
           </p>
         </motion.div>
       </div>
+
+      <ProductShare
+        share={{
+          title: 'My MaliMart Order',
+          text: `Order #${confirmedOrder.id.slice(0, 8)} placed successfully on MaliMart!`,
+          url: window.location.origin,
+        }}
+        isOpen={shareOpen}
+        onClose={() => setShareOpen(false)}
+      />
     </div>
   );
 };

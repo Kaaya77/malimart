@@ -163,7 +163,7 @@ export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, on
                     </div>
                     <div className="pt-3 border-t border-foreground/8 space-y-1.5">
                       <div className="flex justify-between text-[9px] font-bold text-foreground/40 uppercase tracking-wider"><span>Subtotal</span><span>{formatTZS(subtotal)}</span></div>
-                      <div className="flex justify-between text-[9px] font-bold text-foreground/40 uppercase tracking-wider"><span>Delivery</span><span>{formatTZS(deliveryFeeTotal)}</span></div>
+                      <div className="flex justify-between text-[9px] font-bold text-foreground/40 uppercase tracking-wider"><span>Delivery</span><span>{areVendorsLoaded ? formatTZS(deliveryFeeTotal) : '…'}</span></div>
                       {discount > 0 && <div className="flex justify-between text-[9px] font-black text-emerald-500 uppercase tracking-wider"><span>Discount</span><span>-{formatTZS(discount)}</span></div>}
                     </div>
                   </div>
@@ -392,9 +392,11 @@ export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, on
                               <div className="relative">
                                 <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-background/30" />
                                 <input
-                                  placeholder="Sender Phone (optional)"
+                                  placeholder="Sender Phone (e.g. 07XX XXX XXX)"
                                   value={senderPhone}
                                   onChange={e => setSenderPhone(e.target.value)}
+                                  aria-label="Sender phone number"
+                                  aria-invalid={senderPhone.trim().length > 0 && senderPhone.trim().length < 9}
                                   className="w-full h-11 bg-black/25 border border-white/10 rounded-xl pl-11 text-[11px] font-mono font-bold text-white placeholder:text-white/25 outline-none focus:border-white/30 transition-all"
                                 />
                               </div>
@@ -404,10 +406,22 @@ export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, on
                                   placeholder="TRANSACTION ID"
                                   value={paymentRef}
                                   onChange={e => setPaymentRef(e.target.value.toUpperCase())}
+                                  aria-label="Mobile money transaction ID"
+                                  aria-invalid={paymentRef.trim().length > 0 && paymentRef.trim().length < 4}
                                   className="w-full h-13 bg-black/25 border border-white/15 rounded-xl pl-11 text-[12px] font-mono font-black tracking-[0.18em] text-white placeholder:text-white/20 uppercase outline-none focus:border-white/40 transition-all"
                                   style={{ height: '52px' }}
                                 />
                               </div>
+                              {/* Why the button is disabled — inline, not just a dead button */}
+                              {(senderPhone.trim().length < 9 || paymentRef.trim().length < 4) && (
+                                <p className="text-[10px] font-bold text-amber-300/90 leading-relaxed" aria-live="polite">
+                                  {senderPhone.trim().length < 9 && paymentRef.trim().length < 4
+                                    ? 'Enter the phone number you paid from and the transaction ID from your confirmation SMS.'
+                                    : senderPhone.trim().length < 9
+                                      ? 'Enter the phone number you paid from (at least 9 digits).'
+                                      : 'Enter the transaction ID from your confirmation SMS (at least 4 characters).'}
+                                </p>
+                              )}
                             </div>
                             {sellerDetails.length === 1 && <PaymentInstructions method={paymentMethod} seller={sellerDetails[0]} />}
                           </div>

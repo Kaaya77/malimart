@@ -1,7 +1,7 @@
 import React from 'react';
-import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from '../../components/UI';
+import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, EmptyState, Input } from '../../components/UI';
 import { BANK_PROVIDERS, MOBILE_MONEY_PROVIDERS, TANZANIA_DISTRICTS, TANZANIA_REGIONS } from '../../constants';
-import { Edit, Home, Loader2, MapPin, Phone, PlusCircle, Trash2 } from 'lucide-react';
+import { CreditCard, Edit, MapPin, Phone, PlusCircle, Trash2 } from 'lucide-react';
 import { useBuyerSettings } from './context';
 
 export const BillingTab = () => {
@@ -15,36 +15,39 @@ export const BillingTab = () => {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   {addresses.length === 0 ? (
-                      <div className="text-center py-10 text-muted-foreground bg-foreground/[0.03]  rounded-2xl border border-dashed border-foreground/10">
-                          <MapPin className="w-8 h-8 mx-auto mb-3 text-foreground/40 opacity-50" />
-                          <p className="text-sm font-medium">No addresses found. Add one below.</p>
-                      </div>
+                      <EmptyState
+                          icon={MapPin}
+                          title="No addresses yet"
+                          subtitle="Add your first delivery address below so checkout is one tap."
+                          className="bg-foreground/[0.02] rounded-3xl border border-dashed border-foreground/10 py-12"
+                      />
                   ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {[...addresses].sort((a, b) => (b.is_default ? 1 : 0) - (a.is_default ? 1 : 0)).map((addr, idx) => (
-                          <div key={addr.id} className={`p-5 border rounded-2xl flex flex-col justify-between transition-all ${addr.is_default ? 'border-slate-900 dark:border-white bg-foreground/[0.03]/50  shadow-sm' : 'border-foreground/10 hover:border-slate-300 dark:hover:border-white/20'}`}>
+                          <div key={addr.id} className={`p-5 border rounded-3xl flex flex-col justify-between transition-all ${addr.is_default ? 'border-emerald-500/40 bg-emerald-500/[0.04] shadow-sm' : 'border-foreground/10 bg-foreground/[0.02] hover:border-foreground/20'}`}>
                               <div className="flex justify-between items-start mb-4">
                                   <div>
                                       <div className="flex items-center gap-2 mb-2">
                                           <p className="font-semibold text-foreground">{addr.label}</p>
-                                          {addr.is_default && <Badge variant="secondary" className="text-[10px] py-0 h-5 bg-slate-900 text-white dark:bg-white dark:text-slate-900">Default</Badge>}
+                                          {addr.is_default && <Badge variant="success" className="text-[10px] uppercase tracking-widest py-0 h-5">Default</Badge>}
                                       </div>
                                       <p className="text-sm text-foreground/60 leading-relaxed">{addr.street}<br/>{addr.district ? `${addr.district}, ` : ''}{addr.city}</p>
-                                      <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-2 flex items-center gap-1"><Phone className="w-3 h-3"/> {addr.phone}</p>
+                                      <p className="text-sm text-muted-foreground mt-2 flex items-center gap-1"><Phone className="w-3 h-3"/> {addr.phone}</p>
                                   </div>
                               </div>
-                              <div className="flex gap-2 justify-end mt-auto pt-4 border-t border-slate-100 dark:border-white/5">
+                              <div className="flex gap-2 justify-end mt-auto pt-4 border-t border-foreground/[0.06]">
                                   {!addr.is_default && <Button size="sm" variant="outline" onClick={() => handleSetDefaultAddress(addr.id)} className="text-xs">Set Default</Button>}
-                                  <Button size="icon" variant="ghost" onClick={() => setEditingAddress(addr)}><Edit className="w-4 h-4" /></Button>
-                                  <Button size="icon" variant="ghost" className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20" onClick={() => confirmDeleteAddress(addr.id)} disabled={isDeletingAddress && addressToDelete === addr.id}><Trash2 className="w-4 h-4" /></Button>
+                                  <Button size="icon" variant="ghost" aria-label={`Edit ${addr.label || 'address'}`} className="h-11 w-11" onClick={() => setEditingAddress(addr)}><Edit className="w-4 h-4" /></Button>
+                                  <Button size="icon" variant="ghost" aria-label={`Delete ${addr.label || 'address'}`} className="h-11 w-11 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20" onClick={() => confirmDeleteAddress(addr.id)} isLoading={isDeletingAddress && addressToDelete === addr.id}>{!(isDeletingAddress && addressToDelete === addr.id) && <Trash2 className="w-4 h-4" />}</Button>
                               </div>
                           </div>
                           ))}
                       </div>
                   )}
                   
-                  <div className="pt-6 border-t border-slate-100 dark:border-white/5">
-                    <h3 className="font-semibold text-sm mb-4">Add New Address</h3>
+                  <div className="pt-6 border-t border-foreground/[0.06]">
+                    <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">Add New Address</h3>
+                    <p className="text-xs text-muted-foreground mt-1 mb-4">Save a new delivery location for faster checkout.</p>
                     <form onSubmit={handleAddAddress} className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <Input placeholder="Label (e.g., Home, Office)" value={addressData.label} onChange={(e: any) => setAddressData({...addressData, label: e.target.value})} required />
@@ -53,8 +56,9 @@ export const BillingTab = () => {
                               <Input placeholder="Street Address" value={addressData.street} onChange={(e: any) => setAddressData({...addressData, street: e.target.value})} required />
                           </div>
                           <div className="md:col-span-1">
-                              <select 
-                                  className="w-full h-10 bg-background border border-foreground/10 rounded-xl px-3 text-sm outline-none text-foreground focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/50 transition-all"
+                              <select
+                                  aria-label="Region or city"
+                                  className="w-full h-12 bg-background border border-foreground/10 rounded-2xl px-3 text-sm font-medium outline-none text-foreground focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/50 transition-all"
                                   value={addressData.city}
                                   onChange={(e: any) => setAddressData({...addressData, city: e.target.value, district: TANZANIA_DISTRICTS[e.target.value]?.[0] || ''})}
                                   required
@@ -66,8 +70,9 @@ export const BillingTab = () => {
                               </select>
                           </div>
                           <div className="md:col-span-1">
-                              <select 
-                                  className="w-full h-10 bg-background border border-foreground/10 rounded-xl px-3 text-sm outline-none text-foreground focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/50 transition-all disabled:opacity-50"
+                              <select
+                                  aria-label="District"
+                                  className="w-full h-12 bg-background border border-foreground/10 rounded-2xl px-3 text-sm font-medium outline-none text-foreground focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/50 transition-all disabled:opacity-50"
                                   value={addressData.district}
                                   onChange={(e: any) => setAddressData({...addressData, district: e.target.value})}
                                   disabled={!addressData.city || !TANZANIA_DISTRICTS[addressData.city]}
@@ -79,8 +84,8 @@ export const BillingTab = () => {
                               </select>
                           </div>
                       </div>
-                      <Button type="submit" variant="secondary" disabled={isAddingAddress}>
-                        {isAddingAddress ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Adding...</> : <><PlusCircle className="w-4 h-4 mr-2" /> Add Address</>}
+                      <Button type="submit" variant="secondary" isLoading={isAddingAddress}>
+                        {isAddingAddress ? 'Adding...' : <><PlusCircle className="w-4 h-4 mr-2" /> Add Address</>}
                       </Button>
                     </form>
                   </div>
@@ -94,13 +99,18 @@ export const BillingTab = () => {
                   </CardHeader>
                   <CardContent className="space-y-6">
                       {paymentMethods.length === 0 ? (
-                          <p className="text-sm text-muted-foreground">No payment methods added.</p>
+                          <EmptyState
+                              icon={CreditCard}
+                              title="No payment methods saved"
+                              subtitle="Add a card, mobile money number, or bank account below to speed up checkout."
+                              className="bg-foreground/[0.02] rounded-3xl border border-dashed border-foreground/10 py-12"
+                          />
                       ) : (
                           <div className="space-y-3">
                             {paymentMethods.map(pm => (
-                                <div key={pm.id} className="p-4 border border-foreground/10 rounded-xl flex justify-between items-center bg-background">
+                                <div key={pm.id} className="p-4 border border-foreground/10 rounded-2xl flex justify-between items-center bg-foreground/[0.02]">
                                     <div className="flex items-center gap-4">
-                                        <div className={`w-12 h-8 rounded flex items-center justify-center text-white font-bold text-[10px] ${pm.type === 'visa' ? 'bg-slate-900 dark:bg-slate-700' : 'bg-emerald-600'}`}>
+                                        <div className={`w-12 h-8 rounded-lg flex items-center justify-center text-white font-bold text-[10px] uppercase tracking-widest ${pm.type === 'visa' ? 'bg-slate-900 dark:bg-slate-700' : 'bg-emerald-600'}`}>
                                           {pm.provider.toUpperCase()}
                                         </div>
                                         <div>
@@ -114,24 +124,25 @@ export const BillingTab = () => {
                           </div>
                       )}
                       
-                      <div className="pt-6 border-t border-slate-100 dark:border-white/5">
-                        <h4 className="font-semibold text-sm mb-4">Add Payment Method</h4>
+                      <div className="pt-6 border-t border-foreground/[0.06]">
+                        <h4 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">Add Payment Method</h4>
+                        <p className="text-xs text-muted-foreground mt-1 mb-4">We only store the last digits — never your full card number.</p>
                         <form onSubmit={handleAddPaymentMethod} className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <select className="h-10 bg-background rounded-xl border border-foreground/10 px-3 text-sm outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/50" value={paymentData.type} onChange={(e) => setPaymentData({...paymentData, type: e.target.value, provider: e.target.value === 'visa' ? 'visa' : (e.target.value === 'mobile' ? MOBILE_MONEY_PROVIDERS[0] : BANK_PROVIDERS[0])})}>
+                                <select aria-label="Payment method type" className="h-12 bg-background rounded-2xl border border-foreground/10 px-3 text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/50 transition-all" value={paymentData.type} onChange={(e) => setPaymentData({...paymentData, type: e.target.value, provider: e.target.value === 'visa' ? 'visa' : (e.target.value === 'mobile' ? MOBILE_MONEY_PROVIDERS[0] : BANK_PROVIDERS[0])})}>
                                     <option value="visa">Card (Visa/Mastercard)</option>
                                     <option value="mobile">Mobile Money</option>
                                     <option value="bank">Bank Account</option>
                                 </select>
                                 {paymentData.type === 'mobile' && (
-                                    <select className="h-10 bg-background rounded-xl border border-foreground/10 px-3 text-sm outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/50" value={paymentData.provider} onChange={(e) => setPaymentData({...paymentData, provider: e.target.value})}>
+                                    <select aria-label="Mobile money provider" className="h-12 bg-background rounded-2xl border border-foreground/10 px-3 text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/50 transition-all" value={paymentData.provider} onChange={(e) => setPaymentData({...paymentData, provider: e.target.value})}>
                                         {MOBILE_MONEY_PROVIDERS.map(provider => (
                                             <option key={provider} value={provider}>{provider}</option>
                                         ))}
                                     </select>
                                 )}
                                 {paymentData.type === 'bank' && (
-                                    <select className="h-10 bg-background rounded-xl border border-foreground/10 px-3 text-sm outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/50" value={paymentData.provider} onChange={(e) => setPaymentData({...paymentData, provider: e.target.value})}>
+                                    <select aria-label="Bank" className="h-12 bg-background rounded-2xl border border-foreground/10 px-3 text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/50 transition-all" value={paymentData.provider} onChange={(e) => setPaymentData({...paymentData, provider: e.target.value})}>
                                         {BANK_PROVIDERS.map(provider => (
                                             <option key={provider} value={provider}>{provider}</option>
                                         ))}
@@ -143,8 +154,8 @@ export const BillingTab = () => {
                                     <Input placeholder={paymentData.type === 'bank' ? "Account Number" : "Phone Number"} value={paymentData.phone_number} onChange={(e: any) => setPaymentData({...paymentData, phone_number: e.target.value})} required />
                                 )}
                             </div>
-                            <Button type="submit" variant="secondary" disabled={isAddingPayment}>
-                                {isAddingPayment ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <PlusCircle className="w-4 h-4 mr-2" />} Add Method
+                            <Button type="submit" variant="secondary" isLoading={isAddingPayment}>
+                                {!isAddingPayment && <PlusCircle className="w-4 h-4 mr-2" />} Add Method
                             </Button>
                         </form>
                       </div>

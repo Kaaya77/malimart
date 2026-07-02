@@ -1,8 +1,8 @@
 import { rateLimit } from '../src/security';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
-  ChevronLeft, BadgeCheck, Send, Search, Sparkles,
+  ChevronLeft, BadgeCheck, Send, Search, Sparkles, ArrowUpRight, Truck,
   Wand2, Loader2, X, Paperclip, Ban, MoreVertical, ShieldAlert, Trash2,
 } from 'lucide-react';
 import { useAppState } from '../context/AppContext';
@@ -18,24 +18,39 @@ import {
   MessageBubble, TypingIndicator,
 } from './messaging/ConversationKit';
 import { ProductOrderTag } from './SellerMessages';
+import { fetchProductById, fetchVendorProfile } from '../services/shopService';
+import { formatTZS } from '../constants';
 import * as aiService from '../services/geminiService';
 
 const PIN_KEY = 'malimart_pinned_chats';
 
-export const BuyerMessages = ({ userId, initialSellerId }: { userId: string; initialSellerId?: string | null }) => {
-  const { fetchMessages, sendMessage, softDeleteMessage, reportUser, addReaction, markMessagesAsRead, blockUser, blockedUsers, user } = useAppState();
+export const BuyerMessages = ({ userId, initialSellerId, initialProductId, initialOrderId }: {
+  userId: string;
+  initialSellerId?: string | null;
+  initialProductId?: string | null;
+  initialOrderId?: string | null;
+}) => {
+  const { fetchMessages, sendMessage, softDeleteMessage, reportUser, addReaction, markMessagesAsRead, blockUser, blockedUsers, user, orders } = useAppState();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { addToast } = useToast();
   const [chats, setChats] = useState<ChatMessage[]>([]);
   const [selectedSeller, setSelectedSeller] = useState<string | null>(initialSellerId || searchParams.get('sellerId'));
   const [msgText, setMsgText] = useState('');
-  const [context, setContext] = useState<{ type: 'order' | 'return' | 'support' | 'product'; id: string; label: string } | null>(
-    searchParams.get('contextType') ? {
-      type: searchParams.get('contextType') as any,
-      id: searchParams.get('contextId') || '',
-      label: searchParams.get('contextLabel') || '',
-    } : null
-  );
+  const [context, setContext] = useState<{ type: 'order' | 'return' | 'support' | 'product'; id: string; label: string } | null>(() => {
+    if (searchParams.get('contextType')) {
+      return {
+        type: searchParams.get('contextType') as any,
+        id: searchParams.get('contextId') || '',
+        label: searchParams.get('contextLabel') || '',
+      };
+    }
+    const productId = initialProductId ?? searchParams.get('productId');
+    if (productId) return { type: 'product', id: productId, label: '' };
+    const orderId = initialOrderId ?? searchParams.get('orderId');
+    if (orderId) return { type: 'order', id: orderId, label: '' };
+    return null;
+  });
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -63,6 +78,18 @@ export const BuyerMessages = ({ userId, initialSellerId }: { userId: string; ini
   const [chatMenuOpen, setChatMenuOpen] = useState(false);
   const [contextProduct, setContextProduct] = useState<Product | null>(null);
   const [contextOrder, setContextOrder] = useState<Order | null>(null);
+  const [initialVendor, setInitialVendor] = useState<VendorProfile | null>(null);
+
+  // A "contact seller" deep link can target a seller the buyer has never chatted with;
+  // hydrate their public storefront profile so the conversation isn't a blank header.
+  useEffect(() => {
+    if (!selectedSeller) return;
+    const known = chats.some(c => c.sender_id === selectedSeller || c.receiver_id === selectedSeller);
+    if (known || initialVendor?.seller_id === selectedSeller) return;
+    let cancelled = false;
+    fetchVendorProfile(selectedSeller).then(v => { if (!cancelled && v) setInitialVendor(v); });
+    return () => { cancelled = true; };
+  }, [selectedSeller, chats]);
 
   useEffect(() => {
     if (!user) return;
@@ -87,15 +114,23 @@ export const BuyerMessages = ({ userId, initialSellerId }: { userId: string; ini
   }, [selectedSeller]);
 
   useEffect(() => {
+    let cancelled = false;
     if (context?.type === 'product' && context.id) {
-      supabase.from('products').select('*').eq('id', context.id).single().then(({ data }) => { if (data) setContextProduct(data); });
+      // Public product read via the approved service path (RLS-scoped), not a raw table query.
+      fetchProductById(context.id).then(p => { if (!cancelled && p) setContextProduct(p); });
     }
-    if (context?.type === 'order' && context.id) {
-      supabase.from('orders').select('*').eq('id', context.id).single().then(({ data }) => {
-        if (data) { setContextOrder(data); setMsgText(`Hi, I have a question regarding order #${context.id.slice(0, 8)}`); }
-      });
+    if ((context?.type === 'order' || context?.type === 'return') && context.id) {
+      // Buyer's own orders are already hydrated in AppState via the buyer-orders RPC.
+      const order = orders.find(o => o.id === context.id);
+      if (order) {
+        setContextOrder(order);
+        setMsgText(prev => prev || `Hi, I have a question regarding ${context.type === 'return' ? 'my return for ' : ''}order #${context.id.slice(0, 8)}`);
+      }
     }
-  }, [context]);
+    return () => { cancelled = true; };
+  }, [context, orders]);
+
+  const clearContext = () => { setContext(null); setContextProduct(null); setContextOrder(null); };
 
   const vendorList = useMemo(() => {
     const map = new Map<string, VendorProfile & { lastMessage?: string; lastMessageAt?: string; unreadCount: number }>();
@@ -120,6 +155,17 @@ export const BuyerMessages = ({ userId, initialSellerId }: { userId: string; ini
         entry.unreadCount += 1;
       }
     });
+    if (selectedSeller && !map.has(selectedSeller) && initialVendor?.seller_id === selectedSeller) {
+      map.set(selectedSeller, {
+        seller_id: selectedSeller,
+        store_name: initialVendor.store_name || 'Seller',
+        logo_url: initialVendor.logo_url,
+        is_verified: !!initialVendor.is_verified,
+        lastMessage: 'New conversation',
+        lastMessageAt: new Date().toISOString(),
+        unreadCount: 0,
+      } as any);
+    }
     let list = Array.from(map.values());
     if (searchTerm) list = list.filter(v => v.store_name.toLowerCase().includes(searchTerm.toLowerCase()));
     if (filterUnread) list = list.filter(v => v.unreadCount > 0);
@@ -129,7 +175,7 @@ export const BuyerMessages = ({ userId, initialSellerId }: { userId: string; ini
       if (ap !== bp) return bp - ap;
       return new Date(b.lastMessageAt || 0).getTime() - new Date(a.lastMessageAt || 0).getTime();
     });
-  }, [chats, userId, searchTerm, filterUnread, pinnedSellers]);
+  }, [chats, userId, searchTerm, filterUnread, pinnedSellers, selectedSeller, initialVendor]);
 
   const totalUnread = useMemo(
     () => chats.filter(c => c.receiver_id === userId && !c.read).length,
@@ -148,12 +194,17 @@ export const BuyerMessages = ({ userId, initialSellerId }: { userId: string; ini
     if (e) e.preventDefault();
     if (!selectedSeller || (!msgText.trim() && !attachment)) return;
     const text = msgText;
+    const refProductId = contextProduct?.id;
+    const refOrderId = contextOrder?.id;
+    const refAttachment = attachment || undefined;
+    const refReplyId = replyingTo?.id;
     setMsgText('');
     setReplyingTo(null);
     setAttachment(null);
     setMagicMode(false);
+    clearContext(); // the reference rides on this first message only
     if (textareaRef.current) textareaRef.current.style.height = 'auto';
-    await sendMessage(selectedSeller, text, contextProduct?.id, contextOrder?.id, attachment || undefined, replyingTo?.id);
+    await sendMessage(selectedSeller, text, refProductId, refOrderId, refAttachment, refReplyId);
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -272,7 +323,7 @@ export const BuyerMessages = ({ userId, initialSellerId }: { userId: string; ini
               item={{ id: v.seller_id, name: v.store_name, avatarUrl: v.logo_url, isVerified: v.is_verified, lastMessage: (v as any).lastMessage, lastMessageAt: (v as any).lastMessageAt, unreadCount: (v as any).unreadCount }}
               selected={selectedSeller === v.seller_id}
               pinned={pinnedSellers.has(v.seller_id)}
-              onSelect={() => setSelectedSeller(v.seller_id)}
+              onSelect={() => { if (v.seller_id !== selectedSeller) clearContext(); setSelectedSeller(v.seller_id); }}
               onTogglePin={(e) => togglePin(e, v.seller_id)}
             />
           ))}
@@ -347,9 +398,6 @@ export const BuyerMessages = ({ userId, initialSellerId }: { userId: string; ini
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto px-4 py-5 space-y-0 bg-foreground/[0.01] no-scrollbar">
-              {(contextProduct || contextOrder) && (
-                <ProductOrderTag product={contextProduct} order={contextOrder} onViewProduct={setViewingProduct} onViewOrder={setViewingOrder} />
-              )}
               {activeMessages.map((c, idx) => {
                 const prev = activeMessages[idx - 1];
                 const showDay = !prev || !isSameDay(new Date(prev.created_at!), new Date(c.created_at!));
@@ -385,6 +433,79 @@ export const BuyerMessages = ({ userId, initialSellerId }: { userId: string; ini
 
             {/* Composer */}
             <div className="px-4 py-3 bg-background border-t border-foreground/8 flex flex-col gap-2">
+              {/* Reference card — what this message is about; sent with the next message */}
+              {(contextProduct || contextOrder) && (
+                <div
+                  role="group"
+                  aria-label={contextProduct ? `Asking about product ${contextProduct.name}` : `Asking about order ${contextOrder?.id?.slice(0, 8)}`}
+                  className="flex items-center gap-3 p-2.5 bg-emerald-500/[0.06] rounded-2xl border border-emerald-500/25 animate-in slide-in-from-bottom-2"
+                >
+                  {contextProduct ? (
+                    <>
+                      {contextProduct.images?.[0] ? (
+                        <img
+                          src={contextProduct.images[0]}
+                          alt={contextProduct.name}
+                          className="w-11 h-11 object-cover rounded-xl flex-shrink-0"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                      ) : (
+                        <div className="w-11 h-11 rounded-xl bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
+                          <ArrowUpRight className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-0.5">Asking about</p>
+                        <p className="text-xs font-bold text-foreground truncate">{contextProduct.name}</p>
+                        {typeof contextProduct.price === 'number' && (
+                          <p className="text-[11px] font-semibold text-foreground/50">{formatTZS(contextProduct.price)}</p>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/product/${contextProduct.id}`)}
+                        aria-label={`View product ${contextProduct.name}`}
+                        className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+                      >
+                        <ArrowUpRight className="w-4 h-4" />
+                      </button>
+                    </>
+                  ) : contextOrder && (
+                    <>
+                      <div className="w-11 h-11 rounded-xl bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
+                        <Truck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-0.5">
+                          {context?.type === 'return' ? 'About your return' : 'About your order'}
+                        </p>
+                        <p className="text-xs font-bold text-foreground truncate">Order #{contextOrder.id?.slice(0, 8).toUpperCase()}</p>
+                        {typeof (contextOrder as any).total === 'number' && (
+                          <p className="text-[11px] font-semibold text-foreground/50">{formatTZS((contextOrder as any).total)}</p>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setViewingOrder(contextOrder)}
+                        aria-label={`View order ${contextOrder.id?.slice(0, 8)}`}
+                        className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+                      >
+                        <ArrowUpRight className="w-4 h-4" />
+                      </button>
+                    </>
+                  )}
+                  <button
+                    type="button"
+                    onClick={clearContext}
+                    aria-label="Remove reference"
+                    className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-foreground/40 hover:text-foreground hover:bg-foreground/[0.06] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+
               {replyingTo && (
                 <div className="flex items-center gap-3 p-2.5 bg-foreground/[0.03] rounded-xl border border-foreground/8">
                   <div className="flex-1 min-w-0">
@@ -457,7 +578,8 @@ export const BuyerMessages = ({ userId, initialSellerId }: { userId: string; ini
                 <div className="flex-1 bg-foreground/[0.04] rounded-xl border border-foreground/8 focus-within:border-foreground/20 focus-within:bg-background transition-all">
                   <textarea
                     ref={textareaRef}
-                    placeholder="Type a message…"
+                    placeholder={contextProduct ? `Ask about ${contextProduct.name}…` : contextOrder ? 'Ask about this order…' : 'Type a message…'}
+                    aria-label="Message"
                     value={msgText}
                     onChange={(e: any) => {
                       setMsgText(e.target.value);

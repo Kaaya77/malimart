@@ -78,7 +78,7 @@ export const ResetPasswordPage: React.FC = () => {
             <ShieldAlert className="w-8 h-8 text-amber-500 mx-auto" />
             <p className="text-sm font-semibold text-foreground">This reset link is invalid or has expired</p>
             <p className="text-xs text-foreground/50">Request a new one from the login page.</p>
-            <button onClick={() => navigate('/auth')} className="mt-2 px-6 h-11 rounded-xl bg-foreground text-background text-sm font-bold">Back to login</button>
+            <button onClick={() => navigate('/login')} className="mt-2 px-6 h-11 rounded-xl bg-foreground text-background text-sm font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40">Back to login</button>
           </div>
         )}
 
