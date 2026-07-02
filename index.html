@@ -88,8 +88,16 @@
         border: 1px solid var(--glass-border);
       }
 
-      /* Premium Scrollbar */
-      ::-webkit-scrollbar { width: 0px; height: 0px; background: transparent; }
+      /* Slim, subtle scrollbar — keeps scroll affordance without a heavy gutter.
+         (Intentional horizontal rails opt out via the .no-scrollbar class.) */
+      ::-webkit-scrollbar { width: 10px; height: 10px; background: transparent; }
+      ::-webkit-scrollbar-thumb {
+        background: rgba(120, 113, 108, 0.35);
+        border-radius: 999px;
+        border: 2px solid transparent;
+        background-clip: content-box;
+      }
+      ::-webkit-scrollbar-thumb:hover { background: rgba(120, 113, 108, 0.55); background-clip: content-box; }
 
       .reveal {
         opacity: 0;

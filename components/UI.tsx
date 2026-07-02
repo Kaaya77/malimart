@@ -229,7 +229,7 @@ export const CardTitle = ({ className = '', ...props }: any) => (
 );
 
 export const CardDescription = ({ className = '', ...props }: any) => (
- <p className={`text-sm font-medium text-foreground/55 mt-1 ${className}`} {...props} />
+ <p className={`text-sm font-medium text-muted-foreground mt-1 ${className}`} {...props} />
 );
 
 export const Badge = ({ variant = 'default', className = '', ...props }: any) => {
@@ -269,10 +269,16 @@ export const Skeleton = ({ className = '' }: any) => (
 );
 
 export const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, confirmText = "Confirm", cancelText = "Cancel", isDestructive = false }: any) => {
+ React.useEffect(() => {
+   if (!isOpen) return;
+   const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose?.(); };
+   window.addEventListener('keydown', onEsc);
+   return () => window.removeEventListener('keydown', onEsc);
+ }, [isOpen, onClose]);
  if (!isOpen) return null;
  return (
- <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
- <div className="glass-surface w-full max-w-md p-8 rounded-3xl shadow-2xl animate-in zoom-in-95 duration-200">
+ <div onClick={onClose} className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+ <div role="dialog" aria-modal="true" onClick={(e: any) => e.stopPropagation()} className="glass-surface w-full max-w-md p-8 rounded-3xl shadow-2xl animate-in zoom-in-95 duration-200">
  <h3 className="text-2xl font-black text-foreground/60 mb-4 tracking-tight">{title}</h3>
  <p className="text-sm font-medium text-foreground/55 mb-8">{message}</p>
  <div className="flex justify-end gap-3">
@@ -312,8 +318,9 @@ export const Accordion = ({ title, children, defaultOpen = false }: { title: str
  const [isOpen, setIsOpen] = useState(defaultOpen);
  return (
  <div className="border-b border-foreground/8 py-4">
- <button 
- onClick={() => setIsOpen(!isOpen)} 
+ <button
+ onClick={() => setIsOpen(!isOpen)}
+ aria-expanded={isOpen}
  className="flex w-full items-center justify-between py-2 text-left hover:opacity-70 transition-opacity"
  >
  <span className="text-sm font-bold text-foreground">{title}</span>
@@ -431,10 +438,16 @@ export const Modal = ({ isOpen, title, onClose, children, size = 'md' }: any) =>
 };
 
 export const ConfirmDialog = ({ isOpen, title, message, onConfirm, onCancel, isDangerous, confirmText = "Confirm", isLoading }: any) => {
+ React.useEffect(() => {
+   if (!isOpen) return;
+   const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape' && !isLoading) onCancel?.(); };
+   window.addEventListener('keydown', onEsc);
+   return () => window.removeEventListener('keydown', onEsc);
+ }, [isOpen, onCancel, isLoading]);
  if (!isOpen) return null;
  return (
- <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-foreground/[0.05]/50 backdrop-blur-sm animate-in fade-in">
- <div className="glass-surface max-w-sm w-full p-6 space-y-6 rounded-3xl shadow-2xl animate-in zoom-in-95">
+ <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
+ <div role="dialog" aria-modal="true" className="glass-surface max-w-sm w-full p-6 space-y-6 rounded-3xl shadow-2xl animate-in zoom-in-95">
  <div className="text-center">
  <h3 className="text-2xl font-black tracking-tight mb-4 text-foreground">{title}</h3>
  <p className="text-sm font-medium text-foreground/55 leading-relaxed">{message}</p>
@@ -456,7 +469,7 @@ export const PremiumStatCard = ({ title, value, icon: Icon, color = "text-foregr
  return (
  <Card className="p-5 md:p-6 rounded-3xl flex items-center justify-between shadow-sm hover:shadow-md transition-all overflow-hidden relative group">
  <div className="relative z-10 min-w-0 flex-1">
- <p className="text-[11px] font-bold text-foreground/45 uppercase tracking-widest mb-2 flex items-center gap-2 flex-wrap">
+ <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-2 flex items-center gap-2 flex-wrap">
  {title}
  {trendValue && (
  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${isPositive ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600'}`}>
@@ -538,12 +551,18 @@ export const GraphicalIcon = ({ type, className = "" }: { type: string, classNam
 
 // --- UserProfileModal ---
 export const UserProfileModal = ({ isOpen, onClose, user }: { isOpen: boolean, onClose: () => void, user: any }) => {
+ React.useEffect(() => {
+   if (!isOpen) return;
+   const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose?.(); };
+   window.addEventListener('keydown', onEsc);
+   return () => window.removeEventListener('keydown', onEsc);
+ }, [isOpen, onClose]);
  if (!isOpen || !user) return null;
 
  return (
- <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-foreground/[0.05]/50 backdrop-blur-sm animate-in fade-in">
- <div className="glass-surface w-full max-w-md p-8 rounded-[2rem] relative shadow-2xl">
- <button onClick={onClose} className="absolute top-6 right-6 p-2 hover:bg-foreground/[0.05] dark:hover:bg-foreground/[0.05] rounded-full transition-colors">
+ <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
+ <div role="dialog" aria-modal="true" className="glass-surface w-full max-w-md p-8 rounded-[2rem] relative shadow-2xl">
+ <button onClick={onClose} aria-label="Close" className="absolute top-6 right-6 p-2 hover:bg-foreground/[0.05] dark:hover:bg-foreground/[0.05] rounded-full transition-colors">
  <X className="w-6 h-6 stroke-[2] text-foreground/60" />
  </button>
 

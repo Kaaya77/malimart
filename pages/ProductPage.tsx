@@ -401,9 +401,9 @@ export const ProductPage = () => {
  <div className="flex flex-col gap-4 mb-12">
  <div className="flex gap-4 h-14">
  <div className="flex items-center justify-between border border-foreground/20 px-2 w-32 shrink-0">
- <button onClick={() => setQty(Math.max(1, qty - 1))} className="w-8 h-full flex items-center justify-center opacity-50 hover:opacity-100 transition-opacity" disabled={qty <= 1}>-</button>
- <span className="text-sm font-medium">{qty}</span>
- <button onClick={() => setQty(Math.min(metrics.stock, qty + 1))} className="w-8 h-full flex items-center justify-center opacity-50 hover:opacity-100 transition-opacity" disabled={qty >= metrics.stock}>+</button>
+ <button aria-label="Decrease quantity" onClick={() => setQty(Math.max(1, qty - 1))} className="w-8 h-full flex items-center justify-center opacity-50 hover:opacity-100 transition-opacity" disabled={qty <= 1}>-</button>
+ <span className="text-sm font-medium" aria-live="polite">{qty}</span>
+ <button aria-label="Increase quantity" onClick={() => setQty(Math.min(metrics.stock, qty + 1))} className="w-8 h-full flex items-center justify-center opacity-50 hover:opacity-100 transition-opacity" disabled={qty >= metrics.stock}>+</button>
  </div>
  <motion.button 
  whileHover={{ scale: 1.02 }}
@@ -631,7 +631,7 @@ export const ProductPage = () => {
        onClick={() => setLightboxOpen(false)}
      >
        {/* Close */}
-       <button className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors z-10">
+       <button aria-label="Close fullscreen image" className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors z-10">
          <X className="w-5 h-5 stroke-[2]" />
        </button>
        {/* Counter */}

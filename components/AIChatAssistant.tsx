@@ -700,7 +700,7 @@ RESPONSE FORMAT:
 
   // â”€â”€ FAB â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (!isOpen) return (
-    <div className="fixed bottom-[100px] right-4 md:bottom-6 md:right-4 z-[90]">
+    <div className="fixed bottom-[calc(58px+1rem)] right-4 md:bottom-6 md:right-4 z-[90]">
       <motion.button initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 300, damping: 18, delay: 0.3 }}
         whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.9 }}
