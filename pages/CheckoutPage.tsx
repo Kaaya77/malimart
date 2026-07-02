@@ -9,6 +9,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, ShoppingBag } from 'lucide-react';
 import { useAppState } from '../context/AppContext';
 import { CheckoutModal } from '../components/CheckoutComponents';
+import { getEffectiveUnitPrice } from '../components/checkout/shared';
 import { Address } from '../types';
 
 export const CheckoutPage = () => {
@@ -16,13 +17,15 @@ export const CheckoutPage = () => {
   const location = useLocation();
   const { cart, placeOrder, user } = useAppState();
 
-  // Totals from navigation state (set by CartPage) or recalculated
+  // Totals from navigation state (set by CartPage) or recalculated.
+  // NOTE: these are display estimates only — place_order_atomic recomputes
+  // subtotal/VAT/total server-side via compute_cart_totals, which applies each
+  // product's own vat_rate and only for VRN-registered sellers. The flat 18%
+  // fallback here can therefore overstate VAT vs. what the order will record.
   const { total, subtotal, vat, discount, couponCode } = useMemo(() => {
     if (location.state?.total !== undefined) return location.state as any;
-    const sub = cart.reduce((s, i) => {
-      const price = (i as any).price_at_add || i.price || 0;
-      return s + price * (i.quantity || 1);
-    }, 0);
+    // Variant-aware pricing — plain `price_at_add || price` ignored variant prices.
+    const sub = cart.reduce((s, i) => s + getEffectiveUnitPrice(i) * (i.quantity || 1), 0);
     const vatAmt = sub * 0.18;
     return { total: sub + vatAmt, subtotal: sub, vat: vatAmt, discount: 0, couponCode: null };
   }, [location.state, cart]);

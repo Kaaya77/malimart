@@ -1024,7 +1024,9 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
             p_items: itemsPayload,
             p_is_gift: details.isGift,
             p_gift_message: details.giftMessage,
-            p_preferred_delivery_date: details.preferredDeliveryDate,
+            // Checkout surfaces pass `deliveryDate`; keep the old key as a fallback
+            // so neither caller shape silently drops the buyer's chosen date.
+            p_preferred_delivery_date: details.preferredDeliveryDate ?? details.deliveryDate ?? null,
             p_delivery_slot: details.deliverySlot,
             // Server re-validates and computes the real discount from this code.
             p_coupon_code: details.couponCode || null,
@@ -1320,20 +1322,26 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         }
         if (user) await logActivity('update_order_status', `Order ${id} status changed to ${status}`, { order_id: id, status, reason });
 
-        // Send notification to buyer
-        const { data: order } = await supabase.from('orders').select('user_id').eq('id', id).single();
-        if (order) {
-            const message = status === 'cancelled' && reason
-                ? `Your order #${id.slice(0, 8)} was cancelled by the seller. Reason: ${reason}`
-                : `Your order #${id.slice(0, 8)} is now ${status}`;
-            await supabase.from('notifications').insert({
-                user_id: order.user_id,
-                type: 'order',
-                title: status === 'cancelled' ? 'Order Cancelled' : 'Order Updated',
-                message,
-                read: false,
-                created_at: new Date().toISOString()
-            });
+        // Send notification to buyer.
+        // Cancellations are excluded: the guarded cancel path inside
+        // update_order_status_rbac already notifies the buyer (with refund info) —
+        // inserting here again produced duplicate notifications.
+        // NOTE (known gap): sellers cannot SELECT orders under RLS (orders_select_own is
+        // buyer/admin only), so this lookup only succeeds for admins — seller-driven
+        // status changes (processing/in_transit/delivered) reach the buyer with no
+        // notification. Needs a server-side insert in update_order_status_rbac.
+        if (status !== 'cancelled') {
+            const { data: order } = await supabase.from('orders').select('user_id').eq('id', id).single();
+            if (order) {
+                await supabase.from('notifications').insert({
+                    user_id: order.user_id,
+                    type: 'order',
+                    title: 'Order Updated',
+                    message: `Your order #${id.slice(0, 8)} is now ${status.replace(/_/g, ' ')}`,
+                    read: false,
+                    created_at: new Date().toISOString()
+                });
+            }
         }
     }, [user, orders, logActivity]);
 
@@ -1342,43 +1350,42 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         const previous = orders;
         setOrders(prev => prev.map(o => o.id === id ? { ...o, status: 'cancelled' as import('../types').OrderStatus } : o));
 
-        const { error } = await supabase.rpc('update_order_status_rbac', { p_order_id: id, p_new_status: 'cancelled', p_cancel_reason: reason });
+        // Buyer cancellations go through cancel_my_order (pending orders only).
+        // The guarded RPC restores stock, flips payment_status to 'refund_due' when
+        // money is in play, and notifies every seller itself — no client inserts needed.
+        const { data: result, error } = await supabase.rpc('cancel_my_order', { p_order: id, p_reason: reason });
         if (error) {
             setOrders(previous); // rollback
             console.error('Cancel order failed', error);
-            addToast("Failed to cancel order", "error");
+            // The RPC raises human-readable messages (e.g. "The seller is already
+            // preparing this order...") — surface them instead of a generic failure.
+            addToast(error.message || "Failed to cancel order", "error");
             throw error;
         }
-        // cancel_reason now set by RPC — no separate PATCH needed 
+        // cancel_reason now set by RPC — no separate PATCH needed
         if (user) await logActivity('cancel_order', `Order ${id} cancelled`, { order_id: id, reason });
-        
-        // Notify all unique sellers in this order
-        const { data: orderItems } = await supabase
-            .from('order_items')
-            .select('seller_id')
-            .eq('order_id', id);
-        const sellerIds = [...new Set((orderItems || []).map((i: any) => i.seller_id).filter(Boolean))];
-        if (sellerIds.length > 0) {
-            await supabase.from('notifications').insert(
-                sellerIds.map(sid => ({
-                    user_id: sid,
-                    type: 'order',
-                    title: 'Order Cancelled',
-                    message: `Order #${id.slice(0,8)} was cancelled by the buyer. Reason: ${reason}`,
-                    read: false,
-                    created_at: new Date().toISOString()
-                }))
-            );
-        }
 
-        addToast("Order cancelled successfully", "success");
+        addToast(
+            (result as any)?.refund_due
+                ? "Order cancelled — your payment will be refunded"
+                : "Order cancelled successfully",
+            "success"
+        );
         fetchUserData(user?.id!);
     }, [user, orders, logActivity, addToast, fetchUserData]);
 
-    const deleteOrder = useCallback(async (id: string) => { 
-        await supabase.from('orders').update({ deleted_at: new Date().toISOString() }).eq('id', id); 
-        fetchUserData(user?.id!); 
-    }, [user, fetchUserData]);
+    const deleteOrder = useCallback(async (id: string) => {
+        // Direct UPDATE on orders is RLS-blocked for buyers (orders_update_own only
+        // permits status→cancelled), so the old .update({deleted_at}) silently no-oped.
+        // hide_my_order soft-deletes the order server-side (terminal statuses only).
+        const { error } = await supabase.rpc('hide_my_order', { p_order: id });
+        if (error) {
+            console.error('Hide order failed', error);
+            addToast(error.message || 'Could not remove order from history', 'error');
+            throw error;
+        }
+        fetchUserData(user?.id!);
+    }, [user, fetchUserData, addToast]);
 
     const deleteAddress = useCallback(async (id: string) => { 
         const { error } = await supabase.from('addresses').update({ deleted_at: new Date().toISOString() }).eq('id', id);

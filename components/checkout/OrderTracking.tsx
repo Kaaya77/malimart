@@ -13,7 +13,7 @@ import { Button, Input, Label, Card, useToast, Badge, Switch, Textarea } from '.
 import { formatTZS, CURRENCY } from '../../constants';
 import { useAppState } from '../../context/AppContext';
 import { Order, OrderStatus, Address, VendorProfile, CartItem } from '../../types';
-import { supabase } from '../../services/supabaseClient';
+import { fetchOrderShipment } from '../../services/orderApi';
 
 const OrderProgressVisual = ({ status }: { status: string }) => {
   const steps = [
@@ -70,25 +70,38 @@ export const OrderTracking = ({ order }: { order: Order }) => {
   const [carrier, setCarrier] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchTracking = async () => {
-      const { data: shipment } = await supabase.from('shipments').select('*').eq('order_id', order.id).single();
-      if (shipment) {
-        setTrackingNumber(shipment.tracking_number);
-        setCarrier(shipment.carrier);
-        const { data: evts } = await supabase.from('shipment_events').select('*').eq('shipment_id', shipment.id).order('occurred_at', { ascending: false });
-        if (evts) setEvents(evts);
-      }
-    };
-    fetchTracking();
+    let cancelled = false;
+    // Shipment reads go through the orderApi service, not supabase.from here.
+    fetchOrderShipment(order.id).then(tracking => {
+      if (cancelled || !tracking) return;
+      setTrackingNumber(tracking.trackingNumber);
+      setCarrier(tracking.carrier);
+      setEvents(tracking.events);
+    });
+    return () => { cancelled = true; };
   }, [order.id]);
 
-  const isCancelled = ['cancelled', 'refunded', 'failed'].includes(order.status);
-  if (isCancelled) return (
+  // Terminal states — 'disputed' included so it no longer fell through to the
+  // progress rail and rendered as if the order were freshly "Placed".
+  const isTerminal = ['cancelled', 'refunded', 'failed', 'disputed'].includes(order.status);
+  if (isTerminal) return (
     <div className="p-5 bg-red-50 dark:bg-red-950/20 rounded-2xl border border-red-100 dark:border-red-900/30 flex items-center gap-4">
       <div className="w-10 h-10 bg-red-100 dark:bg-red-900/40 rounded-full flex items-center justify-center"><Ban className="w-5 h-5 text-red-500" /></div>
-      <div>
-        <p className="text-[11px] font-black uppercase tracking-wider text-red-500">Order {order.status}</p>
-        <p className="text-[9px] text-red-400 font-bold mt-0.5">{order.cancel_reason || order.reject_reason || "Transaction terminated."}</p>
+      <div className="min-w-0">
+        <p className="text-[11px] font-black uppercase tracking-wider text-red-500">Order {order.status.replace(/_/g, ' ')}</p>
+        <p className="text-[9px] text-red-400 font-bold mt-0.5">
+          {order.cancel_reason || order.reject_reason || (order.status === 'disputed' ? 'This order is under dispute review.' : 'Transaction terminated.')}
+        </p>
+        {order.payment_status === 'refund_due' && (
+          <span className="inline-flex items-center gap-1 mt-2 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded-full">
+            <Clock className="w-3 h-3" /> Refund due — your payment will be returned
+          </span>
+        )}
+        {order.payment_status === 'refunded' && (
+          <span className="inline-flex items-center gap-1 mt-2 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded-full">
+            <CheckCircle2 className="w-3 h-3" /> Payment refunded
+          </span>
+        )}
       </div>
     </div>
   );

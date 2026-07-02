@@ -1,20 +1,46 @@
-import React from 'react';
-import { Badge, Button, EmptyState } from '../../components/UI';
+import React, { useState } from 'react';
+import { Badge, Button, EmptyState, Label, Modal, Textarea } from '../../components/UI';
 import { formatTZS } from '../../constants';
 import { motion } from 'framer-motion';
-import { MessageSquare, Package, Search } from 'lucide-react';
+import { MessageSquare, Package, Search, ShieldAlert } from 'lucide-react';
 import { useAdmin } from './context';
 
 const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40';
 
 const statusVariant = (status: string) => {
     if (['active', 'approved', 'resolved'].includes(status)) return 'success';
-    if (['banned', 'rejected', 'disputed'].includes(status)) return 'danger';
+    if (['banned', 'rejected', 'disputed', 'suspended'].includes(status)) return 'danger';
     return 'secondary';
 };
 
 export const ProductsTab = () => {
-    const { filteredProducts, handleMessageUser, handleToggleProductStatus, productSearch, setProductSearch } = useAdmin();
+    const { filteredProducts, handleMessageUser, handleTakedownProduct, handleToggleProductStatus, productSearch, setProductSearch } = useAdmin();
+
+    // Takedown-with-reason dialog state
+    const [takedownTarget, setTakedownTarget] = useState<any | null>(null);
+    const [takedownReason, setTakedownReason] = useState('');
+    const [takedownSubmitting, setTakedownSubmitting] = useState(false);
+    const reasonValid = takedownReason.trim().length >= 5;
+
+    const closeTakedown = () => {
+        if (takedownSubmitting) return;
+        setTakedownTarget(null);
+        setTakedownReason('');
+    };
+
+    const confirmTakedown = async () => {
+        if (!takedownTarget || !reasonValid || takedownSubmitting) return;
+        setTakedownSubmitting(true);
+        try {
+            await handleTakedownProduct(takedownTarget.id, takedownReason.trim());
+            setTakedownTarget(null);
+            setTakedownReason('');
+        } catch {
+            // toast already shown by handleTakedownProduct; keep dialog open
+        } finally {
+            setTakedownSubmitting(false);
+        }
+    };
 
     const renderThumb = (p: any) => (
         <div className="w-12 h-16 bg-muted/50 rounded-xl overflow-hidden border border-border shadow-sm flex items-center justify-center flex-shrink-0">
@@ -42,11 +68,24 @@ export const ProductsTab = () => {
                 variant={p.status === 'active' ? 'outline' : 'primary'}
                 size="sm"
                 className={`h-9 px-4 text-[10px] font-bold uppercase tracking-widest rounded-xl shadow-sm hover:shadow-md transition-all ${p.status === 'active' ? 'border-destructive/20 text-destructive hover:bg-destructive hover:text-destructive-foreground' : ''} ${focusRing}`}
-                onClick={() => handleToggleProductStatus(p.id, p.status)}
+                onClick={() => p.status === 'active' ? setTakedownTarget(p) : handleToggleProductStatus(p.id, p.status)}
                 aria-label={p.status === 'active' ? `Take down ${p.name}` : `Restore ${p.name}`}
             >
                 {p.status === 'active' ? 'Take Down' : 'Restore'}
             </Button>
+        </div>
+    );
+
+    const renderStatus = (p: any) => (
+        <div className="flex flex-col items-start gap-1">
+            <Badge variant={statusVariant(p.status)} className="text-[10px] font-bold uppercase tracking-widest rounded-full">
+                {p.status}
+            </Badge>
+            {p.status === 'suspended' && p.takedown_reason && (
+                <p className="text-[10px] font-medium text-destructive/80 max-w-[200px] line-clamp-2" title={p.takedown_reason}>
+                    {p.takedown_reason}
+                </p>
+            )}
         </div>
     );
 
@@ -120,9 +159,7 @@ export const ProductsTab = () => {
                                                     <td className="p-5 text-xs font-bold text-foreground">{p.profiles?.full_name || 'Unknown'}</td>
                                                     <td className="p-5 font-mono text-sm font-medium text-foreground">{formatTZS(p.price)}</td>
                                                     <td className="p-5">
-                                                        <Badge variant={statusVariant(p.status)} className="text-[10px] font-bold uppercase tracking-widest rounded-full">
-                                                            {p.status}
-                                                        </Badge>
+                                                        {renderStatus(p)}
                                                     </td>
                                                     <td className="p-5">
                                                         <div className="flex justify-end">
@@ -152,9 +189,9 @@ export const ProductsTab = () => {
                                                     <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-1">{p.category}</p>
                                                     <p className="text-xs text-muted-foreground mt-1">By {p.profiles?.full_name || 'Unknown'}</p>
                                                 </div>
-                                                <Badge variant={statusVariant(p.status)} className="text-[10px] font-bold uppercase tracking-widest rounded-full flex-shrink-0">
-                                                    {p.status}
-                                                </Badge>
+                                                <div className="flex-shrink-0">
+                                                    {renderStatus(p)}
+                                                </div>
                                             </div>
                                             <div className="flex items-center justify-between gap-3">
                                                 <p className="font-mono text-sm font-medium text-foreground">{formatTZS(p.price)}</p>
@@ -165,6 +202,59 @@ export const ProductsTab = () => {
                                 </div>
                                 </>
                                 )}
+
+                                {/* Takedown reason dialog — the reason is recorded and sent to the seller */}
+                                <Modal
+                                    isOpen={!!takedownTarget}
+                                    onClose={closeTakedown}
+                                    title={takedownTarget ? `Take down "${takedownTarget.name}"` : 'Take down product'}
+                                    size="md"
+                                >
+                                    <div className="space-y-4">
+                                        <div className="flex items-start gap-3 p-4 rounded-2xl bg-destructive/5 border border-destructive/15">
+                                            <ShieldAlert className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+                                            <p className="text-xs font-medium text-foreground/70 leading-relaxed">
+                                                The listing will be suspended and hidden from buyers. The seller is
+                                                notified immediately with your reason and can appeal the decision.
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="takedown-reason">Reason (required, shared with the seller)</Label>
+                                            <Textarea
+                                                id="takedown-reason"
+                                                value={takedownReason}
+                                                onChange={(e: any) => setTakedownReason(e.target.value)}
+                                                placeholder="e.g. Counterfeit brand claim — product photos show an unlicensed logo."
+                                                aria-required="true"
+                                                autoFocus
+                                            />
+                                            {!reasonValid && takedownReason.length > 0 && (
+                                                <p className="mt-2 text-[10px] font-bold text-destructive" aria-live="polite">
+                                                    Please give at least 5 characters so the seller understands the decision.
+                                                </p>
+                                            )}
+                                        </div>
+                                        <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
+                                            <Button
+                                                variant="outline"
+                                                onClick={closeTakedown}
+                                                disabled={takedownSubmitting}
+                                                className={`min-h-[44px] px-6 rounded-2xl text-xs font-bold uppercase tracking-widest ${focusRing}`}
+                                            >
+                                                Cancel
+                                            </Button>
+                                            <Button
+                                                variant="danger"
+                                                onClick={confirmTakedown}
+                                                disabled={!reasonValid || takedownSubmitting}
+                                                isLoading={takedownSubmitting}
+                                                className={`min-h-[44px] px-6 rounded-2xl text-xs font-bold uppercase tracking-widest ${focusRing}`}
+                                            >
+                                                Suspend & notify seller
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </Modal>
                             </motion.div>
     );
 };

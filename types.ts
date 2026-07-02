@@ -229,6 +229,10 @@ export interface Order {
     preferred_delivery_date?: string;
     cancel_reason?: string;
     reject_reason?: string;
+    /** DB check: unpaid | processing | paid | failed | refund_due | refunded */
+    payment_status?: 'unpaid' | 'processing' | 'paid' | 'failed' | 'refund_due' | 'refunded';
+    cancelled_by?: 'buyer' | 'seller' | 'admin' | string;
+    cancelled_at?: string;
     address?: string;
     buyer?: { full_name: string; avatar_url: string; phone: string; email: string };
     seller_total?: number; // Computed

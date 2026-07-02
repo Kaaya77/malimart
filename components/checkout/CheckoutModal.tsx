@@ -13,7 +13,7 @@ import { Button, Input, Label, Card, useToast, Badge, Switch, Textarea } from '.
 import { formatTZS, CURRENCY } from '../../constants';
 import { useAppState } from '../../context/AppContext';
 import { Order, OrderStatus, Address, VendorProfile, CartItem } from '../../types';
-import { supabase } from '../../services/supabaseClient';
+import { fetchVendorProfiles } from '../../services/shopService';
 
 import { getEffectiveUnitPrice } from './shared';
 import { AddressForm } from './AddressForm';
@@ -60,8 +60,13 @@ export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, on
       const ids = Array.from(new Set(cart.map(i => i.seller_id)));
       if (!ids.length) { setAreVendorsLoaded(true); return; }
       try {
-        const { data } = await supabase.from('public_vendor_profiles').select('seller_id, store_name, logo_url, region, is_verified, delivery_fee, return_policy, shipping_policy, vacation_mode').in('seller_id', ids);
-        if (data) setSellerDetails(data as VendorProfile[]);
+        // Service reads the RLS-safe public_vendor_profiles view — components
+        // must not call supabase.from directly.
+        // KNOWN GAP: the public view exposes NO payment fields (lipa_namba,
+        // mobile_number, bank/account details), so the payment-channel panel
+        // below cannot show real numbers until a server-side channel exists.
+        const map = await fetchVendorProfiles(ids);
+        setSellerDetails(Object.values(map));
       } catch (e) { console.error(e); }
       finally { setAreVendorsLoaded(true); }
     };
@@ -96,7 +101,11 @@ export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, on
       const methodLabel = paymentMethod === 'cash' ? 'Cash on Delivery' : paymentMethod === 'lipa_namba' ? 'Mobile Money' : 'Bank Transfer';
       const finalRef = senderPhone ? `${paymentRef} (from: ${senderPhone})` : paymentRef;
       await onComplete({ address: selectedAddress, paymentMethod: methodLabel, deliveryFee: deliveryFeeTotal, note: orderNote, paymentRef: finalRef, isGift, giftMessage, deliveryDate: deliveryDate ? new Date(deliveryDate).toISOString() : undefined, deliverySlot });
-    } catch { addToast("Failed to process order", "error"); }
+    } catch (e: any) {
+      // placeOrder maps RPC failures to actionable messages (out of stock,
+      // product removed, session expired) — show those, not a generic error.
+      addToast(e?.message || "Failed to process order", "error");
+    }
     finally { setIsSubmitting(false); }
   };
 
@@ -358,11 +367,11 @@ export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, on
                                 const itemSum = items.reduce((acc, i) => acc + getEffectiveUnitPrice(i) * i.quantity, 0);
                                 const sellerTotal = itemSum + (seller?.delivery_fee || 0);
                                 let payName = seller?.store_name || 'Merchant';
-                                let payNumber = 'Contact Support';
+                                let payNumber: string | null = null;
                                 let payLabel = 'Account';
                                 if (paymentMethod === 'mobile_transfer') {
                                   payName = seller?.bank_account_name || seller?.store_name || 'Merchant';
-                                  payNumber = seller?.account_number || 'Not Listed';
+                                  payNumber = seller?.account_number || null;
                                   payLabel = seller?.bank_name || 'Bank';
                                 } else {
                                   if (seller?.lipa_namba) { payNumber = seller.lipa_namba; payLabel = 'Lipa Namba'; }
@@ -373,15 +382,25 @@ export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, on
                                     <div className="min-w-0">
                                       <p className="text-[8px] font-black uppercase tracking-wider text-background/40 mb-1">{payName} • {formatTZS(Math.round(sellerTotal))}</p>
                                       <div className="flex items-center gap-2 flex-wrap">
-                                        <span className="text-[9px] font-bold bg-white/15 text-background px-2 py-0.5 rounded-md uppercase">{payLabel}</span>
-                                        <span className="font-mono font-black text-background text-sm tracking-wider">{payNumber}</span>
+                                        {payNumber ? (
+                                          <>
+                                            <span className="text-[9px] font-bold bg-white/15 text-background px-2 py-0.5 rounded-md uppercase">{payLabel}</span>
+                                            <span className="font-mono font-black text-background text-sm tracking-wider">{payNumber}</span>
+                                          </>
+                                        ) : (
+                                          <span className="text-[10px] font-bold text-background/60">
+                                            Payment number not available — ask the seller via chat before paying.
+                                          </span>
+                                        )}
                                       </div>
                                     </div>
-                                    <button onClick={() => { navigator.clipboard.writeText(String(payNumber)); addToast("Copied!", "success"); }}
-                                      className="w-9 h-9 bg-white/10 hover:bg-white/20 rounded-xl flex items-center justify-center transition-colors flex-shrink-0"
-                                    >
-                                      <Copy className="w-4 h-4 text-background/70" />
-                                    </button>
+                                    {payNumber && (
+                                      <button onClick={() => { navigator.clipboard.writeText(payNumber!); addToast("Copied!", "success"); }}
+                                        className="w-9 h-9 bg-white/10 hover:bg-white/20 rounded-xl flex items-center justify-center transition-colors flex-shrink-0"
+                                      >
+                                        <Copy className="w-4 h-4 text-background/70" />
+                                      </button>
+                                    )}
                                   </div>
                                 );
                               })}

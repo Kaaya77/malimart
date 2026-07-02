@@ -23,11 +23,20 @@ import type { InventoryProduct, InventoryMovement } from './config';
 import { MovementHistory } from './MovementHistory';
 import { ProductShare } from '../ProductShare';
 
+export interface RowModeration {
+  takedown_reason?: string | null;
+  appeal?: {
+    status: 'pending' | 'approved' | 'rejected';
+    admin_response?: string | null;
+    created_at?: string;
+  } | null;
+}
+
 export const InventoryRow = ({
   product, isSelected, onSelect, onEdit, onArchive, onRestore,
   onToggleStatus, onToggleBoost, onDuplicate, onStockAdjust,
   onDragStart, onDragOver, onDrop, onCreatePromo, onAutoDiscount,
-  updating,
+  updating, moderation, onAppeal,
 }: {
   product: InventoryProduct;
   isSelected: boolean;
@@ -45,6 +54,8 @@ export const InventoryRow = ({
   onCreatePromo: (p: InventoryProduct) => void;
   onAutoDiscount: (p: InventoryProduct) => void;
   updating: boolean;
+  moderation?: RowModeration | null;
+  onAppeal?: (p: InventoryProduct) => void;
 }) => {
   const [showHistory, setShowHistory] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -270,8 +281,13 @@ export const InventoryRow = ({
           </button>
         </div>
 
-        {/* Toggle status */}
+        {/* Toggle status — suspended products can only be reinstated via appeal */}
         <div className="flex justify-center">
+          {product.status === 'suspended' ? (
+            <span className="h-7 px-3 rounded-lg text-[10px] font-bold flex items-center gap-1 bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400">
+              <AlertTriangle className="w-3.5 h-3.5" />Suspended
+            </span>
+          ) : (
           <button
             onClick={e => { e.stopPropagation(); onToggleStatus(product); }}
             className={`h-7 px-3 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 ${
@@ -286,6 +302,7 @@ export const InventoryRow = ({
               : <><ToggleLeft className="w-3.5 h-3.5" />{cfg.label}</>
             }
           </button>
+          )}
         </div>
 
         {/* Actions */}
@@ -350,6 +367,64 @@ export const InventoryRow = ({
           </div>
         </div>
       </div>
+
+      {/* Moderation banner — suspension notice + appeal path (fairness: never a silent takedown) */}
+      {(product.status === 'suspended' || moderation?.appeal) && (
+        <div
+          className="mx-3.5 md:mx-4 mb-3.5 p-3.5 rounded-2xl border border-red-200/70 dark:border-red-900/40 bg-red-50/60 dark:bg-red-900/10 flex flex-col md:flex-row md:items-center gap-3"
+          onClick={e => e.stopPropagation()}
+          role="status"
+        >
+          <div className="flex-1 min-w-0 space-y-1.5">
+            {product.status === 'suspended' && (
+              <>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-600 text-white text-[10px] font-black uppercase tracking-wider">
+                    <AlertTriangle className="w-3 h-3" />Suspended by MaliMart
+                  </span>
+                </div>
+                <p className="text-xs font-semibold text-red-800 dark:text-red-300 leading-relaxed">
+                  Reason: {moderation?.takedown_reason || (product as any).takedown_reason || 'No reason provided — contact support.'}
+                </p>
+              </>
+            )}
+            {moderation?.appeal && (
+              <p className="text-xs font-medium text-foreground/70 leading-relaxed">
+                {moderation.appeal.status === 'pending' && (
+                  <span className="inline-flex items-center gap-1.5 text-amber-700 dark:text-amber-400 font-bold">
+                    <Clock className="w-3.5 h-3.5" />Appeal pending review
+                  </span>
+                )}
+                {moderation.appeal.status === 'approved' && (
+                  <span className="inline-flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-bold">
+                    <Check className="w-3.5 h-3.5" />Appeal approved — listing reinstated
+                  </span>
+                )}
+                {moderation.appeal.status === 'rejected' && (
+                  <span className="inline-flex items-center gap-1.5 text-red-700 dark:text-red-400 font-bold">
+                    <X className="w-3.5 h-3.5" />Appeal rejected
+                  </span>
+                )}
+                {moderation.appeal.admin_response && (
+                  <span className="block mt-1 text-foreground/60">
+                    MaliMart: {moderation.appeal.admin_response}
+                  </span>
+                )}
+              </p>
+            )}
+          </div>
+          {product.status === 'suspended' && onAppeal
+            && (!moderation?.appeal || moderation.appeal.status === 'rejected') && (
+            <button
+              onClick={() => onAppeal(product)}
+              className="flex-shrink-0 min-h-[44px] px-5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black uppercase tracking-wider transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 active:scale-95"
+              aria-label={`Appeal the suspension of ${product.name}`}
+            >
+              {moderation?.appeal?.status === 'rejected' ? 'Appeal again' : 'Appeal'}
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Movement history panel */}
       {showHistory && (

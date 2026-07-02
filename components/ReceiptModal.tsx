@@ -18,10 +18,33 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ isOpen, order, selle
 
   if (!isOpen) return null;
 
-  const subtotal  = order.items?.reduce((a: number, i: any) => a + (i.price_at_purchase * i.quantity), 0) ?? 0;
+  // Prefer the order's stored subtotal (server-computed at insert); fall back
+  // to summing line items. price_at_purchase is the money column on order_items.
+  const itemsSum  = order.items?.reduce((a: number, i: any) => a + ((i.price_at_purchase ?? 0) * i.quantity), 0) ?? 0;
+  const subtotal  = order.subtotal ?? itemsSum;
   const delivery  = order.delivery_fee ?? 0;
   const discount  = order.discount_amount ?? 0;
+  const vat       = order.vat_amount ?? 0;
   const total     = order.total ?? 0;
+  const isPaid    = order.payment_status === 'paid';
+
+  // Orders can span multiple sellers (sellers live on order_items, not orders).
+  const sellerCount = new Set(
+    (order.items ?? [])
+      .map((i: any) => i.seller_id || i.products?.seller_id || i.product?.seller_id)
+      .filter(Boolean)
+  ).size;
+
+  // Honest status badge — the old header always said "Confirmed", even on
+  // cancelled/refunded orders.
+  const statusBadge = (() => {
+    if (order.status === 'cancelled') return { label: 'Cancelled', cls: 'bg-red-500/20 text-red-400' };
+    if (order.status === 'refunded' || order.payment_status === 'refunded') return { label: 'Refunded', cls: 'bg-gray-500/20 text-gray-300' };
+    if (order.status === 'failed') return { label: 'Failed', cls: 'bg-red-500/20 text-red-400' };
+    if (order.status === 'disputed') return { label: 'Disputed', cls: 'bg-amber-500/20 text-amber-400' };
+    if (order.status === 'delivered') return { label: 'Delivered', cls: 'bg-emerald-500/20 text-emerald-400' };
+    return { label: 'Confirmed', cls: 'bg-emerald-500/20 text-emerald-400' };
+  })();
   const dateStr   = new Date(order.created_at ?? Date.now())
     .toLocaleDateString('en-TZ', { year: 'numeric', month: 'long', day: 'numeric' });
   const orderId   = (order.id ?? '').slice(0, 8).toUpperCase();
@@ -64,7 +87,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ isOpen, order, selle
 
   const modal = (
     <div
-      className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/50 backdrop-blur-smrint:bg-white print:p-0 print:block"
+      className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm print:bg-white print:p-0 print:block"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="w-full max-w-sm bg-background rounded-3xl shadow-2xl border border-foreground/8 max-h-[94dvh] flex flex-col print:shadow-none print:rounded-none print:border-none print:max-h-none">
@@ -112,9 +135,14 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ isOpen, order, selle
                 </div>
               </div>
               <div className="text-right">
-                <div className="inline-flex items-center gap-1 bg-emerald-500/20 text-emerald-400 text-[10px] font-bold px-2.5 py-1 rounded-full mb-1">
-                  <CheckCircle2 className="w-3 h-3"/> Confirmed
+                <div className={`inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full mb-1 ${statusBadge.cls}`}>
+                  <CheckCircle2 className="w-3 h-3"/> {statusBadge.label}
                 </div>
+                {order.payment_status === 'refund_due' && (
+                  <div className="inline-flex items-center gap-1 bg-amber-500/20 text-amber-400 text-[10px] font-bold px-2.5 py-1 rounded-full mb-1 ml-1">
+                    Refund due
+                  </div>
+                )}
                 <p className="text-gray-500 text-[10px]">{dateStr}</p>
               </div>
             </div>
@@ -126,7 +154,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ isOpen, order, selle
                 <p className="font-black text-xl text-gray-900 font-mono">#{orderId}</p>
               </div>
               <div className="text-right">
-                <p className="text-[9px] text-gray-400 uppercase tracking-widest font-bold mb-1">Total Paid</p>
+                <p className="text-[9px] text-gray-400 uppercase tracking-widest font-bold mb-1">{isPaid ? 'Total Paid' : 'Order Total'}</p>
                 <p className="font-black text-xl text-emerald-600">{formatTZS(total)}</p>
               </div>
             </div>
@@ -135,9 +163,15 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ isOpen, order, selle
             <div className="px-8 py-5 grid grid-cols-2 gap-4 border-b border-gray-100">
               <div>
                 <p className="text-[9px] text-gray-400 uppercase tracking-widest font-bold mb-2">From</p>
-                <p className="font-bold text-sm text-gray-800">{seller?.store_name || 'MaliMart Seller'}</p>
-                <p className="text-xs text-gray-500 mt-0.5">{seller?.region || 'Tanzania'}</p>
-                {seller?.contact_phone && <p className="text-xs text-gray-400 mt-0.5">{seller.contact_phone}</p>}
+                <p className="font-bold text-sm text-gray-800">
+                  {seller?.store_name
+                    ? sellerCount > 1
+                      ? `${seller.store_name} and ${sellerCount - 1} other seller${sellerCount - 1 > 1 ? 's' : ''}`
+                      : seller.store_name
+                    : sellerCount > 1 ? `${sellerCount} MaliMart sellers` : 'MaliMart Seller'}
+                </p>
+                <p className="text-xs text-gray-500 mt-0.5">{sellerCount > 1 ? 'Tanzania' : (seller?.region || 'Tanzania')}</p>
+                {sellerCount <= 1 && seller?.contact_phone && <p className="text-xs text-gray-400 mt-0.5">{seller.contact_phone}</p>}
               </div>
               <div>
                 <p className="text-[9px] text-gray-400 uppercase tracking-widest font-bold mb-2">To</p>
@@ -152,15 +186,18 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ isOpen, order, selle
               <p className="text-[9px] text-gray-400 uppercase tracking-widest font-bold mb-4">Items Purchased</p>
               <div className="space-y-3.5">
                 {order.items?.map((item: any, i: number) => {
-                  const img = item.products?.images?.[0] || item.image_url;
+                  // Handle both embed shapes: `products` (PostgREST join) and `product`.
+                  const product = item.products || item.product;
+                  const img = product?.images?.[0] || item.image_url;
+                  const unit = item.price_at_purchase ?? 0;
                   return (
                     <div key={i} className="flex items-center gap-3">
                       {img && <img src={img} alt="" className="w-10 h-10 rounded-lg object-cover bg-gray-100 shrink-0" loading="lazy" decoding="async"/>}
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-sm text-gray-800 truncate">{item.products?.name || item.name}</p>
-                        <p className="text-xs text-gray-400">Qty {item.quantity} × {formatTZS(item.price_at_purchase)}</p>
+                        <p className="font-semibold text-sm text-gray-800 truncate">{product?.name || item.name || 'Item'}</p>
+                        <p className="text-xs text-gray-400">Qty {item.quantity} × {formatTZS(unit)}</p>
                       </div>
-                      <p className="font-bold text-sm text-gray-900 shrink-0">{formatTZS(item.price_at_purchase * item.quantity)}</p>
+                      <p className="font-bold text-sm text-gray-900 shrink-0">{formatTZS(unit * item.quantity)}</p>
                     </div>
                   );
                 })}
@@ -172,6 +209,11 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ isOpen, order, selle
               <div className="flex justify-between text-sm text-gray-500">
                 <span>Subtotal</span><span className="font-semibold text-gray-700">{formatTZS(subtotal)}</span>
               </div>
+              {vat > 0 && (
+                <div className="flex justify-between text-sm text-gray-500">
+                  <span>VAT</span><span className="font-semibold text-gray-700">{formatTZS(vat)}</span>
+                </div>
+              )}
               {delivery > 0 && (
                 <div className="flex justify-between text-sm text-gray-500">
                   <span>Delivery fee</span><span className="font-semibold text-gray-700">{formatTZS(delivery)}</span>
@@ -184,8 +226,12 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ isOpen, order, selle
               )}
               <div className="flex justify-between items-center pt-4 mt-2 border-t-2 border-gray-900">
                 <div>
-                  <p className="font-black text-base text-gray-900">Total Paid</p>
-                  <p className="text-xs text-gray-400">{payMethod}</p>
+                  <p className="font-black text-base text-gray-900">{isPaid ? 'Total Paid' : 'Order Total'}</p>
+                  <p className="text-xs text-gray-400">
+                    {payMethod}
+                    {order.payment_status === 'refund_due' && ' · Refund due'}
+                    {order.payment_status === 'refunded' && ' · Refunded'}
+                  </p>
                 </div>
                 <p className="text-2xl font-black text-gray-900">{formatTZS(total)}</p>
               </div>

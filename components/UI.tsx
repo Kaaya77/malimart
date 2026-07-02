@@ -613,18 +613,26 @@ export const UserProfileModal = ({ isOpen, onClose, user }: { isOpen: boolean, o
  <span className="text-foreground/60 ">{user.region}</span>
  </div>
  )}
+ {/* Only real, stored metrics — never fabricated defaults. New accounts
+     honestly show "No data yet" instead of a fake 95% trust score. */}
  <div className="flex justify-between text-sm font-bold text-foreground/55">
  <span>Trust Score</span>
- <span className="text-emerald-600">{user.trust_score || 95}%</span>
+ {user.trust_score != null
+   ? <span className="text-emerald-600">{user.trust_score}%</span>
+   : <span className="text-foreground/35 font-medium">No data yet</span>}
  </div>
  <div className="flex justify-between text-sm font-bold text-foreground/55">
  <span>Total Orders</span>
- <span>{user.total_orders || 12}</span>
+ {user.total_orders != null
+   ? <span>{user.total_orders}</span>
+   : <span className="text-foreground/35 font-medium">No data yet</span>}
  </div>
+ {user.response_rate != null && (
  <div className="flex justify-between text-[10px] uppercase tracking-[0.2em] opacity-60">
  <span>Response Rate</span>
- <span>{user.response_rate || '98%'}</span>
+ <span>{user.response_rate}</span>
  </div>
+ )}
  </div>
 
  <Button variant="primary" className="w-full h-12 rounded-xl text-[10px] uppercase tracking-[0.15em]" onClick={onClose}>Close Profile</Button>

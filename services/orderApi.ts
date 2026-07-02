@@ -15,6 +15,41 @@ export interface OrderReceipt {
   primarySeller: VendorProfile | null;
 }
 
+export interface OrderShipmentTracking {
+  trackingNumber: string | null;
+  carrier: string | null;
+  events: Array<{ id: string; status: string; notes?: string | null; occurred_at: string }>;
+}
+
+/**
+ * Shipment + event timeline for an order (RLS scopes reads to the order's
+ * buyer/seller). Returns null when no shipment exists yet. Never throws.
+ */
+export async function fetchOrderShipment(orderId: string): Promise<OrderShipmentTracking | null> {
+  try {
+    const { data: shipment } = await supabase
+      .from('shipments')
+      .select('id, tracking_number, carrier')
+      .eq('order_id', orderId)
+      .maybeSingle();
+    if (!shipment) return null;
+
+    const { data: events } = await supabase
+      .from('shipment_events')
+      .select('id, status, notes, occurred_at')
+      .eq('shipment_id', shipment.id)
+      .order('occurred_at', { ascending: false });
+
+    return {
+      trackingNumber: shipment.tracking_number ?? null,
+      carrier: shipment.carrier ?? null,
+      events: events ?? [],
+    };
+  } catch {
+    return null;
+  }
+}
+
 /** Buyer's own order with items + all seller storefront profiles. Never throws. */
 export async function fetchOrderReceipt(orderId: string): Promise<OrderReceipt | null> {
   try {

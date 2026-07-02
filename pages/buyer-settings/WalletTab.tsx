@@ -63,13 +63,16 @@ export const WalletTab = () => {
                 </div>
 
                 <div className="space-y-6">
+                  {/* No referral tracking/payout pipeline exists yet — do NOT promise
+                      money the platform can't pay. Honest framing until the program
+                      is actually built (tracking, credit triggers, fraud checks). */}
                   <Card className="bg-emerald-50 border-emerald-100 dark:bg-emerald-900/10 dark:border-emerald-900/20">
                     <CardHeader>
-                      <CardTitle className="text-emerald-900 dark:text-emerald-100 flex items-center gap-2"><Gift className="w-5 h-5" /> Invite & Earn</CardTitle>
-                      <CardDescription className="text-emerald-800/70 dark:text-emerald-200/70">Earn wallet credit for every friend you bring.</CardDescription>
+                      <CardTitle className="text-emerald-900 dark:text-emerald-100 flex items-center gap-2"><Gift className="w-5 h-5" /> Invite Friends</CardTitle>
+                      <CardDescription className="text-emerald-800/70 dark:text-emerald-200/70">Referral rewards are launching soon.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <p className="text-sm text-emerald-800 dark:text-emerald-200">Share your code. When a friend makes their first purchase, they get 10% off and you get {CURRENCY} 5,000.</p>
+                        <p className="text-sm text-emerald-800 dark:text-emerald-200">This is your personal referral code. Rewards for inviting friends aren't live yet — we'll notify you when the program launches, and invites you make now will count.</p>
                         <div className="flex items-center gap-2 bg-background p-2 rounded-xl border border-emerald-200 dark:border-emerald-800/50">
                             <code className="px-3 py-1 font-mono font-bold text-foreground text-sm flex-1 text-center">{user?.referral_code || 'MALI-XXXX'}</code>
                             <Button variant="secondary" size="icon" aria-label="Copy referral code" onClick={copyReferralCode} className="shrink-0 h-11 w-11 rounded-xl">

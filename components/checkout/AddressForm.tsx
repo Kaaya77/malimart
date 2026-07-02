@@ -13,7 +13,6 @@ import { Button, Input, Label, Card, useToast, Badge, Switch, Textarea } from '.
 import { formatTZS, CURRENCY } from '../../constants';
 import { useAppState } from '../../context/AppContext';
 import { Order, OrderStatus, Address, VendorProfile, CartItem } from '../../types';
-import { supabase } from '../../services/supabaseClient';
 
 export const AddressForm = ({ initialData, onSave, onCancel }: {
   initialData?: Partial<Address>;

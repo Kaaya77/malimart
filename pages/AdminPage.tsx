@@ -21,6 +21,7 @@ import { AdminVendorVerification } from '../components/AdminVendorVerification';
 import { AdminMessages } from '../components/AdminMessages';
 import { AdminAIHero } from '../components/AdminAIHero';
 import { analyzeDispute } from '../services/geminiService';
+import { adminTakedownProduct } from '../services/moderationApi';
 import { AdminCtx } from './admin/context';
 import { OverviewTab } from './admin/OverviewTab';
 import { UsersTab } from './admin/UsersTab';
@@ -291,14 +292,30 @@ export const AdminPage = () => {
         setActiveTab('messages');
     };
 
+    // Restore path only — takedowns now go through handleTakedownProduct
+    // (reason required + seller notification). Restoring also clears any
+    // recorded takedown reason.
     const handleToggleProductStatus = async (productId: string, currentStatus: string) => {
-        const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+        if (currentStatus === 'active') return; // takedown handled by handleTakedownProduct
         try {
-            await supabase.from('products').update({ status: newStatus }).eq('id', productId);
-            addToast(`Product marked as ${newStatus}`, "success");
+            await supabase.from('products').update({ status: 'active', takedown_reason: null }).eq('id', productId);
+            addToast('Product restored and live again', "success");
             fetchAdminData();
         } catch (error) {
             addToast("Failed to update product", "error");
+        }
+    };
+
+    // Fair takedown: mandatory reason, RPC suspends the product AND
+    // notifies the seller (no more silent takedowns).
+    const handleTakedownProduct = async (productId: string, reason: string) => {
+        try {
+            await adminTakedownProduct(productId, reason);
+            addToast('Product suspended — the seller has been notified with the reason', "success");
+            fetchAdminData();
+        } catch (error: any) {
+            addToast(error?.message || 'Failed to take down product', "error");
+            throw error;
         }
     };
 
@@ -332,7 +349,7 @@ export const AdminPage = () => {
     if (user.role !== 'admin') {
         return <Navigate to="/" replace />;
     }
-  const __ctx = { addToast, confirmDeleteUser, disputes, fetchAdminData, filteredProducts, filteredUsers, handleAnalyzeDispute, handleApprovePayout, handleMessageUser, handleResolveDispute, handleSaveSettings, handleToggleProductStatus, handleToggleUserBan, payouts, platformSettings, productSearch, products, selectedMessageUser, setActiveTab, setPlatformSettings, setProductSearch, setUserSearch, stats, userSearch, vendorsList };
+  const __ctx = { addToast, confirmDeleteUser, disputes, fetchAdminData, filteredProducts, filteredUsers, handleAnalyzeDispute, handleApprovePayout, handleMessageUser, handleResolveDispute, handleSaveSettings, handleTakedownProduct, handleToggleProductStatus, handleToggleUserBan, payouts, platformSettings, productSearch, products, selectedMessageUser, setActiveTab, setPlatformSettings, setProductSearch, setUserSearch, stats, userSearch, vendorsList };
 
 
     return (

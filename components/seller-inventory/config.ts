@@ -33,6 +33,7 @@ export const STATUS_CFG: Record<string, { label: string; color: string; bg: stri
   draft:    { label: 'Draft',     color: 'text-amber-600',   bg: 'bg-amber-50 dark:bg-amber-900/20' },
   inactive: { label: 'Inactive',  color: 'text-foreground/40', bg: 'bg-foreground/[0.05]' },
   archived: { label: 'Archived',  color: 'text-foreground/30', bg: 'bg-foreground/[0.03]' },
+  suspended:{ label: 'Suspended', color: 'text-red-600 dark:text-red-400', bg: 'bg-red-50 dark:bg-red-900/20' },
 };
 
 export const REASON_LABELS: Record<string, string> = {

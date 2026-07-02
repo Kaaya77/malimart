@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, Package, Clock, ChevronLeft, RotateCcw, AlertCircle,
   ShoppingBag, MapPin, CreditCard, MessageCircle, Truck, CheckCircle2,
-  XCircle, RefreshCw, Star
+  XCircle, RefreshCw, Star, Trash2
 } from 'lucide-react';
 import { Badge, useToast } from './UI';
 import { formatTZS } from '../constants';
@@ -210,6 +210,15 @@ export const BuyerOrders = ({
                   The seller has started preparing this order, so cancellation is their call — send them a message and they can cancel it for you.
                 </p>
               </div>
+            )}
+            {/* Terminal orders can be removed from history (soft delete via hide_my_order —
+                the seller's and admin's records are unaffected). */}
+            {['delivered','cancelled','refunded','failed'].includes(selectedOrder.status) && (
+              <button
+                onClick={async () => { await onDelete(selectedOrder.id); setSelectedOrder(null); }}
+                className="w-full flex items-center justify-center gap-2 h-11 rounded-2xl border border-foreground/10 text-sm font-semibold text-foreground/45 hover:text-red-500 hover:border-red-200 dark:hover:border-red-900/40 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40">
+                <Trash2 className="w-4 h-4" />Remove from history
+              </button>
             )}
           </div>
         </div>

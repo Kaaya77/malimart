@@ -278,9 +278,18 @@ export const OrderConfirmationPage = () => {
                 </div>
               )}
               <div className="border-t border-foreground/8 pt-3 flex justify-between items-center">
-                <span className="text-[11px] font-black uppercase tracking-wider text-foreground/60">Total Paid</span>
+                {/* Fresh orders start payment_status='unpaid' (payment verified after
+                    placement) — only claim "Paid" when the DB says so. */}
+                <span className="text-[11px] font-black uppercase tracking-wider text-foreground/60">
+                  {(confirmedOrder as any).payment_status === 'paid' ? 'Total Paid' : 'Total'}
+                </span>
                 <span className="text-xl font-black tracking-tight text-foreground">{formatTZS(confirmedOrder.total)}</span>
               </div>
+              {(confirmedOrder as any).payment_status === 'refund_due' && (
+                <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-amber-600 bg-amber-50 dark:bg-amber-900/15 border border-amber-200/60 dark:border-amber-800/40 rounded-xl px-3 py-2">
+                  <Clock className="w-3.5 h-3.5" /> Refund due — your payment will be returned
+                </div>
+              )}
             </div>
           </div>
         </motion.div>

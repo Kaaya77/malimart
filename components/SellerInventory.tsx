@@ -31,12 +31,13 @@ import {
 } from 'lucide-react';
 import { useAppState } from '../context/AppContext';
 import { useDebounce } from '../src/hooks/useDebounce';
-import { useToast, ConfirmModal } from './UI';
+import { useToast, ConfirmModal, Modal, Textarea, Label, Button } from './UI';
 import { Product } from '../types';
 import { formatTZS, CURRENCY, CATEGORY_HIERARCHY } from '../constants';
 import { supabase } from '../services/supabaseClient';
 import { rateLimit } from '../src/security';
 import { withCache, invalidate, TTL } from '../services/queryCache';
+import { getMyProductModeration, submitProductAppeal, SellerModerationEntry } from '../services/moderationApi';
 import { QuickProductForm } from './QuickProductForm';
 import { CSVImport } from './CSVImport';
 import { BulkEditModal } from './BulkEditModal';
@@ -136,6 +137,13 @@ export const SellerInventory = ({
   const [liveIndicator, setLiveIndicator] = useState(false);
   const [showAIInsights, setShowAIInsights] = useState(false);
 
+  // Moderation (admin takedowns + appeals) — keyed by product_id
+  const [moderationMap, setModerationMap] = useState<Record<string, SellerModerationEntry>>({});
+  const [appealProduct, setAppealProduct] = useState<InventoryProduct | null>(null);
+  const [appealText, setAppealText] = useState('');
+  const [appealSubmitting, setAppealSubmitting] = useState(false);
+  const appealValid = appealText.trim().length >= 10;
+
   // ── Fetch ────────────────────────────────────────────────────────────────────
   const fetchInventory = useCallback(async (silent = false) => {
     silent ? setRefreshing(true) : setLoading(true);
@@ -174,6 +182,35 @@ export const SellerInventory = ({
       setRefreshing(false);
     }
   }, [userId, page, debouncedSearch, status, category, sort, lowStockOnly]);
+
+  // Fetch suspension/appeal info (get_seller_inventory doesn't return takedown_reason)
+  const fetchModeration = useCallback(async () => {
+    try {
+      const entries = await getMyProductModeration();
+      setModerationMap(Object.fromEntries((entries || []).map(e => [e.product_id, e])));
+    } catch (e: any) {
+      // Non-fatal: inventory still works; RPC may not exist until migration ships
+      console.error('[SellerInventory] moderation fetch', e?.message);
+    }
+  }, []);
+
+  useEffect(() => { fetchModeration(); }, [fetchModeration]);
+
+  const handleSubmitAppeal = async () => {
+    if (!appealProduct || !appealValid || appealSubmitting) return;
+    setAppealSubmitting(true);
+    try {
+      await submitProductAppeal(appealProduct.id, appealText.trim());
+      addToast('Appeal submitted — MaliMart will review it and respond', 'success');
+      setAppealProduct(null);
+      setAppealText('');
+      fetchModeration();
+    } catch (e: any) {
+      addToast(e?.message || 'Failed to submit appeal', 'error');
+    } finally {
+      setAppealSubmitting(false);
+    }
+  };
 
   // Seed from preloaded context data — instant display on first visit
   useEffect(() => {
@@ -658,7 +695,9 @@ export const SellerInventory = ({
                 {displayedProducts.map((p, idx) => {
                   const statusColor = p.status === 'active' ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400' :
                     p.status === 'draft' ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400' :
+                    p.status === 'suspended' ? 'bg-red-600 text-white' :
                     'bg-foreground/8 text-foreground/50';
+                  const mod = moderationMap[p.id];
                   const stockAlert = (p as any).is_out_of_stock ? 'text-red-500' : (p as any).is_low_stock ? 'text-amber-500' : 'text-emerald-600';
                   return (
                     <motion.div
@@ -708,6 +747,32 @@ export const SellerInventory = ({
                             {(p as any).is_out_of_stock ? '0 left' : `${p.stock} left`}
                           </span>
                         </div>
+
+                        {/* Suspension notice + appeal (card view) */}
+                        {p.status === 'suspended' && (
+                          <div className="mt-2 p-2 rounded-xl bg-red-50 dark:bg-red-900/15 border border-red-200/60 dark:border-red-900/40" onClick={e => e.stopPropagation()}>
+                            <p className="text-[10px] font-black uppercase tracking-wider text-red-600 dark:text-red-400">Suspended by MaliMart</p>
+                            {(mod?.takedown_reason || (p as any).takedown_reason) && (
+                              <p className="text-[10px] font-medium text-red-700/80 dark:text-red-300/80 mt-0.5 line-clamp-2">
+                                {mod?.takedown_reason || (p as any).takedown_reason}
+                              </p>
+                            )}
+                            {mod?.appeal?.status === 'pending' ? (
+                              <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400 mt-1">Appeal pending review</p>
+                            ) : (
+                              <button
+                                onClick={() => { setAppealProduct(p); setAppealText(''); }}
+                                className="mt-1.5 w-full min-h-[44px] rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black uppercase tracking-wider transition-colors active:scale-95"
+                                aria-label={`Appeal the suspension of ${p.name}`}
+                              >
+                                {mod?.appeal?.status === 'rejected' ? 'Appeal again' : 'Appeal'}
+                              </button>
+                            )}
+                            {mod?.appeal?.status === 'rejected' && mod.appeal.admin_response && (
+                              <p className="text-[10px] font-medium text-foreground/55 mt-1 line-clamp-2">MaliMart: {mod.appeal.admin_response}</p>
+                            )}
+                          </div>
+                        )}
 
                         {/* Quick actions */}
                         <div className="flex gap-1 mt-2" onClick={e => e.stopPropagation()}>
@@ -808,6 +873,8 @@ export const SellerInventory = ({
                   onCreatePromo={prod => onCreatePromo(prod as Product)}
                   onAutoDiscount={prod => { setProductForDiscount(prod); setIsAutoDiscountOpen(true); }}
                   updating={updatingIds.has(p.id)}
+                  moderation={moderationMap[p.id]}
+                  onAppeal={prod => { setAppealProduct(prod); setAppealText(''); }}
                 />
               ))}
             </AnimatePresence>
@@ -876,6 +943,58 @@ export const SellerInventory = ({
         confirmText="Archive"
         isDestructive
       />
+
+      {/* Appeal a suspension */}
+      <Modal
+        isOpen={!!appealProduct}
+        onClose={() => { if (!appealSubmitting) { setAppealProduct(null); setAppealText(''); } }}
+        title={appealProduct ? `Appeal suspension — ${appealProduct.name}` : 'Appeal suspension'}
+        size="md"
+      >
+        <div className="space-y-4">
+          <div className="p-4 rounded-2xl bg-red-50 dark:bg-red-900/15 border border-red-200/60 dark:border-red-900/40">
+            <p className="text-[10px] font-black uppercase tracking-wider text-red-600 dark:text-red-400 mb-1">Why it was suspended</p>
+            <p className="text-sm font-medium text-foreground leading-relaxed">
+              {(appealProduct && (moderationMap[appealProduct.id]?.takedown_reason || (appealProduct as any).takedown_reason)) || 'No reason recorded.'}
+            </p>
+          </div>
+          <div>
+            <Label htmlFor="appeal-reason">Your appeal (required)</Label>
+            <Textarea
+              id="appeal-reason"
+              value={appealText}
+              onChange={(e: any) => setAppealText(e.target.value)}
+              placeholder="Explain why this listing should be reinstated — e.g. proof of authenticity, corrected photos or description..."
+              aria-required="true"
+              autoFocus
+            />
+            <p className="mt-2 text-[10px] font-medium text-foreground/45" aria-live="polite">
+              {appealValid
+                ? 'MaliMart will review your appeal and notify you of the decision.'
+                : 'Please write at least 10 characters so the review team has enough context.'}
+            </p>
+          </div>
+          <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
+            <Button
+              variant="outline"
+              onClick={() => { setAppealProduct(null); setAppealText(''); }}
+              disabled={appealSubmitting}
+              className="min-h-[44px] px-6 rounded-2xl text-xs font-bold uppercase tracking-widest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleSubmitAppeal}
+              disabled={!appealValid || appealSubmitting}
+              isLoading={appealSubmitting}
+              className="min-h-[44px] px-6 rounded-2xl text-xs font-bold uppercase tracking-widest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+            >
+              Submit appeal
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Restore confirm */}
       <ConfirmModal

@@ -13,7 +13,6 @@ import { Button, Input, Label, Card, useToast, Badge, Switch, Textarea } from '.
 import { formatTZS, CURRENCY } from '../../constants';
 import { useAppState } from '../../context/AppContext';
 import { Order, OrderStatus, Address, VendorProfile, CartItem } from '../../types';
-import { supabase } from '../../services/supabaseClient';
 
 export const PaymentInstructions = ({ method, seller }: { method: string; seller: VendorProfile }) => {
   if (method === 'cash') return (
@@ -27,6 +26,10 @@ export const PaymentInstructions = ({ method, seller }: { method: string; seller
     return null;
   };
   const lipa = getLipaNumber();
+  // public_vendor_profiles exposes no payment fields, so these are often absent —
+  // render nothing rather than an empty "How to Pay" header.
+  if (method === 'lipa_namba' && !lipa) return null;
+  if (method === 'mobile_transfer' && !seller.account_number) return null;
   return (
     <div className="mt-4 text-[11px] text-foreground/60 space-y-2">
       <p className="font-black uppercase tracking-wider text-foreground/50 text-[9px]">How to Pay</p>
