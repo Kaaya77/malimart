@@ -191,11 +191,25 @@ export const BuyerOrders = ({
                 <MessageCircle className="w-4 h-4" />Contact Seller
               </button>
             )}
-            {!['cancelled','refunded','failed','delivered'].includes(selectedOrder.status) && (
+            {/* Free cancellation only while the seller hasn't started preparing.
+                After that, cancellation is the seller's call — the buyer requests
+                it through the order chat instead of hitting a server error. */}
+            {selectedOrder.status === 'pending' && (
               <button onClick={() => setCancelModal(true)}
-                className="w-full flex items-center justify-center gap-2 h-11 rounded-2xl border border-red-200 dark:border-red-900/40 text-sm font-semibold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all">
+                className="w-full flex items-center justify-center gap-2 h-11 rounded-2xl border border-red-200 dark:border-red-900/40 text-sm font-semibold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40">
                 <XCircle className="w-4 h-4" />Cancel Order
               </button>
+            )}
+            {['processing','confirmed'].includes(selectedOrder.status) && sellerId && (
+              <div className="space-y-1.5">
+                <button onClick={() => onContactSeller(sellerId, { type: 'order', id: selectedOrder.id, label: `Order #${selectedOrder.id.slice(0,8)}` })}
+                  className="w-full flex items-center justify-center gap-2 h-11 rounded-2xl border border-amber-300/50 dark:border-amber-700/40 text-sm font-semibold text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/10 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40">
+                  <XCircle className="w-4 h-4" />Request Cancellation
+                </button>
+                <p className="text-[10px] text-foreground/40 text-center leading-relaxed px-2">
+                  The seller has started preparing this order, so cancellation is their call — send them a message and they can cancel it for you.
+                </p>
+              </div>
             )}
           </div>
         </div>

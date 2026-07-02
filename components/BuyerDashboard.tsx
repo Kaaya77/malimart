@@ -305,7 +305,9 @@ export const BuyerDashboard: React.FC<BuyerDashboardProps> = ({
                 const Icon = cfg.icon;
                 const firstItem = order.items?.[0];
                 const img = (firstItem?.products || firstItem?.product)?.images?.[0];
-                const cancellable = ['pending', 'processing', 'confirmed'].includes(order.status);
+                // Buyers may only self-cancel before the seller starts preparing;
+                // afterwards they request cancellation from the Orders tab chat.
+                const cancellable = order.status === 'pending';
                 const reorderable = order.status === 'delivered';
                 return (
                   <div key={order.id} className="flex items-center gap-3 p-3 rounded-xl bg-foreground/[0.02] border border-foreground/[0.06] hover:border-foreground/15 transition-colors group">

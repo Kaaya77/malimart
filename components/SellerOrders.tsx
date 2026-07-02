@@ -15,6 +15,7 @@ import { rateLimit } from '../src/security';
 import { withCache, invalidate } from '../services/queryCache';
 import { motion, AnimatePresence } from 'framer-motion';
 import { orderStatus } from './orderStatusConfig';
+import { CancelOrderModal } from './CancelOrderModal';
 
 type OrderStatus = 'pending'|'processing'|'confirmed'|'in_transit'|'shipped'|'delivered'|'cancelled'|'refunded'|'disputed'|'failed';
 
@@ -129,10 +130,11 @@ function groupRows(rows: OrderRow[]): GroupedOrder[] {
 const OrderDetailModal = ({ order, onClose, onStatus, onMessage, updating }: {
   order: GroupedOrder;
   onClose: () => void;
-  onStatus: (id: string, status: string) => void;
+  onStatus: (id: string, status: string, reason?: string) => void;
   onMessage: (buyerId: string, orderId: string) => void;
   updating: boolean;
 }) => {
+  const [cancelModal, setCancelModal] = useState(false);
   const cfg = orderStatus(order.status);
   const addr = order.shipping_address || {};
   const dateStr = new Date(order.created_at).toLocaleDateString('en-TZ', { weekday:'short', day:'numeric', month:'long', year:'numeric' });
@@ -206,8 +208,8 @@ const OrderDetailModal = ({ order, onClose, onStatus, onMessage, updating }: {
                   </button>
                   {['pending','processing','confirmed'].includes(order.status) && (
                     <button
-                      onClick={() => { if (confirm('Cancel this order?')) { onStatus(order.id, 'cancelled'); onClose(); } }}
-                      className="h-9 px-4 rounded-xl bg-red-500/10 text-red-500 text-[11px] font-black uppercase tracking-wide hover:bg-red-500/15 transition-colors"
+                      onClick={() => setCancelModal(true)}
+                      className="h-9 px-4 rounded-xl bg-red-500/10 text-red-500 text-[11px] font-black uppercase tracking-wide hover:bg-red-500/15 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
                     >
                       Cancel
                     </button>
@@ -337,6 +339,18 @@ const OrderDetailModal = ({ order, onClose, onStatus, onMessage, updating }: {
           </div>
         </div>
       </motion.div>
+
+      {/* Reason is required — the buyer is told why their order was cancelled. */}
+      <CancelOrderModal
+        isOpen={cancelModal}
+        role="seller"
+        onClose={() => setCancelModal(false)}
+        onConfirm={(reason: string) => {
+          onStatus(order.id, 'cancelled', reason);
+          setCancelModal(false);
+          onClose();
+        }}
+      />
     </>
   );
 };
@@ -482,14 +496,14 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: {
     return () => { supabase.removeChannel(ch); };
   }, [sellerId]);
 
-  const handleStatus = async (orderId: string, newStatus: string) => {
+  const handleStatus = async (orderId: string, newStatus: string, reason?: string) => {
     if (!rateLimit(`status-${orderId}`, 5)) return addToast('Slow down', 'error');
     setUpdating(p => new Set(p).add(orderId));
     const patch = (list: GroupedOrder[]) => list.map(o => o.id === orderId ? { ...o, status: newStatus } : o);
     setOrders(patch);
     if (selected?.id === orderId) setSelected(p => p ? { ...p, status: newStatus } : p);
     try {
-      const { error } = await supabase.rpc('update_order_status_rbac', { p_order_id: orderId, p_new_status: newStatus, p_cancel_reason: null });
+      const { error } = await supabase.rpc('update_order_status_rbac', { p_order_id: orderId, p_new_status: newStatus, p_cancel_reason: reason ?? null });
       if (error) throw error;
       const labels: Record<string, string> = { processing:'Order confirmed ✓', in_transit:'Marked as shipped ✓', delivered:'Marked as delivered ✓', cancelled:'Order cancelled' };
       addToast(labels[newStatus] || `Updated to ${newStatus}`, 'success');
