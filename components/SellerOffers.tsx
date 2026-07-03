@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { Button, Input, Badge, useToast, Label, Switch, ConfirmModal } from './UI';
 import { supabase } from '../services/supabaseClient';
+import * as sellerApi from '../services/sellerApi';
 import { withCache, invalidate } from '../services/queryCache';
 import { Offer } from '../types';
 import { formatTZS, CURRENCY } from '../constants';
@@ -40,11 +41,7 @@ export const SellerOffers = ({ sellerId, preselectedProduct }: { sellerId: strin
     if (!silent) setIsLoading(true);
     try {
       if (silent) invalidate(CACHE_KEY);
-      const data = await withCache(CACHE_KEY, 60_000, async () => {
-        const { data: d, error } = await supabase.from('offers').select('*').eq('seller_id', sellerId).order('created_at', { ascending: false });
-        if (error) throw error;
-        return d;
-      });
+      const data = await withCache(CACHE_KEY, 60_000, () => sellerApi.listMyOffers());
       setOffers(data as Offer[]);
     } catch (err: any) {
       if (!silent) addToast('Failed to load campaigns', 'error');
@@ -74,8 +71,8 @@ export const SellerOffers = ({ sellerId, preselectedProduct }: { sellerId: strin
     setIsSubmitting(true);
     try {
       const finalCode = isAuto ? (formData.code || `AUTO-${Date.now().toString().slice(-6)}`) : formData.code.toUpperCase();
+      // seller_id is enforced server-side (auth.uid()) by the RPC.
       const payload = {
-        seller_id: sellerId,
         title: formData.title || (formData.campaign_type === 'bogo' ? `Buy ${formData.buy_quantity} Get ${formData.get_quantity}` : `${formData.value}${formData.type === 'percentage' ? '%' : ''} Off`),
         code: finalCode,
         campaign_type: formData.campaign_type,
@@ -94,15 +91,7 @@ export const SellerOffers = ({ sellerId, preselectedProduct }: { sellerId: strin
         is_auto_apply: isAuto,
         is_flash_sale: formData.campaign_mode === 'flash',
       };
-      let error;
-      if (editingOffer) {
-        const { error: e } = await supabase.from('offers').update(payload).eq('id', editingOffer.id);
-        error = e;
-      } else {
-        const { error: e } = await supabase.from('offers').insert(payload);
-        error = e;
-      }
-      if (error) throw error;
+      await sellerApi.saveOffer(payload, editingOffer?.id);
       addToast(editingOffer ? 'Campaign updated ✓' : 'Campaign launched ✓', 'success');
       setModalOpen(false);
       setEditingOffer(null);
@@ -117,21 +106,21 @@ export const SellerOffers = ({ sellerId, preselectedProduct }: { sellerId: strin
 
   const handleToggle = async (offer: Offer) => {
     const newStatus = offer.status === 'active' ? 'inactive' : 'active';
-    const { error } = await supabase.from('offers').update({ status: newStatus }).eq('id', offer.id);
-    if (!error) {
+    try {
+      await sellerApi.setOfferStatus(offer.id, newStatus);
       addToast(`Campaign ${newStatus === 'active' ? 'enabled' : 'disabled'}`, 'info');
       invalidate(CACHE_KEY);
       setOffers(prev => prev.map(o => o.id === offer.id ? { ...o, status: newStatus as any } : o));
-    }
+    } catch { /* silent — matches previous behavior */ }
   };
 
   const handleDelete = async () => {
     if (!deleteId) return;
-    const { error } = await supabase.from('offers').delete().eq('id', deleteId);
-    if (!error) {
+    try {
+      await sellerApi.deleteOffer(deleteId);
       addToast('Campaign deleted', 'info');
       setOffers(prev => prev.filter(o => o.id !== deleteId));
-    }
+    } catch { /* silent — matches previous behavior */ }
     setDeleteId(null);
   };
 

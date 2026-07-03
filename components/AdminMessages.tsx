@@ -10,6 +10,8 @@ import { ProductOrderTag } from './SellerMessages';
 import { ProductModal } from './ProductModal';
 import { OrderDetailsModal } from './OrderDetailsModal';
 import { supabase } from '../services/supabaseClient';
+import { getUserProfileAsAdmin, getOrderAsAdmin } from '../services/adminApi';
+import { markThreadRead } from '../services/accountApi';
 import { compressImage, IMMUTABLE_CACHE } from '../services/imageCompression';
 import { Product, Order } from '../types';
 import * as aiService from '../services/geminiService';
@@ -192,8 +194,10 @@ export const AdminMessages = ({
   };
 
   const fetchUserProfile = async (uid: string) => {
-    const { data } = await supabase.from('profiles').select('*').eq('id', uid).single();
-    if (data) setViewingProfile({ id: data.id, name: data.full_name || 'User', avatar: data.avatar_url, role: data.role, created_at: data.created_at, region: data.region, trust_score: data.trust_score, is_verified: data.is_verified });
+    try {
+      const data = await getUserProfileAsAdmin(uid);
+      if (data) setViewingProfile({ id: data.id, name: data.full_name || 'User', avatar: data.avatar_url, role: data.role, created_at: data.created_at, region: data.region, trust_score: data.trust_score, is_verified: data.is_verified });
+    } catch { /* profile lookup failed — keep modal closed */ }
   };
 
   useEffect(() => { scrollRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [activeChats, magicMode]);
@@ -202,11 +206,11 @@ export const AdminMessages = ({
     if (selectedChatUser && user) {
       const unread = activeChats.filter(c => c.receiver_id === user.id && !c.read);
       if (unread.length > 0) {
-        supabase.from('messages').update({ read: true }).eq('receiver_id', user.id).eq('sender_id', selectedChatUser).then(() => {
+        markThreadRead(selectedChatUser).then(() => {
           setChats(prev => prev.map(c =>
             (c.receiver_id === user.id && c.sender_id === selectedChatUser) ? { ...c, read: true } : c
           ));
-        });
+        }).catch(() => { /* mark-read is best-effort */ });
       }
     }
   }, [selectedChatUser, activeChats, user]);
@@ -214,8 +218,10 @@ export const AdminMessages = ({
   const handleContextClick = async () => {
     if (!activeContext) return;
     if (activeContext.type === 'order' || activeContext.type === 'return') {
-      const { data } = await supabase.from('orders').select('*').eq('id', activeContext.id).single();
-      if (data) setViewingOrder(data);
+      try {
+        const data = await getOrderAsAdmin(activeContext.id);
+        if (data) setViewingOrder(data as Order);
+      } catch { /* order lookup failed — keep modal closed */ }
     }
   };
 

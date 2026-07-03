@@ -95,6 +95,20 @@ export const DisputesTab = () => {
                                                             <div className="p-5 bg-muted/30 rounded-2xl border border-border text-sm text-foreground/80 leading-relaxed font-medium">
                                                                 "{dispute.description}"
                                                             </div>
+
+                                                            {dispute.seller_response && (
+                                                                <div className="p-5 bg-emerald-500/[0.05] rounded-2xl border border-emerald-500/20">
+                                                                    <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-400 mb-2 flex items-center gap-1.5">
+                                                                        <Store className="w-3.5 h-3.5" /> Seller response
+                                                                        {dispute.seller_responded_at && (
+                                                                            <span className="text-muted-foreground normal-case font-medium tracking-normal">
+                                                                                — {new Date(dispute.seller_responded_at).toLocaleDateString()}
+                                                                            </span>
+                                                                        )}
+                                                                    </p>
+                                                                    <p className="text-sm text-foreground/80 leading-relaxed font-medium">"{dispute.seller_response}"</p>
+                                                                </div>
+                                                            )}
                                                         </div>
 
                                                         <div className="lg:w-80 space-y-4">

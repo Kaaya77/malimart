@@ -22,6 +22,7 @@ import { AdminMessages } from '../components/AdminMessages';
 import { AdminAIHero } from '../components/AdminAIHero';
 import { analyzeDispute } from '../services/geminiService';
 import { adminTakedownProduct } from '../services/moderationApi';
+import { resolveDispute } from '../services/adminApi';
 import { AdminCtx } from './admin/context';
 import { OverviewTab } from './admin/OverviewTab';
 import { UsersTab } from './admin/UsersTab';
@@ -47,6 +48,7 @@ export const AdminPage = () => {
     const [activeTab, setActiveTab] = useState<AdminTab>(initialTab && ADMIN_TABS.includes(initialTab) ? initialTab : 'overview');
     const [selectedMessageUser, setSelectedMessageUser] = useState<{id: string, name: string, context?: { type: 'order' | 'return' | 'support', id: string, label: string }} | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [loadError, setLoadError] = useState(false);
 
     const [revenueData, setRevenueData] = useState<any[]>([]);
     const [stats, setStats] = useState({ totalUsers: 0, totalRevenue: 0, activeDisputes: 0, pendingPayouts: 0, totalProducts: 0 });
@@ -92,6 +94,7 @@ export const AdminPage = () => {
 
     const fetchAdminData = async () => {
         setIsLoading(true);
+        setLoadError(false);
         try {
             // Ã°ÂŸÂšÂ€ All 8 admin queries run in parallel Ã¢Â€Â” was sequential (1.5s+), now ~200ms
             const [
@@ -185,6 +188,7 @@ export const AdminPage = () => {
             }
         } catch (error) {
             console.error('Admin fetch error:', error);
+            setLoadError(true);
             addToast('Failed to load admin data', 'error');
         } finally {
             setIsLoading(false);
@@ -210,14 +214,9 @@ export const AdminPage = () => {
 
     const handleResolveDispute = async (disputeId: string, orderId: string, resolution: 'refund_buyer' | 'release_funds') => {
         try {
-            await supabase.from('disputes').update({ status: 'resolved', resolution_notes: resolution }).eq('id', disputeId);
-            
-            if (resolution === 'refund_buyer') {
-                await supabase.from('orders').update({ status: 'refunded' }).eq('id', orderId);
-            } else {
-                await supabase.from('orders').update({ status: 'delivered' }).eq('id', orderId);
-            }
-            
+            // Atomic admin-only RPC: validates statuses and updates the dispute
+            // and its order in one transaction.
+            await resolveDispute(disputeId, resolution);
             addToast(`Dispute resolved: ${resolution.replace('_', ' ')}`, "success");
             fetchAdminData();
         } catch (error) {
@@ -447,6 +446,17 @@ export const AdminPage = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-pulse">
                         {[1,2,3].map(i => <div key={i} className="h-48 bg-primary/5 dark:bg-background/5 border border-foreground/10 dark:border-background/10"></div>)}
                     </div>
+                ) : loadError ? (
+                    <Card className="p-10 text-center">
+                        <div className="w-14 h-14 rounded-3xl bg-red-50 dark:bg-red-500/10 flex items-center justify-center mx-auto mb-4">
+                            <AlertTriangle className="w-6 h-6 text-red-500 stroke-[1.5]" />
+                        </div>
+                        <p className="text-sm font-bold text-foreground">Couldn't load the admin dashboard</p>
+                        <p className="text-xs font-medium text-foreground/45 mt-1 max-w-xs mx-auto leading-relaxed">Something went wrong fetching platform data. Check your connection and try again.</p>
+                        <Button variant="primary" size="sm" onClick={fetchAdminData} className="mt-5">
+                            <RefreshCw className="w-3.5 h-3.5 mr-2 stroke-[2.5]" /> Try again
+                        </Button>
+                    </Card>
                 ) : (
                     <motion.div 
                         initial={{ opacity: 0, y: 20 }}

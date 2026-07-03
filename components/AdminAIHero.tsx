@@ -1,6 +1,6 @@
 import { safeJsonParse } from '../src/security';
 import React, { useState, useEffect, useMemo } from 'react';
-import { supabase } from '../services/supabaseClient';
+import * as adminApi from '../services/adminApi';
 import { generateHeroRecommendation } from '../services/heroRecommendationService';
 import { Sparkles, Check, X, RefreshCw, Edit2, Trash2, Save, Settings, Star, TrendingUp, Store } from 'lucide-react';
 import { formatTZS } from '../constants';
@@ -47,14 +47,17 @@ export const AdminAIHero = () => {
  }, [topProducts, productSearch]);
 
  const fetchRecommendations = async () => {
- const { data, error } = await supabase.from('hero_recommendations').select('*, products(*, profiles!seller_id(*))').order('created_at', { ascending: false });
- if (error) console.error('Error fetching recommendations:', error);
+ try {
+ const data = await adminApi.listHeroRecommendations();
  if (data) setRecommendations(data);
+ } catch (error) {
+ console.error('Error fetching recommendations:', error);
+ }
  };
 
  const fetchManualSettings = async () => {
- const { data, error } = await supabase.from('platform_settings').select('hero_badge_text, hero_headline, hero_subheadline').eq('id', 1).single();
- if (error) console.error('Error fetching manual settings:', error);
+ try {
+ const data = await adminApi.getHeroSettings();
  if (data) {
  setManualSettings({
  heroBadgeText: data.hero_badge_text || '',
@@ -62,23 +65,29 @@ export const AdminAIHero = () => {
  heroSubheadline: data.hero_subheadline || ''
  });
  }
+ } catch (error) {
+ console.error('Error fetching manual settings:', error);
+ }
  };
 
  const fetchTopProducts = async () => {
  // Fetch all products to show as top products
- const { data, error } = await supabase.from('products').select('*, profiles!seller_id(*)').order('created_at', { ascending: false });
- if (error) console.error('Error fetching top products:', error);
+ try {
+ const data = await adminApi.listHeroProducts();
  if (data) setTopProducts(data);
+ } catch (error) {
+ console.error('Error fetching top products:', error);
+ }
  };
 
  const handleSaveManualSettings = async () => {
  setIsSavingManual(true);
  try {
- await supabase.from('platform_settings').update({
- hero_badge_text: manualSettings.heroBadgeText,
- hero_headline: manualSettings.heroHeadline,
- hero_subheadline: manualSettings.heroSubheadline
- }).eq('id', 1);
+ await adminApi.updateHeroSettings({
+ badgeText: manualSettings.heroBadgeText,
+ headline: manualSettings.heroHeadline,
+ subheadline: manualSettings.heroSubheadline
+ });
  addToast("Manual hero settings saved", "success");
  } catch (error) {
  addToast("Failed to save settings", "error");
@@ -123,74 +132,79 @@ export const AdminAIHero = () => {
 
  const saveEdit = async (id: string) => {
  const offer = { type: editOfferType, value: editOfferValue, text: editOfferText };
- await supabase.from('hero_recommendations').update({ 
- title: editTitle, 
+ try {
+ await adminApi.updateHeroRecommendation(id, {
+ title: editTitle,
  description: editDesc,
- offer_text: JSON.stringify(offer)
- }).eq('id', id);
+ offerText: JSON.stringify(offer)
+ });
  setEditingId(null);
  fetchRecommendations();
  addToast("Recommendation updated", "success");
+ } catch (error) {
+ addToast("Failed to update recommendation", "error");
+ }
  };
 
  const handleApprove = async (id: string, productId: string) => {
  // First, mark all others as not approved (if we only want one active)
  // For now, we just approve this one. The homepage fetches the latest approved.
- await supabase.from('hero_recommendations').update({ status: 'approved', approved_at: new Date().toISOString() }).eq('id', id);
+ // The RPC also notifies the seller server-side.
+ try {
+ await adminApi.setHeroRecommendationStatus(id, 'approved');
  fetchRecommendations();
  addToast("Recommendation approved and is now live!", "success");
-
- // Notify Seller
- const rec = recommendations.find(r => r.id === id);
- if (rec && rec.products && rec.products.seller_id) {
- await supabase.from('notifications').insert({
- user_id: rec.products.seller_id,
- type: 'system',
- title: 'Product Featured!',
- message: `Congratulations! Your product "${rec.products.name}" has been selected to be featured on the homepage hero section.`
- });
+ } catch (error) {
+ addToast("Failed to approve recommendation", "error");
  }
  };
 
  const handleReject = async (id: string) => {
- await supabase.from('hero_recommendations').update({ status: 'rejected' }).eq('id', id);
+ try {
+ await adminApi.setHeroRecommendationStatus(id, 'rejected');
  fetchRecommendations();
+ } catch (error) {
+ addToast("Failed to reject recommendation", "error");
+ }
  };
 
  const confirmDelete = async () => {
  if (deletingId) {
- await supabase.from('hero_recommendations').delete().eq('id', deletingId);
+ try {
+ await adminApi.deleteHeroRecommendation(deletingId);
  setDeletingId(null);
  fetchRecommendations();
  addToast("Recommendation deleted", "success");
+ } catch (error) {
+ addToast("Failed to delete recommendation", "error");
+ }
  }
  };
 
  const handleClearAll = async () => {
- const { error } = await supabase.from('hero_recommendations').delete().neq('status', 'approved');
- if (!error) {
+ try {
+ await adminApi.clearHeroRecommendations();
  addToast("Cleared all pending/rejected recommendations", "success");
  fetchRecommendations();
- } else {
+ } catch (error) {
  addToast("Failed to clear recommendations", "error");
  }
  };
 
  const handlePromoteProduct = async (product: any) => {
  // Manually create a pending recommendation for a product
- const { error } = await supabase.from('hero_recommendations').insert({
- product_id: product.id,
+ try {
+ await adminApi.createHeroRecommendation({
+ productId: product.id,
  title: `Featured: ${product.name}`,
  description: product.description.substring(0, 100) + '...',
- price_display: formatTZS(product.price),
- offer_text: 'Special Feature',
- status: 'pending'
+ priceDisplay: formatTZS(product.price),
+ offerText: 'Special Feature'
  });
- if (!error) {
  addToast("Product nominated for Hero section", "success");
  setActiveTab('ai');
  fetchRecommendations();
- } else {
+ } catch (error) {
  addToast("Failed to nominate product", "error");
  }
  };
@@ -444,11 +458,11 @@ export const AdminAIHero = () => {
  <button 
  onClick={async () => {
  const newVal = !product.is_boosted;
- const { error } = await supabase.from('products').update({ is_boosted: newVal }).eq('id', product.id);
- if (!error) {
+ try {
+ await adminApi.setProductBoost(product.id, newVal);
  addToast(newVal ? "Added to Trending" : "Removed from Trending", "success");
  fetchTopProducts();
- } else {
+ } catch (error) {
  addToast("Failed to update trending status", "error");
  }
  }}

@@ -8,6 +8,8 @@ import {
 } from 'lucide-react';
 import { Badge, Button, Input, Textarea, useToast, GraphicalTag } from './UI';
 import { supabase } from '../services/supabaseClient';
+import { createReturn } from '../services/walletApi';
+import { updateDisputeStatus } from '../services/sellerApi';
 import { compressImage, IMMUTABLE_CACHE } from '../services/imageCompression';
 import { withCache, invalidate } from '../services/queryCache';
 import { useAppState } from '../context/AppContext';
@@ -137,37 +139,22 @@ export const BuyerReturns: React.FC<BuyerReturnsProps> = ({ userId, onContactSel
  const order = orders.find(o => o.id === form.orderId);
  if (!order) return;
 
- const sellerIdForDispute = order.items?.[0]?.seller_id;
- if (!sellerIdForDispute) return addToast('Could not identify the seller for this order', 'error');
-
  setSubmitting(true);
  try {
- const { error } = await supabase.from('disputes').insert({
- order_id: form.orderId,
- buyer_id: userId,
- seller_id: sellerIdForDispute,
- reason: form.reason,
- description: form.description,
- evidence_urls: form.images,
- status: 'open',
- created_at: new Date().toISOString(),
- });
- if (error) throw error;
-
- // Notify seller
- await supabase.from('notifications').insert({
- user_id: sellerIdForDispute,
- type: 'return',
- title: 'New Return Request',
- message: `Buyer has submitted a return request for order #${form.orderId.slice(0,8)}. Reason: ${form.reason}`,
- link: `/seller?tab=returns`,
+ // Server RPC identifies the seller, guards duplicates, and notifies the
+ // seller in one transaction (was two client-side supabase.from inserts).
+ await createReturn({
+   orderId: form.orderId,
+   reason: form.reason,
+   description: form.description,
+   evidence: form.images,
  });
 
  addToast('Return request submitted successfully', 'success');
  setShowCreate(false);
  setForm({ orderId:'', reason:'', description:'', images:[] });
  fetchDisputes();
- } catch { addToast('Failed to submit return request', 'error'); }
+ } catch (err: any) { addToast(err?.message || 'Failed to submit return request', 'error'); }
  finally { setSubmitting(false); }
  };
 
@@ -228,6 +215,25 @@ export const BuyerReturns: React.FC<BuyerReturnsProps> = ({ userId, onContactSel
  </div>
  )}
 
+ {/* Approved refund amount */}
+ {['resolved','refunded'].includes(selected.status) && selected.refund_amount > 0 && (
+ <div className="p-4 bg-emerald-500/8 rounded-2xl border border-emerald-500/20">
+ <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 mb-1">
+ {selected.status === 'refunded' ? 'Refunded to wallet' : 'Approved refund'}
+ </p>
+ <p className="text-lg font-bold text-foreground">{formatTZS(selected.refund_amount)}</p>
+ {selected.status === 'resolved' && <p className="text-xs text-foreground/50 mt-0.5">Will be credited to your wallet shortly.</p>}
+ </div>
+ )}
+
+ {/* Rejection reason */}
+ {selected.status === 'rejected' && selected.rejection_reason && (
+ <div className="p-4 bg-red-500/8 rounded-2xl border border-red-500/20">
+ <p className="text-[10px] font-bold uppercase tracking-widest text-red-600 mb-1">Why it was declined</p>
+ <p className="text-sm text-foreground/70">{selected.rejection_reason}</p>
+ </div>
+ )}
+
  {/* Resolution notes */}
  {selected.resolution_notes && (
  <div className="p-4 bg-emerald-500/8 rounded-2xl border border-emerald-500/20">
@@ -253,10 +259,10 @@ export const BuyerReturns: React.FC<BuyerReturnsProps> = ({ userId, onContactSel
  </button>
  <button
  onClick={async () => {
-              const { error } = await supabase.rpc('update_dispute_status', { p_dispute_id: selected.id, p_new_status: 'closed' });
-              if (!error) { addToast('Return request cancelled', 'success'); setSelected(null); fetchDisputes(); }
-              else addToast('Failed to cancel', 'error');
- fetchDisputes();
+              try {
+                await updateDisputeStatus(selected.id, 'closed');
+                addToast('Return request cancelled', 'success'); setSelected(null); fetchDisputes();
+              } catch (err: any) { addToast(err?.message || 'Failed to cancel', 'error'); }
  }}
  className="flex-1 h-11 rounded-2xl bg-rose-500/8 text-rose-600 text-sm font-semibold hover:bg-rose-500/12 transition-colors flex items-center justify-center gap-2">
  <X className="w-4 h-4"/> Cancel Request

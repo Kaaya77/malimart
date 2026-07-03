@@ -25,6 +25,7 @@ import {
   Tooltip, ResponsiveContainer, Cell, PieChart, Pie
 } from 'recharts';
 import { formatTZS } from '../constants';
+import { Button } from './UI';
 import { ORDER_STATUS_CONFIG } from './orderStatusConfig';
 import { Sk as _Sk } from './DashboardShell';
 
@@ -390,8 +391,8 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [chartPeriod, setChartPeriod] = useState<7 | 14 | 30>(30);
   // ── TanStack Query hooks — fetch, cache, and deduplicate automatically ────
-  const { data: snap, isLoading: snapLoading } = useSellerSnapshot(sellerId);
-  const { data: full, isLoading: fullLoading, isFetching: refreshing, refetch: refetchFull } = useSellerFullStats(sellerId);
+  const { data: snap, isLoading: snapLoading, isError: snapError, refetch: refetchSnap } = useSellerSnapshot(sellerId);
+  const { data: full, isLoading: fullLoading, isFetching: refreshing, refetch: refetchFull, isError: fullError } = useSellerFullStats(sellerId);
   const { data: pendingOrders = [], refetch: refetchPending } = useSellerPendingOrders(sellerId);
   const { data: today } = useSellerTodayStats(sellerId);
   useSellerDashboardRealtime(sellerId);  // invalidates cache on realtime events
@@ -418,6 +419,23 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({
       .filter((d: any) => new Date(d.date) >= sevenAgo)
       .map((d: any) => d.revenue);
   }, [full?.revenueTrend]);
+
+  // Full-panel error state: both core queries failed and there's no cached data
+  // to fall back on, so the dashboard would otherwise render as empty zeros.
+  if (snapError && fullError && !snap && !full) {
+    return (
+      <div className="rounded-2xl border border-foreground/[0.08] bg-foreground/[0.02] p-10 text-center">
+        <div className="w-14 h-14 rounded-3xl bg-red-50 dark:bg-red-500/10 flex items-center justify-center mx-auto mb-4">
+          <AlertTriangle className="w-6 h-6 text-red-500 stroke-[1.5]" />
+        </div>
+        <p className="text-sm font-bold text-foreground">Couldn't load your dashboard</p>
+        <p className="text-xs font-medium text-foreground/45 mt-1 max-w-xs mx-auto leading-relaxed">Something went wrong fetching your store stats. Check your connection and try again.</p>
+        <Button variant="primary" size="sm" onClick={() => { refetchSnap(); refetchFull(); refetchPending(); }} className="mt-5">
+          <RefreshCw className="w-3.5 h-3.5 mr-2 stroke-[2.5]" /> Try again
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-5">

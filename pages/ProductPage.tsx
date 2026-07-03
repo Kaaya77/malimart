@@ -155,8 +155,12 @@ export const ProductPage = () => {
  };
  }, [product, selectedVariant, getActiveOfferForProduct]);
 
+ // Store on vacation → ordering is paused (server enforces this too).
+ const onVacation = !!(vendor as any)?.vacation_mode;
+
  const handleAdd = () => {
  if (!product || !metrics || isAdding) return;
+ if (onVacation) { addToast(`${vendor?.store_name || 'This store'} is on vacation — not accepting orders right now`, 'error'); return; }
  setIsAdding(true);
  addToCart(product, selectedVariant || undefined, qty);
  addToast('Added to cart', 'success');
@@ -419,6 +423,16 @@ export const ProductPage = () => {
  </div>
  )}
 
+ {/* Vacation notice */}
+ {onVacation && (
+ <div className="rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 px-4 py-3 flex items-center gap-3">
+ <span className="text-xl flex-shrink-0" role="img" aria-label="Palm tree">🌴</span>
+ <p className="text-xs text-amber-800 dark:text-amber-300 font-semibold leading-relaxed">
+ {vendor?.store_name || 'This store'} is on vacation and not accepting orders right now. Save this item to your wishlist and check back soon.
+ </p>
+ </div>
+ )}
+
  {/* Quantity + CTAs */}
  <div className="flex flex-col gap-3">
  <div className="flex gap-3">
@@ -427,11 +441,11 @@ export const ProductPage = () => {
  <span className="w-8 text-center text-sm font-black tabular-nums" aria-live="polite">{qty}</span>
  <button aria-label="Increase quantity" onClick={() => setQty(Math.min(metrics.stock, qty + 1))} disabled={qty >= metrics.stock} className="w-10 h-10 rounded-xl flex items-center justify-center text-foreground/50 hover:bg-foreground/[0.06] hover:text-foreground transition-colors disabled:opacity-30 font-bold">+</button>
  </div>
- <Button size="lg" className="flex-1" onClick={handleAdd} disabled={metrics.isOut}>
- {isAdding ? (<><Check className="w-4 h-4 mr-2 stroke-[3]" /> Added</>) : metrics.isOut ? 'Out of Stock' : (<><ShoppingBag className="w-4 h-4 mr-2 stroke-[2.2]" /> Add to Cart</>)}
+ <Button size="lg" className="flex-1" onClick={handleAdd} disabled={metrics.isOut || onVacation}>
+ {isAdding ? (<><Check className="w-4 h-4 mr-2 stroke-[3]" /> Added</>) : metrics.isOut ? 'Out of Stock' : onVacation ? 'Store on Vacation' : (<><ShoppingBag className="w-4 h-4 mr-2 stroke-[2.2]" /> Add to Cart</>)}
  </Button>
  </div>
- <Button size="lg" variant="secondary" className="w-full" onClick={() => { handleAdd(); navigate('/cart'); }} disabled={metrics.isOut}>
+ <Button size="lg" variant="secondary" className="w-full" onClick={() => { handleAdd(); navigate('/cart'); }} disabled={metrics.isOut || onVacation}>
  Buy Now
  </Button>
  </div>
@@ -637,12 +651,12 @@ export const ProductPage = () => {
  </button>
  <button
  onClick={handleAdd}
- disabled={metrics.isOut}
- className={`flex-1 h-14 rounded-2xl font-bold text-[13px] flex items-center justify-center gap-2.5 active:scale-[0.98] transition-all shadow-lg ${metrics.isOut ? 'bg-foreground/10 text-foreground/35 cursor-not-allowed' : isAdding ? 'bg-emerald-600 text-white' : 'bg-emerald-500 text-white'}`}
+ disabled={metrics.isOut || onVacation}
+ className={`flex-1 h-14 rounded-2xl font-bold text-[13px] flex items-center justify-center gap-2.5 active:scale-[0.98] transition-all shadow-lg ${(metrics.isOut || onVacation) ? 'bg-foreground/10 text-foreground/35 cursor-not-allowed' : isAdding ? 'bg-emerald-600 text-white' : 'bg-emerald-500 text-white'}`}
  >
  {isAdding ? (
  <><Check className="w-4 h-4 stroke-[2.5]" /> Added to Cart</>
- ) : metrics.isOut ? 'Out of Stock' : (
+ ) : metrics.isOut ? 'Out of Stock' : onVacation ? 'Store on Vacation' : (
  <><ShoppingBag className="w-4 h-4 stroke-[2.2]" /> Add to Cart · {formatTZS(metrics.price * qty)}</>
  )}
  </button>

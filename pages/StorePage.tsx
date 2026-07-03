@@ -172,7 +172,7 @@ export const StorePage: React.FC = () => {
               {vendor.store_name} is on vacation
             </p>
             <p className="text-amber-700/70 dark:text-amber-400/70 text-xs mt-0.5">
-              Orders placed now will be processed when the seller returns.
+              Ordering is paused while the seller is away — you can still browse and save items to your wishlist.
               {(vendor as any).vacation_end_date && (
                 <> Expected back <strong>{new Date((vendor as any).vacation_end_date).toLocaleDateString('en-TZ', { day: 'numeric', month: 'long' })}</strong>.</>
               )}

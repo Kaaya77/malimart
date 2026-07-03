@@ -4,12 +4,13 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   User, Mail, Lock, ArrowRight, ArrowLeft, ShoppingBag, Store,
-  Eye, EyeOff, Check, ShieldCheck, Sparkles,
+  Eye, EyeOff, Check, ShieldCheck, Sparkles, Gift,
 } from 'lucide-react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useToast } from '../components/UI';
 import { supabase } from '../services/supabaseClient';
 import { useAppState } from '../context/AppContext';
+import { recordReferral } from '../services/walletApi';
 
 const TAGLINES = [
   'Tanzania’s most loved marketplace',
@@ -45,12 +46,17 @@ export const LoginPage = () => {
 
   const [mode, setMode] = useState<'login' | 'signup' | 'forgot'>(() => {
     const m = searchParams.get('mode');
-    return m === 'signup' || m === 'forgot' ? m : 'login';
+    if (m === 'signup' || m === 'forgot') return m;
+    // A shared referral link (?ref=CODE) lands new users straight on signup.
+    return searchParams.get('ref') ? 'signup' : 'login';
   });
   const [role, setRole] = useState<'buyer' | 'seller'>(() =>
     searchParams.get('role') === 'seller' ? 'seller' : 'buyer'
   );
-  const [formData, setFormData] = useState({ email: '', password: '', name: '' });
+  const [formData, setFormData] = useState({
+    email: '', password: '', name: '',
+    referralCode: (searchParams.get('ref') || '').toUpperCase(),
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -61,6 +67,14 @@ export const LoginPage = () => {
   useEffect(() => {
     if (user && !user.is_banned) {
       clearAuthAttempts(formData.email);
+      // Apply a pending referral once the user has an authenticated session.
+      // (At signup there's no session yet — email verification comes first —
+      // so we stash the code and record it here on first login.)
+      const pendingRef = localStorage.getItem('malimart_pending_referral');
+      if (pendingRef) {
+        localStorage.removeItem('malimart_pending_referral');
+        recordReferral(pendingRef).catch(() => { /* invalid/already-used codes are non-fatal */ });
+      }
       navigate(redirectPath);
     }
   }, [user, navigate, redirectPath]);
@@ -134,13 +148,17 @@ export const LoginPage = () => {
         if (!formData.name.trim()) throw new Error('Name is required.');
         if (security.strength < 2) throw new Error('Please use a stronger password.');
 
+        const referralCode = formData.referralCode.trim().toUpperCase();
         const { error } = await supabase.auth.signUp({
           email: formData.email,
           password: formData.password,
-          options: { data: { role, full_name: formData.name } },
+          options: { data: { role, full_name: formData.name, referral_code: referralCode || undefined } },
         });
 
         if (error) throw error;
+        // Stash the code so it's recorded on the first authenticated session
+        // (after email verification + login). Applied in the redirect effect.
+        if (referralCode) localStorage.setItem('malimart_pending_referral', referralCode);
         addToast('Account created — check your email to verify.', 'success');
         setMode('login');
       } else if (mode === 'forgot') {
@@ -256,6 +274,22 @@ export const LoginPage = () => {
                 <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-white/45" />
                 <input id="auth-name" name="name" placeholder="Juma Hamisi"
                   value={formData.name} onChange={handleInputChange} className={inputBase} />
+              </div>
+            </div>
+          )}
+
+          {/* Referral code (signup, optional) */}
+          {mode === 'signup' && (
+            <div>
+              <label htmlFor="auth-referral" className="block text-[13px] font-semibold text-white/70 mb-1.5">
+                Referral code <span className="font-normal text-white/40">(optional)</span>
+              </label>
+              <div className="relative">
+                <Gift className="absolute left-3.5 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-white/45" />
+                <input id="auth-referral" name="referralCode" placeholder="MALI-XXXXXX"
+                  value={formData.referralCode}
+                  onChange={e => setFormData({ ...formData, referralCode: e.target.value.toUpperCase() })}
+                  className={`${inputBase} uppercase tracking-wide`} />
               </div>
             </div>
           )}

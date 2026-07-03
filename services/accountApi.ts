@@ -72,6 +72,10 @@ export const deleteMessage = (messageId: string, forEveryone = false) =>
 export const deleteConversation = (peerId: string) =>
   rpc<void>("delete_my_conversation", { p_peer: peerId });
 
+/** Mark everything a peer sent ME as read (self-scoped server-side). */
+export const markThreadRead = (peerId: string) =>
+  rpc<void>("mark_thread_read", { p_peer: peerId });
+
 // ---------- Notifications ----------
 export const markAllNotificationsRead = () => rpc<void>("mark_all_notifications_read");
 export const deleteNotifications = (ids: string[]) =>

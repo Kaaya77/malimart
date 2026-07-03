@@ -13,7 +13,7 @@ import { Button, Input, Label, Card, useToast, Badge, Switch, Textarea } from '.
 import { formatTZS, CURRENCY } from '../../constants';
 import { useAppState } from '../../context/AppContext';
 import { Order, OrderStatus, Address, VendorProfile, CartItem } from '../../types';
-import { fetchVendorProfiles } from '../../services/shopService';
+import { fetchVendorProfiles, fetchSellerPaymentChannels } from '../../services/shopService';
 
 import { getEffectiveUnitPrice } from './shared';
 import { AddressForm } from './AddressForm';
@@ -24,12 +24,13 @@ import { PaymentInstructions } from './PaymentInstructions';
 // ─────────────────────────────────────────────
 interface CheckoutModalProps {
   total: number; subtotal: number; vat: number; discount: number;
+  discountLabel?: string;
   onClose: () => void;
   onComplete: (details: { address: Address; paymentMethod: string; deliveryFee: number; note: string; paymentRef?: string; isGift?: boolean; giftMessage?: string; deliveryDate?: string; deliverySlot?: string }) => Promise<void>;
 }
 
 
-export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, onClose, onComplete }: CheckoutModalProps) => {
+export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, discountLabel, onClose, onComplete }: CheckoutModalProps) => {
   const { addresses, addAddress, cart } = useAppState();
   const { addToast } = useToast();
 
@@ -60,13 +61,20 @@ export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, on
       const ids = Array.from(new Set(cart.map(i => i.seller_id)));
       if (!ids.length) { setAreVendorsLoaded(true); return; }
       try {
-        // Service reads the RLS-safe public_vendor_profiles view — components
-        // must not call supabase.from directly.
-        // KNOWN GAP: the public view exposes NO payment fields (lipa_namba,
-        // mobile_number, bank/account details), so the payment-channel panel
-        // below cannot show real numbers until a server-side channel exists.
-        const map = await fetchVendorProfiles(ids);
-        setSellerDetails(Object.values(map));
+        // Storefront fields (delivery fee, name…) come from the RLS-safe public
+        // view; payment-receiving numbers (Lipa Namba, mobile money, bank) come
+        // from the get_seller_payment_channels RPC — which returns ONLY those
+        // fields to signed-in shoppers. Merge both so the payment panel can show
+        // real numbers and only offer methods the seller actually configured.
+        const [profiles, channels] = await Promise.all([
+          fetchVendorProfiles(ids),
+          fetchSellerPaymentChannels(ids),
+        ]);
+        const merged = ids.map(sid => ({
+          ...(profiles[sid] || { seller_id: sid }),
+          ...(channels[sid] || {}),
+        })) as VendorProfile[];
+        setSellerDetails(merged);
       } catch (e) { console.error(e); }
       finally { setAreVendorsLoaded(true); }
     };
@@ -79,6 +87,34 @@ export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, on
   }, [cart, sellerDetails]);
 
   const finalTotal = subtotal + vat + deliveryFeeTotal - discount;
+
+  // Only offer payment methods every seller in the cart has actually configured.
+  // Gating fields mirror PaymentInstructions: lipa_namba/mobile_number → Mobile
+  // Money, account_number → Bank Transfer. Cash-on-delivery needs no seller setup.
+  // Payment fields are merged from get_seller_payment_channels above.
+  const availableMethods = useMemo(() => {
+    const sellerIds = Array.from(new Set(cart.map(i => i.seller_id)));
+    const sellersFor = (sid: string) => sellerDetails.find(s => s.seller_id === sid);
+    const everySellerHas = (pred: (s?: VendorProfile) => boolean) =>
+      sellerIds.length > 0 && sellerIds.every(sid => pred(sellersFor(sid)));
+
+    const methods: { id: 'lipa_namba' | 'mobile_transfer' | 'cash'; label: string; icon: any; desc: string }[] = [];
+    if (everySellerHas(s => !!(s?.lipa_namba || s?.mobile_number)))
+      methods.push({ id: 'lipa_namba', label: 'Mobile Money', icon: Smartphone, desc: 'M-Pesa · Tigo · Airtel' });
+    if (everySellerHas(s => !!s?.account_number))
+      methods.push({ id: 'mobile_transfer', label: 'Bank Transfer', icon: Landmark, desc: 'Direct Bank' });
+    // Cash on delivery is always available — pay-at-door needs no seller config.
+    methods.push({ id: 'cash', label: 'Cash on Delivery', icon: Banknote, desc: 'Pay at Door' });
+    return methods;
+  }, [cart, sellerDetails]);
+
+  // Keep the selected method valid as availability resolves (vendors load async).
+  useEffect(() => {
+    if (!areVendorsLoaded) return;
+    if (!availableMethods.some(m => m.id === paymentMethod)) {
+      setPaymentMethod(availableMethods[0]?.id ?? 'cash');
+    }
+  }, [areVendorsLoaded, availableMethods, paymentMethod]);
 
   const groupedItems = useMemo(() => {
     const g: Record<string, CartItem[]> = {};
@@ -173,7 +209,7 @@ export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, on
                     <div className="pt-3 border-t border-foreground/8 space-y-1.5">
                       <div className="flex justify-between text-[9px] font-bold text-foreground/40 uppercase tracking-wider"><span>Subtotal</span><span>{formatTZS(subtotal)}</span></div>
                       <div className="flex justify-between text-[9px] font-bold text-foreground/40 uppercase tracking-wider"><span>Delivery</span><span>{areVendorsLoaded ? formatTZS(deliveryFeeTotal) : '…'}</span></div>
-                      {discount > 0 && <div className="flex justify-between text-[9px] font-black text-emerald-500 uppercase tracking-wider"><span>Discount</span><span>-{formatTZS(discount)}</span></div>}
+                      {discount > 0 && <div className="flex justify-between text-[9px] font-black text-emerald-500 uppercase tracking-wider"><span className="truncate pr-2">{discountLabel || 'Discount'}</span><span>-{formatTZS(discount)}</span></div>}
                     </div>
                   </div>
                 </motion.div>
@@ -339,12 +375,8 @@ export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, on
                         <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground mb-4 flex items-center gap-2">
                           <Wallet className="w-3.5 h-3.5" /> Payment Method
                         </h3>
-                        <div className="grid grid-cols-3 gap-3">
-                          {[
-                            { id: 'lipa_namba', label: 'Mobile Money', icon: Smartphone, desc: 'M-Pesa · Tigo · Airtel' },
-                            { id: 'mobile_transfer', label: 'Bank Transfer', icon: Landmark, desc: 'Direct Bank' },
-                            { id: 'cash', label: 'Cash on Delivery', icon: Banknote, desc: 'Pay at Door' },
-                          ].map(m => (
+                        <div className={`grid gap-3 ${availableMethods.length === 1 ? 'grid-cols-1' : availableMethods.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+                          {availableMethods.map(m => (
                             <motion.button key={m.id} whileTap={{ scale: 0.97 }} onClick={() => setPaymentMethod(m.id as any)}
                               className={`relative flex flex-col items-center text-center p-4 rounded-2xl border-2 transition-all ${paymentMethod === m.id ? 'border-foreground bg-foreground/[0.04]' : 'border-foreground/8 hover:border-foreground/20'}`}
                             >
@@ -354,6 +386,12 @@ export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, on
                             </motion.button>
                           ))}
                         </div>
+                        {areVendorsLoaded && availableMethods.every(m => m.id === 'cash') && (
+                          <div className="mt-3 flex items-start gap-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] font-medium text-amber-700 dark:text-amber-300">
+                            <Info className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                            <span>This seller hasn't set up online payment methods yet — cash on delivery is the only option for this order.</span>
+                          </div>
+                        )}
                       </section>
 
                       {/* Payment details panel */}
@@ -528,7 +566,7 @@ export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, on
               ))}
               {discount > 0 && (
                 <div className="flex justify-between text-[10px] font-black text-emerald-500 uppercase tracking-wider">
-                  <span>Discount</span><span>-{formatTZS(discount)}</span>
+                  <span className="truncate pr-2">{discountLabel || 'Discount'}</span><span>-{formatTZS(discount)}</span>
                 </div>
               )}
               <div className="pt-4 border-t border-foreground/8 flex justify-between items-end">

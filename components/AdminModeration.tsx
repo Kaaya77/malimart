@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Button, Badge, Input, useToast } from './UI';
-import { supabase } from '../services/supabaseClient';
+import * as adminApi from '../services/adminApi';
 import { ShieldAlert, Trash2, CheckCircle, AlertTriangle, EyeOff, TrendingUp, Search, Filter, User, UserMinus, UserCheck, Store, BadgeCheck, XCircle, History, Shield, FileText, Users, ShoppingBag, MessageSquare as MessageIcon } from 'lucide-react';
 import { analyzeContent } from '../src/services/aiService';
 import { PremiumStatCard } from './UI';
@@ -26,35 +26,30 @@ export const AdminModeration = () => {
  }, [activeTab]);
 
  const fetchData = async () => {
-    if (activeTab === 'content') {
-      // Parallel fetch for content tab
-      const [postsRes, reviewsRes] = await Promise.all([
-        supabase.from('social_posts').select('*, profiles!user_id(full_name, email)').order('created_at',{ascending:false}).limit(100),
-        supabase.from('reviews').select('*, profiles!user_id(full_name, email)').order('created_at',{ascending:false}).limit(100)
-      ]);
-      const combined = [
-        ...(postsRes.data || []).map(p => ({ ...p, type: 'social_post', content: p.caption || 'No caption', image: p.image_url })),
-        ...(reviewsRes.data || []).map(r => ({ ...r, type: 'review', content: r.comment }))
-      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-      setPosts(combined);
-    } else if (activeTab === 'reports') {
-      const { data: userReports } = await supabase.from('reports').select('*, reporter:profiles!reports_reporter_id_fkey(full_name, email), reported:profiles!reports_reported_id_fkey(full_name, email)').order('created_at',{ascending:false}).limit(100);
-      setReports(userReports || []);
-    } else if (activeTab === 'users') {
-      const { data: allUsers } = await supabase.from('profiles').select('*').order('created_at', { ascending: false }).limit(100).is('deleted_at',null);
-      setUsers(allUsers || []);
-    } else if (activeTab === 'vendors') {
-      const { data: allVendors } = await supabase.from('vendor_profiles').select('*, profiles!seller_id(full_name, email), documents:vendor_documents(*)').order('created_at', { ascending: false }).limit(100);
-      setVendors(allVendors || []);
-    } else if (activeTab === 'logs') {
-      const { data: allLogs } = await supabase.from('moderation_logs').select('*, admin:profiles!admin_id(full_name)').order('created_at', { ascending: false }).limit(100);
-      setLogs(allLogs || []);
-    } else if (activeTab === 'appeals') {
-      const { data: allAppeals } = await supabase.from('moderation_appeals').select('*, user:profiles!user_id(full_name, email)').order('created_at', { ascending: false }).limit(100);
-      setAppeals(allAppeals || []);
-    } else if (activeTab === 'products') {
-      const { data: allProducts } = await supabase.from('products').select('*, profiles!seller_id(full_name, email)').order('created_at', { ascending: false }).limit(100).is('deleted_at',null);
-      setProducts(allProducts || []);
+    try {
+      const data = await adminApi.getModerationData(activeTab);
+      if (activeTab === 'content') {
+        const combined = (data || []).map((row: any) =>
+          'caption' in row || 'image_url' in row
+            ? { ...row, type: 'social_post', content: row.caption || 'No caption', image: row.image_url }
+            : { ...row, type: 'review', content: row.comment }
+        ).sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        setPosts(combined);
+      } else if (activeTab === 'reports') {
+        setReports(data || []);
+      } else if (activeTab === 'users') {
+        setUsers(data || []);
+      } else if (activeTab === 'vendors') {
+        setVendors(data || []);
+      } else if (activeTab === 'logs') {
+        setLogs(data || []);
+      } else if (activeTab === 'appeals') {
+        setAppeals(data || []);
+      } else if (activeTab === 'products') {
+        setProducts(data || []);
+      }
+    } catch (error) {
+      addToast('Failed to load moderation data', 'error');
     }
   };
 
@@ -62,17 +57,38 @@ export const AdminModeration = () => {
  setSelectedItems(prev => prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]);
  };
 
+ // Resolve the server-side content_type for a moderation item.
+ const contentTypeOf = (item: any): adminApi.ModerationContentType | undefined => {
+ if (item?.type === 'social_post' || item?.type === 'review') return item.type;
+ if (activeTab === 'products') return 'product';
+ return undefined;
+ };
+
  const handleBulkAction = async (action: string) => {
  if (selectedItems.length === 0) return;
- 
+
  try {
- for (const id of selectedItems) {
- const item = activeTab === 'content' ? posts.find(p => p.id === id) : 
- activeTab === 'products' ? products.find(p => p.id === id) : null;
- if (item) await handleAction(item, action);
+ const items = selectedItems
+ .map(id => activeTab === 'content' ? posts.find(p => p.id === id) :
+ activeTab === 'products' ? products.find(p => p.id === id) : null)
+ .filter(Boolean)
+ .map((item: any) => ({
+ id: item.id,
+ content_type: (activeTab === 'products' ? 'product' : item.type) as adminApi.ModerationContentType,
+ }));
+ if (items.length === 0) return;
+
+ // ONE atomic RPC call for the whole batch, with per-item results.
+ const results = await adminApi.bulkModerate(action, items, moderationNote || undefined);
+ const failed = (results || []).filter(r => !r.ok);
+ if (failed.length > 0) {
+ addToast(`Bulk action ${action}: ${items.length - failed.length} succeeded, ${failed.length} failed`, "warning");
+ } else {
+ addToast(`Bulk action ${action} completed for ${items.length} items`, "success");
  }
- addToast(`Bulk action ${action} completed for ${selectedItems.length} items`, "success");
+ setModerationNote('');
  setSelectedItems([]);
+ fetchData();
  } catch (error) {
  addToast("Bulk action failed", "error");
  }
@@ -90,60 +106,25 @@ export const AdminModeration = () => {
  }
  }
 
- // Log action
- const { data: { user } } = await supabase.auth.getUser();
- await supabase.from('moderation_logs').insert({ 
- content_id: id, 
- note: moderationNote || `Action: ${action}`, 
- action,
- admin_id: user?.id
- });
+ // Single admin-only RPC: logs to moderation_logs and applies the action atomically.
+ await adminApi.moderateItem(action, id, contentTypeOf(item), moderationNote || undefined);
 
- if (action === 'resolve_report') {
- await supabase.from('reports').update({ status: 'resolved' }).eq('id', id);
- addToast("Report marked as resolved", "success");
- } else if (action === 'delete_content') {
- const table = item.type === 'social_post' ? 'social_posts' : 'reviews';
- await supabase.from(table).update({ status: 'deleted' }).eq('id', id);
- addToast("Content deleted", "success");
- } else if (action === 'approve_content') {
- const table = item.type === 'social_post' ? 'social_posts' : 'reviews';
- await supabase.from(table).update({ status: 'approved', is_shadowbanned: false }).eq('id', id);
- addToast("Content approved", "success");
- } else if (action === 'flag_content') {
- const table = item.type === 'social_post' ? 'social_posts' : 'reviews';
- await supabase.from(table).update({ status: 'flagged' }).eq('id', id);
- addToast("Content flagged", "success");
- } else if (action === 'shadowban_content') {
- const table = item.type === 'social_post' ? 'social_posts' : 'reviews';
- await supabase.from(table).update({ is_shadowbanned: true }).eq('id', id);
- addToast("Content shadowbanned", "success");
- } else if (action === 'boost_content') {
- const table = item.type === 'social_post' ? 'social_posts' : 'reviews';
- await supabase.from(table).update({ is_boosted: true }).eq('id', id);
- addToast("Content boosted", "success");
- } else if (action === 'ban_user') {
- await supabase.from('profiles').update({ is_banned: true }).eq('id', id);
- addToast("User banned", "success");
- } else if (action === 'unban_user') {
- await supabase.from('profiles').update({ is_banned: false }).eq('id', id);
- addToast("User unbanned", "success");
- } else if (action === 'verify_vendor') {
- await supabase.from('vendor_profiles').update({ is_verified: true, verification_level: 'verified' }).eq('seller_id', id);
- addToast("Vendor verified", "success");
- } else if (action === 'reject_vendor') {
- await supabase.from('vendor_profiles').update({ is_verified: false, verification_level: 'none' }).eq('seller_id', id);
- addToast("Vendor verification rejected", "success");
- } else if (action === 'resolve_appeal') {
- await supabase.from('moderation_appeals').update({ status: 'approved' }).eq('id', id);
- addToast("Appeal approved", "success");
- } else if (action === 'reject_appeal') {
- await supabase.from('moderation_appeals').update({ status: 'rejected' }).eq('id', id);
- addToast("Appeal rejected", "success");
- } else if (action === 'moderate_product') {
- await supabase.from('products').update({ status: 'flagged' }).eq('id', id);
- addToast("Product flagged for review", "success");
- }
+ const toasts: Record<string, string> = {
+ resolve_report: "Report marked as resolved",
+ delete_content: "Content deleted",
+ approve_content: "Content approved",
+ flag_content: "Content flagged",
+ shadowban_content: "Content shadowbanned",
+ boost_content: "Content boosted",
+ ban_user: "User banned",
+ unban_user: "User unbanned",
+ verify_vendor: "Vendor verified",
+ reject_vendor: "Vendor verification rejected",
+ resolve_appeal: "Appeal approved",
+ reject_appeal: "Appeal rejected",
+ moderate_product: "Product flagged for review",
+ };
+ if (toasts[action]) addToast(toasts[action], "success");
 
  setModerationNote('');
  fetchData();

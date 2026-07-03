@@ -85,6 +85,50 @@ export async function fetchVendorProfiles(sellerIds: string[]): Promise<Record<s
   }
 }
 
+/**
+ * Payment-RECEIVING channels for the sellers in a cart (Lipa Namba, mobile
+ * money, bank details) — the numbers a buyer needs to actually pay. These live
+ * on the owner-only vendor_profiles table (next to real PII), so they come via
+ * the get_seller_payment_channels SECURITY DEFINER RPC, which returns ONLY the
+ * receiving fields and only to signed-in users. Never throws.
+ */
+export async function fetchSellerPaymentChannels(sellerIds: string[]): Promise<Record<string, Partial<VendorProfile>>> {
+  const ids = Array.from(new Set(sellerIds.filter(Boolean)));
+  if (ids.length === 0) return {};
+  try {
+    const { data } = await supabase.rpc('get_seller_payment_channels', { p_seller_ids: ids });
+    const map: Record<string, Partial<VendorProfile>> = {};
+    (data || []).forEach((v: any) => { map[v.seller_id] = v as Partial<VendorProfile>; });
+    return map;
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * Which of these sellers are currently in vacation mode? Returns
+ * seller_id → store_name for vacationing stores only. Used by the checkout
+ * flow to block orders client-side (place_order_atomic also enforces this
+ * server-side). Never throws — on error, returns {} and lets the server
+ * check be the backstop.
+ */
+export async function fetchVacationSellers(sellerIds: string[]): Promise<Record<string, string>> {
+  const ids = Array.from(new Set(sellerIds.filter(Boolean)));
+  if (ids.length === 0) return {};
+  try {
+    const { data } = await supabase
+      .from('public_vendor_profiles')
+      .select('seller_id, store_name, vacation_mode')
+      .in('seller_id', ids)
+      .eq('vacation_mode', true);
+    const map: Record<string, string> = {};
+    (data || []).forEach((v: any) => { map[v.seller_id] = v.store_name || 'This store'; });
+    return map;
+  } catch {
+    return {};
+  }
+}
+
 const SHOP_CACHE_TTL = 60_000; // 1 min — shop results can be slightly stale
 
 export async function shopProductsServer(f: ShopFilters): Promise<ShopResult | null> {

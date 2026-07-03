@@ -5,7 +5,7 @@ import {
  Store, Star, BadgeCheck, MessageSquare, LayoutGrid, Package, Undo2, Wallet,
  ShoppingBag, Copy, ArrowDownLeft, ArrowUpRight, Heart, TrendingUp, Bell,
  Settings, RotateCcw, Ticket, Clock, Tag, Check, User, Plus, DollarSign,
- ChevronRight, Repeat, Sparkles, Search, ZapOff, Gift, Eye
+ ChevronRight, Repeat, Sparkles, Search, ZapOff, Gift, Eye, AlertTriangle, RefreshCw
 } from 'lucide-react';
 import { useAppState } from '../context/AppContext';
 import { Button, Card, Badge, Input, useToast, PremiumStatCard, ModernFollowCard, GraphicalTag, EmptyState, CountBadge } from '../components/UI';
@@ -34,27 +34,45 @@ const ChartTip = ({ active, payload, label }: any) => {
 };
 
 // âââ Offers ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// Shared inline error state for buyer dashboard sections — friendly copy + retry.
+const DashboardError = ({ message, onRetry }: { message?: string; onRetry: () => void }) => (
+ <Card className="p-10 text-center">
+ <div className="w-14 h-14 rounded-3xl bg-red-50 dark:bg-red-500/10 flex items-center justify-center mx-auto mb-4">
+ <AlertTriangle className="w-6 h-6 text-red-500 stroke-[1.5]" />
+ </div>
+ <p className="text-sm font-bold text-foreground">Something went wrong</p>
+ <p className="text-xs font-medium text-foreground/45 mt-1 max-w-xs mx-auto leading-relaxed">{message || 'We couldn\'t load this right now. Check your connection and try again.'}</p>
+ <Button variant="primary" size="sm" onClick={onRetry} className="mt-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40">
+ <RefreshCw className="w-3.5 h-3.5 mr-2 stroke-[2.5]" /> Try again
+ </Button>
+ </Card>
+);
+
 const BuyerOffers = () => {
  const { addToast } = useToast();
  const [offers, setOffers] = useState<(Offer & { vendor: VendorProfile })[]>([]);
  const [loading, setLoading] = useState(true);
+ const [loadError, setLoadError] = useState(false);
  const [filter, setFilter] = useState<'all'|'expiring'|'high_value'>('all');
  const [copied, setCopied] = useState<string|null>(null);
 
- useEffect(() => {
- // Re-use offers already in AppContext â only fetch vendor info (not all offers again)
- const { offers: ctxOffers } = (window as any).__malimart_ctx__ || {};
+ const loadOffers = () => {
  setLoading(true);
+ setLoadError(false);
  const now = new Date().toISOString();
  supabase.from('offers').select('*, vendor:vendor_profiles!seller_id(seller_id,store_name,logo_url,is_verified)')
    .eq('status','active').or(`end_date.is.null,end_date.gte.${now}`)
    .order('created_at',{ascending:false}).limit(30)
-   .then(({ data }) => {
-     if (data) setOffers(data as any);
+   .then(({ data, error }) => {
+     if (error) { console.error('Offers fetch error:', error); setLoadError(true); }
+     else if (data) setOffers(data as any);
      setLoading(false);
    });
- },[]);
+ };
 
+ useEffect(() => { loadOffers(); }, []);
+
+ // Client-side filtering of the already-loaded offers.
  const filtered = useMemo(()=>offers.filter(o=>{
  if (filter==='high_value') return o.type==='percentage'?o.value>=20:o.value>=10000;
  if (filter==='expiring') { if (!o.end_date) return false; return (new Date(o.end_date).getTime()-Date.now())/(86400000)<=3; }
@@ -79,6 +97,8 @@ const BuyerOffers = () => {
  {[1,2,3].map(i=><div key={i} className="h-52 rounded-3xl shimmer"/>)}
  </div>
  );
+
+ if (loadError) return <DashboardError message="We couldn't load rewards & vouchers right now." onRetry={loadOffers} />;
 
  return (
  <div className="space-y-6">
@@ -150,19 +170,27 @@ const BuyerOffers = () => {
 const BuyerFollows = ({ followers, unfollowSeller, navigate }: { followers:any[], unfollowSeller:(id:string)=>void, navigate:(p:string)=>void }) => {
  const [vendors, setVendors] = useState<VendorProfile[]>([]);
  const [loading, setLoading] = useState(false);
+ const [loadError, setLoadError] = useState(false);
 
  // Stable key prevents re-fetch when array reference changes but IDs are the same
  const stableIds = followers.map((f:any)=>f.seller_id).sort().join(',');
- useEffect(()=>{
+ const loadVendors = () => {
  if (!followers.length) { setVendors([]); return; }
  setLoading(true);
+ setLoadError(false);
  supabase.from('vendor_profiles')
  .select('seller_id,store_name,logo_url,is_verified,rating,trust_score,description,region')
  .in('seller_id',followers.map((f:any)=>f.seller_id))
- .then(({data})=>{ if(data) setVendors(data as any); setLoading(false); });
- },[stableIds]);
+ .then(({data, error})=>{
+   if (error) { console.error('Followed stores fetch error:', error); setLoadError(true); }
+   else if(data) setVendors(data as any);
+   setLoading(false);
+ });
+ };
+ useEffect(()=>{ loadVendors(); },[stableIds]);
 
  if (loading) return <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{[1,2,3].map(i=><div key={i} className="h-48 rounded-3xl shimmer"/>)}</div>;
+ if (loadError) return <DashboardError message="We couldn't load your followed stores right now." onRetry={loadVendors} />;
  if (!vendors.length) return (
  <EmptyState icon={Store} title="No followed stores yet" subtitle="Follow sellers to see their updates here"
  className="rounded-3xl border border-foreground/8 bg-foreground/[0.02]"

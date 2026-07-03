@@ -10,6 +10,7 @@ import {
 import { useAppState } from '../context/AppContext';
 import { useToast } from './UI';
 import { supabase } from '../services/supabaseClient';
+import * as sellerApi from '../services/sellerApi';
 import { formatTZS } from '../constants';
 import { rateLimit } from '../src/security';
 import { withCache, invalidate } from '../services/queryCache';
@@ -455,16 +456,15 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: {
     try {
       if (silent) invalidate(ORDERS_CACHE_KEY);
       const data = await withCache(ORDERS_CACHE_KEY, 30_000, async () => {
-        const { data: d, error } = await supabase.rpc('get_seller_orders', { p_seller_id: sellerId, p_limit: 50, p_offset: 0 });
-        if (error) {
-          const isTimeout = error.message?.includes('timeout') || error.code === '57014';
+        try {
+          return await sellerApi.getSellerOrders(sellerId, 50, 0);
+        } catch (error: any) {
+          const isTimeout = error?.message?.includes('timeout') || error?.code === '57014';
           if (isTimeout) {
-            const { data: d2, error: e2 } = await supabase.rpc('get_seller_orders', { p_seller_id: sellerId, p_limit: 20, p_offset: 0 });
-            if (!e2) return d2;
+            try { return await sellerApi.getSellerOrders(sellerId, 20, 0); } catch { /* fall through */ }
           }
           throw error;
         }
-        return d;
       });
       const grouped = groupRows((data as OrderRow[]) || []);
       setOrders(grouped);
@@ -503,8 +503,8 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: {
     setOrders(patch);
     if (selected?.id === orderId) setSelected(p => p ? { ...p, status: newStatus } : p);
     try {
-      const { error } = await supabase.rpc('update_order_status_rbac', { p_order_id: orderId, p_new_status: newStatus, p_cancel_reason: reason ?? null });
-      if (error) throw error;
+      // Role-checked RPC: seller ownership resolved via order_items (orders has no seller_id).
+      await sellerApi.updateOrderStatus(orderId, newStatus, reason);
       const labels: Record<string, string> = { processing:'Order confirmed ✓', in_transit:'Marked as shipped ✓', delivered:'Marked as delivered ✓', cancelled:'Order cancelled' };
       addToast(labels[newStatus] || `Updated to ${newStatus}`, 'success');
       invalidate(ORDERS_CACHE_KEY);

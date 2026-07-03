@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAppState } from '../context/AppContext';
 import { useToast } from './UI';
 import { supabase } from '../services/supabaseClient';
+import { getSellerDisputes, updateDisputeStatus, respondToDispute } from '../services/sellerApi';
+import { approveReturn, rejectReturn, processReturnRefund } from '../services/walletApi';
 import { withCache, invalidate } from '../services/queryCache';
 import { rateLimit } from '../src/security';
 import { formatTZS } from '../constants';
@@ -19,7 +21,11 @@ interface Dispute {
   seller_id: string;
   reason: string;
   description: string;
-  status: 'open' | 'resolved' | 'closed' | 'refunded';
+  status: 'open' | 'under_review' | 'resolved' | 'rejected' | 'closed' | 'refunded';
+  seller_response?: string | null;
+  seller_responded_at?: string | null;
+  refund_amount?: number | null;
+  rejection_reason?: string | null;
   created_at: string;
   updated_at?: string;
   order?: any;
@@ -28,8 +34,10 @@ interface Dispute {
 
 const STATUS_CFG: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
   open:     { label: 'Under Review', color: 'text-amber-600',    bg: 'bg-amber-50 dark:bg-amber-900/20',    icon: Clock },
-  resolved: { label: 'Resolved',     color: 'text-emerald-600',  bg: 'bg-emerald-50 dark:bg-emerald-900/20', icon: CheckCircle2 },
+  under_review: { label: 'Under Review', color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20',   icon: Clock },
+  resolved: { label: 'Approved',     color: 'text-emerald-600',  bg: 'bg-emerald-50 dark:bg-emerald-900/20', icon: CheckCircle2 },
   refunded: { label: 'Refunded',     color: 'text-blue-600',     bg: 'bg-blue-50 dark:bg-blue-900/20',       icon: RotateCcw },
+  rejected: { label: 'Declined',     color: 'text-red-600',      bg: 'bg-red-50 dark:bg-red-900/20',         icon: XCircle },
   closed:   { label: 'Closed',       color: 'text-foreground/40', bg: 'bg-foreground/[0.05]',               icon: XCircle },
 };
 
@@ -40,6 +48,7 @@ const REASON_LABELS: Record<string, string> = {
   item_not_received:     'Item not received',
   seller_not_responding: 'Seller not responding',
   refund_not_processed:  'Refund not processed',
+  seller_reported_fraud: 'Suspected fraud (reported by you)',
   other:                 'Other',
 };
 
@@ -55,13 +64,23 @@ const StatusBadge = ({ status }: { status: string }) => {
 };
 
 // ── Detail modal ──────────────────────────────────────────────────────────────
-const DisputeModal = ({ dispute, onClose, onUpdateStatus, onMessage, updating }: {
+const DisputeModal = ({ dispute, onClose, onUpdateStatus, onApprove, onReject, onRefund, onMessage, onRespond, updating, responding }: {
   dispute: Dispute;
   onClose: () => void;
-  onUpdateStatus: (id: string, status: 'resolved' | 'refunded' | 'closed') => void;
+  onUpdateStatus: (id: string, status: 'closed') => void;
+  onApprove: (id: string, amount: number) => Promise<void>;
+  onReject: (id: string, reason: string) => Promise<void>;
+  onRefund: (id: string) => Promise<void>;
   onMessage: (buyerId: string, orderId: string) => void;
+  onRespond: (id: string, text: string) => Promise<void>;
   updating: boolean;
+  responding: boolean;
 }) => {
+  const [responseText, setResponseText] = useState('');
+  const [mode, setMode] = useState<'idle' | 'approve' | 'reject'>('idle');
+  const [refundAmount, setRefundAmount] = useState<string>(String(Math.round(Number(dispute.order?.total) || 0)));
+  const [rejectReason, setRejectReason] = useState('');
+  const isPending = dispute.status === 'open' || dispute.status === 'under_review';
   const dateStr = new Date(dispute.created_at).toLocaleDateString('en-TZ', { weekday:'short', day:'numeric', month:'long', year:'numeric' });
 
   return (
@@ -78,7 +97,7 @@ const DisputeModal = ({ dispute, onClose, onUpdateStatus, onMessage, updating }:
       >
         {/* Header */}
         <div className="flex items-center gap-4 px-5 py-4 border-b border-foreground/[0.07] shrink-0">
-          <button onClick={onClose}
+          <button onClick={onClose} aria-label="Close return details"
             className="w-8 h-8 rounded-xl bg-foreground/[0.05] hover:bg-foreground/10 flex items-center justify-center transition-colors">
             <X className="w-4 h-4 text-foreground/60" />
           </button>
@@ -96,40 +115,134 @@ const DisputeModal = ({ dispute, onClose, onUpdateStatus, onMessage, updating }:
         <div className="flex-1 overflow-y-auto">
           <div className="p-5 space-y-4">
 
-            {/* Action card for open disputes */}
-            {dispute.status === 'open' && (
+            {/* Action card — returns state machine (open → approve/reject; resolved → refund) */}
+            {isPending && (
               <motion.div
                 initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
                 className="rounded-2xl bg-amber-500/10 border border-amber-500/20 p-4"
               >
                 <p className="text-xs font-black text-amber-700 dark:text-amber-400 mb-1">Review required</p>
                 <p className="text-[11px] text-foreground/55 mb-3 leading-relaxed">
-                  This customer has filed a dispute. Review the claim and choose how to proceed.
+                  This customer requested a return. Approve it (with the refund amount) or decline it with a reason.
                 </p>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => onUpdateStatus(dispute.id, 'resolved')}
-                    disabled={updating}
-                    className="flex-1 h-9 rounded-xl bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wide hover:bg-emerald-700 transition-all flex items-center justify-center gap-1.5 disabled:opacity-60"
-                  >
-                    {updating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <><CheckCircle2 className="w-3.5 h-3.5" />Mark Resolved</>}
-                  </button>
-                  <button
-                    onClick={() => onUpdateStatus(dispute.id, 'refunded')}
-                    disabled={updating}
-                    className="flex-1 h-9 rounded-xl bg-blue-600 text-white text-[10px] font-black uppercase tracking-wide hover:bg-blue-700 transition-all flex items-center justify-center gap-1.5 disabled:opacity-60"
-                  >
-                    {updating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <><RotateCcw className="w-3.5 h-3.5" />Approve Refund</>}
-                  </button>
-                </div>
+
+                {mode === 'idle' && (
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setMode('approve')}
+                        disabled={updating}
+                        className="flex-1 h-9 rounded-xl bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wide hover:bg-emerald-700 transition-all flex items-center justify-center gap-1.5 disabled:opacity-60"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" />Approve
+                      </button>
+                      <button
+                        onClick={() => setMode('reject')}
+                        disabled={updating}
+                        className="flex-1 h-9 rounded-xl bg-red-600 text-white text-[10px] font-black uppercase tracking-wide hover:bg-red-700 transition-all flex items-center justify-center gap-1.5 disabled:opacity-60"
+                      >
+                        <XCircle className="w-3.5 h-3.5" />Decline
+                      </button>
+                    </div>
+                    <button
+                      onClick={() => onUpdateStatus(dispute.id, 'closed')}
+                      disabled={updating}
+                      className="text-[10px] font-bold text-foreground/35 hover:text-foreground/60 transition-colors block"
+                    >
+                      Close without action
+                    </button>
+                  </div>
+                )}
+
+                {mode === 'approve' && (
+                  <div className="space-y-2.5">
+                    <div>
+                      <label htmlFor="return-refund-amount" className="text-[9px] font-black uppercase tracking-[0.18em] text-foreground/45 block mb-1">Refund amount (TZS)</label>
+                      <input
+                        id="return-refund-amount"
+                        type="number" min={0} inputMode="numeric"
+                        value={refundAmount}
+                        onChange={e => setRefundAmount(e.target.value)}
+                        className="w-full h-10 px-3 rounded-xl bg-background border border-foreground/[0.12] text-sm font-bold text-foreground outline-none focus:border-emerald-500 transition-all"
+                      />
+                      <p className="text-[9px] text-foreground/35 mt-1">Cannot exceed the order total ({formatTZS(Number(dispute.order?.total) || 0)}).</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => { setMode('idle'); }}
+                        disabled={updating}
+                        className="h-9 px-3 rounded-xl bg-foreground/[0.06] text-foreground/60 text-[10px] font-black uppercase tracking-wide hover:bg-foreground/10 transition-all disabled:opacity-60"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => onApprove(dispute.id, Math.round(Number(refundAmount) || 0))}
+                        disabled={updating || !(Number(refundAmount) > 0)}
+                        className="flex-1 h-9 rounded-xl bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wide hover:bg-emerald-700 transition-all flex items-center justify-center gap-1.5 disabled:opacity-40"
+                      >
+                        {updating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <><CheckCircle2 className="w-3.5 h-3.5" />Approve Return</>}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {mode === 'reject' && (
+                  <div className="space-y-2.5">
+                    <textarea
+                      value={rejectReason}
+                      onChange={e => setRejectReason(e.target.value)}
+                      rows={3} maxLength={500}
+                      placeholder="Why are you declining this return? (min 5 characters)"
+                      className="w-full rounded-xl bg-background border border-foreground/[0.12] p-3 text-xs text-foreground placeholder:text-foreground/30 outline-none focus:border-red-500 transition-all resize-none"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => { setMode('idle'); }}
+                        disabled={updating}
+                        className="h-9 px-3 rounded-xl bg-foreground/[0.06] text-foreground/60 text-[10px] font-black uppercase tracking-wide hover:bg-foreground/10 transition-all disabled:opacity-60"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => onReject(dispute.id, rejectReason.trim())}
+                        disabled={updating || rejectReason.trim().length < 5}
+                        className="flex-1 h-9 rounded-xl bg-red-600 text-white text-[10px] font-black uppercase tracking-wide hover:bg-red-700 transition-all flex items-center justify-center gap-1.5 disabled:opacity-40"
+                      >
+                        {updating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <><XCircle className="w-3.5 h-3.5" />Decline Return</>}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            )}
+
+            {/* Approved — awaiting refund payout to the buyer's wallet */}
+            {dispute.status === 'resolved' && (
+              <motion.div
+                initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+                className="rounded-2xl bg-blue-500/10 border border-blue-500/20 p-4"
+              >
+                <p className="text-xs font-black text-blue-700 dark:text-blue-400 mb-1">Return approved</p>
+                <p className="text-[11px] text-foreground/55 mb-3 leading-relaxed">
+                  Approved for a refund of <span className="font-black text-foreground">{formatTZS(Number(dispute.refund_amount) || 0)}</span>.
+                  Process the refund to credit the buyer's wallet.
+                </p>
                 <button
-                  onClick={() => onUpdateStatus(dispute.id, 'closed')}
+                  onClick={() => onRefund(dispute.id)}
                   disabled={updating}
-                  className="mt-2 text-[10px] font-bold text-foreground/35 hover:text-foreground/60 transition-colors block"
+                  className="w-full h-9 rounded-xl bg-blue-600 text-white text-[10px] font-black uppercase tracking-wide hover:bg-blue-700 transition-all flex items-center justify-center gap-1.5 disabled:opacity-60"
                 >
-                  Close without action
+                  {updating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <><RotateCcw className="w-3.5 h-3.5" />Process Refund</>}
                 </button>
               </motion.div>
+            )}
+
+            {/* Rejected — show the reason */}
+            {dispute.status === 'rejected' && dispute.rejection_reason && (
+              <div className="rounded-2xl bg-red-500/[0.06] border border-red-500/15 p-4">
+                <p className="text-[9px] font-black uppercase tracking-[0.18em] text-red-600/70 mb-1">Return declined</p>
+                <p className="text-[11px] text-foreground/65 leading-relaxed">{dispute.rejection_reason}</p>
+              </div>
             )}
 
             {/* Claim details */}
@@ -170,6 +283,53 @@ const DisputeModal = ({ dispute, onClose, onUpdateStatus, onMessage, updating }:
                   </div>
                 </div>
               </div>
+            </section>
+
+            {/* Seller response — one response per dispute */}
+            <section>
+              <p className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/35 mb-2 px-1">Your response</p>
+              {dispute.seller_response ? (
+                <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.05] p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-7 h-7 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0 mt-0.5">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[11px] text-foreground/65 leading-relaxed">{dispute.seller_response}</p>
+                      {dispute.seller_responded_at && (
+                        <p className="text-[9px] text-foreground/30 mt-1.5">
+                          Sent {new Date(dispute.seller_responded_at).toLocaleDateString('en-TZ', { day:'numeric', month:'long', year:'numeric' })}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : dispute.status === 'open' ? (
+                <div className="rounded-2xl border border-foreground/[0.08] p-4 space-y-3">
+                  <p className="text-[11px] text-foreground/55 leading-relaxed">
+                    Share your side of the story. Your response is sent to the buyer and the MaliMart review team. You can respond once.
+                  </p>
+                  <textarea
+                    value={responseText}
+                    onChange={e => setResponseText(e.target.value)}
+                    rows={4}
+                    maxLength={2000}
+                    placeholder="Explain what happened from your side… (min 10 characters)"
+                    className="w-full rounded-xl bg-foreground/[0.04] border border-foreground/[0.08] p-3 text-xs text-foreground placeholder:text-foreground/30 outline-none focus:border-foreground/25 transition-all resize-none"
+                  />
+                  <button
+                    onClick={() => onRespond(dispute.id, responseText)}
+                    disabled={responding || responseText.trim().length < 10}
+                    className="w-full h-9 rounded-xl bg-foreground text-background text-[10px] font-black uppercase tracking-widest hover:opacity-90 transition-all flex items-center justify-center gap-1.5 disabled:opacity-40"
+                  >
+                    {responding ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Submit Response'}
+                  </button>
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-foreground/[0.08] p-4">
+                  <p className="text-[11px] text-foreground/40">This dispute was closed before you responded.</p>
+                </div>
+              )}
             </section>
 
             {/* Customer */}
@@ -233,16 +393,13 @@ export const SellerReturns = ({ userId, onContactBuyer }: {
   const [statusFilter, setStatusFilter] = useState('all');
   const [selected, setSelected] = useState<Dispute | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
+  const [responding, setResponding] = useState(false);
 
   const fetchDisputes = useCallback(async (silent = false) => {
     silent ? setRefreshing(true) : setLoading(true);
     try {
       if (silent) invalidate(DISPUTES_CACHE_KEY);
-      const data = await withCache(DISPUTES_CACHE_KEY, 60_000, async () => {
-        const { data: d, error } = await supabase.rpc('get_seller_disputes', { p_seller_id: userId });
-        if (error) throw error;
-        return d;
-      });
+      const data = await withCache(DISPUTES_CACHE_KEY, 60_000, () => getSellerDisputes());
       setDisputes((data as Dispute[]) || []);
       if (selected) {
         const fresh = (data as Dispute[]).find(d => d.id === selected.id);
@@ -265,18 +422,79 @@ export const SellerReturns = ({ userId, onContactBuyer }: {
     return () => { supabase.removeChannel(ch); };
   }, [userId]);
 
-  const handleUpdateStatus = async (disputeId: string, newStatus: 'resolved' | 'refunded' | 'closed') => {
+  // Only "close without action" goes through here now. Money-moving transitions
+  // (approve → refund) use handleApprove/handleRefund so the buyer's wallet is
+  // always credited through process_return_refund — never a bare status flip.
+  const handleUpdateStatus = async (disputeId: string, newStatus: 'closed') => {
     if (!rateLimit(`dispute-${disputeId}`, 3)) return addToast('Too fast, slow down', 'error');
     setUpdating(disputeId);
     try {
-      const { error } = await supabase.rpc('update_dispute_status', { p_dispute_id: disputeId, p_new_status: newStatus });
-      if (error) throw error;
-      const labels = { resolved: 'Marked as resolved ✓', refunded: 'Refund approved ✓', closed: 'Case closed' };
-      addToast(labels[newStatus], 'success');
+      await updateDisputeStatus(disputeId, newStatus);
+      addToast('Case closed', 'success');
       invalidate(DISPUTES_CACHE_KEY);
       fetchDisputes(true);
     } catch (err: any) {
       addToast(err.message || 'Update failed', 'error');
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const handleRespond = async (disputeId: string, text: string) => {
+    if (!rateLimit(`dispute-respond-${disputeId}`, 3)) { addToast('Too fast, slow down', 'error'); return; }
+    setResponding(true);
+    try {
+      await respondToDispute(disputeId, text.trim());
+      addToast('Response sent to the buyer and MaliMart review team', 'success');
+      invalidate(DISPUTES_CACHE_KEY);
+      await fetchDisputes(true);
+    } catch (err: any) {
+      addToast(err.message || 'Failed to send response', 'error');
+    } finally {
+      setResponding(false);
+    }
+  };
+
+  const handleApprove = async (disputeId: string, amount: number) => {
+    if (!rateLimit(`return-approve-${disputeId}`, 3)) { addToast('Too fast, slow down', 'error'); return; }
+    setUpdating(disputeId);
+    try {
+      await approveReturn(disputeId, amount);
+      addToast('Return approved — process the refund to credit the buyer', 'success');
+      invalidate(DISPUTES_CACHE_KEY);
+      await fetchDisputes(true);
+    } catch (err: any) {
+      addToast(err.message || 'Approval failed', 'error');
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const handleReject = async (disputeId: string, reason: string) => {
+    if (!rateLimit(`return-reject-${disputeId}`, 3)) { addToast('Too fast, slow down', 'error'); return; }
+    setUpdating(disputeId);
+    try {
+      await rejectReturn(disputeId, reason);
+      addToast('Return declined — the buyer has been notified', 'success');
+      invalidate(DISPUTES_CACHE_KEY);
+      await fetchDisputes(true);
+    } catch (err: any) {
+      addToast(err.message || 'Could not decline', 'error');
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const handleRefund = async (disputeId: string) => {
+    if (!rateLimit(`return-refund-${disputeId}`, 3)) { addToast('Too fast, slow down', 'error'); return; }
+    setUpdating(disputeId);
+    try {
+      const res = await processReturnRefund(disputeId);
+      addToast(`Refund of ${formatTZS(res?.amount || 0)} credited to the buyer's wallet`, 'success');
+      invalidate(DISPUTES_CACHE_KEY);
+      await fetchDisputes(true);
+    } catch (err: any) {
+      addToast(err.message || 'Refund failed', 'error');
     } finally {
       setUpdating(null);
     }
@@ -425,20 +643,13 @@ export const SellerReturns = ({ userId, onContactBuyer }: {
                   </div>
 
                   {isOpen && (
-                    <div className="px-3.5 pb-3.5 flex gap-2" onClick={e => e.stopPropagation()}>
+                    <div className="px-3.5 pb-3.5" onClick={e => e.stopPropagation()}>
                       <button
-                        onClick={() => handleUpdateStatus(dispute.id, 'resolved')}
+                        onClick={() => setSelected(dispute)}
                         disabled={!!isUpd}
-                        className="flex-1 h-8 rounded-xl bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all flex items-center justify-center gap-1.5 disabled:opacity-60"
+                        className="w-full h-8 rounded-xl bg-amber-500/15 text-amber-700 dark:text-amber-400 text-[10px] font-black uppercase tracking-widest hover:bg-amber-500/25 transition-all flex items-center justify-center gap-1.5 disabled:opacity-60"
                       >
-                        {isUpd ? <Loader2 className="w-3 h-3 animate-spin" /> : <><CheckCircle2 className="w-3 h-3" />Resolve</>}
-                      </button>
-                      <button
-                        onClick={() => handleUpdateStatus(dispute.id, 'refunded')}
-                        disabled={!!isUpd}
-                        className="flex-1 h-8 rounded-xl bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all flex items-center justify-center gap-1.5 disabled:opacity-60"
-                      >
-                        {isUpd ? <Loader2 className="w-3 h-3 animate-spin" /> : <><RotateCcw className="w-3 h-3" />Refund</>}
+                        {isUpd ? <Loader2 className="w-3 h-3 animate-spin" /> : <><FileText className="w-3 h-3" />Review Return</>}
                       </button>
                     </div>
                   )}
@@ -456,11 +667,16 @@ export const SellerReturns = ({ userId, onContactBuyer }: {
             dispute={selected}
             onClose={() => setSelected(null)}
             onUpdateStatus={handleUpdateStatus}
+            onApprove={handleApprove}
+            onReject={handleReject}
+            onRefund={handleRefund}
             onMessage={(buyerId, orderId) => {
               setSelected(null);
               onContactBuyer(buyerId, undefined, orderId);
             }}
+            onRespond={handleRespond}
             updating={updating === selected.id}
+            responding={responding}
           />
         )}
       </AnimatePresence>
