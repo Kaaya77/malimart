@@ -259,7 +259,7 @@ const MobileDrawer = ({ open, onClose, user, logout, isDark, toggleDark, notific
 
  {/* Info */}
  <div className="space-y-0.5">
- {[{label:'About MaliMart',path:'/terms'},{label:'Privacy Policy',path:'/privacy'},{label:'Contact Us',path:'/contact'}].map(l=>(
+ {[{label:'About MaliMart',path:'/terms'},{label:'Privacy Policy',path:'/privacy'},{label:'Returns & Refunds',path:'/returns'},{label:'Seller Agreement',path:'/seller-agreement'},{label:'Contact Us',path:'/contact'}].map(l=>(
  <Link key={l.path} to={l.path} className="flex items-center gap-3 p-3 rounded-xl hover:bg-foreground/[0.04] text-foreground/55 hover:text-foreground transition-colors min-h-[44px]">
  <span className="text-sm">{l.label}</span>
  </Link>

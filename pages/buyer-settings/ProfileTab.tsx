@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Switch } from '../../components/UI';
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Select, Switch } from '../../components/UI';
 import { TANZANIA_REGIONS } from '../../constants';
 import { Globe, Home, Loader2, Mail, Phone, Upload, User as UserIcon, Wallet } from 'lucide-react';
 import { supabase } from '../../services/supabaseClient';
@@ -119,18 +119,15 @@ export const ProfileTab = () => {
                         </div>
                         <div className="space-y-1">
                           <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">Region</label>
-                          <div className="relative">
-                              <Home className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40" />
-                              <select 
-                                  className="w-full h-12 bg-background border border-foreground/10 rounded-2xl pl-10 pr-4 text-sm font-medium outline-none text-foreground appearance-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/50 transition-all"
-                                  value={profileData.region || ''}
-                                  onChange={(e: any) => setProfileData({ ...profileData, region: e.target.value })}
-                              >
-                                  {TANZANIA_REGIONS.map(region => (
-                                      <option key={region} value={region}>{region}</option>
-                                  ))}
-                              </select>
-                          </div>
+                          <Select
+                              icon={Home}
+                              value={profileData.region || ''}
+                              onChange={(e: any) => setProfileData({ ...profileData, region: e.target.value })}
+                          >
+                              {TANZANIA_REGIONS.map(region => (
+                                  <option key={region} value={region}>{region}</option>
+                              ))}
+                          </Select>
                         </div>
                         <div className="space-y-1">
                           <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">Pronouns</label>
@@ -142,12 +139,12 @@ export const ProfileTab = () => {
                         </div>
                         <div className="space-y-1">
                           <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">Greeting Style</label>
-                          <select className="w-full h-12 bg-background border border-foreground/10 rounded-2xl px-4 text-sm font-medium outline-none text-foreground appearance-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/50 transition-all" value={profileData.greeting_style || 'karibu'} onChange={(e: any) => setProfileData({ ...profileData, greeting_style: e.target.value })}>
+                          <Select value={profileData.greeting_style || 'karibu'} onChange={(e: any) => setProfileData({ ...profileData, greeting_style: e.target.value })}>
                             <option value="karibu">Karibu (Welcome)</option>
                             <option value="habari">Habari (How are you?)</option>
                             <option value="hello">Hello (English)</option>
                             <option value="mambo">Mambo (Swahili casual)</option>
-                          </select>
+                          </Select>
                         </div>
                         <div className="space-y-1 md:col-span-2">
                           <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">Bio</label>
@@ -156,13 +153,13 @@ export const ProfileTab = () => {
                         </div>
                         <div className="space-y-1">
                           <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">Timezone</label>
-                          <select className="w-full h-12 bg-background border border-foreground/10 rounded-2xl px-4 text-sm font-medium outline-none text-foreground appearance-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/50 transition-all" value={profileData.timezone || 'Africa/Dar_es_Salaam'} onChange={(e: any) => setProfileData({ ...profileData, timezone: e.target.value })}>
+                          <Select value={profileData.timezone || 'Africa/Dar_es_Salaam'} onChange={(e: any) => setProfileData({ ...profileData, timezone: e.target.value })}>
                             <option value="Africa/Dar_es_Salaam">East Africa Time (Dar es Salaam)</option>
                             <option value="Africa/Nairobi">East Africa Time (Nairobi)</option>
                             <option value="UTC">UTC</option>
                             <option value="Europe/London">GMT (London)</option>
                             <option value="America/New_York">EST (New York)</option>
-                          </select>
+                          </Select>
                         </div>
                         <div className="space-y-1">
                           <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">Cover Image</label>
@@ -201,36 +198,30 @@ export const ProfileTab = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div className="space-y-1">
                         <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">Language</label>
-                        <div className="relative">
-                            <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40" />
-                            <select 
-                                className="w-full h-12 bg-background border border-foreground/10 rounded-2xl pl-10 pr-4 text-sm font-medium outline-none text-foreground appearance-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/50 transition-all"
-                                value={preferences.language}
-                                onChange={handleLanguageChange}
-                            >
-                                <option value="en">English (US)</option>
-                                <option value="sw">Swahili</option>
-                                <option value="fr">French</option>
-                            </select>
-                        </div>
+                        <Select
+                            icon={Globe}
+                            value={preferences.language}
+                            onChange={handleLanguageChange}
+                        >
+                            <option value="en">English (US)</option>
+                            <option value="sw">Swahili</option>
+                            <option value="fr">French</option>
+                        </Select>
                     </div>
                     <div className="space-y-1">
                         <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">Default Currency</label>
-                        <div className="relative">
-                            <Wallet className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40" />
-                            <select 
-                                className="w-full h-12 bg-background border border-foreground/10 rounded-2xl pl-10 pr-4 text-sm font-medium outline-none text-foreground appearance-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/50 transition-all"
-                                value={preferences.defaultCurrency}
-                                onChange={(e) => {
-                                    setPreferences({...preferences, defaultCurrency: e.target.value});
-                                    updateUserProfile({ default_currency: e.target.value });
-                                }}
-                            >
-                                <option value="TZS">TZS - Tanzanian Shilling</option>
-                                <option value="USD">USD - US Dollar</option>
-                                <option value="KES">KES - Kenyan Shilling</option>
-                            </select>
-                        </div>
+                        <Select
+                            icon={Wallet}
+                            value={preferences.defaultCurrency}
+                            onChange={(e: any) => {
+                                setPreferences({...preferences, defaultCurrency: e.target.value});
+                                updateUserProfile({ default_currency: e.target.value });
+                            }}
+                        >
+                            <option value="TZS">TZS - Tanzanian Shilling</option>
+                            <option value="USD">USD - US Dollar</option>
+                            <option value="KES">KES - Kenyan Shilling</option>
+                        </Select>
                     </div>
                   </div>
                   <div className="pt-4 border-t border-foreground/[0.06] space-y-4">

@@ -5,7 +5,7 @@ import { supabase } from '../services/supabaseClient';
 import { fetchProductReviews, insertReview, updateOwnReview, deleteOwnReview, reportContent } from '../services/shopService';
 import { compressImage, IMMUTABLE_CACHE } from '../services/imageCompression';
 import { useAppState } from '../context/AppContext';
-import { Textarea, useToast } from './UI';
+import { ConfirmDialog, Textarea, useToast } from './UI';
 // Security helpers (inline if module not found)
 const sanitizeText = (s: string, max = 2000) => s.replace(/<[^>]*>/g, '').slice(0, max).trim();
 const rateLimit = (() => {
@@ -72,6 +72,8 @@ export const ReviewSection: React.FC<ReviewSectionProps> = ({ productId }) => {
   const [sortBy, setSortBy]         = useState<'newest'|'highest'|'lowest'|'helpful'>('newest');
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [editingId, setEditingId]   = useState<string|null>(null);
+  const [deletingId, setDeletingId] = useState<string|null>(null);
+  const [deleting, setDeleting]     = useState(false);
   const [votedIds, setVotedIds]     = useState<Set<string>>(new Set());
 
   const [form, setForm]     = useState({ rating: 5, comment: '', images: [] as string[] });
@@ -173,13 +175,15 @@ export const ReviewSection: React.FC<ReviewSectionProps> = ({ productId }) => {
     } catch { addToast('Update failed', 'error'); }
   };
 
-  const handleDelete = async (reviewId: string) => {
-    if (!window.confirm('Delete your review?')) return;
+  const handleDelete = async () => {
+    if (!deletingId) return;
+    setDeleting(true);
     try {
-      await deleteOwnReview(reviewId, user?.id);
+      await deleteOwnReview(deletingId, user?.id);
       addToast('Review deleted', 'success');
       fetchReviews();
     } catch { addToast('Delete failed', 'error'); }
+    finally { setDeleting(false); setDeletingId(null); }
   };
 
   const handleHelpful = async (review: Review) => {
@@ -388,7 +392,7 @@ export const ReviewSection: React.FC<ReviewSectionProps> = ({ productId }) => {
                         className="w-7 h-7 rounded-lg bg-foreground/[0.06] flex items-center justify-center text-foreground/40 hover:text-foreground hover:bg-foreground/10 transition-colors">
                         <Edit2 className="w-3 h-3 stroke-[2]"/>
                       </button>
-                      <button onClick={() => handleDelete(review.id)}
+                      <button onClick={() => setDeletingId(review.id)}
                         className="w-7 h-7 rounded-lg bg-foreground/[0.06] flex items-center justify-center text-foreground/40 hover:text-rose-500 hover:bg-rose-500/10 transition-colors">
                         <Trash2 className="w-3 h-3 stroke-[2]"/>
                       </button>
@@ -463,6 +467,17 @@ export const ReviewSection: React.FC<ReviewSectionProps> = ({ productId }) => {
           })}
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={!!deletingId}
+        title="Delete review?"
+        message="This will permanently remove your review from this product."
+        confirmText="Delete"
+        isDangerous
+        isLoading={deleting}
+        onConfirm={handleDelete}
+        onCancel={() => setDeletingId(null)}
+      />
     </div>
   );
 };

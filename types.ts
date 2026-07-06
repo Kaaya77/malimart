@@ -204,6 +204,8 @@ export interface OrderItem {
     product?: Product;
     seller_id?: string;
     sku?: string;
+    /** Seller summary the order RPC embeds on each item (fallback if the public profile fetch fails) */
+    seller?: { store_name?: string; logo_url?: string };
 }
 
 export interface Order {
@@ -216,6 +218,8 @@ export interface Order {
     delivery_fee?: number;
     discount_amount?: number; // Maps to DB
     discount?: number; // Legacy alias
+    /** Portion paid from the buyer wallet at checkout. Due via payment method = total - wallet_amount. */
+    wallet_amount?: number;
     status: OrderStatus;
     created_at: string;
     items?: OrderItem[];

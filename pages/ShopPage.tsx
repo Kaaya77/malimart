@@ -259,7 +259,7 @@ export const ShopPage: React.FC = () => {
  <SlidersHorizontal className="w-4 h-4 stroke-[2]" />
  <span className="hidden sm:inline">Filter</span>
  {activeFilterCount > 0 && (
- <span className="w-5 h-5 rounded-full bg-emerald-500 text-white text-[10px] font-bold flex items-center justify-center">
+ <span className="w-5 h-5 rounded-full bg-emerald-500 text-background text-[10px] font-bold flex items-center justify-center tabular-nums">
  {activeFilterCount}
  </span>
  )}
@@ -423,7 +423,7 @@ export const ShopPage: React.FC = () => {
        const pick = active[Math.floor(Math.random() * active.length)];
        navigate(`/product/${pick.id}`);
      }}
-     className="fixed bottom-24 md:bottom-8 right-4 z-[70] flex items-center gap-2 h-12 px-5 rounded-full bg-foreground text-background text-xs font-black uppercase tracking-widest shadow-xl shadow-black/20 hover:shadow-2xl transition-shadow"
+     className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom)+1rem)] md:bottom-8 right-4 z-[70] flex items-center gap-2 h-12 px-5 rounded-full bg-foreground text-background text-xs font-black uppercase tracking-widest shadow-xl shadow-black/20 hover:shadow-2xl transition-shadow"
      aria-label="Discover a random product"
    >
      <motion.span

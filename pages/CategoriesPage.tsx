@@ -203,7 +203,7 @@ export const CategoriesPage = () => {
                   <Icon className="w-3.5 h-3.5 stroke-[2]" />
                   {t.label}
                   {t.badge ? (
-                    <span className="w-4 h-4 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center">
+                    <span className="w-4 h-4 rounded-full bg-rose-500 dark:bg-rose-600 text-white ring-1 ring-background/40 text-[9px] font-black tabular-nums flex items-center justify-center">
                       {t.badge}
                     </span>
                   ) : null}

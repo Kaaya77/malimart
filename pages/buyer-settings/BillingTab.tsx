@@ -1,5 +1,5 @@
 import React from 'react';
-import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, EmptyState, Input } from '../../components/UI';
+import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, EmptyState, Input, Select } from '../../components/UI';
 import { BANK_PROVIDERS, MOBILE_MONEY_PROVIDERS, TANZANIA_DISTRICTS, TANZANIA_REGIONS } from '../../constants';
 import { CreditCard, Edit, MapPin, Phone, PlusCircle, Trash2 } from 'lucide-react';
 import { useBuyerSettings } from './context';
@@ -56,9 +56,8 @@ export const BillingTab = () => {
                               <Input placeholder="Street Address" value={addressData.street} onChange={(e: any) => setAddressData({...addressData, street: e.target.value})} required />
                           </div>
                           <div className="md:col-span-1">
-                              <select
+                              <Select
                                   aria-label="Region or city"
-                                  className="w-full h-12 bg-background border border-foreground/10 rounded-2xl px-3 text-sm font-medium outline-none text-foreground focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/50 transition-all"
                                   value={addressData.city}
                                   onChange={(e: any) => setAddressData({...addressData, city: e.target.value, district: TANZANIA_DISTRICTS[e.target.value]?.[0] || ''})}
                                   required
@@ -67,12 +66,11 @@ export const BillingTab = () => {
                                   {TANZANIA_REGIONS.map(region => (
                                       <option key={region} value={region}>{region}</option>
                                   ))}
-                              </select>
+                              </Select>
                           </div>
                           <div className="md:col-span-1">
-                              <select
+                              <Select
                                   aria-label="District"
-                                  className="w-full h-12 bg-background border border-foreground/10 rounded-2xl px-3 text-sm font-medium outline-none text-foreground focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/50 transition-all disabled:opacity-50"
                                   value={addressData.district}
                                   onChange={(e: any) => setAddressData({...addressData, district: e.target.value})}
                                   disabled={!addressData.city || !TANZANIA_DISTRICTS[addressData.city]}
@@ -81,7 +79,7 @@ export const BillingTab = () => {
                                   {(TANZANIA_DISTRICTS[addressData.city] || []).map(district => (
                                       <option key={district} value={district}>{district}</option>
                                   ))}
-                              </select>
+                              </Select>
                           </div>
                       </div>
                       <Button type="submit" variant="secondary" isLoading={isAddingAddress}>
@@ -129,24 +127,24 @@ export const BillingTab = () => {
                         <p className="text-xs text-muted-foreground mt-1 mb-4">We only store the last digits — never your full card number.</p>
                         <form onSubmit={handleAddPaymentMethod} className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <select aria-label="Payment method type" className="h-12 bg-background rounded-2xl border border-foreground/10 px-3 text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/50 transition-all" value={paymentData.type} onChange={(e) => setPaymentData({...paymentData, type: e.target.value, provider: e.target.value === 'visa' ? 'visa' : (e.target.value === 'mobile' ? MOBILE_MONEY_PROVIDERS[0] : BANK_PROVIDERS[0])})}>
+                                <Select aria-label="Payment method type" value={paymentData.type} onChange={(e: any) => setPaymentData({...paymentData, type: e.target.value, provider: e.target.value === 'visa' ? 'visa' : (e.target.value === 'mobile' ? MOBILE_MONEY_PROVIDERS[0] : BANK_PROVIDERS[0])})}>
                                     <option value="visa">Card (Visa/Mastercard)</option>
                                     <option value="mobile">Mobile Money</option>
                                     <option value="bank">Bank Account</option>
-                                </select>
+                                </Select>
                                 {paymentData.type === 'mobile' && (
-                                    <select aria-label="Mobile money provider" className="h-12 bg-background rounded-2xl border border-foreground/10 px-3 text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/50 transition-all" value={paymentData.provider} onChange={(e) => setPaymentData({...paymentData, provider: e.target.value})}>
+                                    <Select aria-label="Mobile money provider" value={paymentData.provider} onChange={(e: any) => setPaymentData({...paymentData, provider: e.target.value})}>
                                         {MOBILE_MONEY_PROVIDERS.map(provider => (
                                             <option key={provider} value={provider}>{provider}</option>
                                         ))}
-                                    </select>
+                                    </Select>
                                 )}
                                 {paymentData.type === 'bank' && (
-                                    <select aria-label="Bank" className="h-12 bg-background rounded-2xl border border-foreground/10 px-3 text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/50 transition-all" value={paymentData.provider} onChange={(e) => setPaymentData({...paymentData, provider: e.target.value})}>
+                                    <Select aria-label="Bank" value={paymentData.provider} onChange={(e: any) => setPaymentData({...paymentData, provider: e.target.value})}>
                                         {BANK_PROVIDERS.map(provider => (
                                             <option key={provider} value={provider}>{provider}</option>
                                         ))}
-                                    </select>
+                                    </Select>
                                 )}
                                 {paymentData.type === 'visa' ? (
                                     <Input placeholder="Last 4 Digits" value={paymentData.last4} onChange={(e: any) => setPaymentData({...paymentData, last4: e.target.value})} maxLength={4} required />

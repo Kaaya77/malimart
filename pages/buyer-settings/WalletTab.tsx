@@ -30,13 +30,13 @@ export const WalletTab = () => {
 
     return (
             <div className="space-y-6 animate-in fade-in">
-              <Card className="overflow-hidden border-none bg-slate-900 text-white dark:bg-white dark:text-slate-900">
+              <Card className="overflow-hidden border-none bg-foreground text-background">
                 <CardContent className="p-8 md:p-10 relative">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 dark:bg-black/5 blur-[80px] rounded-full pointer-events-none"></div>
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-background/10 blur-[80px] rounded-full pointer-events-none"></div>
                     <div className="relative z-10">
                       <p className="text-[11px] font-semibold uppercase tracking-widest opacity-80 mb-2 flex items-center gap-2"><Wallet className="w-4 h-4" /> Available Balance</p>
                       <h2 className="text-5xl md:text-6xl font-display font-bold tracking-tight">{CURRENCY} {(user?.wallet_balance || 0).toLocaleString()}</h2>
-                      <div className="mt-6 flex items-start gap-2.5 max-w-md rounded-2xl bg-white/10 dark:bg-black/5 p-3.5">
+                      <div className="mt-6 flex items-start gap-2.5 max-w-md rounded-2xl bg-background/10 p-3.5">
                         <Info className="w-4 h-4 mt-0.5 shrink-0 opacity-70" />
                         <p className="text-xs leading-relaxed opacity-80">
                           Your MaliMart wallet is funded by order refunds and referral rewards.

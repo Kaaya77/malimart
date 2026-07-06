@@ -1030,6 +1030,10 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
             p_delivery_slot: details.deliverySlot,
             // Server re-validates and computes the real discount from this code.
             p_coupon_code: details.couponCode || null,
+            // Wallet spend REQUEST — the RPC clamps to the real wallet_balance
+            // and the post-discount order total server-side, then debits
+            // atomically with a wallet_transactions ledger row.
+            p_wallet_amount: Math.max(0, Number(details.walletAmount) || 0),
         });
 
         if (error) {
@@ -1043,7 +1047,13 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         }
         
         await clearCart();
-        
+
+        // If wallet balance was spent, reflect the server-computed new balance
+        // immediately (the RPC returns it after the atomic debit).
+        if (data && typeof data.wallet_balance === 'number') {
+            setUser(u => (u ? { ...u, wallet_balance: data.wallet_balance } : u));
+        }
+
         // Re-fetch all orders via RPC to get the full picture immediately
         await fetchAndSetOrders(user.id);
         

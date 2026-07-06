@@ -48,8 +48,8 @@ import { MessagesTab } from './admin/MessagesTab';
 export const AdminPage = () => {
     const { user } = useAppState();
     const { addToast } = useToast();
-    type AdminTab = 'overview' | 'users' | 'vendors' | 'products' | 'disputes' | 'payouts' | 'settings' | 'moderation' | 'growth' | 'messages' | 'ai-hero';
-    const ADMIN_TABS: AdminTab[] = ['overview', 'users', 'vendors', 'products', 'disputes', 'payouts', 'settings', 'moderation', 'growth', 'messages', 'ai-hero'];
+    type AdminTab = 'overview' | 'users' | 'vendors' | 'products' | 'disputes' | 'payouts' | 'settings' | 'moderation' | 'security' | 'growth' | 'messages' | 'ai-hero';
+    const ADMIN_TABS: AdminTab[] = ['overview', 'users', 'vendors', 'products', 'disputes', 'payouts', 'settings', 'moderation', 'security', 'growth', 'messages', 'ai-hero'];
     // Honor ?tab= deep links (e.g. the /messages redirect sends admins to /admin?tab=messages).
     const initialTab = new URLSearchParams(window.location.search).get('tab') as AdminTab | null;
     const [activeTab, setActiveTab] = useState<AdminTab>(initialTab && ADMIN_TABS.includes(initialTab) ? initialTab : 'overview');
@@ -389,6 +389,7 @@ export const AdminPage = () => {
                         { id: 'disputes', label: 'Disputes', icon: AlertTriangle, count: disputes.length, urgent: true },
                         { id: 'payouts', label: 'Payouts', icon: DollarSign, count: payouts.length, urgent: true },
                         { id: 'moderation', label: 'Moderation', icon: ShieldAlert },
+                        { id: 'security', label: 'Security', icon: ShieldCheck },
                         { id: 'growth', label: 'Growth', icon: TrendingUp },
                         { id: 'messages', label: 'Intelligence', icon: MessageSquare, count: unreadMessagesCount, urgent: true },
                         { id: 'ai-hero', label: 'AI Core', icon: Sparkles },
@@ -462,6 +463,7 @@ export const AdminPage = () => {
                         {activeTab === 'settings' && <SettingsTab />}
 
                         {activeTab === 'moderation' && <ModerationTab />}
+                        {activeTab === 'security' && <SecurityMonitor />}
                         {activeTab === 'growth' && <GrowthTab />}
                         {activeTab === 'messages' && <MessagesTab />}
                         {activeTab === 'ai-hero' && (

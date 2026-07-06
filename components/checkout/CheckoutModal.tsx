@@ -26,12 +26,12 @@ interface CheckoutModalProps {
   total: number; subtotal: number; vat: number; discount: number;
   discountLabel?: string;
   onClose: () => void;
-  onComplete: (details: { address: Address; paymentMethod: string; deliveryFee: number; note: string; paymentRef?: string; isGift?: boolean; giftMessage?: string; deliveryDate?: string; deliverySlot?: string }) => Promise<void>;
+  onComplete: (details: { address: Address; paymentMethod: string; deliveryFee: number; note: string; paymentRef?: string; isGift?: boolean; giftMessage?: string; deliveryDate?: string; deliverySlot?: string; walletAmount?: number }) => Promise<void>;
 }
 
 
 export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, discountLabel, onClose, onComplete }: CheckoutModalProps) => {
-  const { addresses, addAddress, cart } = useAppState();
+  const { addresses, addAddress, cart, user } = useAppState();
   const { addToast } = useToast();
 
   const [step, setStep] = useState<1 | 2>(1);
@@ -49,6 +49,7 @@ export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, di
   const [areVendorsLoaded, setAreVendorsLoaded] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showMobileSummary, setShowMobileSummary] = useState(false);
+  const [useWalletBalance, setUseWalletBalance] = useState(false);
 
   useEffect(() => {
     if (addresses.length > 0 && !selectedAddress) {
@@ -88,6 +89,16 @@ export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, di
 
   const finalTotal = subtotal + vat + deliveryFeeTotal - discount;
 
+  // ── Wallet spend ──
+  // Display estimate only — place_order_atomic re-clamps the wallet amount to
+  // the caller's real profiles.wallet_balance and the server-computed order
+  // total, then debits atomically. Row hidden entirely at zero balance.
+  const walletBalance = Math.max(0, Math.floor(Number(user?.wallet_balance) || 0));
+  const payableTotal = Math.max(0, Math.round(finalTotal));
+  const walletApplied = useWalletBalance ? Math.min(walletBalance, payableTotal) : 0;
+  const amountDue = payableTotal - walletApplied;
+  const walletCoversAll = walletApplied > 0 && amountDue === 0;
+
   // Only offer payment methods every seller in the cart has actually configured.
   // Gating fields mirror PaymentInstructions: lipa_namba/mobile_number → Mobile
   // Money, account_number → Bank Transfer. Cash-on-delivery needs no seller setup.
@@ -126,17 +137,20 @@ export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, di
 
   const handleComplete = async () => {
     if (!selectedAddress) return addToast("Select a delivery address", "error");
-    if (paymentMethod === 'lipa_namba') {
-      if (!senderPhone?.trim() || senderPhone.trim().length < 9) return addToast("Enter sender phone number", "error");
-      if (!paymentRef?.trim() || paymentRef.trim().length < 4) return addToast("Enter transaction reference", "error");
-    } else if (paymentMethod === 'mobile_transfer' && (!paymentRef?.trim() || paymentRef.trim().length < 4)) {
-      return addToast("Enter bank transfer reference", "error");
+    // Wallet covers the whole order → no external payment, no reference needed.
+    if (!walletCoversAll) {
+      if (paymentMethod === 'lipa_namba') {
+        if (!senderPhone?.trim() || senderPhone.trim().length < 9) return addToast("Enter sender phone number", "error");
+        if (!paymentRef?.trim() || paymentRef.trim().length < 4) return addToast("Enter transaction reference", "error");
+      } else if (paymentMethod === 'mobile_transfer' && (!paymentRef?.trim() || paymentRef.trim().length < 4)) {
+        return addToast("Enter bank transfer reference", "error");
+      }
     }
     setIsSubmitting(true);
     try {
-      const methodLabel = paymentMethod === 'cash' ? 'Cash on Delivery' : paymentMethod === 'lipa_namba' ? 'Mobile Money' : 'Bank Transfer';
-      const finalRef = senderPhone ? `${paymentRef} (from: ${senderPhone})` : paymentRef;
-      await onComplete({ address: selectedAddress, paymentMethod: methodLabel, deliveryFee: deliveryFeeTotal, note: orderNote, paymentRef: finalRef, isGift, giftMessage, deliveryDate: deliveryDate ? new Date(deliveryDate).toISOString() : undefined, deliverySlot });
+      const methodLabel = walletCoversAll ? 'Wallet' : paymentMethod === 'cash' ? 'Cash on Delivery' : paymentMethod === 'lipa_namba' ? 'Mobile Money' : 'Bank Transfer';
+      const finalRef = walletCoversAll ? '' : senderPhone ? `${paymentRef} (from: ${senderPhone})` : paymentRef;
+      await onComplete({ address: selectedAddress, paymentMethod: methodLabel, deliveryFee: deliveryFeeTotal, note: orderNote, paymentRef: finalRef, isGift, giftMessage, deliveryDate: deliveryDate ? new Date(deliveryDate).toISOString() : undefined, deliverySlot, walletAmount: walletApplied });
     } catch (e: any) {
       // placeOrder maps RPC failures to actionable messages (out of stock,
       // product removed, session expired) — show those, not a generic error.
@@ -147,6 +161,7 @@ export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, di
 
   const canProceed = selectedAddress && (
     step === 1 ||
+    walletCoversAll ||
     paymentMethod === 'cash' ||
     (paymentMethod === 'lipa_namba' && paymentRef.trim().length >= 4 && senderPhone.trim().length >= 9) ||
     (paymentMethod === 'mobile_transfer' && paymentRef.trim().length >= 4)
@@ -179,7 +194,7 @@ export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, di
                 <span className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/50">{cart.length} items</span>
                 {showMobileSummary ? <ChevronUp className="w-3 h-3 text-foreground/30" /> : <ChevronDown className="w-3 h-3 text-foreground/30" />}
               </div>
-              <span className="text-base font-black text-foreground tracking-tight">{formatTZS(Math.round(finalTotal))}</span>
+              <span className="text-base font-black text-foreground tracking-tight">{formatTZS(amountDue)}</span>
             </button>
 
             <AnimatePresence>
@@ -210,6 +225,7 @@ export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, di
                       <div className="flex justify-between text-[9px] font-bold text-foreground/40 uppercase tracking-wider"><span>Subtotal</span><span>{formatTZS(subtotal)}</span></div>
                       <div className="flex justify-between text-[9px] font-bold text-foreground/40 uppercase tracking-wider"><span>Delivery</span><span>{areVendorsLoaded ? formatTZS(deliveryFeeTotal) : '…'}</span></div>
                       {discount > 0 && <div className="flex justify-between text-[9px] font-black text-emerald-500 uppercase tracking-wider"><span className="truncate pr-2">{discountLabel || 'Discount'}</span><span>-{formatTZS(discount)}</span></div>}
+                      {walletApplied > 0 && <div className="flex justify-between text-[9px] font-black text-emerald-500 uppercase tracking-wider"><span>Wallet</span><span>-{formatTZS(walletApplied)}</span></div>}
                     </div>
                   </div>
                 </motion.div>
@@ -370,7 +386,52 @@ export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, di
                   {step === 2 && (
                     <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
 
+                      {/* Wallet balance — hidden entirely at zero balance */}
+                      {walletBalance > 0 && (
+                        <section>
+                          <div className={`rounded-2xl border-2 p-4 transition-all ${useWalletBalance ? 'border-emerald-500/40 bg-emerald-500/[0.06]' : 'border-foreground/8 bg-foreground/[0.02]'}`}>
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="flex items-center gap-3 min-w-0">
+                                <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${useWalletBalance ? 'bg-emerald-500/15 text-emerald-500' : 'bg-foreground/[0.06] text-foreground/40'}`}>
+                                  <Wallet className="w-4 h-4" />
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-foreground">Use wallet balance</p>
+                                  <p className="text-[10px] font-bold text-foreground/40 mt-0.5">Available: {formatTZS(walletBalance)}</p>
+                                </div>
+                              </div>
+                              <Switch checked={useWalletBalance} onCheckedChange={setUseWalletBalance} />
+                            </div>
+                            <AnimatePresence>
+                              {useWalletBalance && (
+                                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                                  <div className="mt-3 pt-3 border-t border-emerald-500/15 space-y-1.5">
+                                    <div className="flex justify-between text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+                                      <span>Wallet applied</span><span>-{formatTZS(walletApplied)}</span>
+                                    </div>
+                                    <div className="flex justify-between text-[10px] font-bold text-foreground/50 uppercase tracking-wider">
+                                      <span>Remaining to pay</span><span className="text-foreground">{formatTZS(amountDue)}</span>
+                                    </div>
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        </section>
+                      )}
+
+                      {/* Wallet covers everything — no external payment needed */}
+                      {walletCoversAll && (
+                        <div className="flex items-start gap-2 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20">
+                          <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0 text-emerald-500" />
+                          <p className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 leading-relaxed">
+                            Your wallet covers the full order — no other payment is needed. Just confirm below.
+                          </p>
+                        </div>
+                      )}
+
                       {/* Payment method selector */}
+                      {!walletCoversAll && (
                       <section>
                         <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground mb-4 flex items-center gap-2">
                           <Wallet className="w-3.5 h-3.5" /> Payment Method
@@ -393,9 +454,10 @@ export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, di
                           </div>
                         )}
                       </section>
+                      )}
 
                       {/* Payment details panel */}
-                      {paymentMethod !== 'cash' && (
+                      {!walletCoversAll && paymentMethod !== 'cash' && (
                         <section className="bg-foreground rounded-2xl overflow-hidden">
                           <div className="p-5 md:p-6">
                             <p className="text-[9px] font-black uppercase tracking-[0.2em] text-background/40 mb-4">Payment Channels</p>
@@ -523,7 +585,7 @@ export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, di
                 ) : step === 1 ? (
                   <>Continue to Payment <ArrowRight className="w-4 h-4 stroke-[2] group-hover:translate-x-0.5 transition-transform" /></>
                 ) : (
-                  <><Lock className="w-4 h-4 stroke-[2]" />Confirm Order • {formatTZS(Math.round(finalTotal))}</>
+                  <><Lock className="w-4 h-4 stroke-[2]" />Confirm Order • {formatTZS(amountDue)}</>
                 )}
               </motion.button>
             </div>
@@ -569,9 +631,14 @@ export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, di
                   <span className="truncate pr-2">{discountLabel || 'Discount'}</span><span>-{formatTZS(discount)}</span>
                 </div>
               )}
+              {walletApplied > 0 && (
+                <div className="flex justify-between text-[10px] font-black text-emerald-500 uppercase tracking-wider">
+                  <span>Wallet Balance</span><span>-{formatTZS(walletApplied)}</span>
+                </div>
+              )}
               <div className="pt-4 border-t border-foreground/8 flex justify-between items-end">
                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/60">Total Due</span>
-                <span className="text-2xl font-black tracking-tight text-foreground leading-none">{formatTZS(Math.round(finalTotal))}</span>
+                <span className="text-2xl font-black tracking-tight text-foreground leading-none">{formatTZS(amountDue)}</span>
               </div>
               <div className="flex items-center gap-2 text-[8px] font-bold text-foreground/25 uppercase tracking-wider pt-2">
                 <Lock className="w-3 h-3" /> Encrypted & Secure

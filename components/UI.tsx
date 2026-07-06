@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Slot } from '@radix-ui/react-slot';
 import { useAppState } from '../context/AppContext';
 import { Loader2, X, AlertTriangle, ChevronDown, Sun, Moon, ShieldCheck, Printer, Download, CheckCircle2, Package, Truck, CreditCard, Store, Sparkles, RotateCcw, Percent, MessageSquare, Share2, ShieldAlert, BadgeCheck } from 'lucide-react';
-import { ShareButton } from './ShareButton';
 import { Order, VendorProfile, Product } from '../types';
 import { formatTZS } from '../constants';
 
@@ -143,7 +142,7 @@ export const useToast = () => React.useContext(ToastContext);
 // --- Components ---
 
 export const Button = ({ variant = 'primary', size = 'default', className = '', asChild = false, isLoading, children, ...props }: any) => {
- const base = "relative inline-flex items-center justify-center transition-all focus:outline-none disabled:opacity-50 disabled:pointer-events-none overflow-hidden group whitespace-nowrap font-bold";
+ const base = "relative inline-flex items-center justify-center transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-0 disabled:opacity-50 disabled:pointer-events-none overflow-hidden group whitespace-nowrap font-bold";
  
  const variants: any = {
  primary: "bg-emerald-500 text-white hover:bg-emerald-600 shadow-sm",
@@ -196,6 +195,21 @@ export const Input = ({ className = '', ...props }: any) => (
  className={`glass-input flex h-14 w-full rounded-2xl px-4 text-sm font-medium text-foreground placeholder:text-foreground/35 focus:outline-none ${className}`}
  {...props}
  />
+ </div>
+);
+
+// Select primitive — mirrors Input (glass-input, h-14, rounded-2xl) with a chevron affordance.
+// API: <Select value onChange icon={OptionalLucideIcon} className>{<option/>s}</Select>
+export const Select = ({ className = '', icon: Icon, children, ...props }: any) => (
+ <div className="relative group w-full">
+ {Icon && <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40 pointer-events-none" />}
+ <select
+ className={`glass-input flex h-14 w-full appearance-none rounded-2xl ${Icon ? 'pl-10' : 'pl-4'} pr-10 text-sm font-medium text-foreground focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
+ {...props}
+ >
+ {children}
+ </select>
+ <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40 pointer-events-none" />
  </div>
 );
 

@@ -319,6 +319,8 @@ const AppContent = () => {
               <Route path="/privacy" element={<StaticPage />} />
               <Route path="/terms" element={<StaticPage />} />
               <Route path="/contact" element={<StaticPage />} />
+              <Route path="/returns" element={<StaticPage />} />
+              <Route path="/seller-agreement" element={<StaticPage />} />
               <Route path="/auth/reset" element={<ResetPasswordPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

@@ -17,13 +17,19 @@ export const Footer = () => {
         </div>
         
         <div className="flex gap-8">
-          {['Privacy', 'Terms', 'Contact'].map((item) => (
-            <Link 
-              key={item} 
-              to={`/${item.toLowerCase()}`} 
+          {[
+            { label: 'Privacy', path: '/privacy' },
+            { label: 'Terms', path: '/terms' },
+            { label: 'Returns', path: '/returns' },
+            { label: 'Sellers', path: '/seller-agreement' },
+            { label: 'Contact', path: '/contact' },
+          ].map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
               className="text-[9px] uppercase tracking-[0.2em] text-foreground/40 dark:text-background/40 hover:text-foreground dark:hover:text-background transition-colors duration-500"
             >
-              {item}
+              {item.label}
             </Link>
           ))}
         </div>

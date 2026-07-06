@@ -15,6 +15,16 @@ import { previewCartDiscount, type DiscountPreview } from '../services/walletApi
 import { Button } from '../components/UI';
 import { Address } from '../types';
 
+/** Totals CartPage passes via navigate('/checkout', { state }) — display
+ *  estimates only; place_order_atomic recomputes everything server-side. */
+interface CheckoutNavState {
+  total: number;
+  subtotal: number;
+  vat: number;
+  discount: number;
+  couponCode?: string | null;
+}
+
 export const CheckoutPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -25,8 +35,17 @@ export const CheckoutPage = () => {
   // subtotal/VAT/total server-side via compute_cart_totals, which applies each
   // product's own vat_rate and only for VRN-registered sellers. The flat 18%
   // fallback here can therefore overstate VAT vs. what the order will record.
-  const { total, subtotal, vat, discount, couponCode } = useMemo(() => {
-    if (location.state?.total !== undefined) return location.state as any;
+  const { total, subtotal, vat, discount, couponCode } = useMemo<CheckoutNavState>(() => {
+    const navState = location.state as Partial<CheckoutNavState> | null;
+    if (navState?.total !== undefined) {
+      return {
+        total: navState.total,
+        subtotal: navState.subtotal ?? 0,
+        vat: navState.vat ?? 0,
+        discount: navState.discount ?? 0,
+        couponCode: navState.couponCode ?? null,
+      };
+    }
     // Variant-aware pricing — plain `price_at_add || price` ignored variant prices.
     const sub = cart.reduce((s, i) => s + getEffectiveUnitPrice(i) * (i.quantity || 1), 0);
     const vatAmt = sub * 0.18;
@@ -79,6 +98,7 @@ export const CheckoutPage = () => {
     address: Address; paymentMethod: string; deliveryFee: number;
     note: string; paymentRef?: string; isGift?: boolean;
     giftMessage?: string; deliveryDate?: string; deliverySlot?: string;
+    walletAmount?: number;
   }) => {
     const newOrder = await placeOrder({
       ...details,

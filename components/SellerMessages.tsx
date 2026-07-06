@@ -141,13 +141,30 @@ export const SellerMessages = ({
     return () => { supabase.removeChannel(channel); supabase.removeChannel(typingChannel); };
   }, [userId, fetchMessages, selectedChatUser, blockedUsers]);
 
-  const handleTyping = () => {
+  // One outbound typing channel per selected conversation — created on select,
+  // reused for every keystroke, removed on switch/unmount. (Previously each
+  // keystroke created a fresh, never-cleaned-up channel.)
+  const typingOutRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
     if (!selectedChatUser) return;
-    supabase.channel(`typing:${selectedChatUser}`).send({ type: 'broadcast', event: 'typing', payload: { userId, isTyping: true } });
-    const timeout = setTimeout(() => {
-      supabase.channel(`typing:${selectedChatUser}`).send({ type: 'broadcast', event: 'typing', payload: { userId, isTyping: false } });
+    const ch = supabase.channel(`typing:${selectedChatUser}`).subscribe();
+    typingOutRef.current = ch;
+    return () => {
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      typingOutRef.current = null;
+      supabase.removeChannel(ch);
+    };
+  }, [selectedChatUser]);
+
+  const handleTyping = () => {
+    const ch = typingOutRef.current;
+    if (!selectedChatUser || !ch) return;
+    ch.send({ type: 'broadcast', event: 'typing', payload: { userId, isTyping: true } });
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => {
+      typingOutRef.current?.send({ type: 'broadcast', event: 'typing', payload: { userId, isTyping: false } });
     }, 2000);
-    return () => clearTimeout(timeout);
   };
 
   const users = useMemo(() => {

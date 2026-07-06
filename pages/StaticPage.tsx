@@ -1,12 +1,12 @@
 import React from 'react';
-import { useParams, useLocation } from 'react-router-dom';
+import { useParams, useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Shield, FileText, Mail, Phone, MapPin } from 'lucide-react';
 
 const CONTENT: Record<string, {
  title: string;
  icon: any;
- sections: { heading: string; body: string }[];
+ sections: { heading: string; body: string; link?: { label: string; path: string } }[];
 }> = {
   privacy: {
  title: 'Privacy Policy',
@@ -80,7 +80,8 @@ const CONTENT: Record<string, {
  },
  {
  heading: '5. Returns, Refunds and Disputes',
- body: 'Returns and refunds are governed by our Returns Policy, which forms part of these Terms. If a buyer and seller cannot resolve an issue, either party may open a dispute in-app; MaliMart will review the evidence and make a determination in good faith, which both parties agree to accept as the platform-level resolution, without prejudice to their rights under Tanzanian consumer protection law.'
+ body: 'Returns and refunds are governed by our Returns Policy, which forms part of these Terms. If a buyer and seller cannot resolve an issue, either party may open a dispute in-app; MaliMart will review the evidence and make a determination in good faith, which both parties agree to accept as the platform-level resolution, without prejudice to their rights under Tanzanian consumer protection law.',
+ link: { label: 'Read the Returns & Refunds Policy', path: '/returns' }
  },
  {
  heading: '6. Acceptable Use and Prohibited Items',
@@ -130,7 +131,8 @@ const CONTENT: Record<string, {
  },
  {
  heading: '6. Returns, Refunds and Disputes',
- body: 'You agree to honour the platform Returns Policy. Where a dispute is decided against you, the refund amount may be deducted from your pending payouts. Persistent disputes may trigger account review.'
+ body: 'You agree to honour the platform Returns Policy. Where a dispute is decided against you, the refund amount may be deducted from your pending payouts. Persistent disputes may trigger account review.',
+ link: { label: 'Read the Returns & Refunds Policy', path: '/returns' }
  },
  {
  heading: '7. Data Protection',
@@ -245,6 +247,11 @@ export const StaticPage: React.FC = () => {
  >
  <h2 className="font-semibold text-foreground mb-2 text-[15px]">{section.heading}</h2>
  <p className="text-sm text-foreground/60 leading-relaxed whitespace-pre-line">{section.body}</p>
+ {section.link && (
+ <Link to={section.link.path} className="inline-block mt-2 text-sm font-semibold text-primary hover:underline">
+ {section.link.label}
+ </Link>
+ )}
  </motion.div>
  ))}
  </div>

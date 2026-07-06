@@ -3,7 +3,7 @@ import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, Package, ShoppingBag, MapPin, CreditCard, Clock, Share2, Download, ChevronRight, Sparkles, Truck, ArrowRight, Store } from 'lucide-react';
 import { useAppState } from '../context/AppContext';
-import { Order, Address, VendorProfile } from '../types';
+import { Order, OrderItem, Address, VendorProfile } from '../types';
 import { formatTZS } from '../constants';
 import { OrderTracking } from '../components/CheckoutComponents';
 import { fetchVendorProfile } from '../services/shopService';
@@ -46,16 +46,16 @@ export const OrderConfirmationPage = () => {
   const [sellerProfiles, setSellerProfiles] = useState<Record<string, VendorProfile | null>>({});
 
   // Find the confirmed order from context (loaded via RPC after placing)
-  const confirmedOrder = orderId
-    ? (orders as any[]).find((o: any) => o.id === orderId) || null
-    : (orders as any[])[0] || null;
+  const confirmedOrder: Order | null = orderId
+    ? orders.find((o: Order) => o.id === orderId) || null
+    : orders[0] || null;
 
   // Sellers are per ITEM (orders has no seller_id column) — group the order's
   // items by order_items.seller_id, keeping the seller name/logo the RPC embeds
   // on each item as a fallback if the public profile fetch fails.
   const sellerGroups = useMemo(() => {
-    const items = ((confirmedOrder as any)?.items || []) as any[];
-    const groups: Record<string, { name: string; logo: string | null; items: any[] }> = {};
+    const items: OrderItem[] = confirmedOrder?.items || [];
+    const groups: Record<string, { name: string; logo: string | null; items: OrderItem[] }> = {};
     items.forEach(it => {
       const product = it.products || it.product;
       const sid = it.seller_id || product?.seller_id || 'unknown';
@@ -106,7 +106,7 @@ export const OrderConfirmationPage = () => {
     );
   }
 
-  const addr = (confirmedOrder as any).shipping_address as Address | null;
+  const addr: Address | null = confirmedOrder.shipping_address || null;
   const userName = user?.user_metadata?.full_name || user?.full_name || user?.name || 'there';
 
   return (
@@ -224,7 +224,7 @@ export const OrderConfirmationPage = () => {
                       <div className="px-5 pt-4 pb-3 flex items-center gap-3">{header}</div>
                     )}
                     <div className="px-5 pb-4 space-y-2">
-                      {group.items.map((it: any) => {
+                      {group.items.map((it) => {
                         const product = it.products || it.product;
                         return (
                           <div key={it.id} className="flex items-center gap-3">
@@ -263,8 +263,8 @@ export const OrderConfirmationPage = () => {
             <div className="p-5 space-y-3">
               {[
                 { label: 'Subtotal', value: formatTZS(confirmedOrder.subtotal || 0) },
-                ...(((confirmedOrder as any).vat_amount || 0) > 0
-                  ? [{ label: 'VAT', value: formatTZS((confirmedOrder as any).vat_amount) }]
+                ...((confirmedOrder.vat_amount || 0) > 0
+                  ? [{ label: 'VAT', value: formatTZS(confirmedOrder.vat_amount || 0) }]
                   : []),
                 { label: 'Delivery', value: formatTZS(confirmedOrder.delivery_fee || 0) },
               ].map(row => (
@@ -272,20 +272,20 @@ export const OrderConfirmationPage = () => {
                   <span>{row.label}</span><span className="text-foreground/70">{row.value}</span>
                 </div>
               ))}
-              {((confirmedOrder as any).discount_amount || 0) > 0 && (
+              {(confirmedOrder.discount_amount || 0) > 0 && (
                 <div className="flex justify-between text-[11px] font-black text-emerald-500">
-                  <span>Discount</span><span>-{formatTZS((confirmedOrder as any).discount_amount)}</span>
+                  <span>Discount</span><span>-{formatTZS(confirmedOrder.discount_amount || 0)}</span>
                 </div>
               )}
               <div className="border-t border-foreground/8 pt-3 flex justify-between items-center">
                 {/* Fresh orders start payment_status='unpaid' (payment verified after
                     placement) — only claim "Paid" when the DB says so. */}
                 <span className="text-[11px] font-black uppercase tracking-wider text-foreground/60">
-                  {(confirmedOrder as any).payment_status === 'paid' ? 'Total Paid' : 'Total'}
+                  {confirmedOrder.payment_status === 'paid' ? 'Total Paid' : 'Total'}
                 </span>
                 <span className="text-xl font-black tracking-tight text-foreground">{formatTZS(confirmedOrder.total)}</span>
               </div>
-              {(confirmedOrder as any).payment_status === 'refund_due' && (
+              {confirmedOrder.payment_status === 'refund_due' && (
                 <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-amber-600 bg-amber-50 dark:bg-amber-900/15 border border-amber-200/60 dark:border-amber-800/40 rounded-xl px-3 py-2">
                   <Clock className="w-3.5 h-3.5" /> Refund due — your payment will be returned
                 </div>
