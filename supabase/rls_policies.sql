@@ -196,8 +196,10 @@ CREATE POLICY "vendor_profiles_admin" ON vendor_profiles
 -- Does NOT include: account_number, bank_name, bank_account_name, tin_number,
 -- business_reg_no, vrn, mobile_number, lipa_*, contact_phone, contact_email,
 -- address, payment_methods, payout_schedule.
+-- security_invoker must be FALSE (definer rights): the base table is
+-- owner/admin-only, so an invoker-rights view would blank the storefront.
 CREATE OR REPLACE VIEW public.public_vendor_profiles
-  WITH (security_invoker = true)
+  WITH (security_invoker = false)
 AS
 SELECT
   seller_id, store_name, description, logo_url, banner_url, region, district,
@@ -525,3 +527,44 @@ CREATE OR REPLACE TRIGGER audit_seller_payouts
 CREATE OR REPLACE TRIGGER audit_platform_settings
   AFTER UPDATE ON platform_settings
   FOR EACH ROW EXECUTE FUNCTION audit_trigger_fn();
+
+-- ─── product_appeals ─────────────────────────────────────────
+-- Rebuilt 2026-07-06 (migration 20260706101500): one policy per action,
+-- (select ...) wrappers for initplan-friendly evaluation. Sellers read/insert
+-- their own pending appeals on their own suspended products; admins do all.
+ALTER TABLE product_appeals ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "product_appeals_admin_all"     ON product_appeals;
+DROP POLICY IF EXISTS "product_appeals_seller_select" ON product_appeals;
+DROP POLICY IF EXISTS "product_appeals_seller_insert" ON product_appeals;
+DROP POLICY IF EXISTS "product_appeals_select"        ON product_appeals;
+DROP POLICY IF EXISTS "product_appeals_insert"        ON product_appeals;
+DROP POLICY IF EXISTS "product_appeals_update"        ON product_appeals;
+DROP POLICY IF EXISTS "product_appeals_delete"        ON product_appeals;
+
+CREATE POLICY "product_appeals_select" ON product_appeals
+  FOR SELECT USING ((SELECT is_admin()) OR seller_id = (SELECT auth.uid()));
+
+CREATE POLICY "product_appeals_insert" ON product_appeals
+  FOR INSERT WITH CHECK (
+    (SELECT is_admin())
+    OR (
+      seller_id = (SELECT auth.uid())
+      AND status = 'pending'
+      AND admin_response IS NULL
+      AND resolved_at IS NULL
+      AND resolved_by IS NULL
+      AND EXISTS (
+        SELECT 1 FROM products p
+        WHERE p.id = product_appeals.product_id
+          AND p.seller_id = (SELECT auth.uid())
+          AND p.status = 'suspended'
+      )
+    )
+  );
+
+CREATE POLICY "product_appeals_update" ON product_appeals
+  FOR UPDATE USING ((SELECT is_admin())) WITH CHECK ((SELECT is_admin()));
+
+CREATE POLICY "product_appeals_delete" ON product_appeals
+  FOR DELETE USING ((SELECT is_admin()));

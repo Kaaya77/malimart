@@ -1,6 +1,8 @@
 -- 20260702160000_product_appeals.sql
 -- ═══════════════════════════════════════════════════════════════════════════
--- DRAFT — NOT YET APPLIED. Fair product-suspension + appeal process.
+-- APPLIED to production (verified 2026-07-06). Fair product-suspension +
+-- appeal process. NOTE: the three RLS policies below were later rebuilt as
+-- four per-action policies by 20260706101500_db_hardening_advisor_fixes.sql.
 --
 -- Problem today: admin "Take Down" silently flips products.status to
 -- 'inactive' (indistinguishable from a seller's own deactivation), the

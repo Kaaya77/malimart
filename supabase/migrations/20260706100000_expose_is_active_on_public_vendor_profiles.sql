@@ -3,11 +3,14 @@
 -- because the view does not expose is_active. Append it (a non-sensitive
 -- storefront flag) so listings can hide deactivated/rejected stores again.
 -- CREATE OR REPLACE VIEW may only append columns, so is_active goes last;
--- column list and security_invoker are otherwise identical to the
--- definition in supabase/rls_policies.sql.
+-- the column list matches the deployed view exactly.
+-- security_invoker must stay FALSE (definer rights): the base table's only
+-- SELECT policy is owner/admin, so an invoker-rights view would return zero
+-- rows to anon/buyers and blank the public storefront. The view is the
+-- deliberate safe projection — it exposes no payment/contact columns.
 
 CREATE OR REPLACE VIEW public.public_vendor_profiles
-  WITH (security_invoker = true)
+  WITH (security_invoker = false)
 AS
 SELECT
   seller_id, store_name, description, logo_url, banner_url, region, district,
