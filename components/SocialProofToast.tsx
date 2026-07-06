@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingBag, Heart, Eye } from 'lucide-react';
-import { supabase } from '../services/supabaseClient';
+import { fetchRecentPublicActivity } from '../services/shopService';
 import { formatTZS } from '../constants';
 
 // Tanzanian names used to anonymise real buyers (privacy-safe social proof)
@@ -42,10 +42,7 @@ export const SocialProofToast: React.FC = () => {
   // Fetch real recent purchase activity from the public_recent_activity view
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
-        .from('public_recent_activity')
-        .select('product_id, product_name, product_images, price_at_purchase, city')
-        .limit(50);
+      const data = await fetchRecentPublicActivity(50);
 
       if (!data?.length) return;
 

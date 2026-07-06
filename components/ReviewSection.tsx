@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Star, ThumbsUp, Loader2, User, Camera, X, ChevronDown, ChevronUp, Edit2, Trash2, Flag, MessageSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../services/supabaseClient';
+import { fetchProductReviews, insertReview, updateOwnReview, deleteOwnReview, reportContent } from '../services/shopService';
 import { compressImage, IMMUTABLE_CACHE } from '../services/imageCompression';
 import { useAppState } from '../context/AppContext';
 import { Textarea, useToast } from './UI';
@@ -86,12 +87,8 @@ export const ReviewSection: React.FC<ReviewSectionProps> = ({ productId }) => {
 
   const fetchReviews = async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from('reviews')
-      .select('*, user:profiles!user_id(id, full_name, avatar_url)')
-      .eq('product_id', productId)
-      .order('created_at', { ascending: false });
-    if (data) setReviews(data as Review[]);
+    const data = await fetchProductReviews(productId);
+    if (data) setReviews(data);
     setLoading(false);
   };
 
@@ -152,11 +149,10 @@ export const ReviewSection: React.FC<ReviewSectionProps> = ({ productId }) => {
     if (!rateLimit(`review:${user.id}`, 3)) return addToast('Too many submissions — wait a moment', 'error');
     setSubmitting(true);
     try {
-      const { error } = await supabase.from('reviews').insert({
+      await insertReview({
         product_id: productId, user_id: user.id,
         rating: form.rating, comment, images: form.images,
       });
-      if (error) throw error;
       // Product rating aggregate is refreshed automatically by the
       // trg_refresh_product_rating trigger on the reviews table.
       addToast('Review published — thank you!', 'success');
@@ -170,9 +166,7 @@ export const ReviewSection: React.FC<ReviewSectionProps> = ({ productId }) => {
   const handleSaveEdit = async (reviewId: string) => {
     if (!editForm.comment.trim()) return addToast('Comment required', 'error');
     try {
-      await supabase.from('reviews')
-        .update({ rating: editForm.rating, comment: sanitizeText(editForm.comment, 2000), updated_at: new Date().toISOString() })
-        .eq('id', reviewId).eq('user_id', user?.id);
+      await updateOwnReview(reviewId, user?.id, { rating: editForm.rating, comment: sanitizeText(editForm.comment, 2000) });
       addToast('Review updated', 'success');
       setEditingId(null);
       fetchReviews();
@@ -182,7 +176,7 @@ export const ReviewSection: React.FC<ReviewSectionProps> = ({ productId }) => {
   const handleDelete = async (reviewId: string) => {
     if (!window.confirm('Delete your review?')) return;
     try {
-      await supabase.from('reviews').delete().eq('id', reviewId).eq('user_id', user?.id);
+      await deleteOwnReview(reviewId, user?.id);
       addToast('Review deleted', 'success');
       fetchReviews();
     } catch { addToast('Delete failed', 'error'); }
@@ -201,7 +195,7 @@ export const ReviewSection: React.FC<ReviewSectionProps> = ({ productId }) => {
 
   const handleReport = async (reviewId: string) => {
     if (!user) return addToast('Sign in to report', 'error');
-    const { error } = await supabase.from('reports').insert({
+    const { error } = await reportContent({
       reporter_id: user.id,
       reported_id: reviewId,
       category: 'review',

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAppState } from '../context/AppContext';
 import { Button, Input, Card, CardHeader, CardContent, CardTitle, CardDescription, Textarea, useToast, Badge, Switch } from '../components/UI';
 import { Store, DollarSign, Truck, Loader2, Wallet, ArrowUpRight, Clock, CheckCircle2, XCircle, Briefcase, Settings, PlusCircle, Trash2, Globe, MapPin, Info, ShieldCheck, AlertTriangle, ChevronLeft } from 'lucide-react';
-import { supabase } from '../services/supabaseClient';
+import { listMyPayoutMethods, addMyPayoutMethod, deleteMyPayoutMethod, listMyShippingZones, addMyShippingZone, deleteMyShippingZone } from '../services/sellerApi';
 import { CURRENCY, TANZANIA_REGIONS, TANZANIA_DISTRICTS, MOBILE_MONEY_PROVIDERS, BANK_PROVIDERS, SOCIAL_PLATFORMS, isValidTIN, isValidVRN, isValidTanzanianPhone, resolveShippingFee } from '../constants';
 import { SellerSettingsCtx } from './seller-settings/context';
 import { StoreTab } from './seller-settings/StoreTab';
@@ -94,8 +94,8 @@ export const SellerSettingsPage = ({ onBack }: { onBack?: () => void } = {}) => 
  let cancelled = false;
  (async () => {
  const [{ data: payouts }, { data: zones }] = await Promise.all([
- supabase.from('payout_methods').select('*').eq('seller_id', user.id),
- supabase.from('shipping_zones').select('*').eq('seller_id', user.id),
+ listMyPayoutMethods(user.id),
+ listMyShippingZones(user.id),
  ]);
  if (cancelled) return;
  if (payouts) {
@@ -174,12 +174,11 @@ export const SellerSettingsPage = ({ onBack }: { onBack?: () => void } = {}) => 
  return addToast("Bank Account Number seems too short", "error");
  }
 
- const { data, error } = await supabase.from('payout_methods').insert({
- seller_id: user.id,
- method_type: newPayment.type,
+ const { data, error } = await addMyPayoutMethod(user.id, {
+ methodType: newPayment.type,
  details: { provider: newPayment.provider, accountName: newPayment.accountName, accountNumber: newPayment.accountNumber },
- is_primary: paymentMethods.length === 0,
- }).select().single();
+ isPrimary: paymentMethods.length === 0,
+ });
 
  if (error) return addToast(error.message || "Could not save payment method", "error");
 
@@ -197,7 +196,7 @@ export const SellerSettingsPage = ({ onBack }: { onBack?: () => void } = {}) => 
  const handleRemovePayment = async (id: string) => {
  const prev = paymentMethods;
  setPaymentMethods(paymentMethods.filter(p => p.id !== id));
- const { error } = await supabase.from('payout_methods').delete().eq('id', id);
+ const { error } = await deleteMyPayoutMethod(id);
  if (error) { setPaymentMethods(prev); addToast("Could not remove payment method", "error"); }
  };
 
@@ -207,12 +206,11 @@ export const SellerSettingsPage = ({ onBack }: { onBack?: () => void } = {}) => 
  if (shippingZones.find(z => `${z.region}-${z.district}` === zoneKey)) {
  return addToast("This specific region/district already has a fee", "error");
  }
- const { data, error } = await supabase.from('shipping_zones').insert({
- seller_id: user.id,
+ const { data, error } = await addMyShippingZone(user.id, {
  name: newZone.region,
  description: newZone.district,
  fee: newZone.fee,
- }).select().single();
+ });
 
  if (error) return addToast(error.message || "Could not save zone", "error");
 
@@ -225,7 +223,7 @@ export const SellerSettingsPage = ({ onBack }: { onBack?: () => void } = {}) => 
  if (!id) return;
  const prev = shippingZones;
  setShippingZones(shippingZones.filter(z => z.id !== id));
- const { error } = await supabase.from('shipping_zones').delete().eq('id', id);
+ const { error } = await deleteMyShippingZone(id);
  if (error) { setShippingZones(prev); addToast("Could not remove zone", "error"); }
  };
 

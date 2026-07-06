@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAppState } from '../context/AppContext';
 import { formatTZS } from '../constants';
 import { useDebounce } from '../src/hooks/useDebounce';
-import { supabase } from '../services/supabaseClient';
+import { quickSearchProducts } from '../services/searchService';
 import { getAI } from '../services/aiClient';
 import { MODELS } from '../services/aiModels';
 
@@ -62,13 +62,7 @@ export const SearchModal = ({
    setServerSearching(true);
    (async () => {
      try {
-       const { data } = await supabase
-         .from('products')
-         .select('id,name,price,images,category,seller_name,seller_id,status')
-         .eq('status', 'active')
-         .is('deleted_at', null)
-         .or(`name.ilike.%${q}%,category.ilike.%${q}%,seller_name.ilike.%${q}%`)
-         .limit(12);
+       const data = await quickSearchProducts(q);
        if (!cancelled) { setServerResults(data ?? []); setServerSearching(false); }
      } catch {
        if (!cancelled) setServerSearching(false);
@@ -114,9 +108,7 @@ export const SearchModal = ({
    setServerSearching(true);
    (async () => {
      try {
-       let query = supabase.from('products').select('id,name,price,images,category,seller_name,seller_id,status').eq('status', 'active').is('deleted_at', null).or(`name.ilike.%${q}%,category.ilike.%${q}%,seller_name.ilike.%${q}%`);
-       if (aiIntent.maxPrice) query = query.lte('price', aiIntent.maxPrice);
-       const { data } = await query.limit(12);
+       const data = await quickSearchProducts(q, aiIntent.maxPrice);
        if (!cancelled) setServerResults(data ?? []);
      } catch { /* silent */ }
      finally { if (!cancelled) setServerSearching(false); }

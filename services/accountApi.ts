@@ -100,3 +100,71 @@ export const revokeOtherSessions = (keepId?: string) =>
 
 // ---------- Account overview (navbar / dashboards) ----------
 export const getAccountOverview = () => rpc<AccountOverview>("get_account_overview");
+
+// ---------- Self-scoped table reads/writes (RLS-guarded) ----------
+// These are direct table queries moved out of pages (settings/account
+// boundary refactor). Each is self-scoped by user id and protected by RLS.
+// They return the raw PostgREST `{ data, error }` promise so callers keep
+// their existing handling.
+
+/** My orders (with items + product name/category) for the CSV data export. */
+export const getMyOrdersForExport = (userId: string) =>
+  supabase
+    .from("orders")
+    .select("id, created_at, status, total, subtotal, delivery_fee, payment_method, items:order_items(price_at_purchase, quantity, product:products(name, category))")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+
+/** All of my saved payment methods. */
+export const listMyPaymentMethods = (userId: string) =>
+  supabase.from("payment_methods").select("*").eq("user_id", userId);
+
+/** Save a new payment method for the current user. */
+export const addMyPaymentMethod = (
+  userId: string,
+  method: Record<string, unknown>
+) => supabase.from("payment_methods").insert({ user_id: userId, ...method });
+
+/** Remove a payment method by id (RLS restricts to owner). */
+export const deleteMyPaymentMethod = (id: string) =>
+  supabase.from("payment_methods").delete().eq("id", id);
+
+/** Disconnect a linked OAuth/social account for the current user. */
+export const disconnectMyAccount = (userId: string, provider: string) =>
+  supabase
+    .from("connected_accounts")
+    .delete()
+    .eq("user_id", userId)
+    .eq("provider", provider);
+
+/** Soft-flag my profile for deletion (sets deleted_at). */
+export const requestMyAccountDeletion = (userId?: string) =>
+  supabase
+    .from("profiles")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", userId);
+
+/** Ban-status check used right after password login (pre-session gate). */
+export const getProfileBanStatus = (userId: string) =>
+  Promise.resolve(
+    supabase.from("profiles").select("is_banned").eq("id", userId).single()
+  );
+
+// ---------- Public marketplace reads (buyer dashboard) ----------
+
+/** Active, unexpired offers with their vendor card info (newest first, max 30). */
+export const listActiveOffersWithVendors = (nowIso: string) =>
+  supabase
+    .from("offers")
+    .select("*, vendor:vendor_profiles!seller_id(seller_id,store_name,logo_url,is_verified)")
+    .eq("status", "active")
+    .or(`end_date.is.null,end_date.gte.${nowIso}`)
+    .order("created_at", { ascending: false })
+    .limit(30);
+
+/** Public vendor cards for a set of followed sellers. */
+export const getVendorCardsBySellerIds = (sellerIds: string[]) =>
+  supabase
+    .from("vendor_profiles")
+    .select("seller_id,store_name,logo_url,is_verified,rating,trust_score,description,region")
+    .in("seller_id", sellerIds);

@@ -11,7 +11,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Package } from 'lucide-react';
 import { useAppState } from '../context/AppContext';
 import { ProductForm } from '../components/ProductForm';
-import { supabase } from '../services/supabaseClient';
+import { fetchOwnProductForEdit } from '../services/shopService';
 
 export const ProductEditPage = () => {
   const { id } = useParams<{ id?: string }>();
@@ -25,12 +25,7 @@ export const ProductEditPage = () => {
 
   useEffect(() => {
     if (!id) return;
-    supabase
-      .from('products')
-      .select('*, variants:product_variants(*)')
-      .eq('id', id)
-      .eq('seller_id', user?.id ?? '')
-      .single()
+    fetchOwnProductForEdit(id, user?.id ?? '')
       .then(({ data, error }) => {
         if (error || !data) navigate(backUrl, { replace: true });
         else setProduct(data);

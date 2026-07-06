@@ -10,6 +10,7 @@ import { Button, Input, useToast, ConfirmDialog, UserProfileModal, GraphicalTag 
 import { ProductModal } from './ProductModal';
 import { OrderDetailsModal } from './OrderDetailsModal';
 import { supabase } from '../services/supabaseClient';
+import { fetchProfile, fetchProfileNameAvatar } from '../services/messagesService';
 import { compressImage, IMMUTABLE_CACHE } from '../services/imageCompression';
 import { Product, Order } from '../types';
 import * as aiService from '../services/geminiService';
@@ -109,8 +110,8 @@ export const SellerMessages = ({
 
   useEffect(() => {
     if (!initialChatUser) return;
-    supabase.from('profiles').select('full_name, avatar_url').eq('id', initialChatUser).single()
-      .then(({ data }) => {
+    fetchProfileNameAvatar(initialChatUser)
+      .then((data) => {
         if (data) setInitialUserProfile({ name: data.full_name || 'Buyer', avatar: data.avatar_url ?? null });
       });
   }, [initialChatUser]);
@@ -275,7 +276,7 @@ export const SellerMessages = ({
   };
 
   const fetchUserProfile = async (uid: string) => {
-    const { data } = await supabase.from('profiles').select('*').eq('id', uid).single();
+    const data = await fetchProfile(uid);
     if (data) setViewingProfile({ id: data.id, name: data.full_name || 'User', avatar: data.avatar_url, role: data.role, created_at: data.created_at, region: data.region, trust_score: data.trust_score, is_verified: data.is_verified });
   };
 

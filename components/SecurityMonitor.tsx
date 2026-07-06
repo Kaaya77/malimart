@@ -5,7 +5,7 @@ import {
   Activity, Users, Package, FileText, RefreshCw, ChevronRight,
   Zap, Clock, Globe, Hash, X
 } from 'lucide-react';
-import { supabase } from '../services/supabaseClient';
+import { fetchAuditLog } from '../services/adminApi';
 import { useAppState } from '../context/AppContext';
 import { assertRole } from '../src/security';
 import { formatTZS } from '../constants';
@@ -49,11 +49,7 @@ export const SecurityMonitor: React.FC = () => {
 
   const fetchLogs = async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from('audit_log')
-      .select('*, user:profiles!user_id(full_name, email, role)')
-      .order('created_at', { ascending: false })
-      .limit(100);
+    const { data } = await fetchAuditLog();
 
     if (data) {
       setLogs(data as AuditEntry[]);

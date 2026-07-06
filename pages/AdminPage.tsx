@@ -11,7 +11,6 @@ import {
 } from 'lucide-react';
 import { useAppState } from '../context/AppContext';
 import { Card, Badge, Button, Input, useToast, Skeleton, Switch, ConfirmModal, PremiumStatCard, GraphicalTag, CountBadge } from '../components/UI';
-import { supabase } from '../services/supabaseClient';
 import { formatTZS } from '../constants';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { AdminModeration } from '../components/AdminModeration';
@@ -22,7 +21,15 @@ import { AdminMessages } from '../components/AdminMessages';
 import { AdminAIHero } from '../components/AdminAIHero';
 import { analyzeDispute } from '../services/geminiService';
 import { adminTakedownProduct } from '../services/moderationApi';
-import { resolveDispute } from '../services/adminApi';
+import {
+    resolveDispute, getDashboardData,
+    fetchAdminVendorProfiles, fetchOpenDisputes, fetchPendingPayouts,
+    fetchRecentProfiles, fetchRecentProducts, fetchPlatformSettings,
+    fetchRevenueOrders, countUnreadMessages,
+    setVendorVerification, deactivateVendor, markPayoutPaid,
+    setUserBanned, notifyUserBanned, softDeleteUser,
+    restoreProduct, upsertPlatformSettings
+} from '../services/adminApi';
 import { AdminCtx } from './admin/context';
 import { OverviewTab } from './admin/OverviewTab';
 import { UsersTab } from './admin/UsersTab';
@@ -109,38 +116,17 @@ export const AdminPage = () => {
                 unreadRes
             ] = await Promise.all([
                 // Admin stats: 12 counts in one RPC (already built into get_dashboard_data)
-                supabase.rpc('get_dashboard_data'),
-                supabase.from('vendor_profiles')
-                    .select('*, profiles!seller_id(full_name, email)')
-                    .order('created_at', { ascending: false }),
-                supabase.from('disputes')
-                    .select('*, order:orders!order_id(id, total, status), buyer:profiles!buyer_id(full_name, email)')
-                    .eq('status', 'open')
-                    .order('created_at', { ascending: false })
-                    .limit(30),
-                supabase.from('seller_payouts')
-                    .select('*, profiles!seller_id(full_name, email)')
-                    .eq('status', 'pending')
-                    .order('created_at', { ascending: false })
-                    .limit(30),
-                supabase.from('profiles')
-                    .select('*')
-                    .order('created_at', { ascending: false })
-                    .limit(50),
-                supabase.from('products')
-                    .select('id, name, price, stock, status, created_at, seller_id, images, category, is_boosted, profiles!seller_id(full_name)')
-                    .order('created_at', { ascending: false })
-                    .limit(50),
-                supabase.from('platform_settings').select('*').eq('id', 1).single(),
+                getDashboardData(),
+                fetchAdminVendorProfiles(),
+                fetchOpenDisputes(),
+                fetchPendingPayouts(),
+                fetchRecentProfiles(),
+                fetchRecentProducts(),
+                fetchPlatformSettings(),
                 // Revenue trend derived from orders Ã¢Â€Â” no separate table needed
-                supabase.from('orders')
-                    .select('total, created_at')
-                    .in('status', ['paid','shipped','delivered'])
-                    .gte('created_at', new Date(Date.now() - 180 * 86400000).toISOString())
-                    .order('created_at', { ascending: true }),
+                fetchRevenueOrders(),
                 user?.id
-                    ? supabase.from('messages').select('*', { count: 'exact', head: true })
-                        .eq('receiver_id', user.id).eq('read', false)
+                    ? countUnreadMessages(user.id)
                     : Promise.resolve({ count: 0 })
             ]);
 
@@ -200,10 +186,10 @@ export const AdminPage = () => {
     const handleVerifyVendor = async (sellerId: string, approve: boolean) => {
         try {
             if (approve) {
-                await supabase.from('vendor_profiles').update({ is_verified: true }).eq('seller_id', sellerId);
+                await setVendorVerification(sellerId, true);
                 addToast("Vendor verified successfully", "success");
             } else {
-                await supabase.from('vendor_profiles').update({ is_active: false }).eq('seller_id', sellerId);
+                await deactivateVendor(sellerId);
                 addToast("Vendor application rejected", "success");
             }
             fetchAdminData();
@@ -236,7 +222,7 @@ export const AdminPage = () => {
 
     const handleApprovePayout = async (payoutId: string) => {
         try {
-            await supabase.from('seller_payouts').update({ status: 'paid', paid_at: new Date().toISOString() }).eq('id', payoutId);
+            await markPayoutPaid(payoutId);
             addToast("Payout approved and processed", "success");
             fetchAdminData();
         } catch (error) {
@@ -246,15 +232,10 @@ export const AdminPage = () => {
 
     const handleToggleUserBan = async (userId: string, isBanned: boolean) => {
         try {
-            await supabase.from('profiles').update({ is_banned: !isBanned }).eq('id', userId);
-            
+            await setUserBanned(userId, !isBanned);
+
             if (!isBanned) { // If currently NOT banned, we are banning them
-                await supabase.from('notifications').insert({
-                    user_id: userId,
-                    type: 'system',
-                    title: 'Account Banned',
-                    message: 'Your account has been banned due to a violation of our terms of service.'
-                });
+                await notifyUserBanned(userId);
             }
             
             addToast(`User ${!isBanned ? 'banned' : 'unbanned'} successfully`, "success");
@@ -273,10 +254,7 @@ export const AdminPage = () => {
         if (!userToDelete) return;
         try {
             // Soft-delete: mark deleted_at. Hard auth.users deletion requires admin API.
-                await supabase.from('profiles').update({ 
-                    deleted_at: new Date().toISOString(),
-                    is_banned: true 
-                }).eq('id', userToDelete);
+                await softDeleteUser(userToDelete);
             addToast("User deleted successfully", "success");
             fetchAdminData();
         } catch (error) {
@@ -297,7 +275,7 @@ export const AdminPage = () => {
     const handleToggleProductStatus = async (productId: string, currentStatus: string) => {
         if (currentStatus === 'active') return; // takedown handled by handleTakedownProduct
         try {
-            await supabase.from('products').update({ status: 'active', takedown_reason: null }).eq('id', productId);
+            await restoreProduct(productId);
             addToast('Product restored and live again', "success");
             fetchAdminData();
         } catch (error) {
@@ -320,10 +298,7 @@ export const AdminPage = () => {
 
     const handleSaveSettings = async () => {
         try {
-            const { error } = await supabase
-                .from('platform_settings')
-                .upsert({ 
-                    id: 1, 
+            const { error } = await upsertPlatformSettings({
                     maintenance_mode: platformSettings.maintenanceMode,
                     new_signups: platformSettings.newSignups,
                     global_commission: platformSettings.globalCommission,

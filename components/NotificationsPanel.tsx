@@ -5,7 +5,7 @@
 // =====================================================================
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { supabase } from "../services/supabaseClient";
+import { fetchNotifications } from "../services/notificationsService";
 import {
   markAllNotificationsRead, deleteNotifications, clearReadNotifications,
 } from "../services/accountApi";
@@ -26,12 +26,7 @@ export function NotificationsPanel({ onClose }: { onClose: () => void }) {
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
-    const { data } = await supabase
-      .from("notifications")
-      .select("id,type,title,message,link,read,created_at")
-      .is("deleted_at", null)
-      .order("created_at", { ascending: false })
-      .limit(30);
+    const data = await fetchNotifications(30);
     setItems((data as Notif[]) ?? []);
     setLoading(false);
   };

@@ -5,7 +5,7 @@ import { Button, Input, Card, CardHeader, CardContent, CardTitle, CardDescriptio
 import { User as UserIcon, Mail, Phone, Home, PlusCircle, Trash2, Edit, Wallet, Gift, Copy, ArrowUpRight, ArrowDownLeft, Bell, Shield, Globe, CreditCard, Download, LogOut, CheckCircle2, MapPin, Settings, Lock, Activity } from 'lucide-react';
 import { BackButton } from '../components/BackButton';
 import { CURRENCY, TANZANIA_REGIONS, TANZANIA_DISTRICTS, MOBILE_MONEY_PROVIDERS, BANK_PROVIDERS, isValidTanzanianPhone } from '../constants';
-import { supabase } from '../services/supabaseClient';
+import { getMyOrdersForExport, listMyPaymentMethods, addMyPaymentMethod, deleteMyPaymentMethod, disconnectMyAccount, requestMyAccountDeletion } from '../services/accountApi';
 import { BuyerSettingsCtx } from './buyer-settings/context';
 import { ProfileTab } from './buyer-settings/ProfileTab';
 import { BillingTab } from './buyer-settings/BillingTab';
@@ -215,11 +215,7 @@ export const BuyerSettingsPage = () => {
       if (!user) return;
       setIsExporting(true);
       try {
-          const { data: orders } = await supabase
-              .from('orders')
-              .select('id, created_at, status, total, subtotal, delivery_fee, payment_method, items:order_items(price_at_purchase, quantity, product:products(name, category))')
-              .eq('user_id', user.id)
-              .order('created_at', { ascending: false });
+          const { data: orders } = await getMyOrdersForExport(user.id);
           if (!orders || orders.length === 0) {
               addToast('No orders to export', 'info');
               setIsExporting(false);
@@ -268,7 +264,7 @@ export const BuyerSettingsPage = () => {
 
   const refreshPaymentMethods = async () => {
       if (!user) return;
-      const { data } = await supabase.from('payment_methods').select('*').eq('user_id', user.id);
+      const { data } = await listMyPaymentMethods(user.id);
       if (data) setLocalPaymentMethods(data);
   };
 
@@ -277,10 +273,7 @@ export const BuyerSettingsPage = () => {
       if (!user) return;
       setIsAddingPayment(true);
       try {
-          const { error } = await supabase.from('payment_methods').insert({
-              user_id: user.id,
-              ...paymentData
-          });
+          const { error } = await addMyPaymentMethod(user.id, paymentData);
           if (error) throw error;
           addToast('Payment method added', 'success');
           setPaymentData({ type: 'visa', provider: 'visa', last4: '', phone_number: '' });
@@ -301,7 +294,7 @@ export const BuyerSettingsPage = () => {
       if (paymentToDelete) {
           setIsDeletingPayment(true);
           try {
-              const { error } = await supabase.from('payment_methods').delete().eq('id', paymentToDelete);
+              const { error } = await deleteMyPaymentMethod(paymentToDelete);
               if (error) throw error;
               addToast('Payment method removed', 'success');
               setLocalPaymentMethods(prev => (prev ?? paymentMethods).filter(p => p.id !== paymentToDelete));
@@ -332,7 +325,7 @@ export const BuyerSettingsPage = () => {
   const handleDisconnectAccount = async (provider: string) => {
       if (!user) return;
       try {
-          await supabase.from('connected_accounts').delete().eq('user_id', user.id).eq('provider', provider);
+          await disconnectMyAccount(user.id, provider);
           addToast(provider + ' disconnected', 'success');
           // (state refreshed via AppContext subscription)
       } catch (error) {
@@ -347,7 +340,7 @@ export const BuyerSettingsPage = () => {
   const handleRequestAccountDeletion = async () => {
       try {
           // In a real app, this would flag the account or send an email
-          await supabase.from('profiles').update({ deleted_at: new Date().toISOString() }).eq('id', user?.id);
+          await requestMyAccountDeletion(user?.id);
           addToast('Account deletion requested', 'success');
       } catch (error) {
           addToast('Failed to request deletion', 'error');

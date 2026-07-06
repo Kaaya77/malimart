@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { useAppState } from '../context/AppContext';
 import { Button, Card, Badge, Input, useToast, PremiumStatCard, ModernFollowCard, GraphicalTag, EmptyState, CountBadge } from '../components/UI';
-import { supabase } from '../services/supabaseClient';
+import { listActiveOffersWithVendors, getVendorCardsBySellerIds } from '../services/accountApi';
 import { OrderTracking } from '../components/CheckoutComponents';
 import { formatTZS, CURRENCY } from '../constants';
 import { VendorProfile, Order, Offer, Product } from '../types';
@@ -60,9 +60,7 @@ const BuyerOffers = () => {
  setLoading(true);
  setLoadError(false);
  const now = new Date().toISOString();
- supabase.from('offers').select('*, vendor:vendor_profiles!seller_id(seller_id,store_name,logo_url,is_verified)')
-   .eq('status','active').or(`end_date.is.null,end_date.gte.${now}`)
-   .order('created_at',{ascending:false}).limit(30)
+ listActiveOffersWithVendors(now)
    .then(({ data, error }) => {
      if (error) { console.error('Offers fetch error:', error); setLoadError(true); }
      else if (data) setOffers(data as any);
@@ -178,9 +176,7 @@ const BuyerFollows = ({ followers, unfollowSeller, navigate }: { followers:any[]
  if (!followers.length) { setVendors([]); return; }
  setLoading(true);
  setLoadError(false);
- supabase.from('vendor_profiles')
- .select('seller_id,store_name,logo_url,is_verified,rating,trust_score,description,region')
- .in('seller_id',followers.map((f:any)=>f.seller_id))
+ getVendorCardsBySellerIds(followers.map((f:any)=>f.seller_id))
  .then(({data, error})=>{
    if (error) { console.error('Followed stores fetch error:', error); setLoadError(true); }
    else if(data) setVendors(data as any);

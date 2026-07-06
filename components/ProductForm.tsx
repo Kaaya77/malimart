@@ -20,6 +20,7 @@ import { LogisticsStep } from './product-form/LogisticsStep';
 import { VariantsStep } from './product-form/VariantsStep';
 import { PreviewStep } from './product-form/PreviewStep';
 import { supabase } from '../services/supabaseClient';
+import { fetchProductVariants } from '../services/shopService';
 import { compressImage, extFor, IMMUTABLE_CACHE } from '../services/imageCompression';
 import { CURRENCY, CATEGORY_HIERARCHY, formatTZS } from '../constants';
 
@@ -86,8 +87,8 @@ export const ProductForm = ({ initialData, onClose, onSuccess, mode = 'modal' }:
 
  useEffect(() => {
  if (initialData?.id) {
- supabase.from('product_variants').select('*').eq('product_id', initialData.id)
- .then(({ data }) => {
+ fetchProductVariants(initialData.id)
+ .then((data) => {
  if (data && data.length > 0) {
  setVariants(data);
  const attrMap: Record<string, Set<string>> = {};

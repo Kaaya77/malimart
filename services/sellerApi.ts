@@ -77,3 +77,56 @@ export const updateOrderStatus = (
     p_new_status: newStatus,
     p_cancel_reason: cancelReason ?? null,
   });
+
+// ---------- Payout methods & shipping zones (self-scoped, RLS-guarded) ----------
+// Direct table queries moved out of SellerSettingsPage (boundary refactor).
+// They return the raw PostgREST `{ data, error }` promise so callers keep
+// their existing handling.
+
+/** All payout methods saved by this seller. */
+export const listMyPayoutMethods = (sellerId: string) =>
+  supabase.from("payout_methods").select("*").eq("seller_id", sellerId);
+
+/** Save a payout method; returns the inserted row (single). */
+export const addMyPayoutMethod = (
+  sellerId: string,
+  args: { methodType: string; details: Record<string, unknown>; isPrimary: boolean }
+) =>
+  supabase
+    .from("payout_methods")
+    .insert({
+      seller_id: sellerId,
+      method_type: args.methodType,
+      details: args.details,
+      is_primary: args.isPrimary,
+    })
+    .select()
+    .single();
+
+/** Remove a payout method by id (RLS restricts to owner). */
+export const deleteMyPayoutMethod = (id: string) =>
+  supabase.from("payout_methods").delete().eq("id", id);
+
+/** All shipping zones configured by this seller. */
+export const listMyShippingZones = (sellerId: string) =>
+  supabase.from("shipping_zones").select("*").eq("seller_id", sellerId);
+
+/** Save a shipping zone (name=region, description=district); returns the inserted row. */
+export const addMyShippingZone = (
+  sellerId: string,
+  args: { name: string; description: string; fee: number }
+) =>
+  supabase
+    .from("shipping_zones")
+    .insert({
+      seller_id: sellerId,
+      name: args.name,
+      description: args.description,
+      fee: args.fee,
+    })
+    .select()
+    .single();
+
+/** Remove a shipping zone by id (RLS restricts to owner). */
+export const deleteMyShippingZone = (id: string) =>
+  supabase.from("shipping_zones").delete().eq("id", id);

@@ -71,3 +71,19 @@ export async function fetchOrderReceipt(orderId: string): Promise<OrderReceipt |
     return null;
   }
 }
+
+/**
+ * A buyer's own return/dispute cases with the disputed order and the
+ * seller's public profile joined, newest first. RLS scopes disputes to the
+ * buyer/seller involved; the buyer_id filter keeps this the buyer's view.
+ * Throws on error so callers (which cache the result) can handle/log it.
+ */
+export async function fetchBuyerDisputes(buyerId: string): Promise<any[]> {
+  const { data, error } = await supabase
+    .from('disputes')
+    .select('*, order:orders(*), seller:profiles!seller_id(id, full_name, avatar_url)')
+    .eq('buyer_id', buyerId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}

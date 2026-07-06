@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Button, Input, Badge, PremiumStatCard, useToast, ConfirmModal } from './UI';
-import { supabase } from '../services/supabaseClient';
+import { listOffers, createOffer, updateOffer, deleteOffer } from '../services/adminApi';
 import { TrendingUp, Plus, Trash2, Edit2, Save, X, Zap, Gift, Truck, Tag, ToggleLeft, ToggleRight, Calendar, Users, Target, Percent, DollarSign, RefreshCw, CheckCircle2, AlertCircle } from 'lucide-react';
 import { formatTZS } from '../constants';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -83,10 +83,7 @@ export const AdminGrowth = () => {
 
   const fetchCampaigns = useCallback(async () => {
     setIsLoading(true);
-    const { data, error } = await supabase
-      .from('offers')
-      .select('*, profiles(full_name)')
-      .order('created_at', { ascending: false });
+    const { data, error } = await listOffers();
     if (!error && data) setCampaigns(data as Campaign[]);
     setIsLoading(false);
   }, []);
@@ -149,11 +146,11 @@ export const AdminGrowth = () => {
     };
     try {
       if (editingCampaign) {
-        const { error } = await supabase.from('offers').update(payload).eq('id', editingCampaign.id);
+        const { error } = await updateOffer(editingCampaign.id, payload);
         if (error) throw error;
         addToast('Campaign updated successfully', 'success');
       } else {
-        const { error } = await supabase.from('offers').insert({ ...payload, current_usage: 0 });
+        const { error } = await createOffer({ ...payload, current_usage: 0 });
         if (error) throw error;
         addToast('Campaign launched successfully', 'success');
       }
@@ -165,7 +162,7 @@ export const AdminGrowth = () => {
 
   const handleToggleStatus = async (c: Campaign) => {
     const newStatus = c.status === 'active' ? 'inactive' : 'active';
-    const { error } = await supabase.from('offers').update({ status: newStatus }).eq('id', c.id);
+    const { error } = await updateOffer(c.id, { status: newStatus });
     if (error) { addToast('Failed to update status', 'error'); return; }
     addToast(`Campaign ${newStatus === 'active' ? 'activated' : 'paused'}`, 'success');
     fetchCampaigns();
@@ -173,7 +170,7 @@ export const AdminGrowth = () => {
 
   const handleDelete = async () => {
     if (!deletingId) return;
-    const { error } = await supabase.from('offers').delete().eq('id', deletingId);
+    const { error } = await deleteOffer(deletingId);
     if (error) { addToast('Failed to delete campaign', 'error'); }
     else { addToast('Campaign deleted', 'success'); fetchCampaigns(); }
     setDeletingId(null);

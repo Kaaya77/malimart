@@ -1,6 +1,6 @@
 import React from 'react';
 import { Badge, Button, EmptyState } from '../../components/UI';
-import { supabase } from '../../services/supabaseClient';
+import { setUserRole } from '../../services/adminApi';
 import { motion } from 'framer-motion';
 import { ArrowDownCircle, ArrowUpCircle, Lock, MessageSquare, Search, Trash2, Unlock, Users } from 'lucide-react';
 import { useAdmin } from './context';
@@ -12,7 +12,7 @@ export const UsersTab = () => {
 
     const handleToggleRole = (u: any) => {
         const newRole = u.role === 'seller' ? 'buyer' : 'seller';
-        supabase.from('profiles').update({ role: newRole }).eq('id', u.id).then(() => {
+        setUserRole(u.id, newRole).then(() => {
             addToast(`User ${newRole === 'seller' ? 'promoted to seller' : 'demoted to buyer'}`, "success");
             fetchAdminData();
         });

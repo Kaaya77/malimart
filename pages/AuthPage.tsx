@@ -11,6 +11,7 @@ import { useToast } from '../components/UI';
 import { supabase } from '../services/supabaseClient';
 import { useAppState } from '../context/AppContext';
 import { recordReferral } from '../services/walletApi';
+import { getProfileBanStatus } from '../services/accountApi';
 
 const TAGLINES = [
   'Tanzania’s most loved marketplace',
@@ -133,7 +134,7 @@ export const LoginPage = () => {
 
         if (authData.user) {
           const { data: profile } = await withTimeout(
-            Promise.resolve(supabase.from('profiles').select('is_banned').eq('id', authData.user.id).single()),
+            getProfileBanStatus(authData.user.id),
             8_000,
             'Login timed out — check your connection and try again.'
           );

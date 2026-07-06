@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { Card, Button, Badge, Modal } from './UI';
-import { supabase } from '../services/supabaseClient';
+import { setVendorVerification } from '../services/adminApi';
 import { FileText, MessageSquare, CheckCircle, XCircle, History, ShieldCheck } from 'lucide-react';
 
 export const AdminVendorVerification = ({ vendor, onUpdate, onMessage }: { vendor: any, onUpdate: () => Promise<void> | void, onMessage: (userId: string, userName: string, context?: any) => void, key?: string }) => {
     const [showDocs, setShowDocs] = useState(false);
 
     const handleVerify = async (approve: boolean) => {
-        await supabase.from('vendor_profiles').update({ is_verified: approve }).eq('seller_id', vendor.seller_id);
+        await setVendorVerification(vendor.seller_id, approve);
         onUpdate();
     };
 

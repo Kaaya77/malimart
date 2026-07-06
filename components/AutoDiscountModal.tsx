@@ -7,7 +7,7 @@
 import React, { useState } from 'react';
 import { X, Save, Clock, Percent, Info, Loader2, CheckCircle2 } from 'lucide-react';
 import { Product } from '../types';
-import { supabase } from '../services/supabaseClient';
+import { createOffer } from '../services/adminApi';
 import { useAppState } from '../context/AppContext';
 import { useToast } from './UI';
 import { formatTZS } from '../constants';
@@ -44,7 +44,7 @@ export const AutoDiscountModal = ({
     setIsSaving(true);
     try {
       // Create an offer that targets this specific product
-      const { error } = await supabase.from('offers').insert({
+      const { error } = await createOffer({
         seller_id: user.id,
         title: `Auto-discount: ${discountPct}% off ${product.name}`,
         code: null,  // auto-apply, no coupon code needed

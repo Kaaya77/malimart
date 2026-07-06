@@ -9,6 +9,7 @@ import {
 import { Badge, Button, Input, Textarea, useToast, GraphicalTag } from './UI';
 import { supabase } from '../services/supabaseClient';
 import { createReturn } from '../services/walletApi';
+import { fetchBuyerDisputes } from '../services/orderApi';
 import { updateDisputeStatus } from '../services/sellerApi';
 import { compressImage, IMMUTABLE_CACHE } from '../services/imageCompression';
 import { withCache, invalidate } from '../services/queryCache';
@@ -61,15 +62,7 @@ export const BuyerReturns: React.FC<BuyerReturnsProps> = ({ userId, onContactSel
  if (!silent) setLoading(true);
  try {
    if (silent) invalidate(BUYER_DISPUTES_KEY);
-   const data = await withCache(BUYER_DISPUTES_KEY, 30_000, async () => {
-     const { data: d, error } = await supabase
-       .from('disputes')
-       .select('*, order:orders(*), seller:profiles!seller_id(id, full_name, avatar_url)')
-       .eq('buyer_id', userId)
-       .order('created_at', { ascending: false });
-     if (error) throw error;
-     return d;
-   });
+   const data = await withCache(BUYER_DISPUTES_KEY, 30_000, () => fetchBuyerDisputes(userId));
    setDisputes(data || []);
  } catch (err: any) {
    console.error('[BuyerReturns]', err?.message);

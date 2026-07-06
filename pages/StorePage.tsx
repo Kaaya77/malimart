@@ -8,7 +8,7 @@ import {
   Heart, Filter, LayoutGrid, Tag, Phone, TrendingUp, Clock, Eye
 } from 'lucide-react';
 import { useAppState } from '../context/AppContext';
-import { supabase } from '../services/supabaseClient';
+import { fetchStoreProducts } from '../services/shopService';
 import { VendorProfile, Product } from '../types';
 import { ProductCard } from '../components/ProductCard';
 import { ReviewSection } from '../components/ReviewSection';
@@ -67,18 +67,12 @@ export const StorePage: React.FC = () => {
     // Don't rely on the global 60-product context cache — it may not include
     // this seller's products at all, leaving the storefront permanently empty.
     const run = async () => {
-      const [v, res] = await Promise.all([
+      const [v, storeItems] = await Promise.all([
         fetchVendorProfile(id).catch(() => null),
-        supabase
-          .from('products')
-          .select('id,seller_id,name,description,price,sale_price,images,category,tags,rating,review_count,stock,status,is_verified,is_boosted,created_at,updated_at,region')
-          .eq('seller_id', id)
-          .eq('status', 'active')
-          .is('deleted_at', null)
-          .order('created_at', { ascending: false }),
+        fetchStoreProducts(id),
       ]);
       setVendor(v);
-      setAllStoreProducts((res.data ?? []) as Product[]);
+      setAllStoreProducts(storeItems);
       setLoading(false);
     };
     run().catch(() => setLoading(false));

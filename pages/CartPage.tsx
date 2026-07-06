@@ -5,8 +5,7 @@ import { useAppState } from '../context/AppContext';
 import { useToast, CountBadge } from '../components/UI';
 import { CURRENCY, formatTZS, getEffectiveUnitPrice, calculateVatIncluded, normalizeVatRate } from '../constants';
 import { Product, Offer, Address, CartItem } from '../types';
-import { supabase } from '../services/supabaseClient';
-import { fetchVendorProfiles } from '../services/shopService';
+import { fetchVendorProfiles, fetchActiveOfferByCode } from '../services/shopService';
 import { useCartTotals } from '../hooks/useCartTotals';
 import { UpsellBanner } from '../components/cart/UpsellBanner';
 import { VendorGroup } from '../components/cart/VendorGroup';
@@ -228,16 +227,8 @@ export const CartPage = () => {
     if (!couponCode.trim()) return;
     setValidatingCoupon(true);
     try {
-      const now = new Date().toISOString();
-      const { data, error } = await supabase
-        .from('offers')
-        .select('*')
-        .eq('code', couponCode.toUpperCase())
-        .eq('status', 'active')
-        .lte('start_date', now)
-        .or(`end_date.is.null,end_date.gte.${now}`)
-        .single();
-      if (error || !data) throw new Error('Invalid or expired coupon code.');
+      const data = await fetchActiveOfferByCode(couponCode.toUpperCase());
+      if (!data) throw new Error('Invalid or expired coupon code.');
       const offer = data as Offer;
       if (offer.min_order_value && subtotal < offer.min_order_value) throw new Error(`Order must exceed ${formatTZS(offer.min_order_value)}`);
       if (offer.max_usage && (offer.current_usage || 0) >= offer.max_usage) throw new Error('Coupon usage limit reached.');

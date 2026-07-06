@@ -19,6 +19,7 @@ import {
 } from './messaging/ConversationKit';
 import { ProductOrderTag } from './SellerMessages';
 import { fetchProductById, fetchVendorProfile } from '../services/shopService';
+import { fetchProfileRole, fetchProfile } from '../services/messagesService';
 import { formatTZS } from '../constants';
 import * as aiService from '../services/geminiService';
 
@@ -245,8 +246,8 @@ export const BuyerMessages = ({ userId, initialSellerId, initialProductId, initi
 
   const handleReport = async () => {
     if (!reportingUser || !user) return;
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', reportingUser).single();
-    if (profile?.role === 'admin') { addToast('Cannot report an administrator', 'error'); setReportingUser(null); return; }
+    const role = await fetchProfileRole(reportingUser);
+    if (role === 'admin') { addToast('Cannot report an administrator', 'error'); setReportingUser(null); return; }
     await reportUser(reportingUser, reportReason, reportDetails);
     addToast('User reported', 'success');
     setReportingUser(null);
@@ -264,15 +265,15 @@ export const BuyerMessages = ({ userId, initialSellerId, initialProductId, initi
   };
 
   const handleBlock = async (partnerId: string) => {
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', partnerId).single();
-    if (profile?.role === 'admin') { addToast('Cannot block an administrator', 'error'); return; }
+    const role = await fetchProfileRole(partnerId);
+    if (role === 'admin') { addToast('Cannot block an administrator', 'error'); return; }
     await blockUser(partnerId);
     setSelectedSeller(null);
     addToast('User blocked', 'success');
   };
 
   const fetchUserProfile = async (uid: string) => {
-    const { data } = await supabase.from('profiles').select('*').eq('id', uid).single();
+    const data = await fetchProfile(uid);
     if (data) setViewingProfile({ id: data.id, name: data.full_name || 'User', avatar: data.avatar_url, role: data.role, created_at: data.created_at, region: data.region, trust_score: data.trust_score, is_verified: data.is_verified });
   };
 

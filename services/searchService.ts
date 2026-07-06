@@ -41,3 +41,25 @@ export async function searchProductsServer(
     return null;
   }
 }
+
+/**
+ * Lightweight ilike search used by the SearchModal for as-you-type results
+ * (and its AI-intent refinement, which adds a max price). Matches name,
+ * category or seller name on active, non-deleted products; up to 12 rows.
+ * Not wrapped in try/catch — Postgrest errors resolve to null data and the
+ * caller keeps its own error handling.
+ */
+export async function quickSearchProducts(
+  q: string,
+  maxPrice?: number | null,
+): Promise<Pick<Product, 'id' | 'name' | 'price' | 'images' | 'category' | 'seller_name' | 'seller_id' | 'status'>[] | null> {
+  let query = supabase
+    .from('products')
+    .select('id,name,price,images,category,seller_name,seller_id,status')
+    .eq('status', 'active')
+    .is('deleted_at', null)
+    .or(`name.ilike.%${q}%,category.ilike.%${q}%,seller_name.ilike.%${q}%`);
+  if (maxPrice) query = query.lte('price', maxPrice);
+  const { data } = await query.limit(12);
+  return data as any;
+}

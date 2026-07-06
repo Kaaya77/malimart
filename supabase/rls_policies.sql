@@ -205,7 +205,7 @@ SELECT
   delivery_fee, return_policy, shipping_policy, processing_time, warranty,
   auto_reply_message, instagram_url, facebook_url, website_url, custom_domain,
   social_links, opening_hours, currency, language, tags, vacation_mode,
-  rating, store_policy
+  rating, store_policy, is_active
 FROM vendor_profiles;
 
 GRANT SELECT ON public.public_vendor_profiles TO anon, authenticated;

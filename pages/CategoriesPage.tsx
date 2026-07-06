@@ -2,8 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppState } from '../context/AppContext';
-import { supabase } from '../services/supabaseClient';
 import { categoryCountsServer, trendingProductsServer } from '../services/exploreService';
+import { fetchActiveStores } from '../services/shopService';
 import { CATEGORY_HIERARCHY } from '../constants';
 import { VendorProfile } from '../types';
 import { LayoutGrid, Store, Flame, Tag, Search } from 'lucide-react';
@@ -49,19 +49,17 @@ export const CategoriesPage = () => {
   const [hasMoreVendors, setHasMoreVendors] = useState(false);
   useEffect(() => {
     if (tab !== 'stores') return;
+    let live = true;
     setLoadingVendors(true);
-    supabase
-      .from('vendor_profiles')
-      .select('*')
-      .eq('is_active', true)
-      .order('total_sales', { ascending: false })
-      .range(0, vendorPage * VENDOR_PAGE) // one extra row = "has more" probe
-      .then(({ data }) => {
-        const rows = (data as VendorProfile[]) || [];
-        setHasMoreVendors(rows.length > vendorPage * VENDOR_PAGE);
-        setVendors(rows.slice(0, vendorPage * VENDOR_PAGE));
-        setLoadingVendors(false);
-      });
+    // RLS-safe: reads public_vendor_profiles via the service, never the
+    // owner-only vendor_profiles table directly (which returns nothing here).
+    fetchActiveStores(vendorPage, VENDOR_PAGE).then(({ stores, hasMore }) => {
+      if (!live) return;
+      setVendors(stores);
+      setHasMoreVendors(hasMore);
+      setLoadingVendors(false);
+    });
+    return () => { live = false; };
   }, [tab, vendorPage]);
 
   // ── Derived data ─────────────────────────────────────────────────────────
