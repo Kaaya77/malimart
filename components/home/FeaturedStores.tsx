@@ -169,7 +169,9 @@ const StoreCard: React.FC<{
   const rating = (shop as any).rating;
 
   return (
-    <motion.button
+    <motion.div
+      role="button"
+      tabIndex={0}
       initial={{ opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-40px' }}
@@ -177,6 +179,7 @@ const StoreCard: React.FC<{
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onClick={onClick}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } }}
       whileHover={{ y: -3 }}
       className="group flex-shrink-0 relative text-left rounded-2xl overflow-hidden cursor-pointer border border-foreground/8 hover:border-foreground/20 transition-all"
       style={{ width: '220px', height: '280px' }}
@@ -247,7 +250,7 @@ const StoreCard: React.FC<{
           </button>
         </div>
       </div>
-    </motion.button>
+    </motion.div>
   );
 };
 
@@ -263,13 +266,16 @@ const MobileStoreCard: React.FC<{
   const rating = (shop as any).rating;
 
   return (
-    <motion.button
+    <motion.div
+      role="button"
+      tabIndex={0}
       initial={{ opacity: 0, x: 20 }}
       whileInView={{ opacity: 1, x: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.35, delay: Math.min(index * 0.05, 0.3) }}
       onClick={onClick}
-      className="flex items-center gap-3 p-3 rounded-2xl bg-foreground/[0.03] border border-foreground/8 active:scale-[0.98] transition-all text-left w-full"
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } }}
+      className="flex items-center gap-3 p-3 rounded-2xl bg-foreground/[0.03] border border-foreground/8 active:scale-[0.98] transition-all text-left w-full cursor-pointer"
     >
       {/* Logo */}
       <div className="w-12 h-12 rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden"
@@ -306,7 +312,7 @@ const MobileStoreCard: React.FC<{
       >
         <Heart className={`w-4 h-4 stroke-[2.5] ${isFollowed ? 'fill-current stroke-none' : ''}`} />
       </button>
-    </motion.button>
+    </motion.div>
   );
 };
 
