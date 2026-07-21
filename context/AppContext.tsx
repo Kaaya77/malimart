@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useState, ReactNode, useCa
 import { supabase } from '../services/supabaseClient';
 import { withCache, invalidate, invalidatePrefix, TTL } from '../services/queryCache';
 import { applyTheme } from '../services/theme';
+import { requestMyAccountDeletion } from '../services/accountApi';
 import { usePresence } from '../hooks/usePresence';
 import { Product, CartItem, User, Order, Notification, VendorProfile, Address, ProductVariant, ChatMessage, Offer, Category, Payment, Shipment, TrustBadge, ReturnRequest, OrderNote, ActivityLog, WalletTransaction, SocialPost, SocialInteraction, Follower, Review } from '../types';
 import { useToast } from '../components/UI';
@@ -1434,7 +1435,12 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         fetchUserData(user.id);
     }, [user, logActivity, fetchUserData, addToast]);
 
-    const deleteAccount = useCallback(async () => { if(user) await supabase.rpc('delete_user'); logout(); }, [user, logout]);
+    const deleteAccount = useCallback(async () => {
+        if (!user) return;
+        const { error } = await requestMyAccountDeletion(user.id);
+        if (error) throw error;
+        logout();
+    }, [user, logout]);
 
     const softDeleteMessage = useCallback(async (id: string) => {
         if (!user) return;
