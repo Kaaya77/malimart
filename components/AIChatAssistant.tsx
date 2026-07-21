@@ -776,42 +776,47 @@ RESPONSE FORMAT:
           </AnimatePresence>
 
           {/* â”€â”€ Header â”€â”€ */}
-          <div className="relative z-10 px-4 py-3 border-b border-foreground/6 flex items-center justify-between flex-shrink-0 bg-background/80 backdrop-blur-sm">
-            <div className="flex items-center gap-3">
+          <div className="relative z-10 px-4 py-3 border-b border-foreground/6 flex items-center justify-between gap-2 flex-shrink-0 bg-background/95 backdrop-blur-sm">
+            <div className="flex items-center gap-3 min-w-0">
               <motion.button whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.93 }}
                 onClick={() => {
                   // Expand first if minimised — a 64px-tall panel would clip the popover
                   if (isMinimized) setIsMinimized(false);
                   setShowAnimalPicker(v => !v);
                 }}
+                className="flex-shrink-0"
                 title="Change companion">
                 <MaliAvatar size={38} rings={isLive} emote={avatarEmote} />
               </motion.button>
-              <div>
-                <p className="font-black text-sm bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">{animalInfo.name}</p>
-                <div className="flex items-center gap-1.5">
-                  <motion.span className={`w-1.5 h-1.5 rounded-full ${isLive ? 'bg-red-500' : 'bg-emerald-500'}`}
+              <div className="min-w-0">
+                <p className="font-black text-sm bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent truncate">{animalInfo.name}</p>
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <motion.span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isLive ? 'bg-red-500' : 'bg-emerald-500'}`}
                     animate={{ opacity: [1, 0.3, 1], scale: [1, 0.8, 1] }}
                     transition={{ duration: 2, repeat: Infinity }} />
-                  <span className="text-[9px] font-bold uppercase tracking-widest text-foreground/35">
-                    {isConnecting ? 'Connecting…' : isLive ? 'Voice on' : 'Ready to help'}
+                  <span className="text-[9px] font-bold uppercase tracking-widest text-foreground/35 truncate whitespace-nowrap">
+                    {isConnecting ? 'Connecting…' : isLive ? 'Voice on' : 'Ready'}
                   </span>
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-0.5">
-              {/* Sheng toggle */}
+            <div className="flex items-center gap-0.5 flex-shrink-0">
+              {/* Sheng toggle — secondary personality control, hidden on narrow
+                  panels where 5 header buttons would otherwise squeeze the
+                  name/status text down to a single letter. */}
               <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                aria-label={languageMode === 'sheng' ? 'Switch to English' : 'Switch to Sheng mode'}
                 title={languageMode === 'sheng' ? 'Switch to English' : 'Switch to Sheng mode'}
                 onClick={() => {
                   const next: LanguageMode = languageMode === 'english' ? 'sheng' : 'english';
                   setLanguageMode(next); localStorage.setItem('mali_language', next);
                 }}
-                className={`p-1.5 rounded-xl transition-all text-[9px] font-black tracking-wide ${languageMode === 'sheng' ? 'bg-emerald-500/15 text-emerald-500' : 'text-foreground/30 hover:bg-foreground/6'}`}>
+                className={`hidden md:inline-flex p-1.5 rounded-xl transition-all text-[9px] font-black tracking-wide ${languageMode === 'sheng' ? 'bg-emerald-500/15 text-emerald-500' : 'text-foreground/30 hover:bg-foreground/6'}`}>
                 {languageMode === 'sheng' ? 'SHENG' : 'SW'}
               </motion.button>
-              {/* Sass/calm toggle */}
+              {/* Sass/calm toggle — same reasoning as above */}
               <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                aria-label={personalityMode === 'sass' ? 'Switch to calm mode' : 'Activate sass mode'}
                 title={personalityMode === 'sass' ? 'Switch to calm mode' : 'Activate sass mode 🌶️'}
                 onClick={() => {
                   const next: PersonalityMode = personalityMode === 'calm' ? 'sass' : 'calm';
@@ -819,11 +824,11 @@ RESPONSE FORMAT:
                   setAvatarEmote(next === 'sass' ? 'cool' : 'angel');
                   setTimeout(() => setAvatarEmote('idle'), 1800);
                 }}
-                className={`p-1.5 rounded-xl transition-all text-[11px] ${personalityMode === 'sass' ? 'bg-rose-500/10 text-rose-500' : 'text-foreground/30 hover:bg-foreground/6'}`}>
+                className={`hidden md:inline-flex p-1.5 rounded-xl transition-all text-[11px] ${personalityMode === 'sass' ? 'bg-rose-500/10 text-rose-500' : 'text-foreground/30 hover:bg-foreground/6'}`}>
                 {personalityMode === 'sass' ? '🌶️' : '😇'}
               </motion.button>
               <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
-                onClick={clearChat} className="p-2 hover:bg-foreground/6 rounded-xl transition-colors" title="Clear">
+                onClick={clearChat} aria-label="Clear chat history" className="p-2 hover:bg-foreground/6 rounded-xl transition-colors" title="Clear">
                 <Trash2 className="w-3.5 h-3.5 text-foreground/35" />
               </motion.button>
               <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
@@ -917,7 +922,7 @@ RESPONSE FORMAT:
               </div>
 
               {/* â”€â”€ Input â”€â”€ */}
-              <div className="relative z-10 px-3 pb-3 pt-2 border-t border-foreground/6 bg-background/80 backdrop-blur-sm flex-shrink-0">
+              <div className="relative z-10 px-3 pb-3 pt-2 border-t border-foreground/6 bg-background/95 backdrop-blur-sm flex-shrink-0">
                 {/* Attachment preview */}
                 <AnimatePresence>
                   {attachment && (
