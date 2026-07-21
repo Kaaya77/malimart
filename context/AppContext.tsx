@@ -1183,14 +1183,11 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
             targetLink = `/admin/messages?chat=${user.id}`;
         }
 
-        await supabase.from('notifications').insert({
-            user_id: to,
-            type: 'message',
-            title: `New Message from ${user.name}`,
-            message: text,
-            read: false,
-            link: targetLink,
-            created_at: new Date().toISOString()
+        await supabase.rpc('notify_message_recipient', {
+            p_receiver_id: to,
+            p_title: `New Message from ${user.name}`,
+            p_message: text,
+            p_link: targetLink
         });
         // Bust messages cache so next fetchMessages gets fresh data
         invalidate(`messages:${user.id}`);
@@ -1332,28 +1329,8 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
             throw error;
         }
         if (user) await logActivity('update_order_status', `Order ${id} status changed to ${status}`, { order_id: id, status, reason });
-
-        // Send notification to buyer.
-        // Cancellations are excluded: the guarded cancel path inside
-        // update_order_status_rbac already notifies the buyer (with refund info) —
-        // inserting here again produced duplicate notifications.
-        // NOTE (known gap): sellers cannot SELECT orders under RLS (orders_select_own is
-        // buyer/admin only), so this lookup only succeeds for admins — seller-driven
-        // status changes (processing/in_transit/delivered) reach the buyer with no
-        // notification. Needs a server-side insert in update_order_status_rbac.
-        if (status !== 'cancelled') {
-            const { data: order } = await supabase.from('orders').select('user_id').eq('id', id).single();
-            if (order) {
-                await supabase.from('notifications').insert({
-                    user_id: order.user_id,
-                    type: 'order',
-                    title: 'Order Updated',
-                    message: `Your order #${id.slice(0, 8)} is now ${status.replace(/_/g, ' ')}`,
-                    read: false,
-                    created_at: new Date().toISOString()
-                });
-            }
-        }
+        // update_order_status_rbac() already inserts the buyer-facing notification
+        // server-side (cancellations and processing/in_transit/delivered transitions).
     }, [user, orders, logActivity]);
 
     const cancelOrder = useCallback(async (id: string, reason: string) => {
