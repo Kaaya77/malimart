@@ -1,2 +1,0 @@
-ALTER TABLE public.products ADD COLUMN IF NOT EXISTS latitude NUMERIC;
-ALTER TABLE public.products ADD COLUMN IF NOT EXISTS longitude NUMERIC;
