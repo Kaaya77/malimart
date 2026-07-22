@@ -7,7 +7,7 @@ import {
  ChevronLeft, ChevronRight, ArrowRight, Sparkles, ZoomIn, ExternalLink,
  MessageCircle, Store,
 } from 'lucide-react';
-import { Product } from '../types';
+import { Product, VendorProfile } from '../types';
 import { useAppState } from '../context/AppContext';
 import { useToast, VerifiedBadge } from './UI';
 import { CURRENCY, messageSellerPath } from '../constants';
@@ -17,6 +17,7 @@ import { useVariantSelection } from '../hooks/useVariantSelection';
 import { getAI } from '../services/aiClient';
 import { MODELS } from '../services/aiModels';
 import { ProductShare } from './ProductShare';
+import { fetchVendorProfile } from '../services/shopService';
 
 interface ProductModalProps {
  product: Product | null;
@@ -44,6 +45,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
  const [aiPitch, setAiPitch] = useState('');
  const [zoomedImg, setZoomedImg] = useState<string | null>(null);
  const [shareOpen, setShareOpen] = useState(false);
+ const [vendor, setVendor] = useState<VendorProfile | null>(null);
  const scrollRef = useRef<HTMLDivElement>(null);
  const imgScrollRef = useRef<HTMLDivElement>(null);
 
@@ -81,8 +83,16 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
  setQuantity(1);
  setDescExpanded(false);
  setAiPitch('');
+ setVendor(null);
  if (scrollRef.current) scrollRef.current.scrollTop = 0;
  }, [product?.id]);
+
+ useEffect(() => {
+ if (!isOpen || !product?.seller_id) return;
+ let cancelled = false;
+ fetchVendorProfile(product.seller_id).then(v => { if (!cancelled && v) setVendor(v); });
+ return () => { cancelled = true; };
+ }, [isOpen, product?.seller_id]);
 
  // Generate a compelling AI pitch line when the modal opens
  useEffect(() => {
@@ -201,8 +211,8 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
  const TrustBadges = ({ compact = false }: { compact?: boolean }) => (
  <div className="grid grid-cols-3 gap-2">
  {[
- { icon: Truck, label: 'Delivery', value: `By ${deliveryDate}` },
- { icon: Shield, label: 'Protected', value: 'Full refund' },
+ { icon: Truck, label: 'Delivery', value: vendor?.shipping_policy ? vendor.shipping_policy.split('.')[0] : `By ${deliveryDate}` },
+ { icon: Shield, label: 'Returns', value: vendor?.return_policy ? vendor.return_policy.split('.')[0] : '7-day returns' },
  { icon: Package, label: 'Stock', value: stats.isOut ? 'Out of stock' : (product.stock != null ? `${product.stock} left` : 'In stock') },
  ].map(item => (
  <div key={item.label} className={`relative overflow-hidden flex flex-col gap-1 ${compact ? 'p-2.5' : 'p-3'} rounded-xl bg-foreground/[0.03] border border-emerald-500/12`}>

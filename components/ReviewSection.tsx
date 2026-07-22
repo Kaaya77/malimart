@@ -377,13 +377,15 @@ export const ReviewSection: React.FC<ReviewSectionProps> = ({ productId }) => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2 flex-wrap">
-                      <p className="text-sm font-bold text-foreground truncate">{(review as any).user?.full_name || 'Verified Buyer'}</p>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <p className="text-sm font-bold text-foreground truncate">{(review as any).user?.full_name || 'Verified Buyer'}</p>
+                        <Stars value={review.rating} size="xs"/>
+                      </div>
                       <span className="text-[10px] text-foreground/30 font-medium shrink-0">
                         {new Date(review.created_at).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' })}
                         {review.updated_at && review.updated_at !== review.created_at && ' (edited)'}
                       </span>
                     </div>
-                    <Stars value={review.rating} size="xs"/>
                   </div>
                   {/* Owner controls */}
                   {isOwn && !isEditing && (

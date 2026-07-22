@@ -15,7 +15,9 @@ export default function middleware(req: Request) {
   if (!CRAWLER.test(ua)) return next();
 
   const url = new URL(req.url);
-  const id = url.pathname.split('/')[2] || '';
+  const rawId = url.pathname.split('/')[2] || '';
+  const uuidMatch = rawId.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+  const id = uuidMatch ? uuidMatch[0] : rawId;
   if (!id) return next();
 
   return rewrite(new URL(`/api/share-meta?id=${encodeURIComponent(id)}`, url.origin));

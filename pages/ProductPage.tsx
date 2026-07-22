@@ -26,8 +26,18 @@ const StarRating = ({ rating, className = '' }: { rating: number; className?: st
 
 type TabId = 'description' | 'specs' | 'shipping';
 
+// /product/:id accepts either a raw UUID or a readable "name-slug-<uuid>" link —
+// pull the UUID out of the tail so pretty share links and legacy raw-id links both resolve.
+const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const extractProductId = (param?: string) => {
+ if (!param) return param;
+ const match = param.match(UUID_RE);
+ return match ? match[0] : param;
+};
+
 export const ProductPage = () => {
- const { id } = useParams();
+ const { id: rawId } = useParams();
+ const id = extractProductId(rawId);
  const navigate = useNavigate();
  const { products, addToCart, toggleWishlist, isInWishlist, getActiveOfferForProduct, addToRecentlyViewed, recentlyViewed = [], user } = useAppState();
  const { addToast } = useToast();

@@ -78,7 +78,10 @@ export const ProductShare: React.FC<ProductShareProps> = ({ product, share, isOp
   const [copied, setCopied] = useState(false);
   const [showPoster, setShowPoster] = useState(false);
 
-  const shareUrl = product ? `${window.location.origin}/product/${product.id}` : share?.url || '';
+  const slugify = (s: string) => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
+  const shareUrl = product
+    ? `${window.location.origin}/product/${slugify(product.name) ? `${slugify(product.name)}-` : ''}${product.id}`
+    : share?.url || '';
   const shareText = product
     ? `🛒 Check out ${product.name} on MaliMart — ${formatTZS(product.price)} ${CURRENCY}\nAuthentic Tanzanian product, verified seller.`
     : share?.text || share?.title || '';
