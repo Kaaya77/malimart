@@ -241,6 +241,12 @@ export interface Order {
     buyer?: { full_name: string; avatar_url: string; phone: string; email: string };
     seller_total?: number; // Computed
     deleted_at?: string;
+    /** Set by the seller via set_order_delivery_details before marking shipped. */
+    delivery_method?: string;
+    actual_delivery_fee?: number;
+    driver_name?: string;
+    driver_phone?: string;
+    delivery_notes?: string;
 }
 
 export interface VendorProfile {

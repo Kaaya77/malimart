@@ -78,6 +78,22 @@ export const updateOrderStatus = (
     p_cancel_reason: cancelReason ?? null,
   });
 
+/** Records how an order is actually being delivered — method, real cost if it
+ * differs from the checkout estimate, and driver contact — and notifies the
+ * buyer. Call before marking an order shipped. */
+export const setOrderDeliveryDetails = (
+  orderId: string,
+  details: { method: string; cost?: number | null; driverName?: string; driverPhone?: string; notes?: string }
+) =>
+  rpc<void>("set_order_delivery_details", {
+    p_order_id: orderId,
+    p_method: details.method,
+    p_cost: details.cost ?? null,
+    p_driver_name: details.driverName || null,
+    p_driver_phone: details.driverPhone || null,
+    p_notes: details.notes || null,
+  });
+
 // ---------- Payout methods & shipping zones (self-scoped, RLS-guarded) ----------
 // Direct table queries moved out of SellerSettingsPage (boundary refactor).
 // They return the raw PostgREST `{ data, error }` promise so callers keep

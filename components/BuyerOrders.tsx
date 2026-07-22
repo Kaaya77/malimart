@@ -166,6 +166,31 @@ export const BuyerOrders = ({
             </div>
           )}
 
+          {/* Delivery details — set by the seller before marking the order shipped */}
+          {(selectedOrder as any).delivery_method && (
+            <div className="rounded-2xl border border-blue-200/50 dark:border-blue-900/40 bg-blue-50/50 dark:bg-blue-900/10 overflow-hidden">
+              <div className="px-4 py-2.5 border-b border-blue-200/40 dark:border-blue-900/30 flex items-center gap-1.5">
+                <Truck className="w-3 h-3 text-blue-500" />
+                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400">How it's being delivered</p>
+              </div>
+              <div className="p-4 space-y-1">
+                <p className="text-sm font-semibold text-foreground">{(selectedOrder as any).delivery_method}</p>
+                {Number((selectedOrder as any).actual_delivery_fee) > 0 && (
+                  <p className="text-xs text-foreground/60">Delivery cost: {formatTZS(Number((selectedOrder as any).actual_delivery_fee))}</p>
+                )}
+                {(selectedOrder as any).driver_name && (
+                  <p className="text-xs text-foreground/60">Driver: {(selectedOrder as any).driver_name}</p>
+                )}
+                {(selectedOrder as any).driver_phone && (
+                  <p className="text-xs text-foreground/60">Contact: {(selectedOrder as any).driver_phone}</p>
+                )}
+                {(selectedOrder as any).delivery_notes && (
+                  <p className="text-xs text-foreground/50 mt-1.5 pt-1.5 border-t border-blue-200/40 dark:border-blue-900/30">{(selectedOrder as any).delivery_notes}</p>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Payment */}
           <div className="rounded-2xl border border-foreground/8 p-4">
             <p className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/40 mb-2">Payment</p>

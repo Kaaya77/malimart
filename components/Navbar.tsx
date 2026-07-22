@@ -373,11 +373,6 @@ export const Navbar = () => {
  {isDark?<Sun className="w-[18px] h-[18px] stroke-[2]"/>:<Moon className="w-[18px] h-[18px] stroke-[2]"/>}
  </button>
 
- {/* Wishlist (desktop) */}
- <Link to="/wishlist" aria-label="Wishlist" className={`hidden md:flex ${ibtn}`}>
- <Heart className="w-[18px] h-[18px] stroke-[2]"/>
- </Link>
-
  {/* Messages (desktop) */}
  {user && (
  <Link to="/messages" aria-label={`Messages${unreadMessages?` (${unreadMessages} unread)`:''}`} className={`hidden md:flex relative ${ibtn}`}>

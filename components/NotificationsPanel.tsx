@@ -43,8 +43,8 @@ export function NotificationsPanel({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <div className="w-[min(92vw,380px)] overflow-hidden rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 shadow-2xl">
-      <header className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-800 px-4 py-3">
+    <div className="w-[min(92vw,380px)] overflow-hidden rounded-2xl border border-foreground/10 bg-background shadow-2xl">
+      <header className="flex items-center justify-between border-b border-foreground/10 px-4 py-3">
         <h2 className="text-sm font-semibold">Notifications</h2>
         <div className="flex gap-2 text-xs">
           {selecting ? (
@@ -68,15 +68,15 @@ export function NotificationsPanel({ onClose }: { onClose: () => void }) {
       </header>
 
       <div className="max-h-[60vh] overflow-y-auto">
-        {loading && <p className="p-4 text-sm text-neutral-500">Loading…</p>}
+        {loading && <p className="p-4 text-sm text-foreground/45">Loading…</p>}
         {!loading && items.length === 0 && (
-          <p className="p-6 text-center text-sm text-neutral-500">
+          <p className="p-6 text-center text-sm text-foreground/45">
             You're all caught up. New order and message updates will appear here.
           </p>
         )}
         {items.map((n) => {
           const inner = (
-            <div className={`flex gap-3 px-4 py-3 ${n.read ? "" : "bg-[var(--mm-accent-soft)] dark:bg-neutral-900"}`}>
+            <div className={`flex gap-3 px-4 py-3 ${n.read ? "" : "bg-[var(--mm-accent-soft)]"}`}>
               {selecting && (
                 <input type="checkbox" checked={selected.has(n.id)} onChange={() => toggle(n.id)}
                   onClick={(e) => e.stopPropagation()} className="mt-1 accent-[var(--mm-accent)]" />
@@ -84,8 +84,8 @@ export function NotificationsPanel({ onClose }: { onClose: () => void }) {
               <span className="text-lg">{ICONS[n.type] ?? "🔔"}</span>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium">{n.title}</p>
-                <p className="line-clamp-2 text-xs text-neutral-500">{n.message}</p>
-                <p className="mt-0.5 text-[11px] text-neutral-400">
+                <p className="line-clamp-2 text-xs text-foreground/45">{n.message}</p>
+                <p className="mt-0.5 text-[11px] text-foreground/35">
                   {new Date(n.created_at).toLocaleString("en-TZ", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                 </p>
               </div>
@@ -93,22 +93,22 @@ export function NotificationsPanel({ onClose }: { onClose: () => void }) {
             </div>
           );
           return selecting || !n.link ? (
-            <div key={n.id} onClick={() => selecting && toggle(n.id)} className="cursor-pointer border-b border-neutral-100 dark:border-neutral-900 last:border-0">
+            <div key={n.id} onClick={() => selecting && toggle(n.id)} className="cursor-pointer border-b border-foreground/8 last:border-0">
               {inner}
             </div>
           ) : (
             <Link key={n.id} to={n.link} onClick={onClose}
-              className="block border-b border-neutral-100 dark:border-neutral-900 last:border-0 hover:bg-neutral-50 dark:hover:bg-neutral-900">
+              className="block border-b border-foreground/8 last:border-0 hover:bg-foreground/[0.04]">
               {inner}
             </Link>
           );
         })}
       </div>
 
-      <footer className="border-t border-neutral-200 dark:border-neutral-800 px-4 py-2.5 text-center">
+      <footer className="border-t border-foreground/10 px-4 py-2.5 text-center">
         <button
           onClick={async () => { await clearReadNotifications(); load(); }}
-          className="text-xs font-medium text-neutral-500 hover:text-red-600"
+          className="text-xs font-medium text-foreground/45 hover:text-red-600"
         >
           Clear read notifications
         </button>

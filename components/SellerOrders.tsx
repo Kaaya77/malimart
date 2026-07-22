@@ -17,6 +17,7 @@ import { withCache, invalidate } from '../services/queryCache';
 import { motion, AnimatePresence } from 'framer-motion';
 import { orderStatus } from './orderStatusConfig';
 import { CancelOrderModal } from './CancelOrderModal';
+import { DeliveryDetailsModal } from './DeliveryDetailsModal';
 
 type OrderStatus = 'pending'|'processing'|'confirmed'|'in_transit'|'shipped'|'delivered'|'cancelled'|'refunded'|'disputed'|'failed';
 
@@ -496,7 +497,7 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: {
     return () => { supabase.removeChannel(ch); };
   }, [sellerId]);
 
-  const handleStatus = async (orderId: string, newStatus: string, reason?: string) => {
+  const doStatusChange = async (orderId: string, newStatus: string, reason?: string) => {
     if (!rateLimit(`status-${orderId}`, 5)) return addToast('Slow down', 'error');
     setUpdating(p => new Set(p).add(orderId));
     const patch = (list: GroupedOrder[]) => list.map(o => o.id === orderId ? { ...o, status: newStatus } : o);
@@ -515,6 +516,28 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: {
     } finally {
       setUpdating(p => { const s = new Set(p); s.delete(orderId); return s; });
     }
+  };
+
+  // Marking an order shipped first requires delivery details (method, real
+  // cost if different, driver contact) so the buyer knows what to expect —
+  // intercepted here so every call site (quick actions, detail modal) gets
+  // this for free without changing their own signatures.
+  const [deliveryModalOrder, setDeliveryModalOrder] = useState<string | null>(null);
+  const handleStatus = (orderId: string, newStatus: string, reason?: string) => {
+    if (newStatus === 'in_transit') { setDeliveryModalOrder(orderId); return; }
+    return doStatusChange(orderId, newStatus, reason);
+  };
+  const confirmDeliveryDetails = async (details: { method: string; cost?: number | null; driverName?: string; driverPhone?: string; notes?: string }) => {
+    const orderId = deliveryModalOrder;
+    if (!orderId) return;
+    setDeliveryModalOrder(null);
+    try {
+      await sellerApi.setOrderDeliveryDetails(orderId, details);
+    } catch (err: any) {
+      addToast(err.message || 'Could not save delivery details', 'error');
+      return;
+    }
+    await doStatusChange(orderId, 'in_transit');
   };
 
   const filtered = useMemo(() => orders.filter(o => {
@@ -659,6 +682,12 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: {
           />
         )}
       </AnimatePresence>
+
+      <DeliveryDetailsModal
+        isOpen={!!deliveryModalOrder}
+        onClose={() => setDeliveryModalOrder(null)}
+        onConfirm={confirmDeliveryDetails}
+      />
     </div>
   );
 };
