@@ -292,16 +292,16 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
  onClick={() => toggleWishlist(product)}
  aria-label={isLiked ? 'Remove from wishlist' : 'Add to wishlist'}
  className={`w-9 h-9 rounded-full flex items-center justify-center backdrop-blur-md shadow-sm transition-all active:scale-90
- ${isLiked ? 'bg-rose-500 text-white' : 'bg-background/80 text-foreground ring-1 ring-foreground/10'}`}
+ ${isLiked ? 'bg-rose-500 text-white' : 'bg-background/80 text-foreground ring-1 ring-black/15 dark:ring-foreground/10'}`}
  >
  <Heart className={`w-4 h-4 ${isLiked ? 'fill-current stroke-none' : 'stroke-[2.2]'}`} />
  </button>
  <button onClick={handleShare} aria-label="Share"
- className="w-9 h-9 rounded-full bg-background/80 text-foreground ring-1 ring-foreground/10 backdrop-blur-md shadow-sm flex items-center justify-center active:scale-90 transition-transform">
+ className="w-9 h-9 rounded-full bg-background/80 text-foreground ring-1 ring-black/15 dark:ring-foreground/10 backdrop-blur-md shadow-sm flex items-center justify-center active:scale-90 transition-transform">
  <Share2 className="w-4 h-4 stroke-[2.2]" />
  </button>
  <button onClick={onClose} aria-label="Close"
- className="w-9 h-9 rounded-full bg-background/80 text-foreground ring-1 ring-foreground/10 backdrop-blur-md shadow-sm flex items-center justify-center active:scale-90 transition-transform">
+ className="w-9 h-9 rounded-full bg-background/80 text-foreground ring-1 ring-black/15 dark:ring-foreground/10 backdrop-blur-md shadow-sm flex items-center justify-center active:scale-90 transition-transform">
  <X className="w-4 h-4 stroke-[2.5]" />
  </button>
  </div>
@@ -532,7 +532,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
  {/* Zoom button */}
  <button
    onClick={() => setZoomedImg(images[selectedImg])}
-   className="absolute bottom-5 right-5 z-10 w-9 h-9 rounded-full bg-background/80 backdrop-blur-md ring-1 ring-foreground/10 flex items-center justify-center text-foreground/60 hover:text-foreground hover:bg-background transition-colors shadow-sm"
+   className="absolute bottom-5 right-5 z-10 w-9 h-9 rounded-full bg-background/80 backdrop-blur-md ring-1 ring-black/15 dark:ring-foreground/10 flex items-center justify-center text-foreground/60 hover:text-foreground hover:bg-background transition-colors shadow-sm"
    aria-label="Zoom image"
  >
    <ZoomIn className="w-4 h-4 stroke-[2]" />
@@ -543,14 +543,14 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
  <div className="absolute inset-x-3 top-1/2 -translate-y-1/2 flex justify-between pointer-events-none">
  <button
  onClick={() => setSelectedImg(i => (i - 1 + images.length) % images.length)}
- className="pointer-events-auto w-9 h-9 rounded-full bg-background/80 text-foreground ring-1 ring-foreground/10 backdrop-blur-md flex items-center justify-center hover:bg-background transition-colors shadow-sm"
+ className="pointer-events-auto w-9 h-9 rounded-full bg-background/80 text-foreground ring-1 ring-black/15 dark:ring-foreground/10 backdrop-blur-md flex items-center justify-center hover:bg-background transition-colors shadow-sm"
  aria-label="Previous image"
  >
  <ChevronLeft className="w-4 h-4 stroke-[2.2]" />
  </button>
  <button
  onClick={() => setSelectedImg(i => (i + 1) % images.length)}
- className="pointer-events-auto w-9 h-9 rounded-full bg-background/80 text-foreground ring-1 ring-foreground/10 backdrop-blur-md flex items-center justify-center hover:bg-background transition-colors shadow-sm"
+ className="pointer-events-auto w-9 h-9 rounded-full bg-background/80 text-foreground ring-1 ring-black/15 dark:ring-foreground/10 backdrop-blur-md flex items-center justify-center hover:bg-background transition-colors shadow-sm"
  aria-label="Next image"
  >
  <ChevronRight className="w-4 h-4 stroke-[2.2]" />

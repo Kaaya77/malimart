@@ -56,10 +56,10 @@ export const ProductCardActions: React.FC<ProductCardActionsProps> = ({
  <button
  onClick={handleWishlist}
  aria-label={isLiked ? 'Remove from wishlist' : 'Add to wishlist'}
- className={`absolute top-2.5 right-2.5 z-30 w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-md ring-1 transition-all duration-150 active:scale-90
+ className={`absolute top-2.5 right-2.5 z-30 w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-md ring-1 shadow-md transition-all duration-150 active:scale-90
  ${isLiked
- ? 'bg-rose-500/95 text-white ring-rose-400/30 shadow-sm shadow-rose-500/30'
- : 'bg-white/85 dark:bg-black/70 text-foreground/70 hover:text-rose-500 ring-foreground/10 hover:bg-white dark:hover:bg-black'}`}
+ ? 'bg-rose-500/95 text-white ring-rose-400/30 shadow-rose-500/30'
+ : 'bg-white/90 dark:bg-black/70 text-foreground/70 hover:text-rose-500 ring-black/10 dark:ring-white/10 hover:bg-white dark:hover:bg-black'}`}
  >
  <Heart className={`w-3.5 h-3.5 ${isLiked ? 'fill-current stroke-none' : 'stroke-[2.2]'}`} />
  </button>
@@ -94,7 +94,7 @@ export const ProductCardActions: React.FC<ProductCardActionsProps> = ({
  className={`absolute bottom-2.5 left-2.5 z-30 md:hidden h-8 px-3 rounded-full flex items-center gap-1.5 text-[11px] font-bold tracking-wide shadow-md transition-all duration-150
  ${isAdding
  ? 'bg-emerald-600 text-white'
- : 'bg-white/95 dark:bg-black/85 text-foreground backdrop-blur-md ring-1 ring-foreground/10'}`}
+ : 'bg-white/95 dark:bg-black/85 text-foreground backdrop-blur-md ring-1 ring-black/15 dark:ring-white/10'}`}
  >
  {isAdding
  ? <><Check className="w-3.5 h-3.5 stroke-[2.5]" /> Added</>
