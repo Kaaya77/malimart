@@ -13,7 +13,7 @@ export const SecurityTab = () => {
         setSendingReset(true);
         try {
             const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
-                redirectTo: `${window.location.origin}/reset-password`,
+                redirectTo: `${window.location.origin}/auth/reset`,
             });
             if (error) throw error;
             addToast('Password reset link sent to ' + user.email, 'success');
