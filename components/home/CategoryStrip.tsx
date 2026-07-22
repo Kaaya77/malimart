@@ -39,6 +39,14 @@ const CAT_META: Record<string, { img: string; color: string; textColor: string }
   'Fashion & Beauty':  { img: 'https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&q=80&w=900', color: '#e879a0', textColor: '#fff' },
   'Handicrafts':       { img: 'https://images.unsplash.com/photo-1528360983277-13d401cdc186?auto=format&fit=crop&q=80&w=900', color: '#a78bfa', textColor: '#fff' },
   'Pantry & Spices':   { img: 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&q=80&w=900', color: '#f59e0b', textColor: '#fff' },
+  // aliases matching constants.ts CATEGORY_HIERARCHY / geminiService.ts naming
+  'Construction':          { img: 'https://images.unsplash.com/photo-1541976590-713941681591?auto=format&fit=crop&q=80&w=900', color: '#eab308', textColor: '#fff' },
+  'Construction & Hardware': { img: 'https://images.unsplash.com/photo-1541976590-713941681591?auto=format&fit=crop&q=80&w=900', color: '#eab308', textColor: '#fff' },
+  'Vehicles':              { img: 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&q=80&w=900', color: '#64748b', textColor: '#fff' },
+  'Kids & Toys':           { img: 'https://images.unsplash.com/photo-1558877385-8c1cee71006d?auto=format&fit=crop&q=80&w=900', color: '#f43f5e', textColor: '#fff' },
+  'Books & Stationery':    { img: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?auto=format&fit=crop&q=80&w=900', color: '#60a5fa', textColor: '#fff' },
+  'Food & Pantry':         { img: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=900', color: '#fb923c', textColor: '#fff' },
+  'Handicrafts & Products': { img: 'https://images.unsplash.com/photo-1528360983277-13d401cdc186?auto=format&fit=crop&q=80&w=900', color: '#a78bfa', textColor: '#fff' },
 };
 
 const FALLBACK_IMG = 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&q=80&w=900';
@@ -99,7 +107,7 @@ const HeroCategoryCard: React.FC<{
       {/* Count top-right */}
       {count != null && count > 0 && (
         <div className="absolute top-5 right-5">
-          <span className="text-[10px] font-bold text-white/50">{count} products</span>
+          <span className="text-[10px] font-bold text-white/75">{count} products</span>
         </div>
       )}
 
@@ -168,7 +176,7 @@ const MediumCategoryCard: React.FC<{
             {name}
           </motion.h3>
           {count != null && count > 0 && (
-            <p className="text-[10px] text-white/50 mt-0.5">{count} products</p>
+            <p className="text-[10px] text-white/75 mt-0.5">{count} products</p>
           )}
         </div>
         <motion.div
@@ -219,7 +227,7 @@ const CompactCategoryCard: React.FC<{
         <div>
           <p className="text-sm font-bold text-foreground leading-tight">{name}</p>
           {count != null && count > 0 && (
-            <p className="text-[10px] text-foreground/40 mt-0.5">{count} items</p>
+            <p className="text-[10px] text-foreground/55 mt-0.5">{count} items</p>
           )}
         </div>
         <motion.div
@@ -251,7 +259,7 @@ const MobileCategoryCard: React.FC<{
       <motion.div className="absolute inset-0" style={{ background: `linear-gradient(to top, ${color}88, transparent)` }} />
       <div className="absolute inset-x-0 bottom-0 p-3">
         <p className="font-bold text-white text-xs leading-tight line-clamp-2">{name}</p>
-        {count != null && count > 0 && <p className="text-[9px] text-white/50 mt-0.5">{count}</p>}
+        {count != null && count > 0 && <p className="text-[9px] text-white/75 mt-0.5">{count}</p>}
       </div>
     </div>
   </motion.button>
@@ -292,7 +300,7 @@ export const CategoryStrip: React.FC = () => {
       {/* Header */}
       <div className="container mx-auto px-5 md:px-8 mb-6 md:mb-8 flex items-end justify-between gap-4">
         <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.25em] text-foreground/35 mb-2">Explore</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.25em] text-foreground/55 mb-2">Explore</p>
           <h2 className="font-sans text-2xl md:text-[2rem] font-bold tracking-tight text-foreground">
             Browse by category
           </h2>

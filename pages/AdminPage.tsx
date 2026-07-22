@@ -52,8 +52,9 @@ export const AdminPage = () => {
     const ADMIN_TABS: AdminTab[] = ['overview', 'users', 'vendors', 'products', 'disputes', 'payouts', 'settings', 'moderation', 'security', 'growth', 'messages', 'ai-hero'];
     // Honor ?tab= deep links (e.g. the /messages redirect sends admins to /admin?tab=messages).
     const initialTab = new URLSearchParams(window.location.search).get('tab') as AdminTab | null;
+    const initialChatId = new URLSearchParams(window.location.search).get('chat');
     const [activeTab, setActiveTab] = useState<AdminTab>(initialTab && ADMIN_TABS.includes(initialTab) ? initialTab : 'overview');
-    const [selectedMessageUser, setSelectedMessageUser] = useState<{id: string, name: string, context?: { type: 'order' | 'return' | 'support', id: string, label: string }} | null>(null);
+    const [selectedMessageUser, setSelectedMessageUser] = useState<{id: string, name: string, context?: { type: 'order' | 'return' | 'support', id: string, label: string }} | null>(initialChatId ? { id: initialChatId, name: '' } : null);
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState(false);
 

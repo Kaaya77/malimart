@@ -27,7 +27,7 @@ export const MessagesPage = () => {
     return <Navigate to={`/seller?tab=messages${peerId ? `&chat=${peerId}` : ''}`} replace />;
   }
   if (user.role === 'admin') {
-    return <Navigate to="/admin?tab=messages" replace />;
+    return <Navigate to={`/admin?tab=messages${peerId ? `&chat=${peerId}` : ''}`} replace />;
   }
   return <Navigate to={`/buyer?tab=inbox${peerId ? `&sellerId=${peerId}` : ''}`} replace />;
 };
