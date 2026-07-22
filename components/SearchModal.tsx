@@ -208,8 +208,13 @@ export const SearchModal = ({
  animate={{ opacity: 1 }}
  exit={{ opacity: 0 }}
  transition={{ duration: 0.2 }}
- className="fixed inset-0 z-[120] bg-background flex flex-col"
+ onClick={(e) => { if (e.target === e.currentTarget) setIsSearchOpen(false); }}
+ // Full-screen takeover only on mobile, where that's the expected pattern.
+ // On desktop this becomes a centered dropdown panel over a dismissable
+ // backdrop — a search shouldn't blank out the entire page on a large screen.
+ className="fixed inset-0 z-[120] flex flex-col md:items-center md:pt-20 md:bg-black/40 md:backdrop-blur-sm"
  >
+ <div className="flex flex-col w-full h-full bg-background md:h-auto md:max-h-[75vh] md:w-full md:max-w-2xl md:rounded-3xl md:border md:border-foreground/10 md:shadow-2xl overflow-hidden">
  {/* Header */}
  <div className="flex items-center gap-2 p-4 md:p-5 border-b border-foreground/8">
  <form onSubmit={(e) => { pushRecent(searchQuery); handleSearch(e); }} className="flex-1 relative">
@@ -398,6 +403,7 @@ export const SearchModal = ({
  )}
  </div>
  )}
+ </div>
  </div>
  </motion.div>
  )}

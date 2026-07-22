@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Select, Switch } from '../../components/UI';
 import { TANZANIA_REGIONS } from '../../constants';
-import { Globe, Home, Loader2, Mail, Phone, Upload, User as UserIcon, Wallet } from 'lucide-react';
+import { Globe, Home, Loader2, Mail, Phone, Upload, User as UserIcon } from 'lucide-react';
 import { supabase } from '../../services/supabaseClient';
 import { compressImage } from '../../services/imageCompression';
 import { useBuyerSettings } from './context';
@@ -206,21 +206,6 @@ export const ProfileTab = () => {
                             <option value="en">English (US)</option>
                             <option value="sw">Swahili</option>
                             <option value="fr">French</option>
-                        </Select>
-                    </div>
-                    <div className="space-y-1">
-                        <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">Default Currency</label>
-                        <Select
-                            icon={Wallet}
-                            value={preferences.defaultCurrency}
-                            onChange={(e: any) => {
-                                setPreferences({...preferences, defaultCurrency: e.target.value});
-                                updateUserProfile({ default_currency: e.target.value });
-                            }}
-                        >
-                            <option value="TZS">TZS - Tanzanian Shilling</option>
-                            <option value="USD">USD - US Dollar</option>
-                            <option value="KES">KES - Kenyan Shilling</option>
                         </Select>
                     </div>
                   </div>

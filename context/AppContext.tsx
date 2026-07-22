@@ -1367,14 +1367,18 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         // Direct UPDATE on orders is RLS-blocked for buyers (orders_update_own only
         // permits status→cancelled), so the old .update({deleted_at}) silently no-oped.
         // hide_my_order soft-deletes the order server-side (terminal statuses only).
+        // Remove it from view immediately — waiting on a full fetchUserData()
+        // round-trip made "Remove from history" feel like it was doing nothing.
+        const previous = orders;
+        setOrders(prev => prev.filter(o => o.id !== id));
         const { error } = await supabase.rpc('hide_my_order', { p_order: id });
         if (error) {
+            setOrders(previous); // rollback
             console.error('Hide order failed', error);
             addToast(error.message || 'Could not remove order from history', 'error');
             throw error;
         }
-        fetchUserData(user?.id!);
-    }, [user, fetchUserData, addToast]);
+    }, [orders, addToast]);
 
     const deleteAddress = useCallback(async (id: string) => { 
         const { error } = await supabase.from('addresses').update({ deleted_at: new Date().toISOString() }).eq('id', id);

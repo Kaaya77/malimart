@@ -428,6 +428,39 @@ export const AIChatAssistant = () => {
 
   const genId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
+  // ── Repositionable widget ──────────────────────────────────────────────
+  // The companion is anchored bottom-right by default; dragging it offsets
+  // from that anchor and the offset persists across sessions. Same offset
+  // applies whether the bubble is closed or the panel is open, so the panel
+  // opens wherever the user last left the bubble.
+  const posX = useMotionValue(0);
+  const posY = useMotionValue(0);
+  const dragConstraintsRef = useRef({ top: -(window.innerHeight - 160), left: -(window.innerWidth - 100), right: 20, bottom: 20 });
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('mali_widget_pos') || 'null');
+      if (saved && typeof saved.x === 'number' && typeof saved.y === 'number') {
+        posX.set(saved.x); posY.set(saved.y);
+      }
+    } catch {}
+  }, []);
+  const savePosition = () => {
+    try { localStorage.setItem('mali_widget_pos', JSON.stringify({ x: posX.get(), y: posY.get() })); } catch {}
+  };
+  // Browsers still fire a native `click` after mouseup regardless of how far
+  // the pointer moved in between — without this guard, every drag-to-reposition
+  // also re-triggers onClick and pops the chat open.
+  const draggedRef = useRef(false);
+  const handleFabDrag = (_: unknown, info: { offset: { x: number; y: number } }) => {
+    // Set as soon as real movement is detected — well before pointerup/click,
+    // unlike onDragEnd which can resolve a frame after the native click already fired.
+    if (Math.abs(info.offset.x) > 4 || Math.abs(info.offset.y) > 4) draggedRef.current = true;
+  };
+  const handleFabDragEnd = () => {
+    savePosition();
+    setTimeout(() => { draggedRef.current = false; }, 200);
+  };
+
   useEffect(() => { scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' }); }, [messages, isTyping]);
   useEffect(() => { if (isOpen && !isMinimized) setTimeout(() => inputRef.current?.focus(), 250); }, [isOpen, isMinimized]);
   useEffect(() => () => stopLiveSession(), []);
@@ -704,8 +737,12 @@ RESPONSE FORMAT:
       <motion.button initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 300, damping: 18, delay: 0.3 }}
         whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.9 }}
-        onClick={() => setIsOpen(true)}
-        className="relative w-14 h-14 rounded-[18px]"
+        onClick={() => { if (!draggedRef.current) setIsOpen(true); }}
+        drag dragMomentum={false} dragElastic={0.12} dragConstraints={dragConstraintsRef.current}
+        onDrag={handleFabDrag} onDragEnd={handleFabDragEnd}
+        style={{ x: posX, y: posY, touchAction: 'none' }}
+        title="Drag to reposition"
+        className="relative w-14 h-14 rounded-[18px] cursor-grab active:cursor-grabbing"
       >
         {/* Glow halo */}
         <motion.div className="absolute inset-0 rounded-[18px] bg-gradient-to-br from-emerald-400 to-teal-600 blur-xl"

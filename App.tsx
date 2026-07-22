@@ -11,7 +11,6 @@ import { ToastProvider, ErrorBoundary, Button, Input } from './components/UI';
 import { Navbar, MobileBottomNav } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { Magnetic } from './components/Effects';
-import { SocialProofToast } from './components/SocialProofToast';
 
 // Lazy Page Imports
 const HomePage = lazy(() => import('./pages/HomePage').then(m => ({ default: m.HomePage })));
@@ -271,7 +270,6 @@ const AppContent = () => {
       <Navbar />
       <MobileBottomNav />
       <DeferredAIChat />
-      <SocialProofToast />
       <BackToTop />
       
       <main className="flex-1 relative">

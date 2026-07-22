@@ -244,7 +244,7 @@ export const ProductPage = () => {
  initial={{ opacity: 0, y: 16 }}
  animate={{ opacity: 1, y: 0 }}
  transition={{ duration: 0.5, ease: 'easeOut' }}
- className="grid lg:grid-cols-2 gap-6 lg:gap-10"
+ className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10 min-w-0"
  >
  {/* ── Gallery ─────────────────────────────────────────────── */}
  <div className="flex flex-col gap-3 lg:sticky lg:top-28 h-fit">
