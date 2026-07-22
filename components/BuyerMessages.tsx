@@ -24,6 +24,7 @@ import { formatTZS } from '../constants';
 import * as aiService from '../services/geminiService';
 
 const PIN_KEY = 'malimart_pinned_chats';
+const ARCHIVE_KEY = 'malimart_archived_chats';
 
 export const BuyerMessages = ({ userId, initialSellerId, initialProductId, initialOrderId }: {
   userId: string;
@@ -55,12 +56,20 @@ export const BuyerMessages = ({ userId, initialSellerId, initialProductId, initi
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [remoteIsTyping, setRemoteIsTyping] = useState(false);
+  const typingOutRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterUnread, setFilterUnread] = useState(false);
   const [pinnedSellers, setPinnedSellers] = useState<Set<string>>(() => {
     try { return new Set(JSON.parse(localStorage.getItem(PIN_KEY) || '[]')); } catch { return new Set(); }
   });
+  const archiveKey = `${ARCHIVE_KEY}_${userId}`;
+  const [archivedSellers, setArchivedSellers] = useState<Set<string>>(() => {
+    try { return new Set(JSON.parse(localStorage.getItem(archiveKey) || '[]')); } catch { return new Set(); }
+  });
+  const [showArchived, setShowArchived] = useState(false);
 
   const [magicMode, setMagicMode] = useState(false);
   const [isPolishing, setIsPolishing] = useState(false);
@@ -103,8 +112,39 @@ export const BuyerMessages = ({ userId, initialSellerId, initialProductId, initi
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `receiver_id=eq.${userId}` }, () => load())
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `sender_id=eq.${userId}` }, () => load())
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [userId, user, blockedUsers]);
+    const typingChannel = supabase.channel(`typing:${userId}`)
+      .on('broadcast', { event: 'typing' }, ({ payload }: any) => {
+        if (payload.userId === selectedSeller) {
+          setRemoteIsTyping(payload.isTyping);
+          setTimeout(() => setRemoteIsTyping(false), 3000);
+        }
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); supabase.removeChannel(typingChannel); };
+  }, [userId, user, blockedUsers, selectedSeller]);
+
+  // One outbound typing channel per selected conversation — created on select,
+  // reused for every keystroke, removed on switch/unmount.
+  useEffect(() => {
+    if (!selectedSeller) return;
+    const ch = supabase.channel(`typing:${selectedSeller}`).subscribe();
+    typingOutRef.current = ch;
+    return () => {
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      typingOutRef.current = null;
+      supabase.removeChannel(ch);
+    };
+  }, [selectedSeller]);
+
+  const handleTyping = () => {
+    const ch = typingOutRef.current;
+    if (!selectedSeller || !ch) return;
+    ch.send({ type: 'broadcast', event: 'typing', payload: { userId, isTyping: true } });
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => {
+      typingOutRef.current?.send({ type: 'broadcast', event: 'typing', payload: { userId, isTyping: false } });
+    }, 2000);
+  };
 
   useEffect(() => {
     if (!selectedSeller) return;
@@ -168,6 +208,7 @@ export const BuyerMessages = ({ userId, initialSellerId, initialProductId, initi
       } as any);
     }
     let list = Array.from(map.values());
+    list = list.filter(v => showArchived ? archivedSellers.has(v.seller_id) : !archivedSellers.has(v.seller_id));
     if (searchTerm) list = list.filter(v => v.store_name.toLowerCase().includes(searchTerm.toLowerCase()));
     if (filterUnread) list = list.filter(v => v.unreadCount > 0);
     return list.sort((a, b) => {
@@ -176,7 +217,7 @@ export const BuyerMessages = ({ userId, initialSellerId, initialProductId, initi
       if (ap !== bp) return bp - ap;
       return new Date(b.lastMessageAt || 0).getTime() - new Date(a.lastMessageAt || 0).getTime();
     });
-  }, [chats, userId, searchTerm, filterUnread, pinnedSellers, selectedSeller, initialVendor]);
+  }, [chats, userId, searchTerm, filterUnread, pinnedSellers, archivedSellers, showArchived, selectedSeller, initialVendor]);
 
   const totalUnread = useMemo(
     () => chats.filter(c => c.receiver_id === userId && !c.read).length,
@@ -244,6 +285,17 @@ export const BuyerMessages = ({ userId, initialSellerId, initialProductId, initi
     });
   };
 
+  const toggleArchive = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    setArchivedSellers(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      try { localStorage.setItem(archiveKey, JSON.stringify([...next])); } catch {}
+      return next;
+    });
+    if (selectedSeller === id) setSelectedSeller(null);
+  };
+
   const handleReport = async () => {
     if (!reportingUser || !user) return;
     const role = await fetchProfileRole(reportingUser);
@@ -295,12 +347,20 @@ export const BuyerMessages = ({ userId, initialSellerId, initialProductId, initi
                 </span>
               )}
             </h3>
-            <button
-              onClick={() => setFilterUnread(v => !v)}
-              className={`h-7 px-3 rounded-full text-[10px] font-bold transition-colors ${filterUnread ? 'bg-emerald-500 text-white' : 'bg-foreground/[0.06] text-foreground/50 hover:text-foreground'}`}
-            >
-              Unread
-            </button>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setFilterUnread(v => !v)}
+                className={`h-7 px-3 rounded-full text-[10px] font-bold transition-colors ${filterUnread ? 'bg-emerald-500 text-white' : 'bg-foreground/[0.06] text-foreground/50 hover:text-foreground'}`}
+              >
+                Unread
+              </button>
+              <button
+                onClick={() => setShowArchived(v => !v)}
+                className={`h-7 px-3 rounded-full text-[10px] font-bold transition-colors ${showArchived ? 'bg-emerald-500 text-white' : 'bg-foreground/[0.06] text-foreground/50 hover:text-foreground'}`}
+              >
+                Archived
+              </button>
+            </div>
           </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground/35" />
@@ -315,8 +375,8 @@ export const BuyerMessages = ({ userId, initialSellerId, initialProductId, initi
         <div className="flex-1 overflow-y-auto p-2 space-y-0.5 no-scrollbar">
           {vendorList.length === 0 ? (
             <ChatEmptyState
-              title={filterUnread ? 'No unread messages' : searchTerm ? 'No matches' : 'No conversations yet'}
-              hint={!filterUnread && !searchTerm ? 'Message a seller from any product page.' : undefined}
+              title={showArchived ? 'No archived chats' : filterUnread ? 'No unread messages' : searchTerm ? 'No matches' : 'No conversations yet'}
+              hint={!showArchived && !filterUnread && !searchTerm ? 'Message a seller from any product page.' : undefined}
             />
           ) : vendorList.map(v => (
             <ConversationListItem
@@ -324,8 +384,10 @@ export const BuyerMessages = ({ userId, initialSellerId, initialProductId, initi
               item={{ id: v.seller_id, name: v.store_name, avatarUrl: v.logo_url, isVerified: v.is_verified, lastMessage: (v as any).lastMessage, lastMessageAt: (v as any).lastMessageAt, unreadCount: (v as any).unreadCount }}
               selected={selectedSeller === v.seller_id}
               pinned={pinnedSellers.has(v.seller_id)}
+              archived={archivedSellers.has(v.seller_id)}
               onSelect={() => { if (v.seller_id !== selectedSeller) clearContext(); setSelectedSeller(v.seller_id); }}
               onTogglePin={(e) => togglePin(e, v.seller_id)}
+              onToggleArchive={(e) => toggleArchive(e, v.seller_id)}
             />
           ))}
         </div>
@@ -429,6 +491,7 @@ export const BuyerMessages = ({ userId, initialSellerId, initialProductId, initi
                   </React.Fragment>
                 );
               })}
+              {remoteIsTyping && <TypingIndicator />}
               <div ref={scrollRef} />
             </div>
 
@@ -584,6 +647,7 @@ export const BuyerMessages = ({ userId, initialSellerId, initialProductId, initi
                     value={msgText}
                     onChange={(e: any) => {
                       setMsgText(e.target.value);
+                      handleTyping();
                       e.target.style.height = 'auto';
                       e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
                     }}

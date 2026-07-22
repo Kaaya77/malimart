@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 interface DeliveryDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (details: { method: string; cost?: number | null; driverName?: string; driverPhone?: string; notes?: string }) => void;
+  onConfirm: (details: { method: string; cost?: number | null; driverName?: string; driverPhone?: string; notes?: string; carrier?: string; trackingNumber?: string }) => void;
 }
 
 const METHODS = [
@@ -26,8 +26,11 @@ export const DeliveryDetailsModal = ({ isOpen, onClose, onConfirm }: DeliveryDet
   const [driverName, setDriverName] = useState('');
   const [driverPhone, setDriverPhone] = useState('');
   const [notes, setNotes] = useState('');
+  const [carrier, setCarrier] = useState('');
+  const [trackingNumber, setTrackingNumber] = useState('');
 
   const needsDriverContact = method === 'Own driver / rider' || method === 'Boda boda';
+  const needsCarrierInfo = method === 'Courier partner';
 
   const handleConfirm = () => {
     onConfirm({
@@ -36,8 +39,10 @@ export const DeliveryDetailsModal = ({ isOpen, onClose, onConfirm }: DeliveryDet
       driverName: driverName.trim() || undefined,
       driverPhone: driverPhone.trim() || undefined,
       notes: notes.trim() || undefined,
+      carrier: carrier.trim() || undefined,
+      trackingNumber: trackingNumber.trim() || undefined,
     });
-    setMethod(METHODS[0]); setCost(''); setDriverName(''); setDriverPhone(''); setNotes('');
+    setMethod(METHODS[0]); setCost(''); setDriverName(''); setDriverPhone(''); setNotes(''); setCarrier(''); setTrackingNumber('');
   };
 
   return (
@@ -92,6 +97,21 @@ export const DeliveryDetailsModal = ({ isOpen, onClose, onConfirm }: DeliveryDet
                     <Label className="text-xs font-black uppercase tracking-widest text-foreground/40 mb-2 block">Driver phone</Label>
                     <Input value={driverPhone} onChange={(e: any) => setDriverPhone(e.target.value)}
                       placeholder="e.g. 0712 345 678" className="h-12 rounded-2xl bg-foreground/[0.02] dark:bg-background/5 border-none" />
+                  </div>
+                </>
+              )}
+
+              {needsCarrierInfo && (
+                <>
+                  <div>
+                    <Label className="text-xs font-black uppercase tracking-widest text-foreground/40 mb-2 block">Carrier name</Label>
+                    <Input value={carrier} onChange={(e: any) => setCarrier(e.target.value)}
+                      placeholder="e.g. Sky Logistics" className="h-12 rounded-2xl bg-foreground/[0.02] dark:bg-background/5 border-none" />
+                  </div>
+                  <div>
+                    <Label className="text-xs font-black uppercase tracking-widest text-foreground/40 mb-2 block">Tracking number</Label>
+                    <Input value={trackingNumber} onChange={(e: any) => setTrackingNumber(e.target.value)}
+                      placeholder="e.g. SL-2026-88431" className="h-12 rounded-2xl bg-foreground/[0.02] dark:bg-background/5 border-none" />
                   </div>
                 </>
               )}

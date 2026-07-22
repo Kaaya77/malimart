@@ -527,7 +527,7 @@ export const SellerOrders = ({ sellerId, onContactBuyer }: {
     if (newStatus === 'in_transit') { setDeliveryModalOrder(orderId); return; }
     return doStatusChange(orderId, newStatus, reason);
   };
-  const confirmDeliveryDetails = async (details: { method: string; cost?: number | null; driverName?: string; driverPhone?: string; notes?: string }) => {
+  const confirmDeliveryDetails = async (details: { method: string; cost?: number | null; driverName?: string; driverPhone?: string; notes?: string; carrier?: string; trackingNumber?: string }) => {
     const orderId = deliveryModalOrder;
     if (!orderId) return;
     setDeliveryModalOrder(null);

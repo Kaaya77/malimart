@@ -83,7 +83,7 @@ export const updateOrderStatus = (
  * buyer. Call before marking an order shipped. */
 export const setOrderDeliveryDetails = (
   orderId: string,
-  details: { method: string; cost?: number | null; driverName?: string; driverPhone?: string; notes?: string }
+  details: { method: string; cost?: number | null; driverName?: string; driverPhone?: string; notes?: string; carrier?: string; trackingNumber?: string }
 ) =>
   rpc<void>("set_order_delivery_details", {
     p_order_id: orderId,
@@ -92,6 +92,8 @@ export const setOrderDeliveryDetails = (
     p_driver_name: details.driverName || null,
     p_driver_phone: details.driverPhone || null,
     p_notes: details.notes || null,
+    p_carrier: details.carrier || null,
+    p_tracking_number: details.trackingNumber || null,
   });
 
 // ---------- Payout methods & shipping zones (self-scoped, RLS-guarded) ----------

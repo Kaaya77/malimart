@@ -141,6 +141,33 @@ export const OrderTracking = ({ order }: { order: Order }) => {
           )}
         </div>
       )}
+      {(order.delivery_method || order.driver_name || order.driver_phone) && (
+        <div className="mt-4 bg-foreground/[0.03] rounded-2xl p-5 border border-foreground/8">
+          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-foreground/40 mb-3">Delivery Details</p>
+          <div className="space-y-2">
+            {order.delivery_method && (
+              <div className="flex items-center gap-2">
+                <Truck className="w-3.5 h-3.5 text-foreground/40 shrink-0" />
+                <span className="text-xs font-bold text-foreground">{order.delivery_method}</span>
+              </div>
+            )}
+            {(order.driver_name || order.driver_phone) && (
+              <div className="flex items-center gap-2 flex-wrap">
+                <Phone className="w-3.5 h-3.5 text-foreground/40 shrink-0" />
+                <span className="text-xs font-bold text-foreground">{order.driver_name || 'Driver'}</span>
+                {order.driver_phone && (
+                  <a href={`tel:${order.driver_phone}`} className="text-xs font-black text-emerald-600 dark:text-emerald-400 hover:underline">
+                    {order.driver_phone}
+                  </a>
+                )}
+              </div>
+            )}
+            {order.delivery_notes && (
+              <p className="text-[11px] text-foreground/55 pl-5">{order.delivery_notes}</p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

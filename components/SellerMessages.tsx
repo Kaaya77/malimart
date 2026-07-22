@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   ChevronLeft, Send, Loader2, Sparkles, Wand2, Search,
   X, Paperclip, Ban, ShieldAlert, MoreVertical, Tag, Truck, Check, CheckCheck,
+  MessageSquarePlus, Plus, Trash2,
 } from 'lucide-react';
 import { useAppState } from '../context/AppContext';
 import { Button, Input, useToast, ConfirmDialog, UserProfileModal, GraphicalTag } from './UI';
@@ -58,6 +59,14 @@ export const ProductOrderTag = ({
   );
 };
 
+const QUICK_REPLY_KEY = 'malimart_seller_quick_replies';
+const DEFAULT_QUICK_REPLIES = [
+  'Thank you for your order! 🙏',
+  'This item will ship within 2 business days.',
+  'Sorry for the delay — your order is on its way.',
+  'Feel free to ask if you have any questions!',
+];
+
 // ─── SellerMessages ──────────────────────────────────────────────────────────
 export const SellerMessages = ({
   userId, selectedChatUser, setSelectedChatUser, products,
@@ -87,6 +96,17 @@ export const SellerMessages = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [filterUnread, setFilterUnread] = useState(false);
   const [pinnedUsers, setPinnedUsers] = useState<Set<string>>(new Set());
+  const archiveKey = `malimart_archived_seller_chats_${userId}`;
+  const [archivedUsers, setArchivedUsers] = useState<Set<string>>(() => {
+    try { return new Set(JSON.parse(localStorage.getItem(archiveKey) || '[]')); } catch { return new Set(); }
+  });
+  const [showArchived, setShowArchived] = useState(false);
+  const quickReplyKey = `${QUICK_REPLY_KEY}_${userId}`;
+  const [quickReplies, setQuickReplies] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem(quickReplyKey) || 'null') ?? DEFAULT_QUICK_REPLIES; } catch { return DEFAULT_QUICK_REPLIES; }
+  });
+  const [showQuickReplies, setShowQuickReplies] = useState(false);
+  const [newQuickReply, setNewQuickReply] = useState('');
 
   const [magicMode, setMagicMode] = useState(false);
   const [isPolishing, setIsPolishing] = useState(false);
@@ -193,6 +213,7 @@ export const SellerMessages = ({
       });
     }
     let result = Array.from(map.values());
+    result = result.filter((u: any) => showArchived ? archivedUsers.has(u.id) : !archivedUsers.has(u.id));
     if (searchTerm) result = result.filter((u: any) => u.name.toLowerCase().includes(searchTerm.toLowerCase()));
     if (filterUnread) result = result.filter((u: any) => u.unread);
     return result.sort((a: any, b: any) => {
@@ -200,7 +221,7 @@ export const SellerMessages = ({
       if (!pinnedUsers.has(a.id) && pinnedUsers.has(b.id)) return 1;
       return new Date(b.time).getTime() - new Date(a.time).getTime();
     });
-  }, [chats, userId, searchTerm, filterUnread, pinnedUsers, initialChatUser, initialUserProfile]);
+  }, [chats, userId, searchTerm, filterUnread, pinnedUsers, archivedUsers, showArchived, initialChatUser, initialUserProfile]);
 
   const activeChats = useMemo(() => {
     if (!selectedChatUser) return [];
@@ -271,6 +292,32 @@ export const SellerMessages = ({
     setPinnedUsers(next);
   };
 
+  const toggleArchive = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    setArchivedUsers(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      try { localStorage.setItem(archiveKey, JSON.stringify([...next])); } catch {}
+      return next;
+    });
+    if (selectedChatUser === id) setSelectedChatUser(null);
+  };
+
+  const addQuickReply = () => {
+    const text = newQuickReply.trim();
+    if (!text) return;
+    const next = [...quickReplies, text];
+    setQuickReplies(next);
+    try { localStorage.setItem(quickReplyKey, JSON.stringify(next)); } catch {}
+    setNewQuickReply('');
+  };
+
+  const removeQuickReply = (idx: number) => {
+    const next = quickReplies.filter((_, i) => i !== idx);
+    setQuickReplies(next);
+    try { localStorage.setItem(quickReplyKey, JSON.stringify(next)); } catch {}
+  };
+
   const handleReport = async () => {
     if (!reportingUser || !userId) return;
     if (reportingUser.role === 'admin') { addToast('Cannot report an administrator', 'error'); setReportingUser(null); return; }
@@ -312,12 +359,20 @@ export const SellerMessages = ({
               Inbox
               <span className="ml-1.5 text-foreground/40 font-normal text-xs">({users.length})</span>
             </h3>
-            <button
-              onClick={() => setFilterUnread(!filterUnread)}
-              className={`h-7 px-3 rounded-full text-[10px] font-bold transition-colors ${filterUnread ? 'bg-emerald-500 text-white' : 'bg-foreground/[0.06] text-foreground/50 hover:text-foreground'}`}
-            >
-              Unread
-            </button>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setFilterUnread(!filterUnread)}
+                className={`h-7 px-3 rounded-full text-[10px] font-bold transition-colors ${filterUnread ? 'bg-emerald-500 text-white' : 'bg-foreground/[0.06] text-foreground/50 hover:text-foreground'}`}
+              >
+                Unread
+              </button>
+              <button
+                onClick={() => setShowArchived(v => !v)}
+                className={`h-7 px-3 rounded-full text-[10px] font-bold transition-colors ${showArchived ? 'bg-emerald-500 text-white' : 'bg-foreground/[0.06] text-foreground/50 hover:text-foreground'}`}
+              >
+                Archived
+              </button>
+            </div>
           </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground/35" />
@@ -332,7 +387,7 @@ export const SellerMessages = ({
         <div className="flex-1 overflow-y-auto p-2 space-y-0.5 no-scrollbar">
           {users.length === 0 ? (
             <ChatEmptyState
-              title={filterUnread ? 'No unread messages' : searchTerm ? 'No matches' : 'No conversations yet'}
+              title={showArchived ? 'No archived chats' : filterUnread ? 'No unread messages' : searchTerm ? 'No matches' : 'No conversations yet'}
             />
           ) : (users as any[]).map(u => (
             <ConversationListItem
@@ -347,8 +402,10 @@ export const SellerMessages = ({
               }}
               selected={selectedChatUser === u.id}
               pinned={pinnedUsers.has(u.id)}
+              archived={archivedUsers.has(u.id)}
               onSelect={() => setSelectedChatUser(u.id)}
               onTogglePin={(e) => togglePin(e, u.id)}
+              onToggleArchive={(e) => toggleArchive(e, u.id)}
             />
           ))}
         </div>
@@ -491,6 +548,54 @@ export const SellerMessages = ({
                 </div>
               )}
 
+              {showQuickReplies && (
+                <div className="p-3 bg-foreground/[0.03] rounded-xl border border-foreground/8 animate-in slide-in-from-bottom-2">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-foreground/50 flex items-center gap-1.5">
+                      <MessageSquarePlus className="w-3 h-3" /> Quick Replies
+                    </span>
+                    <button onClick={() => setShowQuickReplies(false)} className="p-1 hover:bg-foreground/[0.06] rounded-full text-foreground/40">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                  <div className="space-y-1.5 mb-2 max-h-40 overflow-y-auto no-scrollbar">
+                    {quickReplies.map((reply, i) => (
+                      <div key={i} className="flex items-center gap-1.5 group">
+                        <button
+                          onClick={(e) => { handleSend(e, reply); setShowQuickReplies(false); }}
+                          className="flex-1 text-left px-3 py-1.5 rounded-lg bg-background border border-foreground/8 text-[11px] font-medium text-foreground/75 hover:bg-foreground/[0.05] transition-colors truncate"
+                        >
+                          {reply}
+                        </button>
+                        <button
+                          onClick={() => removeQuickReply(i)}
+                          aria-label="Remove template"
+                          className="p-1.5 rounded-full text-foreground/30 opacity-0 group-hover:opacity-100 hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Input
+                      placeholder="Add a template…"
+                      value={newQuickReply}
+                      onChange={(e: any) => setNewQuickReply(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addQuickReply(); } }}
+                      className="h-8 text-xs rounded-lg bg-background border-foreground/8"
+                    />
+                    <button
+                      onClick={addQuickReply}
+                      aria-label="Save template"
+                      className="p-2 rounded-lg bg-foreground/[0.06] text-foreground/50 hover:text-emerald-500 hover:bg-emerald-500/10 transition-colors shrink-0"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {attachment && (
                 <div className="flex items-center gap-3 p-2.5 bg-foreground/[0.03] rounded-xl border border-foreground/8">
                   {attachment.type === 'image' ? (
@@ -546,6 +651,15 @@ export const SellerMessages = ({
                     className={`p-2.5 rounded-xl transition-all ${magicMode ? 'bg-emerald-500 text-white shadow-sm' : 'text-foreground/35 hover:bg-foreground/[0.05] hover:text-emerald-500'}`}
                   >
                     {isPolishing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowQuickReplies(v => !v)}
+                    disabled={blockedUsers.has(selectedChatUser || '')}
+                    title="Quick replies"
+                    className={`p-2.5 rounded-xl transition-all ${showQuickReplies ? 'bg-emerald-500 text-white shadow-sm' : 'text-foreground/35 hover:bg-foreground/[0.05] hover:text-emerald-500'}`}
+                  >
+                    <MessageSquarePlus className="w-4 h-4" />
                   </button>
                 </div>
 

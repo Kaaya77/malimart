@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BadgeCheck, Pin, MessageSquare, Reply, Trash2, ShieldAlert, Smile, MoreVertical, Check, CheckCheck, Paperclip } from 'lucide-react';
+import { BadgeCheck, Pin, MessageSquare, Reply, Trash2, ShieldAlert, Smile, MoreVertical, Check, CheckCheck, Paperclip, Archive, ArchiveRestore } from 'lucide-react';
 
 // ─── Date helpers ────────────────────────────────────────────────────────────
 
@@ -66,13 +66,15 @@ export interface ConversationItem {
 }
 
 export const ConversationListItem = ({
-  item, selected, pinned, onSelect, onTogglePin,
+  item, selected, pinned, archived, onSelect, onTogglePin, onToggleArchive,
 }: {
   item: ConversationItem;
   selected: boolean;
   pinned: boolean;
+  archived?: boolean;
   onSelect: () => void;
   onTogglePin?: (e: React.MouseEvent) => void;
+  onToggleArchive?: (e: React.MouseEvent) => void;
 }) => {
   const unread = item.unreadCount ?? 0;
   return (
@@ -131,17 +133,32 @@ export const ConversationListItem = ({
         </div>
       </div>
 
-      {/* Pin toggle */}
-      {onTogglePin && (
-        <span
-          onClick={onTogglePin}
-          role="button"
-          aria-label={pinned ? 'Unpin' : 'Pin'}
-          className={`absolute right-2 top-2 p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer
-            ${selected ? 'bg-background/15 text-background/60 hover:bg-background/25' : 'bg-foreground/[0.06] text-foreground/40 hover:bg-foreground/12'}`}
-        >
-          <Pin className="w-3 h-3" />
-        </span>
+      {/* Conversation-level actions */}
+      {(onTogglePin || onToggleArchive) && (
+        <div className="absolute right-2 top-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          {onTogglePin && (
+            <span
+              onClick={onTogglePin}
+              role="button"
+              aria-label={pinned ? 'Unpin' : 'Pin'}
+              className={`p-1.5 rounded-full cursor-pointer
+                ${selected ? 'bg-background/15 text-background/60 hover:bg-background/25' : 'bg-foreground/[0.06] text-foreground/40 hover:bg-foreground/12'}`}
+            >
+              <Pin className="w-3 h-3" />
+            </span>
+          )}
+          {onToggleArchive && (
+            <span
+              onClick={onToggleArchive}
+              role="button"
+              aria-label={archived ? 'Unarchive' : 'Archive'}
+              className={`p-1.5 rounded-full cursor-pointer
+                ${selected ? 'bg-background/15 text-background/60 hover:bg-background/25' : 'bg-foreground/[0.06] text-foreground/40 hover:bg-foreground/12'}`}
+            >
+              {archived ? <ArchiveRestore className="w-3 h-3" /> : <Archive className="w-3 h-3" />}
+            </span>
+          )}
+        </div>
       )}
     </button>
   );
