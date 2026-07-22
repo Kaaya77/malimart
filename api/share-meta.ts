@@ -19,8 +19,9 @@ const tzs = (n: number) => 'TZS ' + Math.round(n || 0).toLocaleString('en-US');
 export default async function handler(req: Request) {
   const url = new URL(req.url);
   const id = url.searchParams.get('id') || '';
+  const path = url.searchParams.get('path') || `/product/${id}`;
   const origin = url.origin;
-  const productUrl = `${origin}/product/${id}`;
+  const productUrl = `${origin}${path}`;
 
   let title = 'MaliMart — Tanzania’s Marketplace';
   let desc = 'Discover authentic Tanzanian products from verified local sellers.';

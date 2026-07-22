@@ -20,5 +20,5 @@ export default function middleware(req: Request) {
   const id = uuidMatch ? uuidMatch[0] : rawId;
   if (!id) return next();
 
-  return rewrite(new URL(`/api/share-meta?id=${encodeURIComponent(id)}`, url.origin));
+  return rewrite(new URL(`/api/share-meta?id=${encodeURIComponent(id)}&path=${encodeURIComponent(url.pathname)}`, url.origin));
 }

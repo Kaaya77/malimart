@@ -27,7 +27,8 @@ export const SharePoster: React.FC<SharePosterProps> = ({ product, isOpen, onClo
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
 
-  const productUrl = `${window.location.origin}/product/${product.id}`;
+  const slugify = (s: string) => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
+  const productUrl = `${window.location.origin}/product/${slugify(product.name) ? `${slugify(product.name)}-` : ''}${product.id}`;
   const shortUrl = productUrl.replace(/^https?:\/\//, '');
   const img = product.images?.[0];
   const sellerName = (product as any).seller_name || (product as any).store_name || 'MaliMart Seller';
