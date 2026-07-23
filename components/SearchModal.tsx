@@ -209,12 +209,16 @@ export const SearchModal = ({
  exit={{ opacity: 0 }}
  transition={{ duration: 0.2 }}
  onClick={(e) => { if (e.target === e.currentTarget) setIsSearchOpen(false); }}
- // Full-screen takeover only on mobile, where that's the expected pattern.
- // On desktop this becomes a centered dropdown panel over a dismissable
- // backdrop — a search shouldn't blank out the entire page on a large screen.
- className="fixed inset-0 z-[120] flex flex-col md:items-center md:pt-20 md:bg-black/40 md:backdrop-blur-sm"
+ // A top sheet on mobile (covers roughly the upper half, page stays dimmed
+ // below and is tap-to-close) and a centered dropdown panel on desktop — a
+ // search shouldn't blank out the entire screen on any device.
+ className="fixed inset-0 z-[120] flex flex-col items-stretch bg-black/40 backdrop-blur-sm md:items-center md:pt-20"
  >
- <div className="flex flex-col w-full h-full bg-background md:h-auto md:max-h-[75vh] md:w-full md:max-w-2xl md:rounded-3xl md:border md:border-foreground/10 md:shadow-2xl overflow-hidden">
+ <motion.div
+ initial={{ y: -16, opacity: 0.6 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -16, opacity: 0 }}
+ transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+ className="flex flex-col w-full bg-background max-h-[70vh] rounded-b-3xl border-b border-foreground/10 shadow-2xl md:h-auto md:max-h-[75vh] md:w-full md:max-w-2xl md:rounded-3xl md:border md:border-foreground/10 overflow-hidden"
+ style={{ paddingTop: 'env(safe-area-inset-top)' }}>
  {/* Header */}
  <div className="flex items-center gap-2 p-4 md:p-5 border-b border-foreground/8">
  <form onSubmit={(e) => { pushRecent(searchQuery); handleSearch(e); }} className="flex-1 relative">
@@ -404,7 +408,7 @@ export const SearchModal = ({
  </div>
  )}
  </div>
- </div>
+ </motion.div>
  </motion.div>
  )}
  </AnimatePresence>

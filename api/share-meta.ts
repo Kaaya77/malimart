@@ -22,6 +22,10 @@ export default async function handler(req: Request) {
   const path = url.searchParams.get('path') || `/product/${id}`;
   const origin = url.origin;
   const productUrl = `${origin}${path}`;
+  // A human who lands here (e.g. an in-app browser mis-detected as a crawler)
+  // is redirected to the real page with a bypass flag so the edge middleware
+  // won't bounce them straight back here — which would loop.
+  const humanUrl = `${productUrl}${path.includes('?') ? '&' : '?'}nc=1`;
 
   let title = 'MaliMart — Online Marketplace';
   let desc = 'Discover great products from verified sellers on MaliMart.';
@@ -64,10 +68,10 @@ export default async function handler(req: Request) {
 <meta name="twitter:description" content="${esc(desc)}" />
 <meta name="twitter:image" content="${esc(image)}" />
 <link rel="canonical" href="${esc(productUrl)}" />
-<meta http-equiv="refresh" content="0; url=${esc(productUrl)}" />
+<meta http-equiv="refresh" content="0; url=${esc(humanUrl)}" />
 </head><body>
-<p>Redirecting to <a href="${esc(productUrl)}">${esc(title)}</a>…</p>
-<script>location.replace(${JSON.stringify(productUrl)});</script>
+<p>Redirecting to <a href="${esc(humanUrl)}">${esc(title)}</a>…</p>
+<script>location.replace(${JSON.stringify(humanUrl)});</script>
 </body></html>`;
 
   return new Response(html, {
