@@ -37,8 +37,7 @@ export const VendorGroup: React.FC<VendorGroupProps> = ({
   <motion.div
     key={sellerId}
     initial={{ opacity: 0, y: 20 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true, margin: '-50px' }}
+    animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.6, delay: vendorIndex * 0.1, ease: [0.22, 1, 0.36, 1] }}
     className="space-y-4"
   >
@@ -58,8 +57,7 @@ export const VendorGroup: React.FC<VendorGroupProps> = ({
 
     <motion.div
       initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true }}
+      animate="visible"
       variants={groupVariants}
       className="bg-background rounded-3xl border border-foreground/8 overflow-hidden shadow-sm divide-y divide-foreground/5"
     >

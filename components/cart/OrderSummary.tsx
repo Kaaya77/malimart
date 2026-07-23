@@ -30,8 +30,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
 }) => (
   <motion.div
     initial={{ opacity: 0, x: 20 }}
-    whileInView={{ opacity: 1, x: 0 }}
-    viewport={{ once: true, margin: '-50px' }}
+    animate={{ opacity: 1, x: 0 }}
     transition={{ duration: 0.6 }}
     className="lg:w-[420px] shrink-0 relative"
   >

@@ -247,8 +247,7 @@ const MobileCategoryCard: React.FC<{
 }> = ({ name, img, color, count, onClick, index }) => (
   <motion.button
     initial={{ opacity: 0, x: 20 }}
-    whileInView={{ opacity: 1, x: 0 }}
-    viewport={{ once: true }}
+    animate={{ opacity: 1, x: 0 }}
     transition={{ duration: 0.35, delay: Math.min(index * 0.04, 0.28) }}
     onClick={onClick}
     className="group flex-shrink-0 w-32 snap-start text-left"

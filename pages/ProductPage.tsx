@@ -508,8 +508,7 @@ export const ProductPage = () => {
  {/* ── Details tabs ─────────────────────────────────────────── */}
  <motion.div
  initial={{ opacity: 0, y: 20 }}
- whileInView={{ opacity: 1, y: 0 }}
- viewport={{ once: true, margin: '-50px' }}
+ animate={{ opacity: 1, y: 0 }}
  transition={{ duration: 0.5 }}
  className="mt-12 md:mt-16"
  >
@@ -601,8 +600,7 @@ export const ProductPage = () => {
  <motion.div
  id="reviews"
  initial={{ opacity: 0, y: 20 }}
- whileInView={{ opacity: 1, y: 0 }}
- viewport={{ once: true, margin: '-50px' }}
+ animate={{ opacity: 1, y: 0 }}
  transition={{ duration: 0.5 }}
  className="mt-12 md:mt-16 scroll-mt-28"
  >
@@ -614,8 +612,7 @@ export const ProductPage = () => {
  {relatedProducts.length > 0 && (
  <motion.div
  initial={{ opacity: 0, y: 20 }}
- whileInView={{ opacity: 1, y: 0 }}
- viewport={{ once: true, margin: '-50px' }}
+ animate={{ opacity: 1, y: 0 }}
  transition={{ duration: 0.5 }}
  className="mt-12 md:mt-16"
  >
@@ -632,8 +629,7 @@ export const ProductPage = () => {
  {recentlyViewed.filter(p => p.id !== product.id).length >= 2 && (
  <motion.div
  initial={{ opacity: 0, y: 20 }}
- whileInView={{ opacity: 1, y: 0 }}
- viewport={{ once: true, margin: '-50px' }}
+ animate={{ opacity: 1, y: 0 }}
  transition={{ duration: 0.5 }}
  className="mt-12 md:mt-16"
  >

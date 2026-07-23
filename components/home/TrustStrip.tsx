@@ -21,8 +21,7 @@ export const TrustStrip: React.FC = () => (
           <motion.div
             key={it.label}
             initial={{ opacity: 0, y: 8 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-40px' }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, delay: Math.min(i * 0.05, 0.25) }}
             className="rounded-2xl p-4 md:p-5 bg-foreground/[0.03] hover:bg-foreground/[0.05] transition-colors"
           >

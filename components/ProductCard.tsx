@@ -116,9 +116,11 @@ const ProductCardInner: React.FC<ProductCardProps> = ({
 
  return (
  <motion.article
+ // Mount-based reveal (not whileInView): fast-scrolling a grid could leave
+ // cards stuck at opacity:0 when their IntersectionObserver never fired while
+ // intersecting, making the grid look broken (#14).
  initial={{ opacity: 0, y: 12 }}
- whileInView={{ opacity: 1, y: 0 }}
- viewport={{ once: true, margin: '-40px' }}
+ animate={{ opacity: 1, y: 0 }}
  transition={{ duration: 0.35, delay: Math.min(index * 0.035, 0.4) }}
  className={rootCls}
  onClick={handleCardClick}

@@ -25,8 +25,7 @@ export const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
   return (
     <motion.section
       initial={{ opacity: 0, y: 16 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-60px' }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
       className="pt-12 md:pt-18 pb-2"
     >
@@ -76,8 +75,7 @@ export const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
           <motion.div
             key={p.id}
             initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-40px' }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: i * 0.07 }}
           >
             <ProductCard
@@ -96,8 +94,7 @@ export const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
             <motion.div
               key={p.id}
               initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-20px' }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.1 + i * 0.06 }}
             >
               <ProductCard

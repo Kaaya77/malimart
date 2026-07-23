@@ -22,8 +22,7 @@ export const ProductGridSection = ({
  return (
  <motion.section
  initial={{ opacity: 0, y: 12 }}
- whileInView={{ opacity: 1, y: 0 }}
- viewport={{ once: true, margin: '-40px' }}
+ animate={{ opacity: 1, y: 0 }}
  transition={{ duration: 0.4 }}
  className="container mx-auto px-5 md:px-8 py-12 md:py-16"
  >
