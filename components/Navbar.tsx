@@ -392,11 +392,27 @@ export const Navbar = () => {
  {user && (
  <div className="hidden md:block relative">
  <button onClick={()=>setNotifOpen(o=>!o)} aria-label={`Notifications${unread?` (${unread} unread)`:''}`} aria-expanded={notifOpen} className={`relative ${ibtn}`}>
- <BellRing className="w-[18px] h-[18px] stroke-[2]"/>
+ <motion.span
+   className="inline-flex"
+   animate={unread>0 && !notifOpen ? { rotate: [0,-14,12,-8,6,0] } : { rotate: 0 }}
+   transition={unread>0 && !notifOpen ? { duration: 0.9, repeat: Infinity, repeatDelay: 2.4, ease: 'easeInOut' } : { duration: 0.2 }}
+   style={{ transformOrigin: '50% 15%' }}
+ >
+ <BellRing className={`w-[18px] h-[18px] stroke-[2] ${unread>0?'text-emerald-500':''}`}/>
+ </motion.span>
  {unread>0 && (
- <span className="absolute top-1.5 right-1.5 min-w-[14px] h-3.5 px-0.5 rounded-full bg-rose-500 text-white text-[8px] font-black flex items-center justify-center">
+ <>
+ <motion.span
+   className="absolute top-1 right-1 h-3.5 w-3.5 rounded-full bg-rose-500/60"
+   animate={{ scale: [1, 2.1], opacity: [0.6, 0] }}
+   transition={{ duration: 1.6, repeat: Infinity, ease: 'easeOut' }}
+ />
+ <motion.span
+   initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type:'spring', stiffness: 500, damping: 18 }}
+   className="absolute top-1.5 right-1.5 min-w-[14px] h-3.5 px-0.5 rounded-full bg-rose-500 text-white text-[8px] font-black flex items-center justify-center z-10">
  {unread>9?'9+':unread}
- </span>
+ </motion.span>
+ </>
  )}
  </button>
  {notifOpen && (

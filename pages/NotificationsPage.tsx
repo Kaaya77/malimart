@@ -36,7 +36,7 @@ function timeAgo(dateStr: string) {
 }
 
 export const NotificationsPage = () => {
-  const { notifications, markNotificationRead, markAllNotificationsRead, dismissNotification } = useAppState();
+  const { notifications, markNotificationRead, markAllNotificationsRead, dismissNotification, deleteAllNotifications } = useAppState();
   const navigate = useNavigate();
   const [filter, setFilter] = useState<typeof FILTERS[number]>('all');
 
@@ -68,14 +68,24 @@ export const NotificationsPage = () => {
               <p className="text-[10px] font-black uppercase tracking-wider text-foreground/40 mt-0.5">{unreadCount} unread</p>
             )}
           </div>
-          {unreadCount > 0 && (
-            <button
-              onClick={markAllNotificationsRead}
-              className={`flex items-center gap-1.5 min-h-11 px-4 rounded-2xl border border-foreground/12 text-[10px] font-black uppercase tracking-widest text-foreground/50 hover:text-foreground hover:border-foreground/25 transition-all ${FOCUS_RING}`}
-            >
-              <CheckCheck className="w-3.5 h-3.5" /> Mark All Read
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {unreadCount > 0 && (
+              <button
+                onClick={markAllNotificationsRead}
+                className={`flex items-center gap-1.5 min-h-11 px-4 rounded-2xl border border-foreground/12 text-[10px] font-black uppercase tracking-widest text-foreground/50 hover:text-foreground hover:border-foreground/25 transition-all ${FOCUS_RING}`}
+              >
+                <CheckCheck className="w-3.5 h-3.5" /> Mark All Read
+              </button>
+            )}
+            {notifications.length > 0 && (
+              <button
+                onClick={deleteAllNotifications}
+                className={`flex items-center gap-1.5 min-h-11 px-4 rounded-2xl border border-foreground/12 text-[10px] font-black uppercase tracking-widest text-foreground/50 hover:text-red-600 hover:border-red-500/30 transition-all ${FOCUS_RING}`}
+              >
+                <X className="w-3.5 h-3.5" /> Delete All
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Filter tabs */}

@@ -84,6 +84,7 @@ interface AppContextType {
     markNotificationRead: (id: string) => Promise<void>;
     markAllNotificationsRead: () => Promise<void>;
     dismissNotification: (id: string) => Promise<void>;
+    deleteAllNotifications: () => Promise<void>;
     getActiveOfferForProduct: (productId: string) => Offer | null;
     logActivity: (action: string, details?: string, metadata?: any) => Promise<void>;
     notify: (title: string, message: string, type?: 'info' | 'success' | 'error', link?: string) => Promise<void>;
@@ -132,7 +133,7 @@ type CommsSlice = Pick<AppContextType,
     'notifications' | 'unreadMessages' | 'preloadedMessages' | 'sellerInventory' | 'sellerOrders' |
     'sellerOffers' | 'sellerStats' | 'notify' | 'fetchMessages' | 'markMessagesAsRead' |
     'sendMessage' | 'deleteMessage' | 'softDeleteMessage' | 'reportUser' | 'addReaction' |
-    'removeReaction' | 'markNotificationRead' | 'markAllNotificationsRead' | 'dismissNotification' |
+    'removeReaction' | 'markNotificationRead' | 'markAllNotificationsRead' | 'dismissNotification' | 'deleteAllNotifications' |
     'refreshNotifications' | 'refreshSellerData'>;
 
 const AuthContext = createContext<AuthSlice | undefined>(undefined);
@@ -718,7 +719,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         const fetchUserData = useCallback(async (userId: string, userRole?: string, isBanned?: boolean) => {
         const [addrsRes, notifsRes, walletRes, paymentsRes, shipmentsRes, payMethodsRes, connAccountsRes, blockedRes] = await Promise.all([
             supabase.from('addresses').select('*').eq('user_id', userId).is('deleted_at', null),
-            isBanned ? { data: [] } : supabase.from('notifications').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
+            isBanned ? { data: [] } : supabase.from('notifications').select('*').eq('user_id', userId).is('deleted_at', null).order('created_at', { ascending: false }),
             supabase.from('wallet_transactions').select('*').eq('profile_id', userId).order('created_at', { ascending: false }).limit(20),
             supabase.from('payments').select('*, order:orders!inner(id, status, total, created_at, user_id)').eq('order.user_id', userId).limit(20),
             supabase.from('shipments').select('*, order:orders!inner(id, status, total, created_at, user_id)').eq('order.user_id', userId).limit(20),
@@ -1518,6 +1519,11 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         await supabase.from('notifications').delete().eq('id', id);
         setNotifications(prev => prev.filter(n => n.id !== id));
     }, []);
+    const deleteAllNotifications = useCallback(async () => {
+        if (!user) return;
+        setNotifications([]); // optimistic
+        await supabase.from('notifications').delete().eq('user_id', user.id);
+    }, [user]);
 
     const updateVendorProfile = useCallback(async (data: Partial<VendorProfile>) => {
         if (!user) return;
@@ -1603,7 +1609,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         sellerInventory, sellerOrders, sellerOffers, sellerStats,
         notify, fetchMessages, markMessagesAsRead, sendMessage, deleteMessage, softDeleteMessage,
         reportUser, addReaction, removeReaction,
-        markNotificationRead, markAllNotificationsRead, dismissNotification,
+        markNotificationRead, markAllNotificationsRead, dismissNotification, deleteAllNotifications,
         refreshNotifications, refreshSellerData,
     }), [notifications, unreadMessages, preloadedMessages,
         sellerInventory, sellerOrders, sellerOffers, sellerStats,

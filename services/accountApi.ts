@@ -81,6 +81,7 @@ export const markAllNotificationsRead = () => rpc<void>("mark_all_notifications_
 export const deleteNotifications = (ids: string[]) =>
   rpc<number>("delete_my_notifications", { p_ids: ids });
 export const clearReadNotifications = () => rpc<number>("clear_read_notifications");
+export const deleteAllNotifications = () => rpc<number>("delete_all_my_notifications");
 
 // ---------- Orders ----------
 export const cancelOrder = (orderId: string, reason: string) =>
