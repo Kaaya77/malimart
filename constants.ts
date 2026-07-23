@@ -16,6 +16,22 @@ export const messageSellerPath = (role: string | undefined | null, sellerId: str
     ? `/buyer?tab=inbox&sellerId=${sellerId}`
     : `/messages/${sellerId}`;
 
+// Build a Google Maps link — prefers exact coordinates, falls back to a text
+// search of whatever address parts we have. Used for store/product locations.
+export const mapsUrl = (opts: {
+  lat?: number | null;
+  lng?: number | null;
+  query?: (string | null | undefined)[] | string | null;
+}): string => {
+  if (opts.lat != null && opts.lng != null) {
+    return `https://www.google.com/maps/search/?api=1&query=${opts.lat},${opts.lng}`;
+  }
+  const q = Array.isArray(opts.query)
+    ? opts.query.filter(Boolean).join(', ')
+    : (opts.query || '');
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q || '')}`;
+};
+
 // Formatter
 export const formatTZS = (amount: number | null | undefined) =>
   (amount || 0).toLocaleString('sw-TZ', {

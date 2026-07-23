@@ -4,6 +4,7 @@ import { TANZANIA_REGIONS } from '../../constants';
 import { Globe, Home, Loader2, Mail, Phone, Upload, User as UserIcon } from 'lucide-react';
 import { supabase } from '../../services/supabaseClient';
 import { compressImage } from '../../services/imageCompression';
+import { AccentThemePicker } from '../../components/AccentThemePicker';
 import { useBuyerSettings } from './context';
 
 export const ProfileTab = () => {
@@ -208,6 +209,17 @@ export const ProfileTab = () => {
                             <option value="fr">French</option>
                         </Select>
                     </div>
+                  </div>
+                  <div className="pt-4 border-t border-foreground/[0.06] space-y-3">
+                    <div>
+                      <p className="font-medium text-sm text-foreground">Accent Theme</p>
+                      <p className="text-xs text-muted-foreground mb-3">Pick a colour — the whole app recolours instantly.</p>
+                    </div>
+                    <AccentThemePicker
+                      value={profileData.theme_accent || user?.theme_accent}
+                      mode={user?.theme_mode}
+                      onSelect={(key) => { setProfileData((prev: any) => ({ ...prev, theme_accent: key })); updateUserProfile({ theme_accent: key } as any); }}
+                    />
                   </div>
                   <div className="pt-4 border-t border-foreground/[0.06] space-y-4">
                     <div className="flex items-center justify-between gap-4 min-h-11">

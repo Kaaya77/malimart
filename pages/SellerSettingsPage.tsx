@@ -161,19 +161,24 @@ export const SellerSettingsPage = ({ onBack }: { onBack?: () => void } = {}) => 
  }
  };
 
- // Dynamic Lists Handlers
- const handleAddSocial = () => {
+ // Dynamic Lists Handlers — add/remove persist immediately so links actually
+ // save (users expected "Add Link" to save; the old flow needed a separate
+ // Save button and silently lost links if they navigated away).
+ const handleAddSocial = async () => {
  if (!newSocial.url) return;
  if (newSocial.platform === 'WhatsApp' && !isValidTanzanianPhone(newSocial.url)) {
  return addToast("Please enter a valid Tanzanian phone number for WhatsApp", "error");
  }
- setSocialLinks([...socialLinks, newSocial]);
+ const next = [...socialLinks, newSocial];
+ setSocialLinks(next);
  setNewSocial({ platform: 'WhatsApp', url: '' });
- addToast("Social link added (Remember to save)", "success");
+ await handleGenericSave({ social_links: next }, "Social link saved");
  };
 
- const handleRemoveSocial = (index: number) => {
- setSocialLinks(socialLinks.filter((_, i) => i !== index));
+ const handleRemoveSocial = async (index: number) => {
+ const next = socialLinks.filter((_, i) => i !== index);
+ setSocialLinks(next);
+ await handleGenericSave({ social_links: next }, "Social link removed");
  };
 
  const handleAddPayment = async () => {

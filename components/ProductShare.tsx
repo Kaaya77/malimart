@@ -83,7 +83,7 @@ export const ProductShare: React.FC<ProductShareProps> = ({ product, share, isOp
     ? `${window.location.origin}/product/${slugify(product.name) ? `${slugify(product.name)}-` : ''}${product.id}`
     : share?.url || '';
   const shareText = product
-    ? `🛒 Check out ${product.name} on MaliMart — ${formatTZS(product.price)} ${CURRENCY}\nAuthentic Tanzanian product, verified seller.`
+    ? `🛒 Check out ${product.name} on MaliMart — ${formatTZS(product.price)} ${CURRENCY}\nVerified seller. Tap to shop.`
     : share?.text || share?.title || '';
   const headerTitle = product ? product.name : share?.title || '';
   const headerSubtitle = product ? formatTZS(product.price) : share?.subtitle;

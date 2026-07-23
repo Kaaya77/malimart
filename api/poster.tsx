@@ -36,7 +36,8 @@ interface PosterBody {
 const bg = '#0a0a0b', white = '#fafafa', muted = '#a1a1aa', emerald = '#10b981',
       priceInk = '#05271c', line = 'rgba(255,255,255,0.10)', cardBorder = 'rgba(255,255,255,0.08)',
       verifiedC = '#34d399';
-const kitenge = 'repeating-linear-gradient(-45deg,#059669 0 28px,#f59e0b 28px 42px,#0c4a6e 42px 70px,#f59e0b 70px 84px)';
+// Neutral premium accent — a soft emerald→teal sweep, no regional motif.
+const accent = 'linear-gradient(90deg,#059669 0%,#10b981 45%,#0d9488 100%)';
 
 export default async function handler(req: Request): Promise<Response> {
   if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 });
@@ -64,10 +65,10 @@ export default async function handler(req: Request): Promise<Response> {
   return new ImageResponse(
     (
       <div style={{ width: '100%', height: '100%', background: bg, color: white, fontFamily: 'sans-serif', display: 'flex', flexDirection: 'column', padding: 72, position: 'relative' }}>
-        {/* Thin kitenge accent — keeps the Tanzanian identity on the dark canvas */}
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 10, display: 'flex', background: kitenge }} />
+        {/* Thin neutral accent sweep */}
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 10, display: 'flex', background: accent }} />
 
-        {/* Header: brand + TANZANIA tag */}
+        {/* Header: brand */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 40 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <div style={{ width: 60, height: 60, borderRadius: 16, background: emerald, color: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 38, fontWeight: 900 }}>M</div>
@@ -77,7 +78,7 @@ export default async function handler(req: Request): Promise<Response> {
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', border: '1px solid rgba(16,185,129,0.4)', borderRadius: 999, padding: '9px 20px' }}>
-            <span style={{ fontSize: 15, fontWeight: 800, letterSpacing: 3, color: emerald, display: 'flex' }}>TANZANIA</span>
+            <span style={{ fontSize: 15, fontWeight: 800, letterSpacing: 3, color: emerald, display: 'flex' }}>SCAN &amp; SHOP</span>
           </div>
         </div>
 

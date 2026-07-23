@@ -14,7 +14,7 @@ import { ProductCard } from '../components/ProductCard';
 import { ReviewSection } from '../components/ReviewSection';
 import { ProductShare } from '../components/ProductShare';
 import { useToast } from '../components/UI';
-import { formatTZS, messageSellerPath } from '../constants';
+import { formatTZS, messageSellerPath, mapsUrl } from '../constants';
 import { usePresence } from '../hooks/usePresence';
 
 type Tab = 'collection' | 'about' | 'reviews';
@@ -398,15 +398,20 @@ export const StorePage: React.FC = () => {
                   </div>
                 )}
 
-                {/* Location */}
-                {(vendor.region || vendor.address) && (
-                  <div className="flex items-start gap-3 p-4 bg-foreground/[0.02] border border-foreground/8 rounded-2xl">
+                {/* Location — opens Google Maps */}
+                {(vendor.region || vendor.address || vendor.district) && (
+                  <a
+                    href={mapsUrl({ query: [vendor.address, vendor.district, vendor.region] })}
+                    target="_blank" rel="noopener noreferrer"
+                    className="flex items-start gap-3 p-4 bg-foreground/[0.02] border border-foreground/8 rounded-2xl hover:bg-foreground/[0.04] transition-colors group"
+                  >
                     <MapPin className="w-4.5 h-4.5 text-foreground/40 stroke-[2] mt-0.5 shrink-0"/>
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">{vendor.region || ''}</p>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-foreground">{vendor.region || vendor.district || 'View location'}</p>
                       {vendor.address && <p className="text-xs text-foreground/45 mt-0.5">{vendor.address}</p>}
+                      <p className="text-[11px] font-semibold text-emerald-600 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">Open in Google Maps →</p>
                     </div>
-                  </div>
+                  </a>
                 )}
 
                 {/* Contact */}

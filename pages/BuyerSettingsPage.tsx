@@ -103,7 +103,11 @@ export const BuyerSettingsPage = () => {
     }
     setIsSavingProfile(true);
     try {
-        await updateUserProfile(profileData);
+        // The app displays `user.name` everywhere (navbar, avatars, reviews), but
+        // the form edits full_name/display_name — keep `name` in sync so a name
+        // change is actually visible. Prefer display name, fall back to full name.
+        const primaryName = (profileData.display_name || profileData.full_name || '').trim();
+        await updateUserProfile(primaryName ? { ...profileData, name: primaryName } : profileData);
         addToast('Profile updated successfully', 'success');
     } catch (error) {
         addToast('Failed to update profile', 'error');

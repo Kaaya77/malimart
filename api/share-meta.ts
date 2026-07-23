@@ -23,8 +23,8 @@ export default async function handler(req: Request) {
   const origin = url.origin;
   const productUrl = `${origin}${path}`;
 
-  let title = 'MaliMart — Tanzania’s Marketplace';
-  let desc = 'Discover authentic Tanzanian products from verified local sellers.';
+  let title = 'MaliMart — Online Marketplace';
+  let desc = 'Discover great products from verified sellers on MaliMart.';
   let image = `${origin}/api/og`;
 
   if (id && SUPABASE_URL && SUPABASE_KEY) {
@@ -39,7 +39,7 @@ export default async function handler(req: Request) {
         if (p) {
           const price = p.sale_price && p.sale_price < p.price ? p.sale_price : p.price;
           title = `${p.name} — ${tzs(price)} | MaliMart`;
-          desc = `${p.name} on MaliMart. Authentic Tanzanian product from a verified seller. Tap to shop.`;
+          desc = `${p.name} on MaliMart — from a verified seller. Tap to shop.`;
           image = `${origin}/api/og?id=${encodeURIComponent(id)}`;
         }
       }

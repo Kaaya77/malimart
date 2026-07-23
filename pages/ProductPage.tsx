@@ -11,7 +11,7 @@ import { Breadcrumb } from '../components/ui/Breadcrumb';
 import { ReviewSection } from '../components/ReviewSection';
 import { ProductCard } from '../components/ProductCard';
 import { ProductShare } from '../components/ProductShare';
-import { formatTZS } from '../constants';
+import { formatTZS, mapsUrl } from '../constants';
 import { Product, VendorProfile } from '../types';
 import { fetchProductById, fetchVendorProfile } from '../services/shopService';
 import { usePresence } from '../hooks/usePresence';
@@ -377,13 +377,9 @@ export const ProductPage = () => {
  <Badge variant="success" className="text-[10px] px-2 py-0.5">New arrival</Badge>
  )}
  {product.location && (
- product.latitude && product.longitude ? (
- <a href={`https://www.google.com/maps/search/?api=1&query=${product.latitude},${product.longitude}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-foreground transition-colors">
+ <a href={mapsUrl({ lat: product.latitude, lng: product.longitude, query: product.location })} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-foreground transition-colors">
  <MapPin className="w-3.5 h-3.5" /> {product.location}
  </a>
- ) : (
- <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {product.location}</span>
- )
  )}
  {metrics.sku && <span>SKU: {metrics.sku}</span>}
  </div>

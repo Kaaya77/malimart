@@ -28,6 +28,13 @@ export const SharePoster: React.FC<SharePosterProps> = ({ product, isOpen, onClo
   const [qr, setQr] = useState<string>('');
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
+  // Pre-rendered poster PNG, cached once generated. Eagerly built when the QR is
+  // ready so the Share button can call navigator.share() SYNCHRONOUSLY on tap —
+  // iOS/Safari revokes the transient user-activation the moment you `await`
+  // anything before share(), which was making "Share image" silently fail while
+  // Download (no activation needed) worked.
+  const posterBlobRef = React.useRef<Blob | null>(null);
+  const [posterReady, setPosterReady] = useState(false);
 
   const slugify = (s: string) => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
   const productUrl = `${window.location.origin}/product/${slugify(product.name) ? `${slugify(product.name)}-` : ''}${product.id}`;
@@ -63,7 +70,7 @@ export const SharePoster: React.FC<SharePosterProps> = ({ product, isOpen, onClo
   // CSS-transformed ancestor (the modal's framer-motion animation + the
   // scale(0.25) preview wrapper). The server just needs the fields the client
   // already has, including the locally-generated QR.
-  const capture = async (): Promise<Blob | null> => {
+  const capture = async (): Promise<Blob> => {
     const res = await fetch('/api/poster', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -85,18 +92,43 @@ export const SharePoster: React.FC<SharePosterProps> = ({ product, isOpen, onClo
     return await res.blob();
   };
 
+  /** Return the cached poster, rendering it once on demand. */
+  const getPoster = async (): Promise<Blob> => {
+    if (posterBlobRef.current) return posterBlobRef.current;
+    const blob = await capture();
+    posterBlobRef.current = blob;
+    setPosterReady(true);
+    return blob;
+  };
+
+  // Eagerly render the poster as soon as the QR is ready, so Share can fire
+  // without an intervening await (see posterBlobRef note above).
+  useEffect(() => {
+    if (!isOpen || !qr) return;
+    posterBlobRef.current = null;
+    setPosterReady(false);
+    let cancelled = false;
+    capture()
+      .then(blob => { if (!cancelled) { posterBlobRef.current = blob; setPosterReady(true); } })
+      .catch(() => { /* generated on demand instead */ });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, qr]);
+
+  const triggerDownload = (blob: Blob) => {
+    const url = URL.createObjectURL(blob);
+    const a = Object.assign(document.createElement('a'), {
+      href: url,
+      download: `malimart-${product.name.replace(/[^a-z0-9]+/gi, '-').toLowerCase().slice(0, 40)}.png`,
+    });
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   const handleDownload = async () => {
     setBusy(true);
     try {
-      const blob = await capture();
-      if (!blob) throw new Error('capture failed');
-      const url = URL.createObjectURL(blob);
-      const a = Object.assign(document.createElement('a'), {
-        href: url,
-        download: `malimart-${product.name.replace(/[^a-z0-9]+/gi, '-').toLowerCase().slice(0, 40)}.png`,
-      });
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      triggerDownload(await getPoster());
       setDone(true);
       setTimeout(() => setDone(false), 2500);
       addToast('Poster downloaded', 'success');
@@ -108,23 +140,37 @@ export const SharePoster: React.FC<SharePosterProps> = ({ product, isOpen, onClo
   };
 
   const handleShareImage = async () => {
+    const cached = posterBlobRef.current;
+    const canShareFiles = !!navigator.canShare && !!navigator.share;
+
+    // Fast path: poster already rendered → share synchronously, preserving the
+    // tap's user-activation (the iOS/Safari requirement that a pre-share await
+    // would have broken).
+    if (cached && canShareFiles) {
+      const file = new File([cached], `malimart-${product.id}.png`, { type: 'image/png' });
+      if (navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], title: product.name, text: `${product.name} — ${formatTZS(product.price)} on MaliMart` });
+        } catch (e: any) {
+          if (e?.name !== 'AbortError') addToast('Sharing was cancelled', 'info');
+        }
+        return;
+      }
+    }
+
+    // Slow path: poster not ready yet, or file-sharing unsupported.
     setBusy(true);
     try {
-      const blob = await capture();
-      if (!blob) throw new Error('capture failed');
+      const blob = await getPoster();
       const file = new File([blob], `malimart-${product.id}.png`, { type: 'image/png' });
-      if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: product.name,
-          text: `${product.name} — ${formatTZS(product.price)} on MaliMart`,
-        });
+      if (navigator.canShare?.({ files: [file] }) && navigator.share) {
+        await navigator.share({ files: [file], title: product.name, text: `${product.name} — ${formatTZS(product.price)} on MaliMart` });
       } else {
-        await handleDownload();
-        addToast('Sharing not supported here — poster downloaded instead', 'info');
+        triggerDownload(blob);
+        addToast('Sharing images isn’t supported on this device — poster downloaded instead', 'info');
       }
-    } catch {
-      /* user cancelled share — no error toast */
+    } catch (e: any) {
+      if (e?.name !== 'AbortError') addToast('Could not share the poster', 'error');
     } finally {
       setBusy(false);
     }
@@ -222,13 +268,13 @@ const PosterCanvas = ({
       flexDirection: 'column', padding: 72, boxSizing: 'border-box',
     }}
   >
-    {/* Thin kitenge accent — keeps the Tanzanian identity on the dark canvas */}
+    {/* Thin neutral accent sweep */}
     <div style={{
       position: 'absolute', top: 0, left: 0, right: 0, height: 10,
-      background: 'repeating-linear-gradient(-45deg,#059669 0 28px,#f59e0b 28px 42px,#0c4a6e 42px 70px,#f59e0b 70px 84px)',
+      background: 'linear-gradient(90deg,#059669 0%,#10b981 45%,#0d9488 100%)',
     }} />
 
-    {/* Header: brand + TANZANIA tag */}
+    {/* Header: brand */}
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 40 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
         <div style={{ width: 60, height: 60, borderRadius: 16, background: '#10b981', color: '#0a0a0b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 38, fontWeight: 900 }}>M</div>
@@ -238,7 +284,7 @@ const PosterCanvas = ({
         </div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', border: '1px solid rgba(16,185,129,0.4)', borderRadius: 999, padding: '9px 20px' }}>
-        <span style={{ fontSize: 15, fontWeight: 800, letterSpacing: '0.18em', color: '#10b981' }}>TANZANIA</span>
+        <span style={{ fontSize: 15, fontWeight: 800, letterSpacing: '0.18em', color: '#10b981' }}>SCAN &amp; SHOP</span>
       </div>
     </div>
 

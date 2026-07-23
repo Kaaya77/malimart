@@ -2,9 +2,12 @@ import React from 'react';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Switch } from '../../components/UI';
 import { Loader2 } from 'lucide-react';
 import { useSellerSettings } from './context';
+import { AccentThemePicker } from '../../components/AccentThemePicker';
+import { useAppState } from '../../context/AppContext';
 
 export const PreferencesTab = () => {
     const { handleGenericSave, isSaving, preferences, setPreferences } = useSellerSettings();
+    const { user, updateUserProfile } = useAppState();
 
     const toggle = (key: keyof typeof preferences) =>
         setPreferences((p: any) => ({ ...p, [key]: !p[key] }));
@@ -51,6 +54,20 @@ export const PreferencesTab = () => {
                             {isSaving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving…</> : 'Save Preferences'}
                         </Button>
                     </div>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Appearance</CardTitle>
+                    <CardDescription>Pick an accent — the whole app recolours instantly.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <AccentThemePicker
+                        value={user?.theme_accent}
+                        mode={user?.theme_mode}
+                        onSelect={(key) => updateUserProfile({ theme_accent: key } as any)}
+                    />
                 </CardContent>
             </Card>
         </div>

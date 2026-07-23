@@ -1,19 +1,50 @@
 // =====================================================================
-// theme.ts — applies user customization safely.
-// Accents are a curated palette (validated again server-side), so users
-// can personalize without injecting arbitrary CSS or breaking contrast.
-// Call applyTheme(profile) once after login and after settings save.
+// theme.ts — applies user appearance customization safely.
+//
+// The whole app is styled with Tailwind `emerald-*` utilities, which in
+// Tailwind v4 resolve to `var(--color-emerald-<step>)`. So a personal accent
+// theme just needs to override that scale on <html> — every emerald surface,
+// ring, badge and button recolours at once, with contrast preserved because we
+// generate a full, balanced 50→950 ramp per preset.
+//
+// Accents are a fixed, curated set (validated again server-side), so users
+// personalize without injecting arbitrary CSS or breaking contrast.
+// Call applyTheme(profile) once after login and after every settings save.
 // =====================================================================
 
 export type ThemeMode = "light" | "dark" | "system";
 
-export const ACCENTS: Record<string, { base: string; soft: string; on: string }> = {
-  emerald: { base: "#0E9F6E", soft: "#D1FAE5", on: "#FFFFFF" },
-  ocean:   { base: "#0369A1", soft: "#E0F2FE", on: "#FFFFFF" },
-  sunset:  { base: "#C2410C", soft: "#FFEDD5", on: "#FFFFFF" },
-  plum:    { base: "#7E22CE", soft: "#F3E8FF", on: "#FFFFFF" },
-  sand:    { base: "#A16207", soft: "#FEF9C3", on: "#FFFFFF" },
+// Lightness ramp (%) roughly matching Tailwind's default numeric steps.
+const RAMP: Record<number, number> = {
+  50: 97, 100: 93, 200: 86, 300: 76, 400: 64, 500: 52, 600: 44, 700: 36, 800: 29, 900: 23, 950: 15,
 };
+const STEPS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
+
+export interface AccentPreset {
+  /** Stable key persisted to profiles.theme_accent. */
+  key: string;
+  /** Human label for the picker. */
+  label: string;
+  hue: number;
+  sat: number;
+  /** Swatch color shown in the picker (its own 500 step). */
+  swatch: string;
+}
+
+// `emerald` is the default — it maps to the app's built-in brand green, so we
+// leave the Tailwind scale untouched for it (see applyTheme).
+export const ACCENT_PRESETS: AccentPreset[] = [
+  { key: "emerald", label: "Emerald",  hue: 160, sat: 84, swatch: "#10b981" },
+  { key: "ocean",   label: "Ocean",    hue: 205, sat: 82, swatch: "#0ea5e9" },
+  { key: "violet",  label: "Violet",   hue: 264, sat: 68, swatch: "#8b5cf6" },
+  { key: "rose",    label: "Rose",     hue: 345, sat: 74, swatch: "#f43f5e" },
+  { key: "amber",   label: "Amber",    hue: 35,  sat: 92, swatch: "#f59e0b" },
+  { key: "teal",    label: "Teal",     hue: 175, sat: 66, swatch: "#14b8a6" },
+  { key: "indigo",  label: "Indigo",   hue: 234, sat: 62, swatch: "#6366f1" },
+  { key: "slate",   label: "Graphite", hue: 220, sat: 12, swatch: "#64748b" },
+];
+
+export const ACCENT_KEYS = ACCENT_PRESETS.map(p => p.key);
 
 export interface ThemeSettings {
   theme_mode?: ThemeMode | null;
@@ -21,6 +52,16 @@ export interface ThemeSettings {
   reduced_motion?: boolean | null;
   high_contrast_mode?: boolean | null;
 }
+
+const scaleFor = (hue: number, sat: number): Record<number, string> => {
+  const out: Record<number, string> = {};
+  for (const step of STEPS) out[step] = `hsl(${hue} ${sat}% ${RAMP[step]}%)`;
+  return out;
+};
+
+const clearAccentVars = (root: HTMLElement) => {
+  for (const step of STEPS) root.style.removeProperty(`--color-emerald-${step}`);
+};
 
 export function applyTheme(s: ThemeSettings) {
   const root = document.documentElement;
@@ -32,22 +73,17 @@ export function applyTheme(s: ThemeSettings) {
     (mode === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
   root.classList.toggle("dark", dark);
 
-  // Accent (whitelist only — anything unknown falls back to emerald)
-  const accent = ACCENTS[s.theme_accent ?? ""] ?? ACCENTS.emerald;
-  root.style.setProperty("--mm-accent", accent.base);
-  root.style.setProperty("--mm-accent-soft", accent.soft);
-  root.style.setProperty("--mm-accent-on", accent.on);
+  // Accent — override the whole emerald scale so every emerald-* utility follows.
+  const key = s.theme_accent ?? "emerald";
+  const preset = ACCENT_PRESETS.find(p => p.key === key);
+  if (!preset || preset.key === "emerald") {
+    clearAccentVars(root); // use the built-in brand green
+  } else {
+    const scale = scaleFor(preset.hue, preset.sat);
+    for (const step of STEPS) root.style.setProperty(`--color-emerald-${step}`, scale[step]);
+  }
 
   // Motion & contrast
   root.classList.toggle("mm-reduced-motion", !!s.reduced_motion);
   root.classList.toggle("mm-high-contrast", !!s.high_contrast_mode);
 }
-
-/* Add once to index.css:
-:root { --mm-accent:#0E9F6E; --mm-accent-soft:#D1FAE5; --mm-accent-on:#fff; }
-.mm-reduced-motion *, .mm-reduced-motion *::before, .mm-reduced-motion *::after {
-  animation-duration: 0.01ms !important; transition-duration: 0.01ms !important;
-}
-.mm-high-contrast { --mm-accent: #065F46; }
-Then use Tailwind arbitrary values: bg-[var(--mm-accent)] text-[var(--mm-accent-on)]
-*/

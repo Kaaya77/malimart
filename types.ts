@@ -110,7 +110,7 @@ export interface User {
     signature_emoji?: string;
     greeting_style?: string;
     cover_image_url?: string;
-    theme_accent?: 'sahara' | 'ocean' | 'forest' | 'sunset' | 'royal' | 'mono';
+    theme_accent?: 'emerald' | 'ocean' | 'violet' | 'rose' | 'amber' | 'teal' | 'indigo' | 'slate';
     theme_mode?: 'light' | 'dark' | 'system';
     reduced_motion?: boolean;
     sound_effects?: boolean;

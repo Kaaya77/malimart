@@ -1421,7 +1421,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         if (safe.signature_emoji) safe.signature_emoji = safe.signature_emoji.slice(0, 10).trim();
         if (safe.cover_image_url) safe.cover_image_url = safe.cover_image_url.slice(0, 500).trim();
         // Only allow safe enum values for DB-constrained fields
-        const validAccents = ['sahara', 'ocean', 'forest', 'sunset', 'royal', 'mono'];
+        const validAccents = ['emerald', 'ocean', 'violet', 'rose', 'amber', 'teal', 'indigo', 'slate'];
         const validModes = ['light', 'dark', 'system'];
         const validLayouts = ['compact', 'comfortable', 'spacious'];
         const validGreetings = ['karibu', 'habari', 'hello', 'mambo'];
