@@ -180,12 +180,16 @@ export const SharePoster: React.FC<SharePosterProps> = ({ product, isOpen, onClo
             </button>
           </div>
 
-          {/* Scaled preview of the poster */}
+          {/* Scaled preview of the poster — visual only, NOT what gets captured.
+              html2canvas badly miscalculates layout when the captured element's
+              ANCESTOR has a CSS transform (the scale(0.25) below), which is what
+              produced the garbled/overlapping downloaded poster — the real fix is
+              a separate untransformed off-screen copy (below) for html2canvas to
+              actually capture. */}
           <div className="px-5 pt-5 flex justify-center">
             <div className="overflow-hidden rounded-2xl shadow-lg border border-foreground/10" style={{ width: 270, height: 337.5 }}>
               <div style={{ transform: 'scale(0.25)', transformOrigin: 'top left' }}>
                 <PosterCanvas
-                  innerRef={posterRef}
                   img={imgDataUrl || img}
                   name={product.name}
                   brand={(product as any).brand}
@@ -200,6 +204,27 @@ export const SharePoster: React.FC<SharePosterProps> = ({ product, isOpen, onClo
                 />
               </div>
             </div>
+          </div>
+
+          {/* Off-screen, untransformed copy — this is what capture() rasterizes.
+              Rendered at its native size (no ancestor transform) so html2canvas
+              lays it out correctly; pushed off the visible viewport instead of
+              display:none so it still renders/paints. */}
+          <div style={{ position: 'fixed', top: 0, left: -99999, pointerEvents: 'none' }} aria-hidden="true">
+            <PosterCanvas
+              innerRef={posterRef}
+              img={imgDataUrl || img}
+              name={product.name}
+              brand={(product as any).brand}
+              price={formatTZS(product.price)}
+              salePrice={product.sale_price && product.sale_price < product.price ? formatTZS(product.sale_price) : null}
+              sellerName={sellerName}
+              verified={!!verified}
+              rating={rating}
+              reviewCount={(product as any).review_count || 0}
+              qr={qr}
+              shortUrl={shortUrl}
+            />
           </div>
 
           {/* Actions */}
@@ -232,7 +257,7 @@ export const SharePoster: React.FC<SharePosterProps> = ({ product, isOpen, onClo
 const PosterCanvas = ({
   innerRef, img, name, brand, price, salePrice, sellerName, verified, rating, reviewCount, qr, shortUrl,
 }: {
-  innerRef: React.Ref<HTMLDivElement>;
+  innerRef?: React.Ref<HTMLDivElement>;
   img?: string; name: string; brand?: string; price: string; salePrice: string | null;
   sellerName: string; verified: boolean; rating: number | null; reviewCount: number;
   qr: string; shortUrl: string;
