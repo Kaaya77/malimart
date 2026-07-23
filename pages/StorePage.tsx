@@ -5,7 +5,7 @@ import {
   Store, MapPin, Star, BadgeCheck, MessageSquare, Share2,
   Search, Globe, Truck, ShieldCheck, Loader2, ArrowRight,
   Instagram, Twitter, Facebook, Info, Calendar, Package,
-  Heart, Filter, LayoutGrid, Tag, Phone, TrendingUp, Clock, Eye
+  Heart, Filter, LayoutGrid, Tag, Phone, TrendingUp, Clock, Eye, QrCode
 } from 'lucide-react';
 import { useAppState } from '../context/AppContext';
 import { fetchStoreProducts } from '../services/shopService';
@@ -13,6 +13,7 @@ import { VendorProfile, Product } from '../types';
 import { ProductCard } from '../components/ProductCard';
 import { ReviewSection } from '../components/ReviewSection';
 import { ProductShare } from '../components/ProductShare';
+import { StorePoster } from '../components/StorePoster';
 import { useToast } from '../components/UI';
 import { formatTZS, messageSellerPath, mapsUrl } from '../constants';
 import { usePresence } from '../hooks/usePresence';
@@ -58,6 +59,7 @@ export const StorePage: React.FC = () => {
   const [showSort, setShowSort]       = useState(false);
   const [msgOpen, setMsgOpen]         = useState(false);
   const [shareOpen, setShareOpen]     = useState(false);
+  const [posterOpen, setPosterOpen]   = useState(false);
   const [reviewProduct, setReviewProduct] = useState<string | null>(null);
 
   useEffect(() => {
@@ -276,6 +278,10 @@ export const StorePage: React.FC = () => {
                 className="w-11 h-11 rounded-2xl bg-foreground/[0.06] flex items-center justify-center text-foreground/50 hover:bg-foreground/10 transition-colors active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40">
                 <Share2 className="w-4 h-4 stroke-[2]"/>
               </button>
+              <button onClick={() => setPosterOpen(true)} aria-label="Create a shareable store card"
+                className="w-11 h-11 rounded-2xl bg-foreground/[0.06] flex items-center justify-center text-foreground/50 hover:bg-foreground/10 transition-colors active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40">
+                <QrCode className="w-4 h-4 stroke-[2]"/>
+              </button>
             </div>
           </div>
         </motion.div>
@@ -486,6 +492,16 @@ export const StorePage: React.FC = () => {
         isOpen={shareOpen}
         onClose={() => setShareOpen(false)}
       />
+
+      {vendor && (
+        <StorePoster
+          vendor={vendor}
+          storeUrl={window.location.href.split('?')[0]}
+          productCount={allStoreProducts.length}
+          isOpen={posterOpen}
+          onClose={() => setPosterOpen(false)}
+        />
+      )}
     </div>
   );
 };

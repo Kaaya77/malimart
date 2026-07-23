@@ -19,7 +19,8 @@ import { ImageResponse } from '@vercel/og';
 export const config = { runtime: 'edge' };
 
 interface PosterBody {
-  img?: string;          // product image URL (Satori fetches server-side)
+  kind?: 'product' | 'store';
+  img?: string;          // product image / store logo URL (Satori fetches server-side)
   name?: string;
   brand?: string;
   price?: string;        // pre-formatted, e.g. "TZS 45,000"
@@ -30,6 +31,10 @@ interface PosterBody {
   reviewCount?: number;
   qr?: string;           // data: URL PNG generated client-side
   shortUrl?: string;
+  // store-card only
+  tagline?: string;      // short store description
+  productCount?: number;
+  location?: string;
 }
 
 // Dark-premium-spotlight palette.
@@ -61,6 +66,64 @@ export default async function handler(req: Request): Promise<Response> {
   const img = b.img;
   const qr = b.qr;
   const verified = !!b.verified;
+
+  // ── Store business card ────────────────────────────────────────────────────
+  if (b.kind === 'store') {
+    const tagline = (b.tagline || '').slice(0, 140);
+    const location = (b.location || '').slice(0, 60);
+    const productCount = b.productCount || 0;
+    return new ImageResponse(
+      (
+        <div style={{ width: '100%', height: '100%', background: bg, color: white, fontFamily: 'sans-serif', display: 'flex', flexDirection: 'column', padding: 80, position: 'relative' }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 10, display: 'flex', background: accent }} />
+
+          {/* Brand line */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 64 }}>
+            <div style={{ width: 48, height: 48, borderRadius: 14, background: emerald, color: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 30, fontWeight: 900 }}>M</div>
+            <div style={{ fontSize: 26, fontWeight: 800, color: white, display: 'flex' }}>MaliMart</div>
+          </div>
+
+          {/* Store identity */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, justifyContent: 'center' }}>
+            <div style={{ width: 260, height: 260, borderRadius: 60, overflow: 'hidden', background: '#18181b', border: `1px solid ${cardBorder}`, boxShadow: '0 40px 110px rgba(16,185,129,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {img
+                ? <img src={img} width={260} height={260} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : <span style={{ fontSize: 120, fontWeight: 900, color: emerald, display: 'flex' }}>{name.charAt(0).toUpperCase()}</span>}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 44 }}>
+              <div style={{ fontSize: 64, fontWeight: 800, color: white, display: 'flex', textAlign: 'center', maxWidth: 820, lineHeight: 1.05 }}>{name}</div>
+            </div>
+            {verified && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 20, color: verifiedC, fontSize: 26, fontWeight: 700 }}>
+                <svg width={28} height={28} viewBox="0 0 24 24" fill="none" stroke={verifiedC} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ display: 'flex' }}>
+                  <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+                  <path d="m9 12 2 2 4-4" />
+                </svg>
+                <span style={{ display: 'flex' }}>Verified seller</span>
+              </div>
+            )}
+            {tagline && <div style={{ fontSize: 28, color: muted, fontWeight: 500, marginTop: 24, textAlign: 'center', maxWidth: 760, display: 'flex', lineHeight: 1.4 }}>{tagline}</div>}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 28, marginTop: 30, fontSize: 26, fontWeight: 700, color: muted }}>
+              {productCount > 0 && <span style={{ display: 'flex' }}>{productCount} products</span>}
+              {location && <span style={{ display: 'flex' }}>📍 {location}</span>}
+            </div>
+          </div>
+
+          {/* Footer QR */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 28, marginTop: 40, paddingTop: 36, borderTop: `1px solid ${line}` }}>
+            <div style={{ width: 132, height: 132, borderRadius: 20, background: '#fff', padding: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 10px 34px rgba(0,0,0,0.5)' }}>
+              {qr && <img src={qr} width={104} height={104} style={{ width: 104, height: 104 }} />}
+            </div>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+              <div style={{ fontSize: 34, fontWeight: 800, color: white, display: 'flex' }}>Scan to visit store</div>
+              <div style={{ fontSize: 22, color: muted, fontWeight: 600, marginTop: 6, display: 'flex' }}>{shortUrl}</div>
+            </div>
+          </div>
+        </div>
+      ),
+      { width: 1080, height: 1350, headers: { 'cache-control': 'no-store' } }
+    );
+  }
 
   return new ImageResponse(
     (
