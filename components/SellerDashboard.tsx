@@ -17,7 +17,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   TrendingUp, TrendingDown, Package, ShoppingBag, Clock,
   Wallet, BarChart3, Users, Zap, AlertTriangle, ArrowRight,
-  RefreshCw, Star, Eye, Target, Activity, CheckCircle2, X,
+  RefreshCw, Star, Eye, Target, Activity, CheckCircle2, X, MessageCircle,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
@@ -378,6 +378,7 @@ interface SellerDashboardProps {
   onGoInventory: () => void;
   onGoReturns?: () => void;
   onGoMessages?: () => void;
+  onMessageBuyer?: (buyerId: string) => void;
   onGoPromotions?: () => void;
   onConfirmOrder?: (orderId: string) => void;
   onCancelOrder?: (orderId: string, reason: string) => void;
@@ -385,7 +386,7 @@ interface SellerDashboardProps {
 
 export const SellerDashboard: React.FC<SellerDashboardProps> = ({
   sellerId, sellerName, vendorLogoUrl, lowStockCount, onGoOrders, onGoInventory,
-  onGoReturns, onGoMessages, onGoPromotions, onConfirmOrder, onCancelOrder,
+  onGoReturns, onGoMessages, onMessageBuyer, onGoPromotions, onConfirmOrder, onCancelOrder,
 }) => {
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
@@ -682,7 +683,7 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({
           ) : (
             <div className="space-y-3">
               {full.topCustomers.map((c: any, i: number) => (
-                <div key={i} className="flex items-center gap-3">
+                <div key={c.id || i} className="flex items-center gap-3 group">
                   <div className="w-7 h-7 rounded-full bg-gradient-to-br from-foreground/20 to-foreground/10 flex items-center justify-center text-[10px] font-black text-foreground/60 shrink-0">
                     {(c.name || '?')[0].toUpperCase()}
                   </div>
@@ -690,6 +691,16 @@ export const SellerDashboard: React.FC<SellerDashboardProps> = ({
                     <p className="text-xs font-semibold text-foreground truncate">{c.name || 'Customer'}</p>
                     <p className="text-[10px] text-foreground/40">{c.count} order{c.count !== 1 ? 's' : ''}</p>
                   </div>
+                  {c.id && onMessageBuyer && (
+                    <button
+                      onClick={() => onMessageBuyer(c.id)}
+                      aria-label={`Message ${c.name || 'buyer'}`}
+                      title="Message buyer"
+                      className="w-7 h-7 rounded-full bg-foreground/[0.06] hover:bg-emerald-500/15 hover:text-emerald-600 text-foreground/45 flex items-center justify-center shrink-0 transition-colors opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+                    >
+                      <MessageCircle className="w-3.5 h-3.5 stroke-[2.2]" />
+                    </button>
+                  )}
                   <div className="text-right shrink-0">
                     <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
                       c.count >= 3 ? 'bg-emerald-500/15 text-emerald-600' :

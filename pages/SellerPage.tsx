@@ -373,6 +373,7 @@ export const SellerPage = () => {
                     onGoInventory={() => setTab('products')}
                     onGoReturns={() => setTab('returns')}
                     onGoMessages={() => setTab('messages')}
+                    onMessageBuyer={(buyerId: string) => switchToMessages(buyerId)}
                     onGoPromotions={() => setTab('offers')}
                     onConfirmOrder={async (orderId) => {
                       await supabase.rpc('update_order_status_rbac', { p_order_id: orderId, p_new_status: 'processing', p_cancel_reason: null });
