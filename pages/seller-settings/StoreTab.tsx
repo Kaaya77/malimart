@@ -16,14 +16,16 @@ export const StoreTab = () => {
     const [uploadingBanner, setUploadingBanner] = useState(false);
     // Personal name — distinct from the store name. This is what other people see
     // in chat, reviews and the navbar. Sellers had no way to change it.
-    const [personalName, setPersonalName] = useState(user?.name || (user as any)?.full_name || '');
+    const [personalName, setPersonalName] = useState((user as any)?.full_name || user?.name || '');
     const [savingName, setSavingName] = useState(false);
     const saveName = async () => {
         const n = personalName.trim();
         if (!n) return addToast('Enter your name', 'error');
         setSavingName(true);
         try {
-            await updateUserProfile({ name: n, full_name: n } as any);
+            // user.name is derived from full_name — write full_name (there's no
+            // `name` column; writing it would make the whole update fail).
+            await updateUserProfile({ full_name: n } as any);
             addToast('Your name was updated', 'success');
         } catch { addToast('Could not update your name', 'error'); }
         finally { setSavingName(false); }

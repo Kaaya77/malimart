@@ -109,21 +109,23 @@ export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, di
     const everySellerHas = (pred: (s?: VendorProfile) => boolean) =>
       sellerIds.length > 0 && sellerIds.every(sid => pred(sellersFor(sid)));
 
-    const methods: { id: 'lipa_namba' | 'mobile_transfer' | 'cash'; label: string; icon: any; desc: string }[] = [];
-    if (everySellerHas(s => !!(s?.lipa_namba || s?.mobile_number)))
-      methods.push({ id: 'lipa_namba', label: 'Mobile Money', icon: Smartphone, desc: 'M-Pesa · Tigo · Airtel' });
-    if (everySellerHas(s => !!s?.account_number))
-      methods.push({ id: 'mobile_transfer', label: 'Bank Transfer', icon: Landmark, desc: 'Direct Bank' });
-    // Cash on delivery is always available — pay-at-door needs no seller config.
-    methods.push({ id: 'cash', label: 'Cash on Delivery', icon: Banknote, desc: 'Pay at Door' });
-    return methods;
+    // Always SHOW every method — but disable (blank out) the ones a seller in the
+    // cart hasn't configured, instead of removing them entirely, so buyers know
+    // the option exists and why it's unavailable. Cash never needs seller config.
+    const mobileOk = everySellerHas(s => !!(s?.lipa_namba || s?.mobile_number));
+    const bankOk = everySellerHas(s => !!s?.account_number);
+    return [
+      { id: 'lipa_namba' as const, label: 'Mobile Money', icon: Smartphone, desc: 'M-Pesa · Tigo · Airtel', disabled: !mobileOk, disabledReason: "Seller hasn't set up mobile money" },
+      { id: 'mobile_transfer' as const, label: 'Bank Transfer', icon: Landmark, desc: 'Direct Bank', disabled: !bankOk, disabledReason: "Seller hasn't set up bank transfer" },
+      { id: 'cash' as const, label: 'Cash on Delivery', icon: Banknote, desc: 'Pay at Door', disabled: false, disabledReason: '' },
+    ];
   }, [cart, sellerDetails]);
 
-  // Keep the selected method valid as availability resolves (vendors load async).
+  // Keep the selected method valid & enabled as availability resolves (async).
   useEffect(() => {
     if (!areVendorsLoaded) return;
-    if (!availableMethods.some(m => m.id === paymentMethod)) {
-      setPaymentMethod(availableMethods[0]?.id ?? 'cash');
+    if (!availableMethods.some(m => m.id === paymentMethod && !m.disabled)) {
+      setPaymentMethod(availableMethods.find(m => !m.disabled)?.id ?? 'cash');
     }
   }, [areVendorsLoaded, availableMethods, paymentMethod]);
 
@@ -436,19 +438,27 @@ export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, di
                         <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground mb-4 flex items-center gap-2">
                           <Wallet className="w-3.5 h-3.5" /> Payment Method
                         </h3>
-                        <div className={`grid gap-3 ${availableMethods.length === 1 ? 'grid-cols-1' : availableMethods.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+                        <div className="grid gap-3 grid-cols-3">
                           {availableMethods.map(m => (
-                            <motion.button key={m.id} whileTap={{ scale: 0.97 }} onClick={() => setPaymentMethod(m.id as any)}
-                              className={`relative flex flex-col items-center text-center p-4 rounded-2xl border-2 transition-all ${paymentMethod === m.id ? 'border-emerald-500 bg-emerald-500/[0.06]' : 'border-foreground/10 hover:border-foreground/25'}`}
+                            <motion.button key={m.id} whileTap={m.disabled ? undefined : { scale: 0.97 }}
+                              onClick={() => { if (!m.disabled) setPaymentMethod(m.id as any); }}
+                              disabled={m.disabled}
+                              title={m.disabled ? m.disabledReason : undefined}
+                              className={`relative flex flex-col items-center text-center p-4 rounded-2xl border-2 transition-all ${
+                                m.disabled
+                                  ? 'border-foreground/8 bg-foreground/[0.02] opacity-45 cursor-not-allowed'
+                                  : paymentMethod === m.id ? 'border-emerald-500 bg-emerald-500/[0.06]' : 'border-foreground/10 hover:border-foreground/25'}`}
                             >
-                              {paymentMethod === m.id && <div className="absolute top-2 right-2 w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center"><Check className="w-3 h-3 text-white" /></div>}
-                              <m.icon className={`w-6 h-6 mb-2 ${paymentMethod === m.id ? 'text-emerald-600' : 'text-foreground/40'}`} />
-                              <p className={`text-[13px] font-black leading-tight ${paymentMethod === m.id ? 'text-foreground' : 'text-foreground/70'}`}>{m.label}</p>
-                              {m.desc && <p className="text-[10px] font-semibold text-foreground/40 mt-0.5 leading-tight">{m.desc}</p>}
+                              {!m.disabled && paymentMethod === m.id && <div className="absolute top-2 right-2 w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center"><Check className="w-3 h-3 text-white" /></div>}
+                              <m.icon className={`w-6 h-6 mb-2 ${!m.disabled && paymentMethod === m.id ? 'text-emerald-600' : 'text-foreground/40'}`} />
+                              <p className={`text-[13px] font-black leading-tight ${!m.disabled && paymentMethod === m.id ? 'text-foreground' : 'text-foreground/70'}`}>{m.label}</p>
+                              {m.disabled
+                                ? <p className="text-[9px] font-semibold text-foreground/35 mt-0.5 leading-tight">Not set up</p>
+                                : m.desc && <p className="text-[10px] font-semibold text-foreground/40 mt-0.5 leading-tight">{m.desc}</p>}
                             </motion.button>
                           ))}
                         </div>
-                        {areVendorsLoaded && availableMethods.every(m => m.id === 'cash') && (
+                        {areVendorsLoaded && availableMethods.every(m => m.disabled || m.id === 'cash') && (
                           <div className="mt-3 flex items-start gap-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] font-medium text-amber-700 dark:text-amber-300">
                             <Info className="w-3.5 h-3.5 mt-0.5 shrink-0" />
                             <span>This seller hasn't set up online payment methods yet — cash on delivery is the only option for this order.</span>

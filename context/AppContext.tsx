@@ -1419,11 +1419,11 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         const {
             role, is_banned, is_admin, wallet_balance, points,
             deleted_at, id, created_at, email, last_seen_at,
+            name, // NOT a real column — the app derives user.name from full_name
             ...safe
         } = data as any;
-        
+
         // Additional sanitization of text fields
-        if (safe.name)         safe.name         = safe.name.slice(0, 100).replace(/<[^>]*>/g, '').trim();
         if (safe.full_name)    safe.full_name     = safe.full_name.slice(0, 100).replace(/<[^>]*>/g, '').trim();
         if (safe.display_name) safe.display_name  = safe.display_name.slice(0, 60).replace(/<[^>]*>/g, '').trim();
         if (safe.bio)          safe.bio           = safe.bio.slice(0, 500).replace(/<[^>]*>/g, '').trim();
@@ -1448,7 +1448,9 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
             throw error;
         }
         await logActivity('update_profile', 'User profile updated');
-        setUser({ ...user, ...safe });
+        // user.name is derived from full_name — keep the in-memory display name in
+        // sync so a name change shows immediately (navbar, avatars) without reload.
+        setUser({ ...user, ...safe, ...(safe.full_name ? { name: safe.full_name } : {}) });
         fetchUserData(user.id);
     }, [user, logActivity, fetchUserData, addToast]);
 
