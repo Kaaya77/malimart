@@ -70,12 +70,13 @@ const ScrollToTop = () => {
 
 // --- ROUTE GUARD COMPONENT ---
 interface RouteGuardProps {
-  requiredRole?: 'seller' | 'buyer' | 'admin';
+  requiredRole?: 'seller' | 'buyer' | 'admin' | ('seller' | 'buyer' | 'admin')[];
 }
 
 const RouteGuard = ({ children, requiredRole }: PropsWithChildren<RouteGuardProps>) => {
   const { user, isLoading } = useAppState();
   const location = useLocation();
+  const allowedRoles = requiredRole ? (Array.isArray(requiredRole) ? requiredRole : [requiredRole]) : null;
 
   if (isLoading) {
     return (
@@ -90,7 +91,7 @@ const RouteGuard = ({ children, requiredRole }: PropsWithChildren<RouteGuardProp
   // Banned handling - temporarily redirect to home or login
   if (user.is_banned) return <Navigate to="/" replace />;
 
-  if (requiredRole && user.role !== requiredRole) {
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
     if (user.role === 'admin') return <Navigate to="/admin" replace />;
     if (user.role === 'seller') return <Navigate to="/seller" replace />;
     if (user.role === 'buyer') return <Navigate to="/buyer" replace />;
@@ -301,7 +302,9 @@ const AppContent = () => {
               {/* MessagesPage reads :peerId via useParams — without this route,
                   opening any conversation 404'd on the catch-all */}
               <Route path="/messages/:peerId" element={<RouteGuard><MessagesPage /></RouteGuard>} />
-              <Route path="/buyer" element={<RouteGuard requiredRole="buyer"><BuyerPage /></RouteGuard>} />
+              {/* Sellers can shop other stores (self-purchase blocked server-side), so
+                  they need access to their own order history / tracking here too. */}
+              <Route path="/buyer" element={<RouteGuard requiredRole={['buyer', 'seller']}><BuyerPage /></RouteGuard>} />
               <Route path="/seller" element={<RouteGuard requiredRole="seller"><SellerPage /></RouteGuard>} />
               <Route path="/seller/products/new" element={<RouteGuard requiredRole="seller"><ProductEditPage /></RouteGuard>} />
               <Route path="/seller/products/:id/edit" element={<RouteGuard requiredRole="seller"><ProductEditPage /></RouteGuard>} />

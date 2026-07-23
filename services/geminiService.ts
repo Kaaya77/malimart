@@ -403,7 +403,14 @@ export const refineProductImage = async (imageInput: string, instruction: string
     let mimeType = 'image/jpeg';
     let cleanBase64 = imageInput;
     if (imageInput.startsWith('http')) {
-        const fetchRes = await fetch(imageInput);
+        // Cache-bust: the PWA service worker CacheFirst-caches this same URL
+        // when it's loaded via a plain <img> tag, which fetches in 'no-cors'
+        // mode and gets stored as an opaque (status 0) response. Reusing that
+        // cached entry for this cors-mode fetch throws "opaque response used
+        // for a request whose type is not no-cors". A distinct query string
+        // is a cache miss, forcing a fresh cors-mode network fetch.
+        const bustUrl = imageInput + (imageInput.includes('?') ? '&' : '?') + '_ai=1';
+        const fetchRes = await fetch(bustUrl, { mode: 'cors', cache: 'no-store' });
         const blob = await fetchRes.blob();
         mimeType = blob.type || 'image/jpeg';
         const buffer = await blob.arrayBuffer();

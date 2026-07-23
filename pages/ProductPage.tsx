@@ -167,9 +167,13 @@ export const ProductPage = () => {
 
  // Store on vacation → ordering is paused (server enforces this too).
  const onVacation = !!(vendor as any)?.vacation_mode;
+ // Sellers can shop other stores, but not their own — server (place_order_atomic)
+ // enforces this too; this just gives a clear message instead of a checkout error.
+ const isOwnProduct = !!user && !!product && user.id === product.seller_id;
 
  const handleAdd = () => {
  if (!product || !metrics || isAdding) return;
+ if (isOwnProduct) { addToast("You can't buy your own product", 'error'); return; }
  if (onVacation) { addToast(`${vendor?.store_name || 'This store'} is on vacation — not accepting orders right now`, 'error'); return; }
  setIsAdding(true);
  addToCart(product, selectedVariant || undefined, qty);
@@ -451,11 +455,11 @@ export const ProductPage = () => {
  <span className="w-8 text-center text-sm font-black tabular-nums" aria-live="polite">{qty}</span>
  <button aria-label="Increase quantity" onClick={() => setQty(Math.min(metrics.stock, qty + 1))} disabled={qty >= metrics.stock} className="w-10 h-10 rounded-xl flex items-center justify-center text-foreground/50 hover:bg-foreground/[0.06] hover:text-foreground transition-colors disabled:opacity-30 font-bold">+</button>
  </div>
- <Button size="lg" className="flex-1" onClick={handleAdd} disabled={metrics.isOut || onVacation}>
- {isAdding ? (<><Check className="w-4 h-4 mr-2 stroke-[3]" /> Added</>) : metrics.isOut ? 'Out of Stock' : onVacation ? 'Store on Vacation' : (<><ShoppingBag className="w-4 h-4 mr-2 stroke-[2.2]" /> Add to Cart</>)}
+ <Button size="lg" className="flex-1" onClick={handleAdd} disabled={metrics.isOut || onVacation || isOwnProduct}>
+ {isAdding ? (<><Check className="w-4 h-4 mr-2 stroke-[3]" /> Added</>) : isOwnProduct ? 'Your Own Listing' : metrics.isOut ? 'Out of Stock' : onVacation ? 'Store on Vacation' : (<><ShoppingBag className="w-4 h-4 mr-2 stroke-[2.2]" /> Add to Cart</>)}
  </Button>
  </div>
- <Button size="lg" variant="secondary" className="w-full" onClick={() => { handleAdd(); navigate('/cart'); }} disabled={metrics.isOut || onVacation}>
+ <Button size="lg" variant="secondary" className="w-full" onClick={() => { handleAdd(); navigate('/cart'); }} disabled={metrics.isOut || onVacation || isOwnProduct}>
  Buy Now
  </Button>
  </div>
@@ -661,12 +665,12 @@ export const ProductPage = () => {
  </button>
  <button
  onClick={handleAdd}
- disabled={metrics.isOut || onVacation}
- className={`flex-1 h-14 rounded-2xl font-bold text-[13px] flex items-center justify-center gap-2.5 active:scale-[0.98] transition-all shadow-lg ${(metrics.isOut || onVacation) ? 'bg-foreground/10 text-foreground/35 cursor-not-allowed' : isAdding ? 'bg-emerald-600 text-white' : 'bg-emerald-500 text-white'}`}
+ disabled={metrics.isOut || onVacation || isOwnProduct}
+ className={`flex-1 h-14 rounded-2xl font-bold text-[13px] flex items-center justify-center gap-2.5 active:scale-[0.98] transition-all shadow-lg ${(metrics.isOut || onVacation || isOwnProduct) ? 'bg-foreground/10 text-foreground/35 cursor-not-allowed' : isAdding ? 'bg-emerald-600 text-white' : 'bg-emerald-500 text-white'}`}
  >
  {isAdding ? (
  <><Check className="w-4 h-4 stroke-[2.5]" /> Added to Cart</>
- ) : metrics.isOut ? 'Out of Stock' : onVacation ? 'Store on Vacation' : (
+ ) : isOwnProduct ? 'Your Own Listing' : metrics.isOut ? 'Out of Stock' : onVacation ? 'Store on Vacation' : (
  <><ShoppingBag className="w-4 h-4 stroke-[2.2]" /> Add to Cart · {formatTZS(metrics.price * qty)}</>
  )}
  </button>

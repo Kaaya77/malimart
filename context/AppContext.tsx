@@ -1041,6 +1041,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
             // Map common RPC errors to user-friendly messages
             const msg = error.message || '';
             if (msg.includes('Insufficient stock')) throw new Error('One or more items are out of stock. Please update your cart.');
+            if (msg.includes('cannot purchase your own product')) throw new Error("You can't buy your own product. Remove it from your cart to continue.");
             if (msg.includes('on vacation')) throw new Error(msg.replace(/^Seller on vacation: /, ''));
             if (msg.includes('Product not found')) throw new Error('A product in your cart is no longer available.');
             if (msg.includes('Unauthorized')) throw new Error('Session expired. Please log in again.');

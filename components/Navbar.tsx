@@ -127,6 +127,9 @@ const MobileDrawer = ({ open, onClose, user, logout, isDark, toggleDark, notific
  { label:'Notifications', path:'/notifications', icon:BellRing, badge:unread },
  { label:'Messages', path:'/messages', icon:MessageCircle, badge:unreadMessages },
  { label:'My Account', path:accountPath, icon:user.role==='admin'?ShieldAlert:user.role==='seller'?Store:Package, badge:0 },
+ // Sellers can also shop other stores — give them a way back to their own
+ // purchase history, since /seller is their default dashboard landing.
+ ...(user.role==='seller' ? [{ label:'My Purchases', path:'/buyer?tab=orders', icon:Package, badge:0 }] : []),
  { label:'Settings', path:accountPath+'?tab=settings', icon:Settings, badge:0 },
  ] : [];
 
