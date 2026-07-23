@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Star, ThumbsUp, Loader2, User, Camera, X, ChevronDown, ChevronUp, Edit2, Trash2, Flag, MessageSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../services/supabaseClient';
-import { fetchProductReviews, insertReview, updateOwnReview, deleteOwnReview, reportContent, hasDeliveredPurchase } from '../services/shopService';
+import { fetchProductReviews, insertReview, updateOwnReview, deleteOwnReview, reportContent } from '../services/shopService';
 import { compressImage, IMMUTABLE_CACHE } from '../services/imageCompression';
 import { useAppState } from '../context/AppContext';
 import { ConfirmDialog, Textarea, useToast } from './UI';
@@ -60,7 +60,7 @@ const RatingBar: React.FC<{ star: number; count: number; total: number; onClick:
 interface ReviewSectionProps { productId: string; }
 
 export const ReviewSection: React.FC<ReviewSectionProps> = ({ productId }) => {
-  const { user, orders } = useAppState();
+  const { user } = useAppState();
   const { addToast } = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -114,23 +114,9 @@ export const ReviewSection: React.FC<ReviewSectionProps> = ({ productId }) => {
 
   const userHasReviewed = reviews.some(r => (r as any).user?.id === user?.id);
 
-  // RLS only accepts reviews from buyers with a DELIVERED order containing this
-  // product. Verify against the DB rather than the in-memory `orders` array,
-  // which for a SELLER holds their store's orders — not their own purchases —
-  // so a seller who bought from another store was wrongly blocked (#5).
-  const [hasPurchased, setHasPurchased] = useState(false);
-  useEffect(() => {
-    let cancelled = false;
-    if (!user) { setHasPurchased(false); return; }
-    // Optimistic hint from the local orders array (buyer case), then confirm.
-    const localHint = (orders || []).some((o: any) =>
-      o.status === 'delivered' &&
-      (o.items || []).some((i: any) => (i.product_id || i.products?.id || i.product?.id) === productId)
-    );
-    if (localHint) setHasPurchased(true);
-    hasDeliveredPurchase(productId, user.id).then(ok => { if (!cancelled) setHasPurchased(ok); });
-    return () => { cancelled = true; };
-  }, [user, productId, orders]);
+  // Any signed-in user may leave a review (the reviews_insert RLS policy no
+  // longer requires a delivered purchase). Gate only on being signed in.
+  const canReview = !!user;
 
   // ── Handlers ──────────────────────────────────────────────────────────────
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -156,7 +142,7 @@ export const ReviewSection: React.FC<ReviewSectionProps> = ({ productId }) => {
     e.preventDefault();
     if (!user) return addToast('Sign in to leave a review', 'error');
     if (userHasReviewed) return addToast('You already reviewed this product', 'error');
-    if (!hasPurchased) return addToast('Only verified buyers can review — order this product first', 'error');
+    if (!canReview) return addToast('Sign in to leave a review', 'error');
     const comment = sanitizeText(form.comment, 2000);
     if (comment.length < 10) return addToast('Write at least 10 characters', 'error');
     if (!rateLimit(`review:${user.id}`, 3)) return addToast('Too many submissions — wait a moment', 'error');
@@ -244,16 +230,16 @@ export const ReviewSection: React.FC<ReviewSectionProps> = ({ productId }) => {
           ))}
         </div>
 
-        {/* Write review CTA — only for verified buyers (matches the RLS rule) */}
-        {user && !userHasReviewed && !showForm && hasPurchased && (
+        {/* Write review CTA — any signed-in user */}
+        {user && !userHasReviewed && !showForm && (
           <button onClick={() => setShowForm(true)}
             className="self-start sm:self-center shrink-0 h-10 px-5 rounded-2xl bg-foreground text-background text-xs font-bold hover:bg-foreground/85 transition-colors active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40">
             Write Review
           </button>
         )}
-        {user && !userHasReviewed && !hasPurchased && (
+        {!user && (
           <p className="self-start sm:self-center shrink-0 text-[10px] font-bold uppercase tracking-widest text-foreground/35">
-            Reviews are from verified buyers only
+            Sign in to review
           </p>
         )}
       </div>
@@ -357,7 +343,7 @@ export const ReviewSection: React.FC<ReviewSectionProps> = ({ productId }) => {
           <MessageSquare className="w-8 h-8 opacity-20"/>
           <p className="text-sm font-semibold">No reviews yet</p>
           <p className="text-xs">Be the first to share your experience</p>
-          {user && !userHasReviewed && hasPurchased && (
+          {user && !userHasReviewed && (
             <button onClick={() => setShowForm(true)}
               className="mt-2 h-9 px-5 rounded-full bg-foreground text-background text-xs font-bold hover:bg-foreground/85 transition-colors">
               Write the first review

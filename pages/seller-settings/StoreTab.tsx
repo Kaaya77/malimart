@@ -5,13 +5,29 @@ import { Globe, ImageIcon, Info, Loader2, Store, Trash2, Upload } from 'lucide-r
 import { supabase } from '../../services/supabaseClient';
 import { compressImage } from '../../services/imageCompression';
 import { useSellerSettings } from './context';
+import { useAppState } from '../../context/AppContext';
 
 export const StoreTab = () => {
     const { addToast, handleAddSocial, handleGenericSave, handleRemoveSocial, isSaving, newSocial, policiesData, profileData, setNewSocial, setPoliciesData, setProfileData, socialLinks, user } = useSellerSettings();
+    const { updateUserProfile } = useAppState();
     const logoInputRef = useRef<HTMLInputElement>(null);
     const bannerInputRef = useRef<HTMLInputElement>(null);
     const [uploadingLogo, setUploadingLogo] = useState(false);
     const [uploadingBanner, setUploadingBanner] = useState(false);
+    // Personal name — distinct from the store name. This is what other people see
+    // in chat, reviews and the navbar. Sellers had no way to change it.
+    const [personalName, setPersonalName] = useState(user?.name || (user as any)?.full_name || '');
+    const [savingName, setSavingName] = useState(false);
+    const saveName = async () => {
+        const n = personalName.trim();
+        if (!n) return addToast('Enter your name', 'error');
+        setSavingName(true);
+        try {
+            await updateUserProfile({ name: n, full_name: n } as any);
+            addToast('Your name was updated', 'success');
+        } catch { addToast('Could not update your name', 'error'); }
+        finally { setSavingName(false); }
+    };
 
     const uploadStoreImage = async (
         file: File,
@@ -145,6 +161,15 @@ export const StoreTab = () => {
    )}
  </div>
  <p className="text-[11px] text-foreground/40">Used for your storefront's Follow/CTA buttons. Leave blank for the default emerald.</p>
+ </div>
+ <div className="space-y-1">
+ <label className="text-xs font-semibold text-foreground/70 mb-1.5 block">Your Name <span className="font-normal text-foreground/40">(personal — shown in chat & reviews)</span></label>
+ <div className="flex gap-2">
+   <Input placeholder="Your full name" value={personalName} onChange={(e: any) => setPersonalName(e.target.value)} />
+   <Button variant="secondary" onClick={saveName} disabled={savingName || personalName.trim() === (user?.name || '')}>
+     {savingName ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save'}
+   </Button>
+ </div>
  </div>
  <div className="space-y-1">
  <label className="text-xs font-semibold text-foreground/70 mb-1.5 block">Store Name</label>

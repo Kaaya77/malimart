@@ -112,6 +112,13 @@ export const BuyerMessages = ({ userId, initialSellerId, initialProductId, initi
     const channel = supabase.channel(`msgs-${userId}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `receiver_id=eq.${userId}` }, () => load())
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `sender_id=eq.${userId}` }, () => load())
+      // Soft-deletes are UPDATEs (deleted_at) — subscribe so a deleted message
+      // reflects live for both parties, not just after a manual refresh.
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages', filter: `receiver_id=eq.${userId}` }, () => load())
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages', filter: `sender_id=eq.${userId}` }, () => load())
+      // Reactions live in message_reactions — reload on any change so emoji
+      // reactions appear/disappear in realtime.
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'message_reactions' }, () => load())
       .subscribe();
     const typingChannel = supabase.channel(`typing:${userId}`)
       .on('broadcast', { event: 'typing' }, ({ payload }: any) => {

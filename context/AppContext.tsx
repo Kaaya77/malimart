@@ -1160,8 +1160,10 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
             receiver_id: to,
             body: text,
             product_id: productId,
-            // messages has no order_id column — keep order context in metadata (jsonb)
-            metadata: orderId ? { order_id: orderId } : null,
+            // messages has no order_id column — keep order context in metadata (jsonb).
+            // metadata is NOT NULL (defaults to {}), so never send null or the
+            // insert fails with "failed to send message".
+            metadata: orderId ? { order_id: orderId } : {},
             attachment_url: attachment?.url,
             attachment_type: attachment?.type,
             reply_to_id: replyToId,
@@ -1464,6 +1466,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
             console.error("Message soft delete failed:", error);
             addToast("Failed to delete message", "error");
         }
+        invalidate(`messages:${user.id}`);
     }, [user, addToast]);
 
     const reportUser = useCallback(async (reportedId: string, reason: string, details?: string) => {
@@ -1492,6 +1495,8 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         if (error && error.code !== '23505') { // Ignore duplicate reactions
             console.error("Add reaction failed:", error);
         }
+        // Bust cache so the next fetchMessages reflects the reaction immediately.
+        invalidate(`messages:${user.id}`);
     }, [user]);
 
     const removeReaction = useCallback(async (messageId: string, emoji: string) => {
@@ -1504,6 +1509,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         if (error) {
             console.error("Remove reaction failed:", error);
         }
+        invalidate(`messages:${user.id}`);
     }, [user]);
 
     const markNotificationRead = useCallback(async (id: string) => {
