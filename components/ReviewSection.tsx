@@ -346,7 +346,7 @@ export const ReviewSection: React.FC<ReviewSectionProps> = ({ productId }) => {
           <MessageSquare className="w-8 h-8 opacity-20"/>
           <p className="text-sm font-semibold">No reviews yet</p>
           <p className="text-xs">Be the first to share your experience</p>
-          {user && !userHasReviewed && (
+          {user && !userHasReviewed && hasPurchased && (
             <button onClick={() => setShowForm(true)}
               className="mt-2 h-9 px-5 rounded-full bg-foreground text-background text-xs font-bold hover:bg-foreground/85 transition-colors">
               Write the first review

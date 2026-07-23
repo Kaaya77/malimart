@@ -255,7 +255,7 @@ const PosterCanvas = ({
     <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 40 }}>
       <div style={{ width: 64, height: 64, borderRadius: 18, background: '#059669', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40, fontWeight: 900 }}>M</div>
       <div>
-        <div style={{ fontSize: 34, fontWeight: 800, letterSpacing: '-0.02em' }}>MaliMart</div>
+        <div style={{ fontSize: 34, fontWeight: 800 }}>MaliMart</div>
         <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: '0.28em', color: '#059669' }}>MARKETPLACE</div>
       </div>
     </div>
@@ -271,13 +271,13 @@ const PosterCanvas = ({
     {/* Info */}
     <div style={{ marginTop: 40, flex: 1, display: 'flex', flexDirection: 'column' }}>
       {brand && <div style={{ fontSize: 22, fontWeight: 700, color: '#8a8580', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>{brand}</div>}
-      <div style={{ fontSize: 52, fontWeight: 800, lineHeight: 1.05, letterSpacing: '-0.02em', maxHeight: 168, overflow: 'hidden' }}>{name}</div>
+      <div style={{ fontSize: 52, fontWeight: 800, lineHeight: 1.15, maxHeight: 180, overflow: 'hidden' }}>{name}</div>
 
       {/* Price + seller */}
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginTop: 28 }}>
         <div>
           <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: 14, background: '#059669', color: '#fff', padding: '14px 28px', borderRadius: 18 }}>
-            <span style={{ fontSize: 46, fontWeight: 900, letterSpacing: '-0.02em' }}>{salePrice || price}</span>
+            <span style={{ fontSize: 46, fontWeight: 900 }}>{salePrice || price}</span>
           </div>
           {salePrice && <span style={{ fontSize: 28, color: '#8a8580', textDecoration: 'line-through', marginLeft: 18 }}>{price}</span>}
         </div>
@@ -306,7 +306,7 @@ const PosterCanvas = ({
         {qr && <img src={qr} style={{ width: '100%', height: '100%' }} />}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 34, fontWeight: 800, letterSpacing: '-0.01em' }}>Scan to shop</div>
+        <div style={{ fontSize: 34, fontWeight: 800 }}>Scan to shop</div>
         <div style={{ fontSize: 22, color: '#8a8580', fontWeight: 600, marginTop: 6, wordBreak: 'break-all' }}>{shortUrl}</div>
       </div>
     </div>

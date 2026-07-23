@@ -132,7 +132,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ isOpen, order, selle
                   <span className="text-white text-sm font-black">M</span>
                 </div>
                 <div>
-                  <p className="text-white font-black text-lg tracking-tight leading-none">MaliMart</p>
+                  <p className="text-white font-black text-lg leading-none">MaliMart</p>
                   <p className="text-gray-400 text-[10px] mt-0.5">Tanzania's Marketplace</p>
                 </div>
               </div>
