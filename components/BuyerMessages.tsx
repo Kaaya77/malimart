@@ -232,6 +232,20 @@ export const BuyerMessages = ({ userId, initialSellerId, initialProductId, initi
     [chats, selectedSeller]
   );
 
+  // People this buyer has already messaged — shown in the "new message" picker
+  // before they type anything (#19).
+  const recentContacts = useMemo(() => {
+    const map = new Map<string, { id: string; full_name: string | null; avatar_url: string | null; role: string }>();
+    for (const m of chats) {
+      const isMine = m.sender_id === userId;
+      const peerId = isMine ? m.receiver_id : m.sender_id;
+      const peer: any = isMine ? (m as any).receiver : (m as any).sender;
+      if (!peerId || map.has(peerId)) continue;
+      map.set(peerId, { id: peerId, full_name: peer?.full_name || null, avatar_url: peer?.avatar_url || null, role: 'seller' });
+    }
+    return [...map.values()].slice(0, 8);
+  }, [chats, userId]);
+
   const handleSend = async (e?: React.FormEvent) => {
     if (!rateLimit('send_message', 15)) { addToast('Slow down', 'error'); return; }
     if (e) e.preventDefault();
@@ -775,6 +789,7 @@ export const BuyerMessages = ({ userId, initialSellerId, initialProductId, initi
         isOpen={showNewChat}
         onClose={() => setShowNewChat(false)}
         roleFilter="seller"
+        recentContacts={recentContacts}
         onSelect={(contact) => {
           setInitialVendor({
             seller_id: contact.id,

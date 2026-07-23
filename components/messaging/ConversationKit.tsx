@@ -221,6 +221,18 @@ export const MessageBubble = ({
 }: BubbleProps) => {
   const [showEmoji, setShowEmoji] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Long-press (touch) reveals the reply/react/delete actions — on mobile there
+  // is no hover, so "hold a message" is the only way to get to them (#19).
+  const startPress = () => {
+    if (deletedAt) return;
+    pressTimer.current = setTimeout(() => {
+      setShowMenu(true);
+      try { navigator.vibrate?.(15); } catch { /* not supported */ }
+    }, 420);
+  };
+  const cancelPress = () => { if (pressTimer.current) { clearTimeout(pressTimer.current); pressTimer.current = null; } };
 
   const reactionMap = (reactions ?? []).reduce<Record<string, number>>((acc, r) => {
     acc[r.emoji] = (acc[r.emoji] || 0) + 1;
@@ -230,6 +242,10 @@ export const MessageBubble = ({
 
   return (
     <div className={`flex flex-col ${isMine ? 'items-end' : 'items-start'} group relative mb-0.5`}>
+      {/* Tap-catcher to dismiss the long-press action menu */}
+      {showMenu && (
+        <div className="fixed inset-0 z-40" onClick={() => { setShowMenu(false); setShowEmoji(false); }} />
+      )}
       {/* Reply preview */}
       {replyToContent && (
         <div className={`mb-1 max-w-[75%] px-3 py-1.5 rounded-xl text-[11px] leading-snug
@@ -245,13 +261,17 @@ export const MessageBubble = ({
       {/* Context slot (product/order tags) */}
       {contextSlot}
 
-      <div className="relative max-w-[80%]">
+      <div className="relative max-w-[80%] z-50">
         {/* Bubble */}
-        <div className={`px-4 py-2.5 text-[13px] leading-relaxed shadow-sm relative
+        <div className={`px-4 py-2.5 text-[13px] leading-relaxed shadow-sm relative select-none
           ${isMine
             ? 'bg-foreground text-background rounded-2xl rounded-br-sm'
             : 'glass-surface text-foreground border border-foreground/[0.08] rounded-2xl rounded-bl-sm'
           }`}
+          onTouchStart={startPress}
+          onTouchEnd={cancelPress}
+          onTouchMove={cancelPress}
+          onContextMenu={(e) => { if (onReply || onReact) { e.preventDefault(); setShowMenu(true); } }}
         >
           {/* Attachment */}
           {attachmentUrl && !deletedAt && (
@@ -338,14 +358,15 @@ export const MessageBubble = ({
         {/* Hover actions - floating pill beside bubble */}
         {!deletedAt && (
           <div
-            className={`absolute top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center
+            className={`absolute top-1/2 -translate-y-1/2 transition-opacity flex items-center z-50
+              ${showMenu ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}
               ${isMine ? 'right-full pr-2' : 'left-full pl-2'}`}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-0.5 bg-background border border-foreground/10 rounded-full shadow-md px-1 py-0.5">
               {onReply && (
                 <button
-                  onClick={onReply}
+                  onClick={() => { onReply(); setShowMenu(false); }}
                   title="Reply"
                   className="p-1.5 rounded-full text-foreground/40 hover:bg-foreground/[0.06] hover:text-emerald-500 transition-colors"
                 >
@@ -363,7 +384,7 @@ export const MessageBubble = ({
               )}
               {isMine && onDelete && (
                 <button
-                  onClick={onDelete}
+                  onClick={() => { onDelete(); setShowMenu(false); }}
                   title="Delete"
                   className="p-1.5 rounded-full text-foreground/40 hover:bg-red-500/10 hover:text-red-500 transition-colors"
                 >
@@ -372,7 +393,7 @@ export const MessageBubble = ({
               )}
               {!isMine && onReport && (
                 <button
-                  onClick={onReport}
+                  onClick={() => { onReport(); setShowMenu(false); }}
                   title="Report"
                   className="p-1.5 rounded-full text-foreground/40 hover:bg-red-500/10 hover:text-red-500 transition-colors"
                 >
@@ -394,13 +415,15 @@ export const MessageBubble = ({
 // is what lets a seller reach another seller, or anyone reach a buyer, when
 // no thread exists yet.
 export const NewConversationModal = ({
-  isOpen, onClose, onSelect, roleFilter,
+  isOpen, onClose, onSelect, roleFilter, recentContacts = [],
 }: {
   isOpen: boolean;
   onClose: () => void;
   onSelect: (contact: { id: string; full_name: string | null; avatar_url: string | null; role: string }) => void;
   /** Restrict results to one role (e.g. sellers messaging only other sellers). Omit to search everyone. */
   roleFilter?: 'buyer' | 'seller' | 'admin';
+  /** People the user has already chatted with — shown before they type (#19). */
+  recentContacts?: Array<{ id: string; full_name: string | null; avatar_url: string | null; role: string }>;
 }) => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Array<{ id: string; full_name: string | null; avatar_url: string | null; role: string }>>([]);
@@ -458,7 +481,33 @@ export const NewConversationModal = ({
             <p className="text-center text-xs text-foreground/40 py-8">No one found matching "{query.trim()}"</p>
           )}
           {!loading && query.trim().length < 2 && (
-            <p className="text-center text-xs text-foreground/35 py-8">Type at least 2 characters to search</p>
+            recentContacts.length > 0 ? (
+              <>
+                <p className="px-4 pt-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-foreground/40">Recent</p>
+                {recentContacts.map(r => (
+                  <button
+                    key={r.id}
+                    onClick={() => { onSelect(r); onClose(); }}
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-foreground/[0.04] transition-colors text-left"
+                  >
+                    {r.avatar_url ? (
+                      <img src={r.avatar_url} alt="" className="w-9 h-9 rounded-full object-cover shrink-0" loading="lazy" />
+                    ) : (
+                      <div className="w-9 h-9 rounded-full bg-foreground/[0.08] flex items-center justify-center shrink-0">
+                        <UserCircle2 className="w-5 h-5 text-foreground/40" />
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-foreground truncate">{r.full_name || 'User'}</p>
+                      <p className="text-[10px] uppercase tracking-wider text-foreground/40 font-bold">{r.role}</p>
+                    </div>
+                  </button>
+                ))}
+                <p className="text-center text-[10px] text-foreground/30 py-3">Or search everyone by name above</p>
+              </>
+            ) : (
+              <p className="text-center text-xs text-foreground/35 py-8">Type at least 2 characters to search</p>
+            )
           )}
           {!loading && results.map(r => (
             <button

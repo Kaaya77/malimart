@@ -813,6 +813,7 @@ export const SellerMessages = ({
       <NewConversationModal
         isOpen={showNewChat}
         onClose={() => setShowNewChat(false)}
+        recentContacts={users.slice(0, 8).map((u: any) => ({ id: u.id, full_name: u.name, avatar_url: u.avatar || null, role: 'buyer' }))}
         onSelect={(contact) => {
           setNewChatContact({ id: contact.id, name: contact.full_name || 'User', avatar: contact.avatar_url });
           setSelectedChatUser(contact.id);
