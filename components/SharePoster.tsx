@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Download, Share2, Loader2, Check, ShieldCheck, Star } from 'lucide-react';
@@ -14,7 +14,10 @@ interface SharePosterProps {
 
 /**
  * SharePoster — generates a beautiful, downloadable/shareable product poster
- * (clean-premium look + QR code) entirely client-side via html2canvas.
+ * (clean-premium look + QR code). The QR is generated client-side; the final
+ * 1080×1350 PNG is rendered SERVER-SIDE by /api/poster (@vercel/og / Satori),
+ * the same deterministic renderer behind the /api/og link-preview cards. This
+ * replaced client-side html2canvas, which produced garbled/overlapping output.
  *
  * For places that DON'T unfurl links (Instagram, Stories/Status, print), this
  * gives sellers a polished image. Link-preview cards (WhatsApp/FB/X) are handled
@@ -22,11 +25,9 @@ interface SharePosterProps {
  */
 export const SharePoster: React.FC<SharePosterProps> = ({ product, isOpen, onClose }) => {
   const { addToast } = useToast();
-  const posterRef = useRef<HTMLDivElement>(null);
   const [qr, setQr] = useState<string>('');
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
-  const [imgDataUrl, setImgDataUrl] = useState<string | null>(null);
 
   const slugify = (s: string) => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
   const productUrl = `${window.location.origin}/product/${slugify(product.name) ? `${slugify(product.name)}-` : ''}${product.id}`;
@@ -47,7 +48,7 @@ export const SharePoster: React.FC<SharePosterProps> = ({ product, isOpen, onClo
           margin: 0,
           width: 320,
           errorCorrectionLevel: 'M',
-          color: { dark: '#1c1917', light: '#00000000' },
+          color: { dark: '#1c1917', light: '#ffffff' },
         });
         if (!cancelled) setQr(data);
       } catch { /* QR is optional */ }
@@ -55,58 +56,33 @@ export const SharePoster: React.FC<SharePosterProps> = ({ product, isOpen, onClo
     return () => { cancelled = true; };
   }, [isOpen, productUrl]);
 
-  // Pre-fetch the product photo as a data URL. html2canvas draws the poster
-  // straight from the DOM, and a remote <img> — even with crossOrigin set —
-  // taints the canvas the moment the CORS handshake isn't exactly right,
-  // which throws inside canvas.toBlob() and silently kills BOTH download and
-  // share (that's why the poster image, download, and share were all broken
-  // together — one root cause). A data: URL is same-origin by definition, so
-  // there's nothing left to taint.
-  useEffect(() => {
-    if (!isOpen || !img) { setImgDataUrl(null); return; }
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch(img);
-        if (!res.ok) throw new Error(`fetch failed: ${res.status}`);
-        const blob = await res.blob();
-        const reader = new FileReader();
-        reader.onloadend = () => { if (!cancelled) setImgDataUrl(reader.result as string); };
-        reader.readAsDataURL(blob);
-      } catch {
-        if (!cancelled) setImgDataUrl(null); // poster still renders, just without the photo
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [isOpen, img]);
-
+  // Render the poster SERVER-SIDE via /api/poster (@vercel/og / Satori) — the
+  // same deterministic renderer that produces the link-preview cards. This
+  // replaces client-side html2canvas, which repeatedly produced garbled,
+  // overlapping output because it mis-lays-out any element under a
+  // CSS-transformed ancestor (the modal's framer-motion animation + the
+  // scale(0.25) preview wrapper). The server just needs the fields the client
+  // already has, including the locally-generated QR.
   const capture = async (): Promise<Blob | null> => {
-    const el = posterRef.current;
-    if (!el) return null;
-    // Guard against clicking Download/Share before the photo's data-URL
-    // fetch (above) has resolved and React has re-rendered the DOM with it —
-    // capturing the still-remote <img> would reintroduce the tainted-canvas
-    // failure this whole thing exists to avoid. Poll the actual DOM node
-    // (not React state, which this closure would only ever see as stale).
-    if (img) {
-      for (let i = 0; i < 20; i++) {
-        const domImg = el.querySelector('img');
-        if (domImg?.src.startsWith('data:') && domImg.complete) break;
-        await new Promise(r => setTimeout(r, 150));
-      }
-    }
-    // html2canvas-pro, not html2canvas: the original library can't parse
-    // modern CSS color functions (oklab/oklch, which Tailwind v4's color
-    // system uses), which threw inside its style parser and silently killed
-    // both download and share — this fork patches exactly that.
-    const { default: html2canvas } = await import('html2canvas-pro');
-    const canvas = await html2canvas(el, {
-      scale: 2,
-      backgroundColor: '#faf9f6',
-      useCORS: true,
-      logging: false,
+    const res = await fetch('/api/poster', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        img,
+        name: product.name,
+        brand: (product as any).brand,
+        price: formatTZS(product.price),
+        salePrice: product.sale_price && product.sale_price < product.price ? formatTZS(product.sale_price) : null,
+        sellerName,
+        verified: !!verified,
+        rating,
+        reviewCount: (product as any).review_count || 0,
+        qr,
+        shortUrl,
+      }),
     });
-    return await new Promise(res => canvas.toBlob(b => res(b), 'image/png', 0.95));
+    if (!res.ok) throw new Error(`poster render failed: ${res.status}`);
+    return await res.blob();
   };
 
   const handleDownload = async () => {
@@ -180,17 +156,15 @@ export const SharePoster: React.FC<SharePosterProps> = ({ product, isOpen, onClo
             </button>
           </div>
 
-          {/* Scaled preview of the poster — visual only, NOT what gets captured.
-              html2canvas badly miscalculates layout when the captured element's
-              ANCESTOR has a CSS transform (the scale(0.25) below), which is what
-              produced the garbled/overlapping downloaded poster — the real fix is
-              a separate untransformed off-screen copy (below) for html2canvas to
-              actually capture. */}
+          {/* Scaled preview of the poster (React render of the same design the
+              server draws) — purely a visual approximation. The actual
+              downloaded/shared PNG is rendered server-side by /api/poster, so
+              this preview no longer needs to be pixel-identical or captured. */}
           <div className="px-5 pt-5 flex justify-center">
             <div className="overflow-hidden rounded-2xl shadow-lg border border-foreground/10" style={{ width: 270, height: 337.5 }}>
               <div style={{ transform: 'scale(0.25)', transformOrigin: 'top left' }}>
                 <PosterCanvas
-                  img={imgDataUrl || img}
+                  img={img}
                   name={product.name}
                   brand={(product as any).brand}
                   price={formatTZS(product.price)}
@@ -204,27 +178,6 @@ export const SharePoster: React.FC<SharePosterProps> = ({ product, isOpen, onClo
                 />
               </div>
             </div>
-          </div>
-
-          {/* Off-screen, untransformed copy — this is what capture() rasterizes.
-              Rendered at its native size (no ancestor transform) so html2canvas
-              lays it out correctly; pushed off the visible viewport instead of
-              display:none so it still renders/paints. */}
-          <div style={{ position: 'fixed', top: 0, left: -99999, pointerEvents: 'none' }} aria-hidden="true">
-            <PosterCanvas
-              innerRef={posterRef}
-              img={imgDataUrl || img}
-              name={product.name}
-              brand={(product as any).brand}
-              price={formatTZS(product.price)}
-              salePrice={product.sale_price && product.sale_price < product.price ? formatTZS(product.sale_price) : null}
-              sellerName={sellerName}
-              verified={!!verified}
-              rating={rating}
-              reviewCount={(product as any).review_count || 0}
-              qr={qr}
-              shortUrl={shortUrl}
-            />
           </div>
 
           {/* Actions */}
@@ -253,17 +206,16 @@ export const SharePoster: React.FC<SharePosterProps> = ({ product, isOpen, onClo
   );
 };
 
-// ── The actual poster (1080×1350), rendered off-layout and captured ──────────────
+// ── On-screen preview approximation of the 1080×1350 poster (the real PNG is
+//    rendered by /api/poster). Kept in sync with that endpoint's layout. ───────
 const PosterCanvas = ({
-  innerRef, img, name, brand, price, salePrice, sellerName, verified, rating, reviewCount, qr, shortUrl,
+  img, name, brand, price, salePrice, sellerName, verified, rating, reviewCount, qr, shortUrl,
 }: {
-  innerRef?: React.Ref<HTMLDivElement>;
   img?: string; name: string; brand?: string; price: string; salePrice: string | null;
   sellerName: string; verified: boolean; rating: number | null; reviewCount: number;
   qr: string; shortUrl: string;
 }) => (
   <div
-    ref={innerRef}
     style={{
       width: 1080, height: 1350, background: '#faf9f6', color: '#1c1917',
       fontFamily: 'Inter, system-ui, sans-serif', position: 'relative', display: 'flex',
