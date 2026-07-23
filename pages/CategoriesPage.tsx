@@ -73,6 +73,18 @@ export const CategoriesPage = () => {
     return counts;
   }, [products, serverCounts]);
 
+  // A representative thumbnail per category = the first real product image in
+  // that category. Makes the Explore bubbles show what's actually inside a
+  // category instead of a random stock/picsum image (#8).
+  const categoryThumbs = useMemo(() => {
+    const m: Record<string, string> = {};
+    for (const p of products) {
+      if (p.status === 'inactive' || !p.category) continue;
+      if (!m[p.category] && p.images?.[0]) m[p.category] = p.images[0];
+    }
+    return m;
+  }, [products]);
+
   const organizedCategories = useMemo(() => {
     const top = categories.filter(c => !c.parent_id);
     const children = categories.filter(c => c.parent_id);
@@ -221,6 +233,7 @@ export const CategoriesPage = () => {
             <CategoriesTab
               visibleCategories={visibleCategories}
               categoryCounts={categoryCounts}
+              categoryThumbs={categoryThumbs}
               searchQ={searchQ}
               expandedCat={expandedCat}
               onSearchChange={setSearchQ}

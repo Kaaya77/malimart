@@ -1,12 +1,13 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { LayoutGrid, Search, ArrowRight, Package, Tag, X, ChevronRight } from 'lucide-react';
+import { LayoutGrid, Package, Tag } from 'lucide-react';
 import { CATEGORY_IMAGES, CATEGORY_EMOJIS } from './categoryConstants';
 
 interface CategoriesTabProps {
   visibleCategories: any[];
   categoryCounts: Record<string, number>;
+  categoryThumbs?: Record<string, string>;
   searchQ: string;
   expandedCat: string | null;
   onSearchChange: (q: string) => void;
@@ -15,10 +16,10 @@ interface CategoriesTabProps {
 }
 
 export const CategoriesTab: React.FC<CategoriesTabProps> = ({
-  visibleCategories, categoryCounts, searchQ, expandedCat,
+  visibleCategories, categoryCounts, categoryThumbs = {}, searchQ, expandedCat,
   onSearchChange, onExpandCat, onViewDeals,
 }) => (
-  <motion.div key="cats" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-6">
+  <motion.div key="cats" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-8">
     {/* Search lives in the page hero — one input, one state, no duplicate box */}
     {visibleCategories.length === 0 ? (
       <div className="flex flex-col items-center py-16 border border-dashed border-foreground/15 rounded-3xl text-foreground/35">
@@ -27,62 +28,37 @@ export const CategoriesTab: React.FC<CategoriesTabProps> = ({
         <button onClick={() => onSearchChange('')} className="mt-3 text-xs font-bold text-emerald-500">Clear search</button>
       </div>
     ) : (
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      // Bubble grid — round, tappable category bubbles that read at a glance,
+      // with a real product image from the category (falls back to the emoji).
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-7 gap-x-3 gap-y-6">
         {visibleCategories.map((cat: any) => {
-          const img = CATEGORY_IMAGES[cat.name] || cat.image_url || `https://picsum.photos/seed/${encodeURIComponent(cat.name)}/400/500`;
+          const thumb = categoryThumbs[cat.name] || CATEGORY_IMAGES[cat.name] || cat.image_url || '';
+          const emoji = CATEGORY_EMOJIS[cat.name] || '🛍️';
           const count = categoryCounts[cat.name];
-          const isExpanded = expandedCat === cat.id;
-          const subs: any[] = cat.subcategories || [];
 
           return (
-            <div key={cat.id} className="flex flex-col gap-2">
-              <Link
-                to={`/shop?category=${encodeURIComponent(cat.name)}`}
-                className="group relative aspect-[4/5] rounded-3xl overflow-hidden bg-foreground/[0.04] block"
-              >
-                <img src={img} alt={cat.name} className="w-full h-full object-cover group-hover:scale-[1.05] transition-transform duration-500" loading="lazy" decoding="async" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent" />
-                <div className="absolute inset-x-0 bottom-0 p-4">
-                  <div className="flex items-end justify-between gap-2">
-                    <div>
-                      <span className="text-base mb-0.5 block">{CATEGORY_EMOJIS[cat.name] || '🛍️'}</span>
-                      <h3 className="text-white font-bold text-sm leading-tight">{cat.name}</h3>
-                      <p className="text-white/55 text-[10px] mt-0.5">
-                        {count ? `${count} product${count === 1 ? '' : 's'}` : 'Browse'}
-                      </p>
-                    </div>
-                    <div className="w-7 h-7 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0 group-hover:bg-white/30 transition-colors">
-                      <ArrowRight className="w-3 h-3 text-white" />
-                    </div>
-                  </div>
-                </div>
-              </Link>
-
-              {subs.length > 0 && (
-                <div>
-                  <div className={`flex flex-wrap gap-1.5 overflow-hidden transition-all ${isExpanded ? 'max-h-40' : 'max-h-[2.2rem]'}`}>
-                    {subs.map((s: any) => (
-                      <Link
-                        key={s.id}
-                        to={`/shop?category=${encodeURIComponent(s.name)}`}
-                        className="flex-shrink-0 h-7 px-2.5 rounded-full bg-foreground/[0.05] text-foreground/60 text-[10px] font-semibold hover:bg-foreground/10 hover:text-foreground transition-colors whitespace-nowrap"
-                      >
-                        {s.name}
-                      </Link>
-                    ))}
-                  </div>
-                  {subs.length > 3 && (
-                    <button
-                      onClick={() => onExpandCat(isExpanded ? null : cat.id)}
-                      className="mt-1 text-[10px] font-bold text-foreground/35 hover:text-emerald-500 transition-colors flex items-center gap-0.5"
-                    >
-                      {isExpanded ? 'Show less' : `+${subs.length - 3} more`}
-                      <ChevronRight className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
+            <Link
+              key={cat.id}
+              to={`/shop?category=${encodeURIComponent(cat.name)}`}
+              className="group flex flex-col items-center gap-2 text-center"
+            >
+              <div className="relative w-[4.5rem] h-[4.5rem] sm:w-20 sm:h-20 md:w-[5.25rem] md:h-[5.25rem] rounded-full overflow-hidden ring-1 ring-foreground/10 group-hover:ring-emerald-500/50 shadow-sm group-hover:shadow-md group-hover:-translate-y-0.5 transition-all bg-gradient-to-br from-emerald-500/15 to-teal-500/10 flex items-center justify-center">
+                {thumb ? (
+                  <>
+                    <img src={thumb} alt={cat.name} className="w-full h-full object-cover group-hover:scale-[1.08] transition-transform duration-500" loading="lazy" decoding="async" />
+                    <span className="absolute -bottom-0.5 -right-0.5 w-6 h-6 rounded-full bg-background shadow ring-1 ring-foreground/10 flex items-center justify-center text-xs">{emoji}</span>
+                  </>
+                ) : (
+                  <span className="text-3xl">{emoji}</span>
+                )}
+              </div>
+              <div className="min-w-0 w-full">
+                <h3 className="text-[11px] sm:text-xs font-bold text-foreground leading-tight line-clamp-2">{cat.name}</h3>
+                <p className="text-[10px] text-foreground/40 mt-0.5">
+                  {count ? `${count}` : 'Browse'}
+                </p>
+              </div>
+            </Link>
           );
         })}
       </div>

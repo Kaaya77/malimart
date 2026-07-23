@@ -176,15 +176,21 @@ export const HeroSection = ({
       seen.add(p.id);
       list.push(p as Product);
     };
+    // Only admin-approved hero recommendations populate the hero — the homepage
+    // spotlight is curated, not "whatever was added most recently".
     heroFeaturedProducts.forEach(pushUnique);
     if (heroRecommendation?.products) {
       const p = heroRecommendation.products;
       pushUnique(Array.isArray(p) ? p[0] : p);
     }
-    products.filter(p => p.is_boosted).sort((a, b) => (b.rating || 0) - (a.rating || 0)).forEach(pushUnique);
-    [...products].sort((a, b) =>
-      (b.rating || 0) * (b.review_count || 0) - (a.rating || 0) * (a.review_count || 0)
-    ).forEach(pushUnique);
+    // Fallback ONLY when admins haven't curated anything yet, so a fresh
+    // marketplace still shows a hero instead of an empty slot.
+    if (list.length === 0) {
+      products.filter(p => p.is_boosted).sort((a, b) => (b.rating || 0) - (a.rating || 0)).forEach(pushUnique);
+      [...products].sort((a, b) =>
+        (b.rating || 0) * (b.review_count || 0) - (a.rating || 0) * (a.review_count || 0)
+      ).forEach(pushUnique);
+    }
     return list.slice(0, 5);
   }, [heroFeaturedProducts, heroRecommendation, products]);
 
