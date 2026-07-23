@@ -132,6 +132,10 @@ export const StorePage: React.FC = () => {
     </div>
   );
 
+  // Seller-chosen accent, scoped to this store page only (default emerald).
+  const accentColor = vendor.accent_color || '#10b981';
+  const accentStyle = { backgroundColor: accentColor, color: '#fff' };
+
   const TAB_LIST: { id: Tab; label: string }[] = [
     { id: 'collection', label: `Products (${allStoreProducts.length})` },
     { id: 'about',      label: 'About' },
@@ -149,6 +153,25 @@ export const StorePage: React.FC = () => {
           className="w-full h-[115%] object-cover -mt-[7.5%]"
           loading="lazy" decoding="async" alt="Store banner"/>
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent"/>
+        {(vendor.banner_headline || vendor.banner_subtext) && (
+          <div className="absolute inset-x-0 bottom-16 md:bottom-20 px-4 md:px-8">
+            <div className="container mx-auto max-w-7xl">
+              {vendor.banner_headline && (
+                <h2 className="text-2xl md:text-4xl font-black text-white drop-shadow-lg max-w-xl leading-tight">{vendor.banner_headline}</h2>
+              )}
+              {vendor.banner_subtext && (
+                <p className="text-sm md:text-base text-white/85 drop-shadow-md max-w-lg mt-1.5">{vendor.banner_subtext}</p>
+              )}
+              {vendor.banner_cta_text && vendor.banner_cta_url && (
+                <a href={vendor.banner_cta_url} target="_blank" rel="noopener noreferrer"
+                  style={accentStyle}
+                  className="inline-flex items-center gap-1.5 mt-4 h-10 px-5 rounded-2xl text-sm font-bold shadow-lg transition-transform active:scale-95">
+                  {vendor.banner_cta_text}
+                </a>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="container mx-auto px-4 md:px-8 max-w-7xl -mt-28 relative z-10">
@@ -240,7 +263,8 @@ export const StorePage: React.FC = () => {
             {/* Action buttons */}
             <div className="flex gap-2 flex-wrap md:flex-col md:items-end shrink-0">
               <button onClick={() => id && (following ? unfollowSeller(id) : followSeller(id))}
-                className={`flex items-center gap-2 h-10 px-4 rounded-2xl text-sm font-bold transition-all active:scale-95 ${following ? 'bg-rose-500/10 text-rose-600 hover:bg-rose-500/15' : 'bg-foreground text-background hover:bg-foreground/85'}`}>
+                style={following ? undefined : accentStyle}
+                className={`flex items-center gap-2 h-10 px-4 rounded-2xl text-sm font-bold transition-all active:scale-95 ${following ? 'bg-rose-500/10 text-rose-600 hover:bg-rose-500/15' : 'hover:opacity-90'}`}>
                 <Heart className={`w-4 h-4 stroke-[2.5] ${following ? 'fill-current stroke-none' : ''}`}/>
                 {following ? 'Following' : 'Follow'}
               </button>

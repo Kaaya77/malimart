@@ -1517,6 +1517,9 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         if (safe.store_name)  safe.store_name  = (safe.store_name  as string).slice(0, 100).replace(/<[^>]*>/g, '').trim();
         if (safe.description) safe.description = (safe.description as string).slice(0, 1000).replace(/<[^>]*>/g, '').trim();
         if (safe.address)     safe.address     = (safe.address     as string).slice(0, 200).replace(/<[^>]*>/g, '').trim();
+        // Hex-color / URL CHECK constraints reject '' — coerce blank to NULL.
+        if ('accent_color' in safe && !safe.accent_color) safe.accent_color = null;
+        if ('banner_cta_url' in safe && !safe.banner_cta_url) safe.banner_cta_url = null;
         let result;
         if (vendorProfile) {
             result = await supabase.from('vendor_profiles').update(safe).eq('seller_id', user.id).select().single();

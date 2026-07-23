@@ -1,5 +1,6 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { Type } from "@google/genai";
 import { getAI } from './aiClient';
+import { MODELS } from './aiModels';
 import { supabase } from './supabaseClient';
 
 const ai = getAI();
@@ -23,7 +24,7 @@ export const generateHeroRecommendation = async () => {
     Return the result as JSON.`;
 
     const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: MODELS.TEXT,
         contents: prompt,
         config: {
             responseMimeType: "application/json",

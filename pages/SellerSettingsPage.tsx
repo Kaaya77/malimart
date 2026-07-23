@@ -21,7 +21,8 @@ export const SellerSettingsPage = ({ onBack }: { onBack?: () => void } = {}) => 
  // --- STORE PROFILE STATE ---
  const [profileData, setProfileData] = useState({
  store_name: '', description: '', contact_phone: '', contact_email: '',
- logo_url: '', banner_url: '', region: 'Dar es Salaam', district: 'Kinondoni', address: ''
+ logo_url: '', banner_url: '', region: 'Dar es Salaam', district: 'Kinondoni', address: '',
+ accent_color: '', banner_headline: '', banner_subtext: '', banner_cta_text: '', banner_cta_url: ''
  });
  
  // Dynamic Social Links
@@ -66,7 +67,12 @@ export const SellerSettingsPage = ({ onBack }: { onBack?: () => void } = {}) => 
  banner_url: vendorProfile.banner_url || '',
  region: vendorProfile.region || 'Dar es Salaam',
  district: vendorProfile.district || 'Kinondoni',
- address: vendorProfile.address || ''
+ address: vendorProfile.address || '',
+ accent_color: vendorProfile.accent_color || '',
+ banner_headline: vendorProfile.banner_headline || '',
+ banner_subtext: vendorProfile.banner_subtext || '',
+ banner_cta_text: vendorProfile.banner_cta_text || '',
+ banner_cta_url: vendorProfile.banner_cta_url || ''
  });
  setBusinessData({
  tin_number: vendorProfile.tin_number || '',
@@ -133,6 +139,14 @@ export const SellerSettingsPage = ({ onBack }: { onBack?: () => void } = {}) => 
  }
  if (data.contact_phone && !isValidTanzanianPhone(data.contact_phone)) {
  addToast("Please enter a valid Tanzanian phone number", "error");
+ return;
+ }
+ if (data.accent_color && !/^#[0-9A-Fa-f]{6}$/.test(data.accent_color)) {
+ addToast("Accent color must be a hex code like #10b981", "error");
+ return;
+ }
+ if (data.banner_cta_url && !/^https?:\/\//.test(data.banner_cta_url)) {
+ addToast("Banner button link must start with http:// or https://", "error");
  return;
  }
 

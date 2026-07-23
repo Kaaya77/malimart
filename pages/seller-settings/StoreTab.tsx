@@ -89,7 +89,63 @@ export const StoreTab = () => {
    </div>
  </div>
 
+ {/* Banner overlay copy */}
+ <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6 p-4 rounded-2xl bg-foreground/[0.02] border border-foreground/8">
+   <div className="md:col-span-2">
+     <p className="text-xs font-semibold text-foreground/70">Banner headline (optional)</p>
+     <p className="text-[11px] text-foreground/40 mb-2">Shown as text over your banner image on your store page.</p>
+   </div>
+   <div className="space-y-1">
+     <label className="text-xs font-semibold text-foreground/70 mb-1.5 block">Headline</label>
+     <Input placeholder="e.g., Fresh drops every Friday" maxLength={80}
+       value={profileData.banner_headline || ''}
+       onChange={(e: any) => setProfileData({ ...profileData, banner_headline: e.target.value })} />
+   </div>
+   <div className="space-y-1">
+     <label className="text-xs font-semibold text-foreground/70 mb-1.5 block">Subtext</label>
+     <Input placeholder="e.g., Handmade in Dar es Salaam" maxLength={160}
+       value={profileData.banner_subtext || ''}
+       onChange={(e: any) => setProfileData({ ...profileData, banner_subtext: e.target.value })} />
+   </div>
+   <div className="space-y-1">
+     <label className="text-xs font-semibold text-foreground/70 mb-1.5 block">Button text</label>
+     <Input placeholder="e.g., Shop new arrivals" maxLength={30}
+       value={profileData.banner_cta_text || ''}
+       onChange={(e: any) => setProfileData({ ...profileData, banner_cta_text: e.target.value })} />
+   </div>
+   <div className="space-y-1">
+     <label className="text-xs font-semibold text-foreground/70 mb-1.5 block">Button link</label>
+     <Input placeholder="https://wa.me/255..." value={profileData.banner_cta_url || ''}
+       onChange={(e: any) => setProfileData({ ...profileData, banner_cta_url: e.target.value })} />
+   </div>
+ </div>
+
  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+ <div className="md:col-span-2 space-y-1">
+ <label className="text-xs font-semibold text-foreground/70 mb-1.5 block">Accent Color</label>
+ <div className="flex items-center gap-3">
+   <input
+     type="color"
+     value={profileData.accent_color || '#10b981'}
+     onChange={(e: any) => setProfileData({ ...profileData, accent_color: e.target.value })}
+     className="w-11 h-11 rounded-xl border border-foreground/15 bg-transparent cursor-pointer p-0.5"
+     aria-label="Store accent color"
+   />
+   <Input
+     placeholder="#10b981"
+     value={profileData.accent_color || ''}
+     onChange={(e: any) => setProfileData({ ...profileData, accent_color: e.target.value })}
+     className="flex-1 max-w-[160px] font-mono"
+   />
+   {profileData.accent_color && (
+     <button type="button" onClick={() => setProfileData({ ...profileData, accent_color: '' })}
+       className="text-[11px] font-medium text-foreground/40 hover:text-foreground/70 transition-colors">
+       Reset to default
+     </button>
+   )}
+ </div>
+ <p className="text-[11px] text-foreground/40">Used for your storefront's Follow/CTA buttons. Leave blank for the default emerald.</p>
+ </div>
  <div className="space-y-1">
  <label className="text-xs font-semibold text-foreground/70 mb-1.5 block">Store Name</label>
  <Input placeholder="Store Name" value={profileData.store_name || ''} onChange={(e: any) => setProfileData({...profileData, store_name: e.target.value})} />

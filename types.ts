@@ -255,6 +255,11 @@ export interface VendorProfile {
     description?: string;
     logo_url?: string;
     banner_url?: string;
+    accent_color?: string;
+    banner_headline?: string;
+    banner_subtext?: string;
+    banner_cta_text?: string;
+    banner_cta_url?: string;
     region?: string;
     is_verified: boolean;
     trust_score?: number;
