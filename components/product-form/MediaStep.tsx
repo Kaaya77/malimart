@@ -212,51 +212,57 @@ export const MediaStep = () => {
                             </div>
                         )}
 
-                        {/* Hover actions */}
+                        {/* Actions — always visible on touch devices (no hover to reveal them on);
+                            fade in on hover only at md+ where a mouse can be assumed. AI Enhance
+                            gets its own persistent emerald pill so the AI feature doesn't get lost
+                            among Remove/Primary/Download — that was the whole "hard to notice" bug. */}
                         {enhancingIdx !== i && (
-                            <div className="absolute inset-0 bg-foreground/60 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center gap-2 flex-wrap p-2">
-                                <button
-                                    title="Remove"
-                                    onClick={() => {
-                                        const newImgs = [...(formData.images || [])];
-                                        newImgs.splice(i, 1);
-                                        setFormData({ ...formData, images: newImgs });
-                                    }}
-                                    className="p-2.5 bg-background text-foreground hover:bg-red-500 hover:text-white transition-colors"
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                </button>
-
-                                {i !== 0 && (
+                            <>
+                                <div className="absolute inset-0 bg-foreground/50 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all flex items-center justify-center gap-2 flex-wrap p-2">
                                     <button
-                                        title="Set as primary"
+                                        title="Remove"
                                         onClick={() => {
                                             const newImgs = [...(formData.images || [])];
-                                            [newImgs[0], newImgs[i]] = [newImgs[i], newImgs[0]];
+                                            newImgs.splice(i, 1);
                                             setFormData({ ...formData, images: newImgs });
                                         }}
-                                        className="p-2.5 bg-background text-foreground hover:bg-foreground hover:text-background transition-colors"
+                                        className="p-2.5 bg-background text-foreground hover:bg-red-500 hover:text-white transition-colors rounded-full shadow-sm"
                                     >
-                                        <CheckCircle2 className="w-4 h-4" />
+                                        <Trash2 className="w-4 h-4" />
                                     </button>
-                                )}
 
-                                <button
-                                    title="Download"
-                                    onClick={() => downloadImage(img, `product-image-${i + 1}.png`)}
-                                    className="p-2.5 bg-background text-foreground hover:bg-foreground hover:text-background transition-colors"
-                                >
-                                    <Download className="w-4 h-4" />
-                                </button>
+                                    {i !== 0 && (
+                                        <button
+                                            title="Set as primary"
+                                            onClick={() => {
+                                                const newImgs = [...(formData.images || [])];
+                                                [newImgs[0], newImgs[i]] = [newImgs[i], newImgs[0]];
+                                                setFormData({ ...formData, images: newImgs });
+                                            }}
+                                            className="p-2.5 bg-background text-foreground hover:bg-foreground hover:text-background transition-colors rounded-full shadow-sm"
+                                        >
+                                            <CheckCircle2 className="w-4 h-4" />
+                                        </button>
+                                    )}
 
+                                    <button
+                                        title="Download"
+                                        onClick={() => downloadImage(img, `product-image-${i + 1}.png`)}
+                                        className="p-2.5 bg-background text-foreground hover:bg-foreground hover:text-background transition-colors rounded-full shadow-sm"
+                                    >
+                                        <Download className="w-4 h-4" />
+                                    </button>
+                                </div>
+
+                                {/* Persistent AI Enhance pill — never hover-gated */}
                                 <button
                                     title="AI Enhance"
                                     onClick={() => handleEnhanceSingle(i)}
-                                    className="p-2.5 bg-background text-foreground hover:bg-foreground hover:text-background transition-colors"
+                                    className="absolute bottom-2 left-2 z-10 flex items-center gap-1.5 pl-2 pr-3 py-1.5 rounded-full bg-emerald-600 text-white text-[10px] font-bold shadow-lg shadow-emerald-600/30 hover:bg-emerald-500 active:scale-95 transition-all"
                                 >
-                                    <Sparkles className="w-4 h-4" />
+                                    <Sparkles className="w-3.5 h-3.5" /> Enhance
                                 </button>
-                            </div>
+                            </>
                         )}
 
                         {/* Primary badge */}

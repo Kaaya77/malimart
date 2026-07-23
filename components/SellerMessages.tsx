@@ -18,7 +18,7 @@ import * as aiService from '../services/geminiService';
 import { MessageContainer, SidebarContainer, ChatAreaContainer, DetailsAreaContainer } from './MessageShared';
 import {
   ConversationListItem, ChatEmptyState, DayDivider, isSameDay,
-  MessageBubble, TypingIndicator,
+  MessageBubble, TypingIndicator, NewConversationModal,
 } from './messaging/ConversationKit';
 
 // ─── ProductOrderTag ─────────────────────────────────────────────────────────
@@ -136,6 +136,12 @@ export const SellerMessages = ({
       });
   }, [initialChatUser]);
 
+  // Starting a brand-new conversation (no existing thread) — same shape as
+  // the initialChatUser deep-link above, just sourced from the contact
+  // search modal instead of a "Contact Seller" navigation.
+  const [showNewChat, setShowNewChat] = useState(false);
+  const [newChatContact, setNewChatContact] = useState<{ id: string; name: string; avatar: string | null } | null>(null);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -212,6 +218,16 @@ export const SellerMessages = ({
         unread: false,
       });
     }
+    if (newChatContact && !map.has(newChatContact.id)) {
+      map.set(newChatContact.id, {
+        id: newChatContact.id,
+        name: newChatContact.name,
+        avatar: newChatContact.avatar,
+        lastMsg: 'New conversation',
+        time: new Date().toISOString(),
+        unread: false,
+      });
+    }
     let result = Array.from(map.values());
     result = result.filter((u: any) => showArchived ? archivedUsers.has(u.id) : !archivedUsers.has(u.id));
     if (searchTerm) result = result.filter((u: any) => u.name.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -221,7 +237,7 @@ export const SellerMessages = ({
       if (!pinnedUsers.has(a.id) && pinnedUsers.has(b.id)) return 1;
       return new Date(b.time).getTime() - new Date(a.time).getTime();
     });
-  }, [chats, userId, searchTerm, filterUnread, pinnedUsers, archivedUsers, showArchived, initialChatUser, initialUserProfile]);
+  }, [chats, userId, searchTerm, filterUnread, pinnedUsers, archivedUsers, showArchived, initialChatUser, initialUserProfile, newChatContact]);
 
   const activeChats = useMemo(() => {
     if (!selectedChatUser) return [];
@@ -360,6 +376,13 @@ export const SellerMessages = ({
               <span className="ml-1.5 text-foreground/40 font-normal text-xs">({users.length})</span>
             </h3>
             <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setShowNewChat(true)}
+                title="New message"
+                className="h-7 w-7 flex items-center justify-center rounded-full bg-emerald-600 text-white hover:bg-emerald-500 transition-colors"
+              >
+                <MessageSquarePlus className="w-3.5 h-3.5" />
+              </button>
               <button
                 onClick={() => setFilterUnread(!filterUnread)}
                 className={`h-7 px-3 rounded-full text-[10px] font-bold transition-colors ${filterUnread ? 'bg-emerald-500 text-white' : 'bg-foreground/[0.06] text-foreground/50 hover:text-foreground'}`}
@@ -786,6 +809,15 @@ export const SellerMessages = ({
           </div>
         </div>
       )}
+
+      <NewConversationModal
+        isOpen={showNewChat}
+        onClose={() => setShowNewChat(false)}
+        onSelect={(contact) => {
+          setNewChatContact({ id: contact.id, name: contact.full_name || 'User', avatar: contact.avatar_url });
+          setSelectedChatUser(contact.id);
+        }}
+      />
     </MessageContainer>
   );
 };

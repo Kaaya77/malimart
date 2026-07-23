@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   ChevronLeft, BadgeCheck, Send, Search, Sparkles, ArrowUpRight, Truck,
-  Wand2, Loader2, X, Paperclip, Ban, MoreVertical, ShieldAlert, Trash2,
+  Wand2, Loader2, X, Paperclip, Ban, MoreVertical, ShieldAlert, Trash2, Plus,
 } from 'lucide-react';
 import { useAppState } from '../context/AppContext';
 import { Button, Input, useToast, ConfirmDialog, UserProfileModal } from './UI';
@@ -15,7 +15,7 @@ import { VendorProfile, ChatMessage, Product, Order } from '../types';
 import { SidebarContainer, ChatAreaContainer, DetailsAreaContainer } from './MessageShared';
 import {
   ConversationListItem, ChatEmptyState, DayDivider, isSameDay,
-  MessageBubble, TypingIndicator,
+  MessageBubble, TypingIndicator, NewConversationModal,
 } from './messaging/ConversationKit';
 import { ProductOrderTag } from './SellerMessages';
 import { fetchProductById, fetchVendorProfile } from '../services/shopService';
@@ -89,6 +89,7 @@ export const BuyerMessages = ({ userId, initialSellerId, initialProductId, initi
   const [contextProduct, setContextProduct] = useState<Product | null>(null);
   const [contextOrder, setContextOrder] = useState<Order | null>(null);
   const [initialVendor, setInitialVendor] = useState<VendorProfile | null>(null);
+  const [showNewChat, setShowNewChat] = useState(false);
 
   // A "contact seller" deep link can target a seller the buyer has never chatted with;
   // hydrate their public storefront profile so the conversation isn't a blank header.
@@ -348,6 +349,13 @@ export const BuyerMessages = ({ userId, initialSellerId, initialProductId, initi
               )}
             </h3>
             <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setShowNewChat(true)}
+                title="New message"
+                className="h-7 w-7 flex items-center justify-center rounded-full bg-emerald-600 text-white hover:bg-emerald-500 transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5" />
+              </button>
               <button
                 onClick={() => setFilterUnread(v => !v)}
                 className={`h-7 px-3 rounded-full text-[10px] font-bold transition-colors ${filterUnread ? 'bg-emerald-500 text-white' : 'bg-foreground/[0.06] text-foreground/50 hover:text-foreground'}`}
@@ -760,6 +768,21 @@ export const BuyerMessages = ({ userId, initialSellerId, initialProductId, initi
           if (!a) return;
           if (a.type === 'block') await handleBlock(a.targetId);
           else await handleDeleteChat(a.targetId);
+        }}
+      />
+
+      <NewConversationModal
+        isOpen={showNewChat}
+        onClose={() => setShowNewChat(false)}
+        roleFilter="seller"
+        onSelect={(contact) => {
+          setInitialVendor({
+            seller_id: contact.id,
+            store_name: contact.full_name || 'Seller',
+            logo_url: contact.avatar_url || undefined,
+            is_verified: false,
+          } as VendorProfile);
+          setSelectedSeller(contact.id);
         }}
       />
     </div>

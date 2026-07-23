@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { BadgeCheck, Pin, MessageSquare, Reply, Trash2, ShieldAlert, Smile, MoreVertical, Check, CheckCheck, Paperclip, Archive, ArchiveRestore } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { BadgeCheck, Pin, MessageSquare, Reply, Trash2, ShieldAlert, Smile, MoreVertical, Check, CheckCheck, Paperclip, Archive, ArchiveRestore, Search, X, Loader2, UserCircle2 } from 'lucide-react';
+import { searchMessagingContacts } from '../../services/messagesService';
 
 // ─── Date helpers ────────────────────────────────────────────────────────────
 
@@ -381,6 +382,104 @@ export const MessageBubble = ({
             </div>
           </div>
         )}
+      </div>
+    </div>
+  );
+};
+
+// ─── New conversation ────────────────────────────────────────────────────────
+// Contacts are only discoverable through search_messaging_contacts (profiles
+// has no client-readable policy for other users' rows) — see the RPC's own
+// comment for why. Any authenticated user can message any other; this modal
+// is what lets a seller reach another seller, or anyone reach a buyer, when
+// no thread exists yet.
+export const NewConversationModal = ({
+  isOpen, onClose, onSelect, roleFilter,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onSelect: (contact: { id: string; full_name: string | null; avatar_url: string | null; role: string }) => void;
+  /** Restrict results to one role (e.g. sellers messaging only other sellers). Omit to search everyone. */
+  roleFilter?: 'buyer' | 'seller' | 'admin';
+}) => {
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<Array<{ id: string; full_name: string | null; avatar_url: string | null; role: string }>>([]);
+  const [loading, setLoading] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) { setQuery(''); setResults([]); return; }
+    setTimeout(() => inputRef.current?.focus(), 100);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    const q = query.trim();
+    if (q.length < 2) { setResults([]); setLoading(false); return; }
+    setLoading(true);
+    debounceRef.current = setTimeout(async () => {
+      const data = await searchMessagingContacts(q, roleFilter);
+      setResults(data);
+      setLoading(false);
+    }, 300);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [query, roleFilter]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-start justify-center pt-24 px-4 bg-black/50 backdrop-blur-sm" onClick={onClose}>
+      <div
+        className="w-full max-w-md bg-background rounded-2xl border border-foreground/10 shadow-2xl overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center gap-2 p-4 border-b border-foreground/8">
+          <Search className="w-4 h-4 text-foreground/35 shrink-0" />
+          <input
+            ref={inputRef}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={roleFilter ? `Search ${roleFilter}s by name…` : 'Search people by name…'}
+            className="flex-1 bg-transparent text-sm text-foreground placeholder:text-foreground/35 outline-none"
+          />
+          <button onClick={onClose} aria-label="Close" className="p-1 rounded-full hover:bg-foreground/[0.06] text-foreground/40">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="max-h-80 overflow-y-auto">
+          {loading && (
+            <div className="flex items-center justify-center gap-2 py-8 text-foreground/40 text-xs">
+              <Loader2 className="w-4 h-4 animate-spin" /> Searching…
+            </div>
+          )}
+          {!loading && query.trim().length >= 2 && results.length === 0 && (
+            <p className="text-center text-xs text-foreground/40 py-8">No one found matching "{query.trim()}"</p>
+          )}
+          {!loading && query.trim().length < 2 && (
+            <p className="text-center text-xs text-foreground/35 py-8">Type at least 2 characters to search</p>
+          )}
+          {!loading && results.map(r => (
+            <button
+              key={r.id}
+              onClick={() => { onSelect(r); onClose(); }}
+              className="w-full flex items-center gap-3 px-4 py-3 hover:bg-foreground/[0.04] transition-colors text-left"
+            >
+              {r.avatar_url ? (
+                <img src={r.avatar_url} alt="" className="w-9 h-9 rounded-full object-cover shrink-0" loading="lazy" />
+              ) : (
+                <div className="w-9 h-9 rounded-full bg-foreground/[0.08] flex items-center justify-center shrink-0">
+                  <UserCircle2 className="w-5 h-5 text-foreground/40" />
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-foreground truncate">{r.full_name || 'User'}</p>
+                <p className="text-[10px] uppercase tracking-wider text-foreground/40 font-bold">{r.role}</p>
+              </div>
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -37,3 +37,18 @@ export async function fetchProfileNameAvatar(
   const { data } = await supabase.from('profiles').select('full_name, avatar_url').eq('id', userId).single();
   return data ?? null;
 }
+
+/**
+ * Search for someone to start a NEW conversation with — profiles has no
+ * client-readable policy for other users' rows (only own/admin), so this
+ * goes through a SECURITY DEFINER RPC that returns only the minimal public
+ * fields needed to start a chat. Pass `role` to scope to buyers/sellers/admins.
+ */
+export async function searchMessagingContacts(
+  query: string,
+  role?: 'buyer' | 'seller' | 'admin',
+): Promise<Array<{ id: string; full_name: string | null; avatar_url: string | null; role: string }>> {
+  const { data, error } = await supabase.rpc('search_messaging_contacts', { p_query: query, p_role: role ?? null });
+  if (error) { console.error('searchMessagingContacts failed', error); return []; }
+  return data ?? [];
+}

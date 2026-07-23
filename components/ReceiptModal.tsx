@@ -55,8 +55,10 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ isOpen, order, selle
   const handleDownload = async () => {
     setDownloading(true);
     try {
+      // html2canvas-pro: the original html2canvas can't parse modern CSS
+      // color functions (oklab/oklch) that Tailwind v4 emits, and throws.
       const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
-        import('html2canvas'),
+        import('html2canvas-pro'),
         import('jspdf'),
       ]);
       const el = document.getElementById('mali-receipt');

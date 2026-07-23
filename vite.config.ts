@@ -238,7 +238,7 @@ export default defineConfig(({ mode }) => {
             )) return 'charts';
 
             // PDF generation — only loaded when user downloads receipt
-            if (id.includes('node_modules') && (id.includes('jspdf') || id.includes('html2canvas'))) return 'pdf-gen';
+            if (id.includes('node_modules') && (id.includes('jspdf') || id.includes('html2canvas-pro'))) return 'pdf-gen';
 
             // Gemini AI SDK — only the npm package. (Matching the substring
             // 'gemini' also captured services/geminiService.ts, statically
@@ -284,7 +284,7 @@ export default defineConfig(({ mode }) => {
         // Never pre-bundle — always lazy loaded
         'recharts',
         'jspdf',
-        'html2canvas',
+        'html2canvas-pro',
         '@google/genai',
       ],
     },

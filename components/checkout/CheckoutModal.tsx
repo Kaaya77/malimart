@@ -439,11 +439,12 @@ export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, di
                         <div className={`grid gap-3 ${availableMethods.length === 1 ? 'grid-cols-1' : availableMethods.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
                           {availableMethods.map(m => (
                             <motion.button key={m.id} whileTap={{ scale: 0.97 }} onClick={() => setPaymentMethod(m.id as any)}
-                              className={`relative flex flex-col items-center text-center p-4 rounded-2xl border-2 transition-all ${paymentMethod === m.id ? 'border-foreground bg-foreground/[0.04]' : 'border-foreground/8 hover:border-foreground/20'}`}
+                              className={`relative flex flex-col items-center text-center p-4 rounded-2xl border-2 transition-all ${paymentMethod === m.id ? 'border-emerald-500 bg-emerald-500/[0.06]' : 'border-foreground/10 hover:border-foreground/25'}`}
                             >
-                              {paymentMethod === m.id && <div className="absolute top-2 right-2 w-4 h-4 bg-foreground rounded-full flex items-center justify-center"><Check className="w-2.5 h-2.5 text-background" /></div>}
-                              <m.icon className={`w-5 h-5 mb-2 ${paymentMethod === m.id ? 'text-foreground' : 'text-foreground/30'}`} />
-                              <p className={`text-[8px] font-black uppercase tracking-wider leading-tight ${paymentMethod === m.id ? 'text-foreground' : 'text-foreground/40'}`}>{m.label}</p>
+                              {paymentMethod === m.id && <div className="absolute top-2 right-2 w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center"><Check className="w-3 h-3 text-white" /></div>}
+                              <m.icon className={`w-6 h-6 mb-2 ${paymentMethod === m.id ? 'text-emerald-600' : 'text-foreground/40'}`} />
+                              <p className={`text-[13px] font-black leading-tight ${paymentMethod === m.id ? 'text-foreground' : 'text-foreground/70'}`}>{m.label}</p>
+                              {m.desc && <p className="text-[10px] font-semibold text-foreground/40 mt-0.5 leading-tight">{m.desc}</p>}
                             </motion.button>
                           ))}
                         </div>
@@ -478,17 +479,17 @@ export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, di
                                   else if (seller?.mobile_number) { payNumber = seller.mobile_number; payLabel = seller.mobile_operator || 'Mobile'; payName = seller.mobile_name || payName; }
                                 }
                                 return (
-                                  <div key={sid} className="bg-white/8 rounded-xl p-4 flex items-center justify-between gap-3">
+                                  <div key={sid} className="bg-white/10 rounded-xl p-4 flex items-center justify-between gap-3 border border-white/10">
                                     <div className="min-w-0">
-                                      <p className="text-[8px] font-black uppercase tracking-wider text-background/40 mb-1">{payName} • {formatTZS(Math.round(sellerTotal))}</p>
+                                      <p className="text-[11px] font-bold uppercase tracking-wide text-background/55 mb-1.5">{payName} • {formatTZS(Math.round(sellerTotal))}</p>
                                       <div className="flex items-center gap-2 flex-wrap">
                                         {payNumber ? (
                                           <>
-                                            <span className="text-[9px] font-bold bg-white/15 text-background px-2 py-0.5 rounded-md uppercase">{payLabel}</span>
-                                            <span className="font-mono font-black text-background text-sm tracking-wider">{payNumber}</span>
+                                            <span className="text-[11px] font-black bg-emerald-500 text-white px-2.5 py-1 rounded-md uppercase tracking-wide">{payLabel}</span>
+                                            <span className="font-mono font-black text-background text-lg tracking-wider">{payNumber}</span>
                                           </>
                                         ) : (
-                                          <span className="text-[10px] font-bold text-background/60">
+                                          <span className="text-[11px] font-bold text-background/60">
                                             Payment number not available — ask the seller via chat before paying.
                                           </span>
                                         )}

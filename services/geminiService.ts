@@ -118,9 +118,9 @@ export const generateProductDescription = async (productName: string, category: 
     const ai = getAI();
     const response = await ai.models.generateContent({
       model: MODELS.TEXT,
-      contents: `Write a compelling, short e-commerce product description for a product named "${productName}" in the category "${category}". 
-      Highlight these features: ${keywords}. 
-      Tone: Professional, inviting, and high-end. Max 80 words. Use English exclusively.`,
+      contents: `Write a product description for "${productName}" (category: "${category}") the way a real seller who actually made or sources this item would write it — like they're telling a friend why it's worth buying, not writing an ad.
+      Work in these details naturally if they fit: ${keywords}.
+      Rules: talk like a person, not a brand. Be specific and concrete (what it's actually like to use/wear/own, not vague superlatives). No words like "premium", "elevate", "exquisite", "indulge", "unparalleled", "discerning", or "elegant" unless the product genuinely calls for that exact word. Short sentences are fine. It's okay to sound a little informal. Max 70 words. English only, plain text, no markdown.`,
     });
     return response.text || "Could not generate description.";
   }).catch(error => {
@@ -143,12 +143,12 @@ export const analyzeProductImage = async (imageBase64: string): Promise<{ name: 
             contents: {
                 parts: [
                     { inlineData: { mimeType: 'image/jpeg', data: cleanBase64 } },
-                    { text: `Analyze this product image for an e-commerce listing. 
+                    { text: `Look at this product photo and write a listing the way the person who's actually selling it would.
                     Return ONLY a JSON object with:
-                    - name: A professional, catchy product title (max 5 words).
+                    - name: A clear, specific product title (max 5 words) — what it plainly is, not a slogan.
                     - category: The best fitting category from [Fashion & Beauty, Food & Pantry, Handicrafts & Products, Electronics, Home & Living, Agriculture & Livestock, Construction & Hardware, Kids & Toys, Vehicles & Parts, Books & Stationery].
-                    - tags: Array of 5 relevant SEO keywords.
-                    - description: A sophisticated 2-sentence sales pitch.
+                    - tags: Array of 5 relevant search keywords a buyer would actually type.
+                    - description: 2 sentences, conversational, describing what's actually visible in the photo (material, color, style, condition). No marketing language — avoid words like "premium", "elevate", "exquisite", "sophisticated", "unparalleled".
                     Do not include any other text, markdown formatting, or explanations.` }
                 ]
             }
@@ -214,13 +214,13 @@ export const generateProductListing = async (name: string, imageBase64?: string)
             parts.push({ inlineData: { mimeType: 'image/jpeg', data: cleanBase64 } });
         }
         
-        parts.push({ 
-            text: `Generate a listing for product "${name}". Return JSON with:
-            1. description: Professional sales copy (max 60 words).
-            2. tags: 5 relevant SEO keywords.
+        parts.push({
+            text: `Generate a listing for product "${name}", written the way the seller themself would describe it — plain, specific, no ad-speak. Return JSON with:
+            1. description: max 60 words, conversational, concrete details over adjectives. Avoid words like "premium", "elevate", "exquisite", "unparalleled".
+            2. tags: 5 relevant search keywords a buyer would actually type.
             3. category: Best fit from [Fashion & Beauty, Food & Pantry, Handicrafts & Products, Electronics, Home & Living, Agriculture & Livestock, Construction & Hardware, Kids & Toys, Vehicles & Parts, Books & Stationery].
             4. subcategory: A specific subcategory type.
-            Use English.` 
+            Use English.`
         });
 
         const response = await ai.models.generateContent({
@@ -263,7 +263,7 @@ export const enhanceDescription = async (text: string): Promise<string> => {
         const ai = getAI();
         const response = await ai.models.generateContent({
             model: MODELS.TEXT,
-            contents: `Rewrite the product description below to make it more compelling, premium, and SEO-optimized for a Tanzanian marketplace. Focus on sensory details, craftsmanship, and benefits. Keep it under 100 words. Use plain prose only — no markdown, no asterisks, no bullet points, no headers.\n\n${text}`,
+            contents: `Tighten up this product description for a Tanzanian marketplace listing — fix awkward phrasing, add a concrete detail or two if something's missing, keep it easy to search for. Keep the seller's own voice and any specific details they already included; don't flatten it into generic ad copy. Avoid words like "premium", "elevate", "exquisite", "unparalleled", "indulge", "discerning" unless already used naturally. Keep it under 90 words. Plain prose only — no markdown, no asterisks, no bullet points, no headers.\n\n${text}`,
         });
         return (response.text || text).trim();
     }).catch(() => text);

@@ -26,6 +26,7 @@ export const SharePoster: React.FC<SharePosterProps> = ({ product, isOpen, onClo
   const [qr, setQr] = useState<string>('');
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
+  const [imgDataUrl, setImgDataUrl] = useState<string | null>(null);
 
   const slugify = (s: string) => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
   const productUrl = `${window.location.origin}/product/${slugify(product.name) ? `${slugify(product.name)}-` : ''}${product.id}`;
@@ -54,10 +55,51 @@ export const SharePoster: React.FC<SharePosterProps> = ({ product, isOpen, onClo
     return () => { cancelled = true; };
   }, [isOpen, productUrl]);
 
+  // Pre-fetch the product photo as a data URL. html2canvas draws the poster
+  // straight from the DOM, and a remote <img> — even with crossOrigin set —
+  // taints the canvas the moment the CORS handshake isn't exactly right,
+  // which throws inside canvas.toBlob() and silently kills BOTH download and
+  // share (that's why the poster image, download, and share were all broken
+  // together — one root cause). A data: URL is same-origin by definition, so
+  // there's nothing left to taint.
+  useEffect(() => {
+    if (!isOpen || !img) { setImgDataUrl(null); return; }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(img);
+        if (!res.ok) throw new Error(`fetch failed: ${res.status}`);
+        const blob = await res.blob();
+        const reader = new FileReader();
+        reader.onloadend = () => { if (!cancelled) setImgDataUrl(reader.result as string); };
+        reader.readAsDataURL(blob);
+      } catch {
+        if (!cancelled) setImgDataUrl(null); // poster still renders, just without the photo
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isOpen, img]);
+
   const capture = async (): Promise<Blob | null> => {
     const el = posterRef.current;
     if (!el) return null;
-    const { default: html2canvas } = await import('html2canvas');
+    // Guard against clicking Download/Share before the photo's data-URL
+    // fetch (above) has resolved and React has re-rendered the DOM with it —
+    // capturing the still-remote <img> would reintroduce the tainted-canvas
+    // failure this whole thing exists to avoid. Poll the actual DOM node
+    // (not React state, which this closure would only ever see as stale).
+    if (img) {
+      for (let i = 0; i < 20; i++) {
+        const domImg = el.querySelector('img');
+        if (domImg?.src.startsWith('data:') && domImg.complete) break;
+        await new Promise(r => setTimeout(r, 150));
+      }
+    }
+    // html2canvas-pro, not html2canvas: the original library can't parse
+    // modern CSS color functions (oklab/oklch, which Tailwind v4's color
+    // system uses), which threw inside its style parser and silently killed
+    // both download and share — this fork patches exactly that.
+    const { default: html2canvas } = await import('html2canvas-pro');
     const canvas = await html2canvas(el, {
       scale: 2,
       backgroundColor: '#faf9f6',
@@ -144,7 +186,7 @@ export const SharePoster: React.FC<SharePosterProps> = ({ product, isOpen, onClo
               <div style={{ transform: 'scale(0.25)', transformOrigin: 'top left' }}>
                 <PosterCanvas
                   innerRef={posterRef}
-                  img={img}
+                  img={imgDataUrl || img}
                   name={product.name}
                   brand={(product as any).brand}
                   price={formatTZS(product.price)}
@@ -220,7 +262,7 @@ const PosterCanvas = ({
 
     {/* Product image */}
     <div style={{ width: '100%', height: 620, borderRadius: 32, overflow: 'hidden', background: '#ece9e2', flexShrink: 0, position: 'relative' }}>
-      {img && <img src={img} crossOrigin="anonymous" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+      {img && <img src={img} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
       {salePrice && (
         <div style={{ position: 'absolute', top: 24, left: 24, background: '#ef4444', color: '#fff', fontSize: 22, fontWeight: 800, padding: '10px 20px', borderRadius: 999 }}>SALE</div>
       )}
