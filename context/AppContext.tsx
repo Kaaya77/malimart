@@ -833,7 +833,15 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
 
     const removeFromCart = useCallback(async (productId: string, variantId?: string) => {
         try {
-            setCart(prev => prev.filter(p => !(p.id === productId && p.variant_id === variantId)));
+            // Match robustly: a cart line's variant may live in variant_id or
+            // selectedVariant.id, and DB rows use null while callers pass
+            // undefined — normalise both so removal never silently no-ops.
+            const target = variantId ?? null;
+            setCart(prev => prev.filter(p => {
+                if (p.id !== productId) return true;
+                const pv = (p.variant_id ?? (p as any).selectedVariant?.id) ?? null;
+                return pv !== target; // drop only the matching line
+            }));
 
             if (user) {
                 // cartIdRef may be null if upsert_cart_item created the cart after initial fetch

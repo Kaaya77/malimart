@@ -61,6 +61,36 @@ const scaleFor = (hue: number, sat: number): Record<number, string> => {
 
 const clearAccentVars = (root: HTMLElement) => {
   for (const step of STEPS) root.style.removeProperty(`--color-emerald-${step}`);
+  document.getElementById('mm-accent-overrides')?.remove();
+};
+
+// Opacity steps + utility prefixes the app uses with `emerald-500/<n>`. Tailwind
+// baked ~half of these to a literal hex (not the CSS var), so overriding the var
+// alone leaves them stuck emerald. We regenerate them with color-mix on the new
+// accent so the WHOLE UI recolours consistently.
+const OPACITIES = [3,4,5,6,8,10,12,15,20,25,30,35,40,45,50,55,60,65,70,75,80,90,95];
+const COLOR_UTILS: [prefix: string, decl: (c: string) => string][] = [
+  ['bg', c => `background-color:${c}`],
+  ['text', c => `color:${c}`],
+  ['border', c => `border-color:${c}`],
+  ['ring', c => `--tw-ring-color:${c}`],
+  ['fill', c => `fill:${c}`],
+  ['stroke', c => `stroke:${c}`],
+  ['from', c => `--tw-gradient-from:${c};--tw-gradient-stops:var(--tw-gradient-via-stops,var(--tw-gradient-position),var(--tw-gradient-from) var(--tw-gradient-from-position),var(--tw-gradient-to) var(--tw-gradient-to-position))`],
+  ['to', c => `--tw-gradient-to:${c};--tw-gradient-stops:var(--tw-gradient-via-stops,var(--tw-gradient-position),var(--tw-gradient-from) var(--tw-gradient-from-position),var(--tw-gradient-to) var(--tw-gradient-to-position))`],
+];
+
+const buildOverrides = (base: string): string => {
+  let css = '';
+  for (const [prefix, decl] of COLOR_UTILS) {
+    // solid (no opacity) — also override so it wins over literal builds
+    css += `.${prefix}-emerald-500{${decl(base)}}`;
+    for (const o of OPACITIES) {
+      const c = `color-mix(in oklab, ${base} ${o}%, transparent)`;
+      css += `.${prefix}-emerald-500\\/${o}{${decl(c)}}`;
+    }
+  }
+  return css;
 };
 
 /**
@@ -77,6 +107,15 @@ export function applyAccent(accentKey?: string | null) {
   }
   const scale = scaleFor(preset.hue, preset.sat);
   for (const step of STEPS) root.style.setProperty(`--color-emerald-${step}`, scale[step]);
+
+  // Inject overrides for the opacity utilities Tailwind baked to literals.
+  let style = document.getElementById('mm-accent-overrides') as HTMLStyleElement | null;
+  if (!style) {
+    style = document.createElement('style');
+    style.id = 'mm-accent-overrides';
+    document.head.appendChild(style);
+  }
+  style.textContent = buildOverrides(scale[500]);
 }
 
 export function applyTheme(s: ThemeSettings) {
@@ -89,15 +128,9 @@ export function applyTheme(s: ThemeSettings) {
     (mode === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
   root.classList.toggle("dark", dark);
 
-  // Accent — override the whole emerald scale so every emerald-* utility follows.
-  const key = s.theme_accent ?? "emerald";
-  const preset = ACCENT_PRESETS.find(p => p.key === key);
-  if (!preset || preset.key === "emerald") {
-    clearAccentVars(root); // use the built-in brand green
-  } else {
-    const scale = scaleFor(preset.hue, preset.sat);
-    for (const step of STEPS) root.style.setProperty(`--color-emerald-${step}`, scale[step]);
-  }
+  // Accent — override the emerald scale AND the baked-literal opacity utilities
+  // (see applyAccent) so every emerald surface follows the chosen accent.
+  applyAccent(s.theme_accent ?? "emerald");
 
   // Motion & contrast
   root.classList.toggle("mm-reduced-motion", !!s.reduced_motion);

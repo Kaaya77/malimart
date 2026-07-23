@@ -6,6 +6,7 @@ interface ProductCardImageProps {
   product: Product;
   images: string[];
   isNew: boolean;
+  isTrending?: boolean;
   stats: any;
   layout: 'grid' | 'list';
   isHovered: boolean;
@@ -17,6 +18,7 @@ export const ProductCardImage: React.FC<ProductCardImageProps> = ({
   product,
   images,
   isNew,
+  isTrending = false,
   stats,
   layout,
   isHovered,
@@ -100,6 +102,10 @@ export const ProductCardImage: React.FC<ProductCardImageProps> = ({
           ) : isNew ? (
             <span className="px-2 py-0.5 rounded-lg bg-white/95 dark:bg-black/90 text-foreground text-[10px] font-bold uppercase tracking-wider shadow-sm ring-1 ring-foreground/5">
               New
+            </span>
+          ) : isTrending ? (
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-orange-500 text-white text-[10px] font-bold uppercase tracking-wider shadow-sm">
+              🔥 Trending
             </span>
           ) : null}
           {lowStock && (

@@ -440,6 +440,36 @@ export const StorePage: React.FC = () => {
                   </div>
                 )}
 
+                {/* Social links */}
+                {vendor.social_links && vendor.social_links.length > 0 && (
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-foreground/35 mb-2">Connect</p>
+                    <div className="flex flex-wrap gap-2">
+                      {vendor.social_links.filter(s => s?.url).map((s, i) => {
+                        const raw = s.url.trim();
+                        const platform = (s.platform || '').toLowerCase();
+                        const href = /^https?:\/\//.test(raw)
+                          ? raw
+                          : platform.includes('whatsapp')
+                            ? `https://wa.me/${raw.replace(/[^0-9]/g, '')}`
+                            : platform.includes('instagram')
+                              ? `https://instagram.com/${raw.replace(/^@/, '')}`
+                              : platform.includes('tiktok')
+                                ? `https://tiktok.com/@${raw.replace(/^@/, '')}`
+                                : platform.includes('facebook')
+                                  ? `https://facebook.com/${raw}`
+                                  : `https://${raw}`;
+                        return (
+                          <a key={i} href={href} target="_blank" rel="noopener noreferrer"
+                            className="flex items-center gap-2 px-3.5 py-2 bg-foreground/[0.05] border border-foreground/8 rounded-full text-[12px] font-semibold text-foreground/70 hover:bg-foreground/[0.09] hover:text-foreground transition-colors">
+                            {s.platform}
+                          </a>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {/* Tags */}
                 {vendor.tags?.length > 0 && (
                   <div>

@@ -733,7 +733,11 @@ RESPONSE FORMAT:
       } else {
         setMessages(prev => prev.map(m => m.id === aid ? { ...m, text: cleanText, streaming: false, suggestions } : m));
       }
-    } catch {
+    } catch (err) {
+      // Surface the real cause for diagnosis (e.g. the /api/gemini proxy returns
+      // 503 "AI service not configured" when GEMINI_API_KEY is missing on the
+      // deployment) — the swallowed error made "Mali isn't working" undebuggable.
+      console.error('Mali AI request failed:', err);
       setIsTyping(false);
       setMessages(prev => [...prev, { id: genId(), role: 'assistant', type: 'text', ts: Date.now(), text: "Oops, something went sideways! Try again — I'm still here 😊" }]);
     }
