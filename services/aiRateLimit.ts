@@ -16,7 +16,6 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
   'gemini-2.5-flash':       { rpm: 15, maxBurst: 5 },
   'gemini-2.5-flash-image': { rpm: 3,  maxBurst: 2 },
   'gemini-3.1-flash-image': { rpm: 3,  maxBurst: 2 },
-  'gemini-3-pro-image':     { rpm: 2,  maxBurst: 1 },
 };
 
 const DEFAULT_CONFIG: ModelConfig = { rpm: 10, maxBurst: 3 };

@@ -22,10 +22,17 @@ export const MODELS = {
 
 // Ordered fallback chain for image generation.
 // When the primary model hits 429, callers try models left to right.
+// gemini-3-pro-image deliberately excluded: Google moved all Pro-series
+// models to paid-only on 1 Apr 2026 (Flash models stayed free) — it will
+// 429/403 on every call without a Cloud Billing account attached, so
+// trying it just burns a request and delays the real failure. Enabling
+// billing to unlock it also kills the free tier for the WHOLE project
+// (every call becomes billable, not just the Pro ones) — don't add it
+// back without a deliberate decision to pay, ideally on a separate key/
+// project so free Flash usage elsewhere isn't affected.
 export const IMAGE_MODEL_CHAIN = [
   'gemini-2.5-flash-image',
   'gemini-3.1-flash-image',
-  'gemini-3-pro-image',
 ] as const;
 
 // Defensive JSON parse for structured responses — strips ```json fences

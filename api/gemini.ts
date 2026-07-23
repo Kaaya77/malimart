@@ -13,10 +13,11 @@ const UPSTREAM = 'https://generativelanguage.googleapis.com';
 
 // Models the app is allowed to reach through this proxy (prefix match).
 // KEEP IN SYNC with services/aiModels.ts (MODELS + IMAGE_MODEL_CHAIN).
+// gemini-3-pro-image intentionally NOT here — it's Pro-tier (paid-only
+// since 1 Apr 2026), see the note in aiModels.ts.
 const ALLOWED_MODEL_PREFIXES = [
   'gemini-2.5-flash',      // TEXT + IMAGE ('gemini-2.5-flash-image')
   'gemini-3.1-flash-image',
-  'gemini-3-pro-image',
   'gemini-3.5-flash',      // planned replacement (aiModels.ts note)
 ];
 const ALLOWED_ACTIONS = ['generateContent', 'streamGenerateContent'];
