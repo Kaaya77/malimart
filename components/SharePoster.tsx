@@ -217,60 +217,67 @@ const PosterCanvas = ({
 }) => (
   <div
     style={{
-      width: 1080, height: 1350, background: '#faf9f6', color: '#1c1917',
+      width: 1080, height: 1350, background: '#0a0a0b', color: '#fafafa',
       fontFamily: 'Inter, system-ui, sans-serif', position: 'relative', display: 'flex',
-      flexDirection: 'column', padding: 64, boxSizing: 'border-box',
+      flexDirection: 'column', padding: 72, boxSizing: 'border-box',
     }}
   >
-    {/* Kitenge accent strip */}
+    {/* Thin kitenge accent — keeps the Tanzanian identity on the dark canvas */}
     <div style={{
-      position: 'absolute', top: 0, left: 0, right: 0, height: 14,
+      position: 'absolute', top: 0, left: 0, right: 0, height: 10,
       background: 'repeating-linear-gradient(-45deg,#059669 0 28px,#f59e0b 28px 42px,#0c4a6e 42px 70px,#f59e0b 70px 84px)',
     }} />
 
-    {/* Brand row */}
-    <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 40 }}>
-      <div style={{ width: 64, height: 64, borderRadius: 18, background: '#059669', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40, fontWeight: 900 }}>M</div>
-      <div>
-        <div style={{ fontSize: 34, fontWeight: 800 }}>MaliMart</div>
-        <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: '0.28em', color: '#059669' }}>MARKETPLACE</div>
+    {/* Header: brand + TANZANIA tag */}
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 40 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div style={{ width: 60, height: 60, borderRadius: 16, background: '#10b981', color: '#0a0a0b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 38, fontWeight: 900 }}>M</div>
+        <div>
+          <div style={{ fontSize: 32, fontWeight: 800, color: '#fafafa' }}>MaliMart</div>
+          <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: '0.28em', color: '#10b981' }}>MARKETPLACE</div>
+        </div>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', border: '1px solid rgba(16,185,129,0.4)', borderRadius: 999, padding: '9px 20px' }}>
+        <span style={{ fontSize: 15, fontWeight: 800, letterSpacing: '0.18em', color: '#10b981' }}>TANZANIA</span>
       </div>
     </div>
 
-    {/* Product image */}
-    <div style={{ width: '100%', height: 620, borderRadius: 32, overflow: 'hidden', background: '#ece9e2', flexShrink: 0, position: 'relative' }}>
-      {img && <img src={img} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
-      {salePrice && (
-        <div style={{ position: 'absolute', top: 24, left: 24, background: '#ef4444', color: '#fff', fontSize: 22, fontWeight: 800, padding: '10px 20px', borderRadius: 999 }}>SALE</div>
-      )}
+    {/* Spotlight — product floated in a glowing rounded card */}
+    <div style={{ display: 'flex', flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ width: '100%', height: 600, borderRadius: 40, overflow: 'hidden', background: '#18181b', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 40px 110px rgba(16,185,129,0.22)', position: 'relative' }}>
+        {img && <img src={img} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+        {salePrice && (
+          <div style={{ position: 'absolute', top: 24, left: 24, background: '#ef4444', color: '#fff', fontSize: 22, fontWeight: 800, padding: '10px 20px', borderRadius: 999 }}>SALE</div>
+        )}
+      </div>
     </div>
 
     {/* Info */}
-    <div style={{ marginTop: 40, flex: 1, display: 'flex', flexDirection: 'column' }}>
-      {brand && <div style={{ fontSize: 22, fontWeight: 700, color: '#8a8580', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>{brand}</div>}
-      <div style={{ fontSize: 52, fontWeight: 800, lineHeight: 1.15, maxHeight: 180, overflow: 'hidden' }}>{name}</div>
+    <div style={{ marginTop: 44, display: 'flex', flexDirection: 'column' }}>
+      {brand && <div style={{ fontSize: 22, fontWeight: 700, color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: 12 }}>{brand}</div>}
+      <div style={{ fontSize: 56, fontWeight: 800, color: '#fafafa', lineHeight: 1.1, maxHeight: 130, overflow: 'hidden' }}>{name}</div>
 
-      {/* Price + seller */}
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginTop: 28 }}>
-        <div>
-          <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: 14, background: '#059669', color: '#fff', padding: '14px 28px', borderRadius: 18 }}>
-            <span style={{ fontSize: 46, fontWeight: 900 }}>{salePrice || price}</span>
+      {/* Price pill + rating */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 32 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', background: '#10b981', color: '#05271c', padding: '16px 34px', borderRadius: 999, boxShadow: '0 14px 44px rgba(16,185,129,0.38)' }}>
+            <span style={{ fontSize: 48, fontWeight: 900 }}>{salePrice || price}</span>
           </div>
-          {salePrice && <span style={{ fontSize: 28, color: '#8a8580', textDecoration: 'line-through', marginLeft: 18 }}>{price}</span>}
+          {salePrice && <span style={{ fontSize: 28, color: '#a1a1aa', textDecoration: 'line-through' }}>{price}</span>}
         </div>
         {rating != null && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 28, fontWeight: 700 }}>
-            <Star style={{ width: 30, height: 30, fill: '#f59e0b', color: '#f59e0b' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 28, fontWeight: 700, color: '#fafafa' }}>
+            <Star style={{ width: 30, height: 30, fill: '#fbbf24', color: '#fbbf24' }} />
             {rating.toFixed(1)}
-            {reviewCount > 0 && <span style={{ color: '#8a8580', fontSize: 22, fontWeight: 600 }}>({reviewCount})</span>}
+            {reviewCount > 0 && <span style={{ color: '#a1a1aa', fontSize: 22, fontWeight: 600 }}>({reviewCount})</span>}
           </div>
         )}
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 24, fontSize: 26, fontWeight: 700, color: '#57534e' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 26, fontSize: 26, fontWeight: 700, color: '#a1a1aa' }}>
         <span>by {sellerName}</span>
         {verified && (
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#2563eb' }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#34d399' }}>
             <ShieldCheck style={{ width: 26, height: 26 }} /> Verified
           </span>
         )}
@@ -278,13 +285,13 @@ const PosterCanvas = ({
     </div>
 
     {/* Footer: QR + scan-to-shop */}
-    <div style={{ display: 'flex', alignItems: 'center', gap: 28, paddingTop: 36, borderTop: '2px solid rgba(28,25,23,0.08)' }}>
-      <div style={{ width: 140, height: 140, borderRadius: 20, background: '#fff', padding: 14, boxSizing: 'border-box', flexShrink: 0, boxShadow: '0 4px 14px rgba(0,0,0,0.06)' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 28, marginTop: 40, paddingTop: 36, borderTop: '1px solid rgba(255,255,255,0.10)' }}>
+      <div style={{ width: 132, height: 132, borderRadius: 20, background: '#fff', padding: 14, boxSizing: 'border-box', flexShrink: 0, boxShadow: '0 10px 34px rgba(0,0,0,0.5)' }}>
         {qr && <img src={qr} style={{ width: '100%', height: '100%' }} />}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 34, fontWeight: 800 }}>Scan to shop</div>
-        <div style={{ fontSize: 22, color: '#8a8580', fontWeight: 600, marginTop: 6, wordBreak: 'break-all' }}>{shortUrl}</div>
+        <div style={{ fontSize: 34, fontWeight: 800, color: '#fafafa' }}>Scan to shop</div>
+        <div style={{ fontSize: 22, color: '#a1a1aa', fontWeight: 600, marginTop: 6, wordBreak: 'break-all' }}>{shortUrl}</div>
       </div>
     </div>
   </div>
