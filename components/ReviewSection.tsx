@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Star, ThumbsUp, Loader2, User, Camera, X, ChevronDown, ChevronUp, Edit2, Trash2, Flag, MessageSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../services/supabaseClient';
-import { fetchProductReviews, insertReview, updateOwnReview, deleteOwnReview, reportContent } from '../services/shopService';
+import { fetchProductReviews, insertReview, updateOwnReview, deleteOwnReview, reportContent, hasDeliveredPurchase } from '../services/shopService';
 import { compressImage, IMMUTABLE_CACHE } from '../services/imageCompression';
 import { useAppState } from '../context/AppContext';
 import { ConfirmDialog, Textarea, useToast } from './UI';
@@ -115,11 +115,22 @@ export const ReviewSection: React.FC<ReviewSectionProps> = ({ productId }) => {
   const userHasReviewed = reviews.some(r => (r as any).user?.id === user?.id);
 
   // RLS only accepts reviews from buyers with a DELIVERED order containing this
-  // product — mirror that here so users get an explanation, not a server error.
-  const hasPurchased = useMemo(() => (orders || []).some((o: any) =>
-    o.status === 'delivered' &&
-    (o.items || []).some((i: any) => (i.product_id || i.products?.id || i.product?.id) === productId)
-  ), [orders, productId]);
+  // product. Verify against the DB rather than the in-memory `orders` array,
+  // which for a SELLER holds their store's orders — not their own purchases —
+  // so a seller who bought from another store was wrongly blocked (#5).
+  const [hasPurchased, setHasPurchased] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    if (!user) { setHasPurchased(false); return; }
+    // Optimistic hint from the local orders array (buyer case), then confirm.
+    const localHint = (orders || []).some((o: any) =>
+      o.status === 'delivered' &&
+      (o.items || []).some((i: any) => (i.product_id || i.products?.id || i.product?.id) === productId)
+    );
+    if (localHint) setHasPurchased(true);
+    hasDeliveredPurchase(productId, user.id).then(ok => { if (!cancelled) setHasPurchased(ok); });
+    return () => { cancelled = true; };
+  }, [user, productId, orders]);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {

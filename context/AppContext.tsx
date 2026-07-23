@@ -1173,26 +1173,35 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
             return;
         }
 
-        const { data: receiverProfile } = await supabase.from('profiles').select('role').eq('id', to).single();
-        const receiverRole = receiverProfile?.role;
-
-        let targetLink = '/messages';
-        if (receiverRole === 'buyer') {
-            targetLink = `/buyer?tab=inbox&chat=${user.id}`;
-        } else if (receiverRole === 'seller') {
-            targetLink = `/seller?tab=messages&chat=${user.id}`;
-        } else if (receiverRole === 'admin') {
-            targetLink = `/admin/messages?chat=${user.id}`;
-        }
-
-        await supabase.rpc('notify_message_recipient', {
-            p_receiver_id: to,
-            p_title: `New Message from ${user.name}`,
-            p_message: text,
-            p_link: targetLink
-        });
-        // Bust messages cache so next fetchMessages gets fresh data
+        // Bust the messages cache FIRST — the realtime INSERT handler re-fetches
+        // immediately, and if the cache were still warm the just-sent message
+        // would be dropped from the UI (looking like the send silently failed).
         invalidate(`messages:${user.id}`);
+
+        // Recipient notification is best-effort — a failure here must NEVER make a
+        // successfully-sent message look like it didn't go through.
+        try {
+            const { data: receiverProfile } = await supabase.from('profiles').select('role').eq('id', to).single();
+            const receiverRole = receiverProfile?.role;
+
+            let targetLink = '/messages';
+            if (receiverRole === 'buyer') {
+                targetLink = `/buyer?tab=inbox&chat=${user.id}`;
+            } else if (receiverRole === 'seller') {
+                targetLink = `/seller?tab=messages&chat=${user.id}`;
+            } else if (receiverRole === 'admin') {
+                targetLink = `/admin/messages?chat=${user.id}`;
+            }
+
+            await supabase.rpc('notify_message_recipient', {
+                p_receiver_id: to,
+                p_title: `New Message from ${user.name}`,
+                p_message: text,
+                p_link: targetLink
+            });
+        } catch (notifyErr) {
+            console.warn('Message sent, but recipient notification failed:', notifyErr);
+        }
     }, [user, blockedUsers, addToast]);
 
     const getActiveOfferForProduct = useCallback((productId: string) => {

@@ -1,7 +1,8 @@
 ﻿import React, { useState, useRef, useEffect, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { motion, AnimatePresence, useSpring, useTransform, useMotionValue, useAnimate } from 'framer-motion';
-import { X, Send, Mic, MicOff, Paperclip, ChevronRight, Trash2, Volume2, Loader2, Zap, Copy, Check, ShoppingBag, ChevronLeft } from 'lucide-react';
+import { X, Send, Mic, MicOff, Paperclip, ChevronRight, Trash2, Volume2, Loader2, Zap, Copy, Check, ShoppingBag, ChevronLeft, Eye } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { getAI, getLiveAI } from '../services/aiClient';
 import { MODELS } from '../services/aiModels';
 import { validateUpload } from '../src/security';
@@ -217,8 +218,8 @@ const SuggestionChips = ({ chips, onPick }: { chips: string[]; onPick: (s: strin
 );
 
 // â”€â”€ Product carousel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-const ProductCarousel = ({ ids, products, onAdd }: {
-  ids: string[]; products: any[]; onAdd: (p: any) => void;
+const ProductCarousel = ({ ids, products, onAdd, onView }: {
+  ids: string[]; products: any[]; onAdd: (p: any) => void; onView: (p: any) => void;
 }) => {
   const items = ids.map(id => products.find(p => p.id === id)).filter(Boolean);
   const [idx, setIdx] = useState(0);
@@ -238,11 +239,18 @@ const ProductCarousel = ({ ids, products, onAdd }: {
               <div className="flex-1 min-w-0">
                 <p className="font-bold text-[11px] text-foreground line-clamp-2 leading-snug mb-1">{p.name}</p>
                 <p className="text-[12px] font-black text-emerald-600 mb-2">{formatTZS(p.price)}</p>
-                <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.96 }}
-                  onClick={() => onAdd(p)}
-                  className="flex items-center gap-1.5 h-7 px-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl text-[9px] font-black uppercase tracking-wider shadow-sm shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-shadow">
-                  <ShoppingBag className="w-2.5 h-2.5" /> Add to bag
-                </motion.button>
+                <div className="flex items-center gap-1.5">
+                  <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.96 }}
+                    onClick={() => onView(p)}
+                    className="flex items-center gap-1.5 h-7 px-3 bg-foreground/[0.06] text-foreground/70 rounded-xl text-[9px] font-black uppercase tracking-wider hover:bg-foreground/10 transition-colors">
+                    <Eye className="w-2.5 h-2.5" /> View
+                  </motion.button>
+                  <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.96 }}
+                    onClick={() => onAdd(p)}
+                    className="flex items-center gap-1.5 h-7 px-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl text-[9px] font-black uppercase tracking-wider shadow-sm shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-shadow">
+                    <ShoppingBag className="w-2.5 h-2.5" /> Add to bag
+                  </motion.button>
+                </div>
               </div>
             </motion.div>
           </AnimatePresence>
@@ -278,9 +286,9 @@ const ProductCarousel = ({ ids, products, onAdd }: {
 };
 
 // â”€â”€ Message bubble â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-const MessageBubble = ({ m, isFirst, products, onAdd, onSuggest }: {
+const MessageBubble = ({ m, isFirst, products, onAdd, onView, onSuggest }: {
   m: Msg; isFirst: boolean; products: any[];
-  onAdd: (p: any) => void; onSuggest: (s: string) => void;
+  onAdd: (p: any) => void; onView: (p: any) => void; onSuggest: (s: string) => void;
 }) => {
   const [copied, setCopied] = useState(false);
   const [hovered, setHovered] = useState(false);
@@ -298,7 +306,7 @@ const MessageBubble = ({ m, isFirst, products, onAdd, onSuggest }: {
   })();
 
   if (m.type === 'products' && m.productIds?.length) {
-    return <ProductCarousel ids={m.productIds} products={products} onAdd={onAdd} />;
+    return <ProductCarousel ids={m.productIds} products={products} onAdd={onAdd} onView={onView} />;
   }
 
   return (
@@ -367,6 +375,7 @@ const MessageBubble = ({ m, isFirst, products, onAdd, onSuggest }: {
 export const AIChatAssistant = () => {
   const { products, addToCart, user } = useAppState();
   const { addToast } = useToast();
+  const navigate = useNavigate();
 
   const firstName = user?.full_name?.split(' ')[0] || (user as any)?.display_name || null;
   const { animalInfo } = useAnimalAvatar();
@@ -928,6 +937,7 @@ RESPONSE FORMAT:
                     <MessageBubble key={m.id} m={m} isFirst={isFirstInGroup(i)}
                       products={products}
                       onAdd={p => { addToCart(p); addToast(`Added ${p.name} to bag 🛍️`, 'success'); }}
+                      onView={p => { setIsOpen(false); navigate(`/product/${p.id}`); }}
                       onSuggest={s => handleSend(undefined, s)} />
                   ))}
                 </AnimatePresence>

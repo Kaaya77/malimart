@@ -207,6 +207,25 @@ export async function fetchProductReviews(productId: string): Promise<Review[] |
 }
 
 /**
+ * Whether the signed-in user may review this product — i.e. they have a
+ * DELIVERED order containing it. Mirrors the reviews_insert RLS rule with a
+ * direct query, so it's correct regardless of the caller's role (a seller who
+ * bought from another store qualifies; the client `orders` array would not
+ * include that purchase). Returns false on any error.
+ */
+export async function hasDeliveredPurchase(productId: string, userId: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('order_items')
+    .select('id, orders!inner(user_id, status)')
+    .eq('product_id', productId)
+    .eq('orders.user_id', userId)
+    .eq('orders.status', 'delivered')
+    .limit(1);
+  if (error) return false;
+  return Array.isArray(data) && data.length > 0;
+}
+
+/**
  * Publish a verified-buyer review. RLS only accepts reviews from buyers with
  * a delivered order containing this product. Throws on insert error so the
  * caller can surface a toast.
