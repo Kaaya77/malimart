@@ -63,6 +63,22 @@ const clearAccentVars = (root: HTMLElement) => {
   for (const step of STEPS) root.style.removeProperty(`--color-emerald-${step}`);
 };
 
+/**
+ * Apply ONLY the accent recolour (no dark/light or motion changes). Use this for
+ * live preview from the settings picker, where the app owns dark mode separately
+ * — calling full applyTheme there could flip the user's theme as a side effect.
+ */
+export function applyAccent(accentKey?: string | null) {
+  const root = document.documentElement;
+  const preset = ACCENT_PRESETS.find(p => p.key === (accentKey ?? 'emerald'));
+  if (!preset || preset.key === 'emerald') {
+    clearAccentVars(root);
+    return;
+  }
+  const scale = scaleFor(preset.hue, preset.sat);
+  for (const step of STEPS) root.style.setProperty(`--color-emerald-${step}`, scale[step]);
+}
+
 export function applyTheme(s: ThemeSettings) {
   const root = document.documentElement;
 

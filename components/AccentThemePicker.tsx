@@ -1,6 +1,6 @@
 import React from 'react';
 import { Check } from 'lucide-react';
-import { ACCENT_PRESETS, applyTheme, ThemeMode } from '../services/theme';
+import { ACCENT_PRESETS, applyAccent, ThemeMode } from '../services/theme';
 
 interface AccentThemePickerProps {
   /** Currently selected accent key (defaults to emerald). */
@@ -19,7 +19,7 @@ export const AccentThemePicker: React.FC<AccentThemePickerProps> = ({ value, mod
   const active = value || 'emerald';
 
   const choose = (key: string) => {
-    applyTheme({ theme_accent: key, theme_mode: mode ?? undefined });
+    applyAccent(key); // recolour live without touching dark/light mode
     onSelect(key);
   };
 
