@@ -68,7 +68,7 @@ export default async function handler(req: Request): Promise<Response> {
           <div style={{ width: 64, height: 64, borderRadius: 18, background: emerald, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40, fontWeight: 900 }}>M</div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <div style={{ fontSize: 34, fontWeight: 800, display: 'flex' }}>MaliMart</div>
-            <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: 5, color: emerald, display: 'flex' }}>MARKETPLACE</div>
+            <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: 4.5, color: emerald, display: 'flex' }}>MARKETPLACE</div>
           </div>
         </div>
 
@@ -83,17 +83,20 @@ export default async function handler(req: Request): Promise<Response> {
         {/* Info */}
         <div style={{ marginTop: 40, flex: 1, display: 'flex', flexDirection: 'column' }}>
           {brand && <div style={{ fontSize: 22, fontWeight: 700, color: muted, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 10, display: 'flex' }}>{brand}</div>}
-          <div style={{ fontSize: 52, fontWeight: 800, lineHeight: 1.15, maxHeight: 190, overflow: 'hidden', display: 'flex' }}>{name}</div>
+          <div style={{ fontSize: 52, fontWeight: 800, lineHeight: 1.15, maxHeight: 180, overflow: 'hidden', display: 'flex' }}>{name}</div>
 
-          {/* Price + rating */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 28 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+          {/* Price + rating — bottom-aligned to match the preview */}
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginTop: 28 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 18 }}>
               <div style={{ display: 'flex', alignItems: 'center', background: emerald, color: '#fff', padding: '14px 28px', borderRadius: 18, fontSize: 46, fontWeight: 900 }}>{salePrice || price}</div>
               {salePrice && <div style={{ fontSize: 28, color: muted, textDecoration: 'line-through', display: 'flex' }}>{price}</div>}
             </div>
             {rating != null && rating > 0 && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 28, fontWeight: 700 }}>
-                <span style={{ color: '#f59e0b', fontSize: 32, display: 'flex' }}>★</span>
+                {/* lucide Star (filled) — matches the preview icon */}
+                <svg width={30} height={30} viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ display: 'flex' }}>
+                  <path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.878L2.16 9.795a.53.53 0 0 1 .294-.904l5.166-.756a2.122 2.122 0 0 0 1.593-1.16z" />
+                </svg>
                 <span style={{ display: 'flex' }}>{rating.toFixed(1)}</span>
                 {reviewCount > 0 && <span style={{ color: muted, fontSize: 22, fontWeight: 600, display: 'flex' }}>({reviewCount})</span>}
               </div>
@@ -102,13 +105,22 @@ export default async function handler(req: Request): Promise<Response> {
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 24, fontSize: 26, fontWeight: 700, color: '#57534e' }}>
             <span style={{ display: 'flex' }}>by {sellerName}</span>
-            {verified && <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#2563eb' }}>✓ Verified</span>}
+            {verified && (
+              <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#2563eb' }}>
+                {/* lucide ShieldCheck — matches the preview icon */}
+                <svg width={26} height={26} viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ display: 'flex' }}>
+                  <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+                  <path d="m9 12 2 2 4-4" />
+                </svg>
+                <span style={{ display: 'flex' }}>Verified</span>
+              </span>
+            )}
           </div>
         </div>
 
         {/* Footer: QR + scan-to-shop */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 28, paddingTop: 36, borderTop: '2px solid rgba(28,25,23,0.08)' }}>
-          <div style={{ width: 140, height: 140, borderRadius: 20, background: '#fff', padding: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: 140, height: 140, borderRadius: 20, background: '#fff', padding: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 14px rgba(0,0,0,0.06)' }}>
             {qr && <img src={qr} width={112} height={112} style={{ width: 112, height: 112 }} />}
           </div>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
