@@ -11,6 +11,7 @@ import { Order, VendorProfile } from '../types';
 import { CancelOrderModal } from './CancelOrderModal';
 import { OrderTracking } from './CheckoutComponents';
 import { orderStatus } from './orderStatusConfig';
+import { SwipeableRow } from './SwipeableRow';
 
 /**
  * BuyerOrders — completely field-safe rewrite.
@@ -306,9 +307,21 @@ export const BuyerOrders = ({
             const firstItem = order.items?.[0] as any;
             const firstProduct = firstItem ? getItemProduct(firstItem) : {};
 
+            // Swipe action depends on order state: pending → cancel (opens the
+            // reason modal); terminal → remove from history; otherwise no swipe.
+            const isTerminal = ['delivered','cancelled','refunded','failed'].includes(order.status);
+            const isPending = order.status === 'pending';
+            const swipeProps = isPending
+              ? { label: 'Cancel', icon: XCircle, bgClass: 'bg-amber-500', removeOnAction: false,
+                  onDelete: () => { setSelectedOrder(order); setCancelModal(true); } }
+              : isTerminal
+              ? { label: 'Remove', icon: Trash2, bgClass: 'bg-red-500', removeOnAction: true,
+                  onDelete: () => onDelete(order.id) }
+              : { disabled: true, onDelete: () => {} };
+
             return (
+              <SwipeableRow key={order.id} className="rounded-2xl" {...swipeProps}>
               <motion.button
-                key={order.id}
                 onClick={() => setSelectedOrder(order)}
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -349,6 +362,7 @@ export const BuyerOrders = ({
                   </div>
                 </div>
               </motion.button>
+              </SwipeableRow>
             );
           })
         )}
