@@ -154,6 +154,7 @@ export const CheckoutPage = () => {
           vat={vat}
           discount={effectiveDiscount}
           discountLabel={discountLabel}
+          couponCode={couponCode}
           onClose={() => navigate('/cart')}
           onComplete={handleComplete}
         />

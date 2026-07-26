@@ -593,6 +593,23 @@ a, button {
   }
 }
 
+/* In-app "Reduced motion" toggle (profiles.reduced_motion). Mirrors the OS
+   media query above for users who enable it in-app without an OS preference.
+   Framer-motion (JS-driven) is handled separately via <MotionConfig> in App. */
+.mm-reduced-motion *, .mm-reduced-motion *::before, .mm-reduced-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* In-app "High contrast" toggle (profiles.high_contrast_mode). The UI leans on
+   many low-opacity foreground text/borders (text-foreground/40, etc.); force
+   those to full strength and give focus a thick, always-visible outline. */
+.mm-high-contrast [class*="text-foreground/"] { color: var(--color-foreground) !important; }
+.mm-high-contrast [class*="border-foreground/"] { border-color: var(--color-foreground) !important; }
+.mm-high-contrast *:focus-visible { outline: 3px solid var(--color-foreground); outline-offset: 2px; }
+
 /* ═══════════════════════ MOBILE FIXES ═══════════════════════ */
 
 /* iOS Safari auto-zooms the page when focusing any input under 16px,

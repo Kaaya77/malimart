@@ -86,7 +86,16 @@ export const SellerSettingsPage = ({ onBack }: { onBack?: () => void } = {}) => 
  warranty: vendorProfile.warranty || ''
  });
  setDeliveryData({ delivery_fee: vendorProfile.delivery_fee || 0 });
- 
+ // Preferences must hydrate too — otherwise the toggles show hardcoded
+ // defaults, misrepresent the saved state, and a later Save writes those
+ // defaults back (e.g. Vacation Mode silently flips off).
+ setPreferences({
+ orderNotifications: (vendorProfile as any).order_notifications ?? true,
+ stockAlerts: (vendorProfile as any).stock_alerts ?? true,
+ vacationMode: (vendorProfile as any).vacation_mode ?? false,
+ lowStockThreshold: (vendorProfile as any).low_stock_threshold ?? 5,
+ });
+
  if (vendorProfile.social_links) {
  setSocialLinks(vendorProfile.social_links);
  }

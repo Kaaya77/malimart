@@ -50,7 +50,10 @@ export const AutoDiscountModal = ({
         code: null,  // auto-apply, no coupon code needed
         type: 'percentage',
         value: discountPct,
-        scope: 'product',
+        // scope is constrained to 'seller' | 'platform' (offers_scope_check).
+        // This is a seller-owned offer; the single-product targeting is carried
+        // by target_type/target_ids, NOT scope. 'product' here failed every insert.
+        scope: 'seller',
         target_type: 'product',
         target_ids: [product.id],
         is_auto_apply: true,

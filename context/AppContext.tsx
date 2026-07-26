@@ -523,7 +523,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
                     if (sellerIds.length > 0) {
                         const { data: vendors } = await supabase
                             .from('public_vendor_profiles')
-                            .select('seller_id, store_name, is_verified')
+                            .select('seller_id, store_name, is_verified, region')
                             .in('seller_id', sellerIds);
                         if (vendors) {
                             const vmap = Object.fromEntries((vendors as any[]).map((v: any) => [v.seller_id, v]));
@@ -531,6 +531,9 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
                                 ...p,
                                 seller_name: vmap[p.seller_id]?.store_name || p.seller_name || '',
                                 is_verified: vmap[p.seller_id]?.is_verified ?? p.is_verified,
+                                // Seller region — Mali's store list surfaces this; without it
+                                // every store showed regionless.
+                                seller_region: vmap[p.seller_id]?.region || p.location || '',
                             }));
                         }
                     }
@@ -837,11 +840,17 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
             // selectedVariant.id, and DB rows use null while callers pass
             // undefined — normalise both so removal never silently no-ops.
             const target = variantId ?? null;
-            setCart(prev => prev.filter(p => {
-                if (p.id !== productId) return true;
-                const pv = (p.variant_id ?? (p as any).selectedVariant?.id) ?? null;
-                return pv !== target; // drop only the matching line
-            }));
+            const lineVariant = (p: any) => (p.variant_id ?? p.selectedVariant?.id) ?? null;
+            // Resolve the removed line's true variant from the snapshot so the DB
+            // delete targets the same row the local filter drops — otherwise a
+            // line whose variant lived only in selectedVariant.id would be removed
+            // locally but survive in the DB and resurrect on reload.
+            let dbVariant = target;
+            setCart(prev => {
+                const hit = prev.find(p => p.id === productId && lineVariant(p) === target);
+                if (hit) dbVariant = lineVariant(hit);
+                return prev.filter(p => p.id !== productId || lineVariant(p) !== target);
+            });
 
             if (user) {
                 // cartIdRef may be null if upsert_cart_item created the cart after initial fetch
@@ -854,7 +863,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
                     let query = supabase.from('cart_items').delete()
                         .eq('cart_id', cartId)
                         .eq('product_id', productId);
-                    if (variantId) query = query.eq('variant_id', variantId);
+                    if (dbVariant) query = query.eq('variant_id', dbVariant);
                     else query = query.is('variant_id', null);
                     const { error } = await query;
                     if (error) throw error;
@@ -869,11 +878,17 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
 
     const updateQuantity = useCallback(async (productId: string, delta: number, variantId?: string) => {
         try {
+            // Same normalisation as removeFromCart: a line's variant may live in
+            // variant_id or selectedVariant.id, and DB rows use null while callers
+            // pass undefined — match on the resolved value so +/- never no-ops, and
+            // target the DB row by that same resolved variant.
+            const target = variantId ?? null;
+            const lineVariant = (p: any) => (p.variant_id ?? p.selectedVariant?.id) ?? null;
+            let dbVariant = target;
             setCart(prev => prev.map(p => {
-                if (p.id === productId && p.variant_id === variantId) {
-                    return { ...p, quantity: Math.max(1, p.quantity + delta) };
-                }
-                return p;
+                if (p.id !== productId || lineVariant(p) !== target) return p;
+                dbVariant = lineVariant(p);
+                return { ...p, quantity: Math.max(1, p.quantity + delta) };
             }));
 
             if (user) {
@@ -883,15 +898,15 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
                         .select('id, quantity')
                         .eq('cart_id', cartId)
                         .eq('product_id', productId);
-                    
-                    if (variantId) {
-                        query = query.eq('variant_id', variantId);
+
+                    if (dbVariant) {
+                        query = query.eq('variant_id', dbVariant);
                     } else {
                         query = query.is('variant_id', null);
                     }
-                    
-                    const { data: item } = await query.single();
-                    
+
+                    const { data: item } = await query.maybeSingle();
+
                     if (item) {
                         const { error } = await supabase.from('cart_items').update({ quantity: Math.max(1, item.quantity + delta) }).eq('id', item.id);
                         if (error) throw error;
@@ -1023,12 +1038,26 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
             };
         });
 
+        // Free-shipping campaigns waive the delivery fee. Compute the waiver with
+        // the SAME server function the cart preview uses, so the charged delivery
+        // matches what the buyer previewed. (delivery_fee has always been
+        // client-supplied to this RPC, so this introduces no new trust surface.)
+        let netDeliveryFee = Math.max(0, Number(details.deliveryFee) || 0);
+        try {
+            const { data: waiver } = await supabase.rpc('compute_shipping_waiver', {
+                p_items: itemsPayload,
+                p_coupon_code: details.couponCode || null,
+                p_delivery_fee: netDeliveryFee,
+            });
+            netDeliveryFee = Math.max(0, netDeliveryFee - (Number(waiver) || 0));
+        } catch { /* on any error, fall back to the full delivery fee */ }
+
         const { data, error } = await supabase.rpc('place_order_atomic', {
             p_user_id: user.id,
             p_shipping_address: details.address,
             p_payment_method: details.paymentMethod,
             p_payment_ref: details.paymentRef,
-            p_delivery_fee: details.deliveryFee,
+            p_delivery_fee: netDeliveryFee,
             p_discount_amount: details.discount, // ignored server-side; kept for signature compat
             p_note: details.note,
             p_items: itemsPayload,
@@ -1219,6 +1248,14 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         const product = products.find(p => p.id === productId);
         if (!product) return null;
 
+        // Rank a tier's candidates: a real `discount` campaign always beats a
+        // shipping/BOGO one for the "best offer" (those carry the value=100
+        // sentinel and only cut price/shipping elsewhere), so a genuine discount
+        // is never shadowed. Within the same kind, higher value wins.
+        const byBestOffer = (a: Offer, b: Offer) =>
+            ((b.campaign_type === 'discount' ? 1 : 0) - (a.campaign_type === 'discount' ? 1 : 0))
+            || (b.value - a.value);
+
         // 1. Find product-specific offers
         const specificOffers = offers.filter(o => 
             o.target_type === 'product' && 
@@ -1227,7 +1264,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
 
         if (specificOffers.length > 0) {
             // Sort by highest value (assuming same currency/type for simplicity in sorting)
-            return specificOffers.sort((a, b) => b.value - a.value)[0];
+            return specificOffers.sort(byBestOffer)[0];
         }
 
         // 2. Find category-specific offers
@@ -1238,7 +1275,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         );
 
         if (categoryOffers.length > 0) {
-            return categoryOffers.sort((a, b) => b.value - a.value)[0];
+            return categoryOffers.sort(byBestOffer)[0];
         }
 
         // 3. Find store-wide offers from this seller
@@ -1248,7 +1285,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         );
 
         if (storeOffers.length > 0) {
-            return storeOffers.sort((a, b) => b.value - a.value)[0];
+            return storeOffers.sort(byBestOffer)[0];
         }
 
         // 4. Find platform-wide offers
@@ -1257,7 +1294,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
             (!o.target_type || o.target_type === 'store')
         );
 
-        return platformOffers.length > 0 ? platformOffers.sort((a, b) => b.value - a.value)[0] : null;
+        return platformOffers.length > 0 ? platformOffers.sort(byBestOffer)[0] : null;
     }, [products, offers]);
 
     const fetchOrderDetails = useCallback(async (orderId: string) => {

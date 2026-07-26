@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Star, MapPin } from 'lucide-react';
 import { Product } from '../../types';
 import { VerifiedBadge } from '../UI';
@@ -50,12 +51,20 @@ export const ProductCardContent: React.FC<ProductCardContentProps> = ({
  )}
  </div>
 
- {/* Title */}
+ {/* Title — a real link so keyboard users can open the product and crawlers
+ can follow to the detail page (the card's mouse onClick stays a convenience).
+ stopPropagation avoids a redundant double-navigate. */}
  <h3
  className={`font-sans font-semibold text-foreground leading-snug line-clamp-2 tracking-tight
  ${isGrid ? 'text-[14px]' : 'text-lg'}`}
  >
+ <Link
+ to={`/product/${product.id}`}
+ onClick={(e) => e.stopPropagation()}
+ className="outline-none hover:text-emerald-600 focus-visible:underline transition-colors"
+ >
  {product.name}
+ </Link>
  </h3>
 
  {/* Rating */}

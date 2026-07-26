@@ -87,7 +87,10 @@ export const CategoriesTab: React.FC<CategoriesTabProps> = ({
           <div
             key={ri}
             className="flex justify-center gap-x-2 sm:gap-x-3"
-            style={{ marginLeft: ri % 2 === 1 ? '2.75rem' : 0 }}
+            // Offset alternate rows by ±¼ cell around the centre axis so the
+            // circles nest into a hex packing without the whole cluster leaning
+            // right (a plain marginLeft on odd rows shifted everything sideways).
+            style={{ transform: rows.length > 1 ? `translateX(${ri % 2 === 1 ? '1.375rem' : '-1.375rem'})` : undefined }}
           >
             {row.map((cat: any) => <Bubble key={cat.id} cat={cat} />)}
           </div>

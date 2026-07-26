@@ -49,15 +49,9 @@ const ProductCardInner: React.FC<ProductCardProps> = ({
  const [currentImgIdx, setCurrentImgIdx] = useState(0);
  const [isAdding, setIsAdding] = useState(false);
  const [showBurst, setShowBurst] = useState(false);
- const [activeVariantImage] = useState<string | null>(null);
- const [activeVariantId] = useState<string | null>(null);
-
- const activeVariant = useMemo(() => {
- if (!activeVariantId) return null;
- return product.variants?.find(v => v.id === activeVariantId) || null;
- }, [activeVariantId, product.variants]);
-
- const stats = useProductPricing(product, activeVariant);
+ // No per-card variant selection — the card shows base-product pricing; picking
+ // a variant happens on the detail page.
+ const stats = useProductPricing(product, null);
 
  const isNew = useMemo(() => {
  if (!product.created_at) return false;
@@ -85,13 +79,13 @@ const ProductCardInner: React.FC<ProductCardProps> = ({
  useEffect(() => {
  let timer: any;
  const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
- if (isHovered && images.length > 1 && !activeVariantImage && !isTouch) {
+ if (isHovered && images.length > 1 && !isTouch) {
  timer = setInterval(() => {
  setCurrentImgIdx(prev => (prev + 1) % images.length);
  }, 1500);
  }
  return () => clearInterval(timer);
- }, [isHovered, images.length, activeVariantImage]);
+ }, [isHovered, images.length]);
 
  const handleAdd = (e: React.MouseEvent) => {
  e.stopPropagation();
@@ -150,7 +144,6 @@ const ProductCardInner: React.FC<ProductCardProps> = ({
  layout={layout}
  isHovered={isHovered}
  currentImgIdx={currentImgIdx}
- activeVariantImage={activeVariantImage}
  />
  <ProductCardActions
  product={product}

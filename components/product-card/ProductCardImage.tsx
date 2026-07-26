@@ -99,13 +99,13 @@ export const ProductCardImage: React.FC<ProductCardImageProps> = ({
               </span>
               Just In
             </span>
-          ) : isNew ? (
-            <span className="px-2 py-0.5 rounded-lg bg-white/95 dark:bg-black/90 text-foreground text-[10px] font-bold uppercase tracking-wider shadow-sm ring-1 ring-foreground/5">
-              New
-            </span>
           ) : isTrending ? (
             <span className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-orange-500 text-white text-[10px] font-bold uppercase tracking-wider shadow-sm">
               🔥 Trending
+            </span>
+          ) : isNew ? (
+            <span className="px-2 py-0.5 rounded-lg bg-white/95 dark:bg-black/90 text-foreground text-[10px] font-bold uppercase tracking-wider shadow-sm ring-1 ring-foreground/5">
+              New
             </span>
           ) : null}
           {lowStock && (

@@ -445,7 +445,7 @@ export const StorePage: React.FC = () => {
                   <div>
                     <p className="text-[10px] font-black uppercase tracking-widest text-foreground/35 mb-2">Connect</p>
                     <div className="flex flex-wrap gap-2">
-                      {vendor.social_links.filter(s => s?.url).map((s, i) => {
+                      {vendor.social_links.filter(s => s?.url?.trim()).map((s, i) => {
                         const raw = s.url.trim();
                         const platform = (s.platform || '').toLowerCase();
                         const href = /^https?:\/\//.test(raw)
@@ -459,10 +459,15 @@ export const StorePage: React.FC = () => {
                                 : platform.includes('facebook')
                                   ? `https://facebook.com/${raw}`
                                   : `https://${raw}`;
+                        // Never render an empty pill: fall back to the link's host,
+                        // then a generic label, when the seller left platform blank.
+                        let host = '';
+                        try { host = new URL(href).hostname.replace(/^www\./, ''); } catch { /* ignore */ }
+                        const label = (s.platform || '').trim() || host || 'Link';
                         return (
                           <a key={i} href={href} target="_blank" rel="noopener noreferrer"
                             className="flex items-center gap-2 px-3.5 py-2 bg-foreground/[0.05] border border-foreground/8 rounded-full text-[12px] font-semibold text-foreground/70 hover:bg-foreground/[0.09] hover:text-foreground transition-colors">
-                            {s.platform}
+                            {label}
                           </a>
                         );
                       })}

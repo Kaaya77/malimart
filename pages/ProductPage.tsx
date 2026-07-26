@@ -138,10 +138,12 @@ export const ProductPage = () => {
  const rawPrice = selectedVariant ? (selectedVariant.sale_price || selectedVariant.base_price) : product.price;
  const currentStock = selectedVariant ? selectedVariant.stock : product.stock;
 
- // Apply auto-apply campaign discount (same logic as useProductPricing / ProductCard)
+ // Apply auto-apply campaign discount (same logic as useProductPricing / ProductCard).
+ // Only `discount` campaigns cut the price — BOGO/SHIPPING are stored with
+ // value=100 and would zero the product out if applied as a percentage here.
  const activeOffer = getActiveOfferForProduct(product.id);
  let price = rawPrice;
- if (activeOffer && activeOffer.is_auto_apply && activeOffer.campaign_type !== 'bogo') {
+ if (activeOffer && activeOffer.is_auto_apply && activeOffer.campaign_type === 'discount') {
    if (activeOffer.type === 'percentage') {
      price = rawPrice - (rawPrice * activeOffer.value / 100);
    } else if (activeOffer.type === 'fixed') {

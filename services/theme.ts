@@ -61,36 +61,6 @@ const scaleFor = (hue: number, sat: number): Record<number, string> => {
 
 const clearAccentVars = (root: HTMLElement) => {
   for (const step of STEPS) root.style.removeProperty(`--color-emerald-${step}`);
-  document.getElementById('mm-accent-overrides')?.remove();
-};
-
-// Opacity steps + utility prefixes the app uses with `emerald-500/<n>`. Tailwind
-// baked ~half of these to a literal hex (not the CSS var), so overriding the var
-// alone leaves them stuck emerald. We regenerate them with color-mix on the new
-// accent so the WHOLE UI recolours consistently.
-const OPACITIES = [3,4,5,6,8,10,12,15,20,25,30,35,40,45,50,55,60,65,70,75,80,90,95];
-const COLOR_UTILS: [prefix: string, decl: (c: string) => string][] = [
-  ['bg', c => `background-color:${c}`],
-  ['text', c => `color:${c}`],
-  ['border', c => `border-color:${c}`],
-  ['ring', c => `--tw-ring-color:${c}`],
-  ['fill', c => `fill:${c}`],
-  ['stroke', c => `stroke:${c}`],
-  ['from', c => `--tw-gradient-from:${c};--tw-gradient-stops:var(--tw-gradient-via-stops,var(--tw-gradient-position),var(--tw-gradient-from) var(--tw-gradient-from-position),var(--tw-gradient-to) var(--tw-gradient-to-position))`],
-  ['to', c => `--tw-gradient-to:${c};--tw-gradient-stops:var(--tw-gradient-via-stops,var(--tw-gradient-position),var(--tw-gradient-from) var(--tw-gradient-from-position),var(--tw-gradient-to) var(--tw-gradient-to-position))`],
-];
-
-const buildOverrides = (base: string): string => {
-  let css = '';
-  for (const [prefix, decl] of COLOR_UTILS) {
-    // solid (no opacity) — also override so it wins over literal builds
-    css += `.${prefix}-emerald-500{${decl(base)}}`;
-    for (const o of OPACITIES) {
-      const c = `color-mix(in oklab, ${base} ${o}%, transparent)`;
-      css += `.${prefix}-emerald-500\\/${o}{${decl(c)}}`;
-    }
-  }
-  return css;
 };
 
 /**
@@ -105,17 +75,14 @@ export function applyAccent(accentKey?: string | null) {
     clearAccentVars(root);
     return;
   }
+  // Override the whole emerald scale. Tailwind v4 emits every `emerald-*` and
+  // `emerald-*/<opacity>` utility (all steps, all variants — hover/dark/
+  // focus-visible/…) as `color-mix(in oklab, var(--color-emerald-<step>) …)`
+  // guarded by `@supports (color-mix)`, and that rule wins over the literal
+  // fallback on any browser with color-mix support. So setting these vars alone
+  // recolours 100% of emerald surfaces — no per-utility stylesheet needed.
   const scale = scaleFor(preset.hue, preset.sat);
   for (const step of STEPS) root.style.setProperty(`--color-emerald-${step}`, scale[step]);
-
-  // Inject overrides for the opacity utilities Tailwind baked to literals.
-  let style = document.getElementById('mm-accent-overrides') as HTMLStyleElement | null;
-  if (!style) {
-    style = document.createElement('style');
-    style.id = 'mm-accent-overrides';
-    document.head.appendChild(style);
-  }
-  style.textContent = buildOverrides(scale[500]);
 }
 
 export function applyTheme(s: ThemeSettings) {

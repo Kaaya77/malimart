@@ -305,39 +305,42 @@ export const Skeleton = ({ className = '' }: any) => (
  </div>
 );
 
-export const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, confirmText = "Confirm", cancelText = "Cancel", isDestructive = false }: any) => {
+// One canonical confirm dialog. `ConfirmModal` and `ConfirmDialog` below are
+// thin adapters over this, so the two historical prop APIs both keep working
+// against a single implementation, look, and a11y behaviour. Sits above Modal
+// (z-300) so a confirm can be raised from inside an open modal.
+const ConfirmBase = ({ isOpen, title, message, onConfirm, onCancel, danger = false, confirmText = "Confirm", cancelText = "Cancel", isLoading = false }: any) => {
  React.useEffect(() => {
    if (!isOpen) return;
-   const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose?.(); };
+   const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape' && !isLoading) onCancel?.(); };
    window.addEventListener('keydown', onEsc);
    return () => window.removeEventListener('keydown', onEsc);
- }, [isOpen, onClose]);
+ }, [isOpen, onCancel, isLoading]);
  if (!isOpen) return null;
  return (
- <div onClick={onClose} className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
- <div role="dialog" aria-modal="true" onClick={(e: any) => e.stopPropagation()} className="glass-surface w-full max-w-md p-8 rounded-3xl shadow-2xl animate-in zoom-in-95 duration-200">
- <h3 className="text-2xl font-black text-foreground/60 mb-4 tracking-tight">{title}</h3>
- <p className="text-sm font-medium text-foreground/55 mb-8">{message}</p>
- <div className="flex justify-end gap-3">
- <Button 
- variant="secondary"
- onClick={onClose}
- className="rounded-xl font-bold px-6"
- >
- {cancelText}
- </Button>
- <Button 
- variant={isDestructive ? 'danger' : 'primary'}
- onClick={() => { onConfirm(); onClose(); }}
- className="rounded-xl font-bold px-6"
- >
- {confirmText}
- </Button>
+ <div onClick={() => { if (!isLoading) onCancel?.(); }} className="fixed inset-0 z-[350] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+ <div role="dialog" aria-modal="true" aria-label={title} onClick={(e: any) => e.stopPropagation()} className="glass-surface w-full max-w-sm p-6 space-y-6 rounded-3xl shadow-2xl animate-in zoom-in-95 duration-200">
+ <div className="text-center">
+ <h3 className="text-2xl font-black tracking-tight mb-4 text-foreground">{title}</h3>
+ <p className="text-sm font-medium text-foreground/55 leading-relaxed">{message}</p>
+ </div>
+ <div className="flex gap-3">
+ <Button variant="secondary" onClick={onCancel} className="flex-1 rounded-xl font-bold" disabled={isLoading}>{cancelText}</Button>
+ <Button variant={danger ? 'danger' : 'primary'} onClick={onConfirm} className="flex-1 rounded-xl font-bold" isLoading={isLoading}>{confirmText}</Button>
  </div>
  </div>
  </div>
  );
 };
+
+export const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, confirmText = "Confirm", cancelText = "Cancel", isDestructive = false }: any) => (
+ <ConfirmBase
+ isOpen={isOpen} title={title} message={message}
+ confirmText={confirmText} cancelText={cancelText} danger={isDestructive}
+ onCancel={onClose}
+ onConfirm={() => { onConfirm?.(); onClose?.(); }}
+ />
+);
 
 export const SpotlightCard = ({ children, className = '', ...props }: any) => (
  <div className={`group relative overflow-hidden ${className}`} {...props}>
@@ -427,14 +430,40 @@ export const ImageDropzone = ({ currentImage, onImageSelected }: any) => {
 };
 
 export const Modal = ({ isOpen, title, onClose, children, size = 'md' }: any) => {
- // Body scroll lock + ESC to close — applies to every Modal user app-wide
+ const panelRef = React.useRef<HTMLDivElement>(null);
+ // Body scroll lock + ESC + focus trap/restore — applies to every Modal app-wide.
  React.useEffect(() => {
    if (!isOpen) return;
    const prev = document.body.style.overflow;
    document.body.style.overflow = 'hidden';
-   const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose?.(); };
-   window.addEventListener('keydown', onEsc);
-   return () => { document.body.style.overflow = prev; window.removeEventListener('keydown', onEsc); };
+   const previouslyFocused = document.activeElement as HTMLElement | null;
+
+   const focusables = () => Array.from(
+     panelRef.current?.querySelectorAll<HTMLElement>(
+       'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+     ) ?? []
+   ).filter(el => el.offsetParent !== null);
+
+   // Move focus into the dialog once it's painted.
+   const t = window.setTimeout(() => (focusables()[0] ?? panelRef.current)?.focus(), 0);
+
+   const onKey = (e: KeyboardEvent) => {
+     if (e.key === 'Escape') { onClose?.(); return; }
+     if (e.key !== 'Tab') return;
+     const els = focusables();
+     if (els.length === 0) { e.preventDefault(); panelRef.current?.focus(); return; }
+     const first = els[0], last = els[els.length - 1];
+     const active = document.activeElement as HTMLElement;
+     if (e.shiftKey && (active === first || !panelRef.current?.contains(active))) { e.preventDefault(); last.focus(); }
+     else if (!e.shiftKey && active === last) { e.preventDefault(); first.focus(); }
+   };
+   window.addEventListener('keydown', onKey);
+   return () => {
+     window.clearTimeout(t);
+     document.body.style.overflow = prev;
+     window.removeEventListener('keydown', onKey);
+     previouslyFocused?.focus?.(); // restore focus to the trigger
+   };
  }, [isOpen, onClose]);
 
  const maxW = size === 'lg' ? 'max-w-4xl' : size === 'sm' ? 'max-w-md' : 'max-w-2xl';
@@ -456,7 +485,7 @@ export const Modal = ({ isOpen, title, onClose, children, size = 'md' }: any) =>
  onClick={(e: any) => e.stopPropagation()}
  className={`${maxW} w-full`}
  >
- <div className="modal-scroll glass-surface p-6 md:p-8 space-y-6 rounded-t-3xl md:rounded-3xl shadow-2xl max-h-[92dvh] md:max-h-[90dvh] overflow-y-auto" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
+ <div ref={panelRef} role="dialog" aria-modal="true" aria-label={typeof title === 'string' ? title : undefined} tabIndex={-1} className="modal-scroll glass-surface p-6 md:p-8 space-y-6 rounded-t-3xl md:rounded-3xl shadow-2xl max-h-[92dvh] md:max-h-[90dvh] overflow-y-auto outline-none" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
  {/* Mobile drag-handle affordance */}
  <div className="md:hidden w-10 h-1 rounded-full bg-foreground/15 mx-auto -mt-2" />
  <div className="flex justify-between items-center border-b border-foreground/8 pb-6">
@@ -474,29 +503,13 @@ export const Modal = ({ isOpen, title, onClose, children, size = 'md' }: any) =>
  );
 };
 
-export const ConfirmDialog = ({ isOpen, title, message, onConfirm, onCancel, isDangerous, confirmText = "Confirm", isLoading }: any) => {
- React.useEffect(() => {
-   if (!isOpen) return;
-   const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape' && !isLoading) onCancel?.(); };
-   window.addEventListener('keydown', onEsc);
-   return () => window.removeEventListener('keydown', onEsc);
- }, [isOpen, onCancel, isLoading]);
- if (!isOpen) return null;
- return (
- <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
- <div role="dialog" aria-modal="true" className="glass-surface max-w-sm w-full p-6 space-y-6 rounded-3xl shadow-2xl animate-in zoom-in-95">
- <div className="text-center">
- <h3 className="text-2xl font-black tracking-tight mb-4 text-foreground">{title}</h3>
- <p className="text-sm font-medium text-foreground/55 leading-relaxed">{message}</p>
- </div>
- <div className="flex gap-3">
- <Button variant="secondary" onClick={onCancel} className="flex-1 rounded-xl font-bold" disabled={isLoading}>Cancel</Button>
- <Button variant={isDangerous ? 'danger' : 'primary'} onClick={onConfirm} className="flex-1 rounded-xl font-bold" isLoading={isLoading}>{confirmText}</Button>
- </div>
- </div>
- </div>
- );
-};
+export const ConfirmDialog = ({ isOpen, title, message, onConfirm, onCancel, isDangerous, confirmText = "Confirm", isLoading }: any) => (
+ <ConfirmBase
+ isOpen={isOpen} title={title} message={message}
+ confirmText={confirmText} danger={isDangerous} isLoading={isLoading}
+ onCancel={onCancel} onConfirm={onConfirm}
+ />
+);
 
 
 export const PremiumStatCard = ({ title, value, icon: Icon, color = "text-foreground", loading, trend }: { title: string, value: string | number, icon: any, color?: string, loading?: boolean, trend?: string | { value: string, positive?: boolean, isPositive?: boolean } }) => {

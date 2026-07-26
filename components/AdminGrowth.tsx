@@ -21,6 +21,7 @@ interface Campaign {
   status: 'active' | 'inactive' | 'expired';
   scope: string;
   is_auto_apply?: boolean;
+  is_flash_sale?: boolean;
   buy_quantity?: number;
   get_quantity?: number;
   profiles?: { full_name: string };
@@ -95,7 +96,9 @@ export const AdminGrowth = () => {
     setForm({
       title: c.title || '',
       code: c.code || '',
-      campaign_type: c.campaign_type || 'discount',
+      // Reconstruct the 'flash_sale' picker option from the is_flash_sale flag
+      // (the DB stores flash sales as campaign_type='discount').
+      campaign_type: c.is_flash_sale ? 'flash_sale' : (c.campaign_type || 'discount'),
       target_type: c.target_type || 'store',
       type: c.type || 'percentage',
       value: c.value || 10,
@@ -127,10 +130,16 @@ export const AdminGrowth = () => {
   const handleSave = async () => {
     if (!validateForm()) return;
     setIsSaving(true);
+    // Flash sales are modelled app-wide as a normal discount PLUS the
+    // is_flash_sale flag (that flag drives the buyer countdown/urgency UI) —
+    // NOT a distinct campaign_type. Map the 'flash_sale' picker option onto that
+    // shape so admin-created flash sales match seller-created ones. Flash sales
+    // always auto-apply.
+    const isFlash = form.campaign_type === 'flash_sale';
     const payload = {
       title: form.title.trim(),
       code: form.code.toUpperCase().trim(),
-      campaign_type: form.campaign_type,
+      campaign_type: isFlash ? 'discount' : form.campaign_type,
       target_type: form.target_type,
       type: form.type,
       value: Number(form.value),
@@ -138,7 +147,8 @@ export const AdminGrowth = () => {
       max_usage: form.max_usage > 0 ? Number(form.max_usage) : null,
       start_date: new Date(form.start_date).toISOString(),
       end_date: new Date(form.end_date).toISOString(),
-      is_auto_apply: form.is_auto_apply,
+      is_auto_apply: isFlash ? true : form.is_auto_apply,
+      is_flash_sale: isFlash,
       buy_quantity: form.campaign_type === 'bogo' ? Number(form.buy_quantity) : null,
       get_quantity: form.campaign_type === 'bogo' ? Number(form.get_quantity) : null,
       scope: 'platform',
@@ -405,7 +415,10 @@ export const AdminGrowth = () => {
                       <span className={`text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${STATUS_COLOR[status] || STATUS_COLOR.inactive}`}>
                         {status}
                       </span>
-                      {c.is_auto_apply && (
+                      {c.is_flash_sale && (
+                        <span className="text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400">⚡ Flash</span>
+                      )}
+                      {c.is_auto_apply && !c.is_flash_sale && (
                         <span className="text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400">Auto</span>
                       )}
                     </div>

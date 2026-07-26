@@ -10,10 +10,11 @@ import {
   HelpCircle, Phone, Lock, Sparkles, AlertCircle
 } from 'lucide-react';
 import { Button, Input, Label, Card, useToast, Badge, Switch, Textarea } from '../UI';
-import { formatTZS, CURRENCY } from '../../constants';
+import { formatTZS, CURRENCY, isValidTanzanianPhone } from '../../constants';
 import { useAppState } from '../../context/AppContext';
 import { Order, OrderStatus, Address, VendorProfile, CartItem } from '../../types';
 import { fetchVendorProfiles, fetchSellerPaymentChannels } from '../../services/shopService';
+import { supabase } from '../../services/supabaseClient';
 
 import { getEffectiveUnitPrice } from './shared';
 import { AddressForm } from './AddressForm';
@@ -25,12 +26,13 @@ import { PaymentInstructions } from './PaymentInstructions';
 interface CheckoutModalProps {
   total: number; subtotal: number; vat: number; discount: number;
   discountLabel?: string;
+  couponCode?: string | null;
   onClose: () => void;
   onComplete: (details: { address: Address; paymentMethod: string; deliveryFee: number; note: string; paymentRef?: string; isGift?: boolean; giftMessage?: string; deliveryDate?: string; deliverySlot?: string; walletAmount?: number }) => Promise<void>;
 }
 
 
-export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, discountLabel, onClose, onComplete }: CheckoutModalProps) => {
+export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, discountLabel, couponCode = null, onClose, onComplete }: CheckoutModalProps) => {
   const { addresses, addAddress, cart, user } = useAppState();
   const { addToast } = useToast();
 
@@ -56,6 +58,17 @@ export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, di
       setSelectedAddress(addresses.find(a => a.is_default) || addresses[0]);
     }
   }, [addresses]);
+
+  // Lock the page behind the full-screen checkout and allow Escape to close.
+  // (Backdrop-click dismissal is intentionally NOT wired — too easy to lose a
+  // half-filled order mid-payment.)
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape' && !isSubmitting) onClose(); };
+    window.addEventListener('keydown', onEsc);
+    return () => { document.body.style.overflow = prev; window.removeEventListener('keydown', onEsc); };
+  }, [onClose, isSubmitting]);
 
   useEffect(() => {
     const fetchSellers = async () => {
@@ -87,7 +100,22 @@ export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, di
     return uids.reduce<number>((acc, sid) => acc + Number(sellerDetails.find(s => s.seller_id === sid)?.delivery_fee || 0), 0);
   }, [cart, sellerDetails]);
 
-  const finalTotal = subtotal + vat + deliveryFeeTotal - discount;
+  // Delivery actually charged, after any free-shipping campaign. Uses the same
+  // compute_shipping_waiver the server (placeOrder) applies, so the previewed
+  // delivery here matches the charge. placeOrder still receives the RAW fee and
+  // does the one authoritative waiver — we display the result, not pre-waive it.
+  const [shippingWaiver, setShippingWaiver] = useState(0);
+  useEffect(() => {
+    if (!areVendorsLoaded) { setShippingWaiver(0); return; }
+    const items = cart.map(i => ({ product_id: i.id, variant_id: i.variant_id || null, quantity: i.quantity }));
+    let cancelled = false;
+    supabase.rpc('compute_shipping_waiver', { p_items: items, p_coupon_code: couponCode || null, p_delivery_fee: deliveryFeeTotal })
+      .then(({ data }) => { if (!cancelled) setShippingWaiver(Math.max(0, Number(data) || 0)); });
+    return () => { cancelled = true; };
+  }, [cart, couponCode, deliveryFeeTotal, areVendorsLoaded]);
+  const effectiveDelivery = Math.max(0, deliveryFeeTotal - shippingWaiver);
+
+  const finalTotal = subtotal + vat + effectiveDelivery - discount;
 
   // ── Wallet spend ──
   // Display estimate only — place_order_atomic re-clamps the wallet amount to
@@ -142,7 +170,7 @@ export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, di
     // Wallet covers the whole order → no external payment, no reference needed.
     if (!walletCoversAll) {
       if (paymentMethod === 'lipa_namba') {
-        if (!senderPhone?.trim() || senderPhone.trim().length < 9) return addToast("Enter sender phone number", "error");
+        if (!isValidTanzanianPhone(senderPhone?.trim() || '')) return addToast("Enter a valid sender phone number", "error");
         if (!paymentRef?.trim() || paymentRef.trim().length < 4) return addToast("Enter transaction reference", "error");
       } else if (paymentMethod === 'mobile_transfer' && (!paymentRef?.trim() || paymentRef.trim().length < 4)) {
         return addToast("Enter bank transfer reference", "error");
@@ -165,7 +193,7 @@ export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, di
     step === 1 ||
     walletCoversAll ||
     paymentMethod === 'cash' ||
-    (paymentMethod === 'lipa_namba' && paymentRef.trim().length >= 4 && senderPhone.trim().length >= 9) ||
+    (paymentMethod === 'lipa_namba' && paymentRef.trim().length >= 4 && isValidTanzanianPhone(senderPhone.trim())) ||
     (paymentMethod === 'mobile_transfer' && paymentRef.trim().length >= 4)
   );
 
@@ -177,6 +205,7 @@ export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, di
         style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(10px)' }}
       >
         <motion.div
+          role="dialog" aria-modal="true" aria-label="Checkout"
           initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }}
           transition={{ type: 'spring', damping: 30, stiffness: 300 }}
           className="relative w-full max-w-5xl bg-background overflow-hidden flex flex-col md:flex-row border border-foreground/10"
@@ -225,7 +254,7 @@ export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, di
                     </div>
                     <div className="pt-3 border-t border-foreground/8 space-y-1.5">
                       <div className="flex justify-between text-[9px] font-bold text-foreground/40 uppercase tracking-wider"><span>Subtotal</span><span>{formatTZS(subtotal)}</span></div>
-                      <div className="flex justify-between text-[9px] font-bold text-foreground/40 uppercase tracking-wider"><span>Delivery</span><span>{areVendorsLoaded ? formatTZS(deliveryFeeTotal) : '…'}</span></div>
+                      <div className="flex justify-between text-[9px] font-bold text-foreground/40 uppercase tracking-wider"><span>Delivery</span><span>{areVendorsLoaded ? (effectiveDelivery === 0 && deliveryFeeTotal > 0 ? 'Free' : formatTZS(effectiveDelivery)) : '…'}</span></div>
                       {discount > 0 && <div className="flex justify-between text-[9px] font-black text-emerald-500 uppercase tracking-wider"><span className="truncate pr-2">{discountLabel || 'Discount'}</span><span>-{formatTZS(discount)}</span></div>}
                       {walletApplied > 0 && <div className="flex justify-between text-[9px] font-black text-emerald-500 uppercase tracking-wider"><span>Wallet</span><span>-{formatTZS(walletApplied)}</span></div>}
                     </div>
@@ -631,7 +660,7 @@ export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, di
               {[
                 { label: 'Subtotal', value: formatTZS(subtotal) },
                 { label: 'VAT (18%)', value: formatTZS(Math.round(vat)) },
-                { label: 'Delivery', value: areVendorsLoaded ? formatTZS(deliveryFeeTotal) : '...' },
+                { label: 'Delivery', value: areVendorsLoaded ? (effectiveDelivery === 0 && deliveryFeeTotal > 0 ? 'Free' : formatTZS(effectiveDelivery)) : '...' },
               ].map(row => (
                 <div key={row.label} className="flex justify-between text-[10px] font-bold text-foreground/40 uppercase tracking-wider">
                   <span>{row.label}</span><span className="text-foreground/60">{row.value}</span>

@@ -5,7 +5,7 @@ import {
   ArrowUpRight, ArrowRight, Instagram, Linkedin, ShieldCheck, Globe, Zap,
   Facebook, CreditCard, Wallet, ChevronUp, CheckCircle2, Shield
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
 import { AppStateProvider, useAppState } from './context/AppContext';
 import { ToastProvider, ErrorBoundary, Button, Input } from './components/UI';
 import { Navbar, MobileBottomNav } from './components/Navbar';
@@ -257,6 +257,10 @@ const AppContent = () => {
   }, []);
 
   return (
+    // Honour reduced motion for JS-driven framer-motion animations: 'always'
+    // when the in-app toggle is on, otherwise 'user' to respect the OS setting.
+    // (The CSS media query only covers CSS animations, not framer-motion.)
+    <MotionConfig reducedMotion={user?.reduced_motion ? 'always' : 'user'}>
     <div className={`min-h-screen flex flex-col font-sans selection:bg-primary selection:text-background dark:selection:bg-background dark:selection:text-foreground transition-all duration-700 ${isDark ? 'atmosphere-dark' : 'atmosphere-light'}`}>
       {/* Global ambient aurora — gives glass surfaces something to blur over, app-wide */}
       <div className="fixed inset-0 -z-10 pointer-events-none overflow-hidden">
@@ -332,6 +336,7 @@ const AppContent = () => {
 
       <Footer />
     </div>
+    </MotionConfig>
   );
 };
 

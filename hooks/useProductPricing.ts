@@ -59,7 +59,12 @@ export const useProductPricing = (product: Product | null, activeVariant: Produc
             variantDiscountPct = Math.round(((comparePrice - basePrice) / comparePrice) * 100);
         }
 
-        if (activeOffer && activeOffer.is_auto_apply && activeOffer.campaign_type !== 'bogo') {
+        // Only a `discount` campaign reduces the unit price. BOGO gives free
+        // units and SHIPPING waives delivery — neither cuts the item price, and
+        // both are stored with value=100, so applying them here as a percentage
+        // would zero the product out (show it as free). Flash sales are stored
+        // as campaign_type='discount', so they're correctly included.
+        if (activeOffer && activeOffer.is_auto_apply && activeOffer.campaign_type === 'discount') {
             if (activeOffer.type === 'percentage') {
                 campaignDiscountPct = activeOffer.value;
                 finalPrice = finalPrice - (finalPrice * campaignDiscountPct / 100);

@@ -100,7 +100,10 @@ export const CartPage = () => {
   const calculateItemPrice = (item: CartItem) => {
     const basePrice = getEffectiveUnitPrice(item);
     const activeOffer = getActiveOfferForProduct(item.id);
-    if (activeOffer && activeOffer.is_auto_apply && activeOffer.campaign_type !== 'bogo') {
+    // Only `discount` campaigns cut the unit price. BOGO (free units) is handled
+    // in autoApplyDiscount; SHIPPING waives the delivery fee below — both are
+    // stored with value=100 and would zero the item out if applied here.
+    if (activeOffer && activeOffer.is_auto_apply && activeOffer.campaign_type === 'discount') {
       const discountedPrice = activeOffer.type === 'percentage'
         ? basePrice - (basePrice * activeOffer.value / 100)
         : Math.max(0, basePrice - activeOffer.value);
@@ -175,7 +178,7 @@ export const CartPage = () => {
 
   const discountAmount = appliedCoupon ? (() => {
     if (appliedCoupon.min_order_value && subtotal < appliedCoupon.min_order_value) return 0;
-    if (appliedCoupon.campaign_type === 'shipping') return deliveryFeeTotal;
+    if (appliedCoupon.campaign_type === 'shipping') return 0; // shipping waives delivery, not the subtotal (see effectiveDelivery)
     if (appliedCoupon.campaign_type === 'bogo' && appliedCoupon.buy_quantity && appliedCoupon.get_quantity) {
       return cart
         .filter(item =>
@@ -195,9 +198,10 @@ export const CartPage = () => {
   })() : 0;
 
   const couponDiscountOnSubtotal = (appliedCoupon && appliedCoupon.campaign_type !== 'shipping') ? discountAmount : 0;
-  const shippingFee = (appliedCoupon && appliedCoupon.campaign_type === 'shipping') ? 0 : Number(deliveryFeeTotal);
+  // Delivery waiver for shipping campaigns is computed server-side (see
+  // compute_shipping_waiver); the local figure is only the pre-server fallback.
+  const shippingFee = Number(deliveryFeeTotal);
   const localTotal = Math.max(0, subtotal + shippingFee - autoApplyDiscount - couponDiscountOnSubtotal);
-  const totalDiscountAmount = autoApplyDiscount + couponDiscountOnSubtotal + (Number(deliveryFeeTotal) - shippingFee);
 
   const cartTotalsItems = useMemo(
     () => cart.map((i: any) => ({ product_id: i.id, variant_id: i.variant_id || null, quantity: i.quantity })),
@@ -212,6 +216,10 @@ export const CartPage = () => {
   // Show the server-authoritative total (matches what checkout charges);
   // fall back to the local estimate only while the server figure is loading.
   const total = totalsLoading ? localTotal : srvTotals.total;
+  // Delivery actually charged, after the server's shipping-offer waiver. Drives
+  // the "Free" delivery display; falls back to the raw fee while loading.
+  const effectiveDelivery = totalsLoading ? Number(deliveryFeeTotal) : Number(srvTotals.delivery_fee);
+  const totalDiscountAmount = autoApplyDiscount + couponDiscountOnSubtotal + Math.max(0, Number(deliveryFeeTotal) - effectiveDelivery);
 
   const groupedItems = useMemo(() => {
     const groups: Record<string, CartItem[]> = {};
@@ -324,7 +332,7 @@ export const CartPage = () => {
             subtotal={subtotal}
             totalVAT={totalVAT}
             deliveryFeeTotal={deliveryFeeTotal}
-            shippingFee={shippingFee}
+            shippingFee={effectiveDelivery}
             autoApplyDiscount={autoApplyDiscount}
             couponDiscountOnSubtotal={couponDiscountOnSubtotal}
             total={total}
