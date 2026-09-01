@@ -118,6 +118,12 @@ export default defineConfig(({ mode }) => {
           // CDN only when actually used. Cuts SW install payload ~60%.
           globIgnores: [
             '**/pdf-gen-*.js',
+            // Rest of the pdf-gen graph: html2canvas (198KB) and index.es
+            // (156KB, the jsPDF half) are pulled in ONLY by pdf-gen, so
+            // precaching them shipped 354KB of receipt/poster machinery to
+            // every first-time visitor while pdf-gen itself was excluded.
+            '**/html2canvas*.js',
+            '**/index.es-*.js',
             '**/charts-*.js',
             '**/ai-sdk-*.js',
             '**/AIChatAssistant-*.js',

@@ -1,0 +1,26 @@
+-- SECURITY: close the GraphQL endpoint.
+--
+-- pg_graphql reflects the whole `public` schema and serves it at /graphql/v1,
+-- exposing 60 relations to `authenticated` and 17 to `anon`. That is a second,
+-- parallel data path alongside PostgREST — one that none of the repo's rules,
+-- the repo-map, or any review lens has ever looked at.
+--
+-- The app does not use GraphQL anywhere (verified: no match for "graphql" or
+-- "/graphql/v1" across components, pages, context, hooks, services, api, src,
+-- or package.json), so the endpoint is pure unreviewed attack surface.
+--
+-- WHY A REVOKE DOES NOT WORK HERE (tried first, it is a silent no-op):
+-- the USAGE grants on `graphql` / `graphql_public` read
+--     anon=U/supabase_admin
+-- i.e. they were granted BY `supabase_admin`. Migrations run as `postgres`,
+-- and a role cannot revoke a grant it did not issue — the REVOKE succeeds,
+-- changes nothing, and `graphql.resolve()` stays callable by `anon`. Verified
+-- by probe before and after.
+--
+-- So the extension itself has to go. It drops without CASCADE (no dependent
+-- objects). To re-enable GraphQL deliberately:
+--     create extension pg_graphql;
+-- Note the Supabase dashboard's GraphiQL tab stops working while it is off,
+-- and a platform upgrade may reinstall it — re-check this after major
+-- Supabase version bumps.
+drop extension if exists pg_graphql;
