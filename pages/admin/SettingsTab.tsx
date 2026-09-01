@@ -120,7 +120,7 @@ export const SettingsTab = () => {
 
                                     <div className="mt-8 flex justify-end">
                                         <Button 
-                                            variant="default"
+                                            variant="primary"
                                             size="lg"
                                             onClick={handleSaveSettings} 
                                             className="h-12 px-8 rounded-xl text-[10px] font-bold uppercase tracking-wider shadow-sm"

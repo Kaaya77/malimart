@@ -291,7 +291,7 @@ const PosterCanvas = ({
     {/* Spotlight — product floated in a glowing rounded card */}
     <div style={{ display: 'flex', flex: 1, alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ width: '100%', height: 600, borderRadius: 40, overflow: 'hidden', background: '#18181b', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 40px 110px rgba(16,185,129,0.22)', position: 'relative' }}>
-        {img && <img src={img} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+        {img && <img src={img} alt={name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
         {salePrice && (
           <div style={{ position: 'absolute', top: 24, left: 24, background: '#ef4444', color: '#fff', fontSize: 22, fontWeight: 800, padding: '10px 20px', borderRadius: 999 }}>SALE</div>
         )}
@@ -333,7 +333,7 @@ const PosterCanvas = ({
     {/* Footer: QR + scan-to-shop */}
     <div style={{ display: 'flex', alignItems: 'center', gap: 28, marginTop: 40, paddingTop: 36, borderTop: '1px solid rgba(255,255,255,0.10)' }}>
       <div style={{ width: 132, height: 132, borderRadius: 20, background: '#fff', padding: 14, boxSizing: 'border-box', flexShrink: 0, boxShadow: '0 10px 34px rgba(0,0,0,0.5)' }}>
-        {qr && <img src={qr} style={{ width: '100%', height: '100%' }} />}
+        {qr && <img src={qr} alt="QR code linking to this product" style={{ width: '100%', height: '100%' }} />}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 34, fontWeight: 800, color: '#fafafa' }}>Scan to shop</div>

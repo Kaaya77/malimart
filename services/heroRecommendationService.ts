@@ -3,9 +3,8 @@ import { getAI } from './aiClient';
 import { MODELS } from './aiModels';
 import { supabase } from './supabaseClient';
 
-const ai = getAI();
-
 export const generateHeroRecommendation = async () => {
+    const ai = await getAI(); // lazy — loads the SDK only when this actually runs
     // 1. Fetch top selling products
     const { data: products } = await supabase
         .from('products')

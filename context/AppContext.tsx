@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback, useMemo } from 'react';
 import { supabase } from '../services/supabaseClient';
-import { withCache, invalidate, invalidatePrefix, TTL } from '../services/queryCache';
+import { withCache, invalidate, invalidatePrefix, loadPersisted, TTL } from '../services/queryCache';
 import { applyTheme } from '../services/theme';
 import { requestMyAccountDeletion } from '../services/accountApi';
 import { usePresence } from '../hooks/usePresence';
@@ -551,7 +551,16 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
             setProducts(products_ as any);
             setCatalogError(null);
         } else if (products_ === null) {
-            setCatalogError('Could not load products. Check your connection and try again.');
+            // Backend unreachable on a cold load — fall back to the last durable
+            // copy so the catalog isn't a dead screen. Only surface the hard
+            // error when we have nothing at all to show.
+            const persisted = loadPersisted<any[]>('public:products');
+            if (Array.isArray(persisted) && persisted.length > 0) {
+                setProducts(prev => (prev && prev.length > 0 ? prev : persisted));
+                setCatalogError(null);
+            } else {
+                setCatalogError('Could not load products. Check your connection and try again.');
+            }
         }
     }, []);
 

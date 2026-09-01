@@ -73,7 +73,7 @@ export const AIInventoryInsights = ({ products, onClose }: Props) => {
     setLoadingAI(true);
     setAiRequested(true);
     try {
-      const ai = getAI();
+      const ai = await getAI();
       const summary = signals.active.slice(0, 20).map(p =>
         `${p.name} | stock: ${p.stock} | sold 30d: ${p.units_sold_30d ?? 0} | revenue: ${formatTZS(p.revenue_30d ?? 0)} | category: ${p.category || 'N/A'}`
       ).join('\n');

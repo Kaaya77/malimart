@@ -100,7 +100,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
  let cancelled = false;
  (async () => {
    try {
-     const ai = getAI();
+     const ai = await getAI();
      const res = await ai.models.generateContent({
        model: MODELS.TEXT,
        contents: [{ role: 'user', parts: [{ text: `Write ONE punchy sentence (max 18 words) that highlights why someone should buy this product. Be specific, avoid generic phrases. Product: "${product.name}" | Category: "${product.category || ''}" | Description: "${(product.description || '').slice(0, 150)}". Output only the sentence, no quotes.` }] }],

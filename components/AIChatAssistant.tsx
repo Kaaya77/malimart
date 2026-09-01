@@ -672,7 +672,7 @@ RESPONSE FORMAT:
     }
 
     try {
-      const ai = getAI();
+      const ai = await getAI();
       const history = messages.filter(m => m.type === 'text' && !m.streaming)
         .map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.text }] }));
       const chat = ai.chats.create({ model: MODELS.TEXT, history, config: { systemInstruction: getSystem(), tools: [{ googleSearch: {} }] } });
@@ -1033,7 +1033,7 @@ RESPONSE FORMAT:
                           onClick={async () => {
                             setIsTyping(true);
                             try {
-                              const ai = getAI();
+                              const ai = await getAI();
                               const r = await ai.models.generateContent({
                                 model: MODELS.TEXT,
                                 contents: `Rephrase this shopping query to be clearer and more specific for a Tanzanian marketplace, return ONLY the rephrased query: "${input}"`,

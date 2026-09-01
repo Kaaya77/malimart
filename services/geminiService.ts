@@ -104,7 +104,7 @@ export const generateWelcomeGreeting = async (name?: string): Promise<string> =>
     const fallbacks = [`Good ${period}${namePart} - Welcome to MaliMart`, "Welcome Back - Enjoy Shopping"];
     if (!canRequest(MODELS.TEXT)) return fallbacks[0];
     return withRetry(async () => {
-        const ai = getAI();
+        const ai = await getAI();
         const response = await ai.models.generateContent({
             model: MODELS.TEXT,
             contents: `One punchy greeting (max 6 words) for a ${period}. Format: "Greeting${namePart} - Subtitle". English only.`,
@@ -115,7 +115,7 @@ export const generateWelcomeGreeting = async (name?: string): Promise<string> =>
 
 export const generateProductDescription = async (productName: string, category: string, keywords: string): Promise<string> => {
   return withRetry(async () => {
-    const ai = getAI();
+    const ai = await getAI();
     const response = await ai.models.generateContent({
       model: MODELS.TEXT,
       contents: `Write a product description for "${productName}" (category: "${category}") the way a real seller who actually made or sources this item would write it — like they're telling a friend why it's worth buying, not writing an ad.
@@ -135,7 +135,7 @@ export const generateProductDescription = async (productName: string, category: 
 export const analyzeProductImage = async (imageBase64: string): Promise<{ name: string, category: string, tags: string[], description: string } | null> => {
     if (!canRequest(MODELS.TEXT)) throw new Error('Rate limit reached — please wait a moment and try again.');
     return withRetry(async () => {
-        const ai = getAI();
+        const ai = await getAI();
         const cleanBase64 = imageBase64.split(',')[1] || imageBase64;
         
         const response = await ai.models.generateContent({
@@ -166,7 +166,7 @@ export const analyzeProductImage = async (imageBase64: string): Promise<{ name: 
 
 export const suggestAttributes = async (name: string, category: string, description: string): Promise<{name: string, values: string[]}[]> => {
     return withRetry(async () => {
-        const ai = getAI();
+        const ai = await getAI();
         const response = await ai.models.generateContent({
             model: MODELS.TEXT,
             contents: `Suggest 2-3 appropriate product attributes (like Color, Size, Material) for a "${name}" in "${category}". 
@@ -194,7 +194,7 @@ export const suggestAttributes = async (name: string, category: string, descript
 
 export const generateSmartSKU = async (name: string, category: string): Promise<string> => {
     return withRetry(async () => {
-        const ai = getAI();
+        const ai = await getAI();
         const response = await ai.models.generateContent({
             model: MODELS.TEXT,
             contents: `Generate a professional, short SKU (Stock Keeping Unit) code for "${name}" in category "${category}". 
@@ -206,7 +206,7 @@ export const generateSmartSKU = async (name: string, category: string): Promise<
 
 export const generateProductListing = async (name: string, imageBase64?: string): Promise<{ description: string, tags: string[], category?: string, subcategory?: string } | null> => {
     return withRetry(async () => {
-        const ai = getAI();
+        const ai = await getAI();
         let parts: any[] = [];
         
         if (imageBase64) {
@@ -249,7 +249,7 @@ export const generateProductListing = async (name: string, imageBase64?: string)
 
 export const translateToSwahili = async (text: string): Promise<string> => {
     return withRetry(async () => {
-        const ai = getAI();
+        const ai = await getAI();
         const response = await ai.models.generateContent({
             model: MODELS.TEXT,
             contents: `Translate the product description below into professional, engaging Swahili for a Tanzanian marketplace. Return ONLY the translated text — no English preamble, no explanation, no word-by-word breakdown, nothing else.\n\n${text}`,
@@ -260,7 +260,7 @@ export const translateToSwahili = async (text: string): Promise<string> => {
 
 export const enhanceDescription = async (text: string): Promise<string> => {
     return withRetry(async () => {
-        const ai = getAI();
+        const ai = await getAI();
         const response = await ai.models.generateContent({
             model: MODELS.TEXT,
             contents: `Tighten up this product description for a Tanzanian marketplace listing — fix awkward phrasing, add a concrete detail or two if something's missing, keep it easy to search for. Keep the seller's own voice and any specific details they already included; don't flatten it into generic ad copy. Avoid words like "premium", "elevate", "exquisite", "unparalleled", "indulge", "discerning" unless already used naturally. Keep it under 90 words. Plain prose only — no markdown, no asterisks, no bullet points, no headers.\n\n${text}`,
@@ -271,7 +271,7 @@ export const enhanceDescription = async (text: string): Promise<string> => {
 
 export const moderateContent = async (name: string, description: string): Promise<{ isFlagged: boolean, reason: string }> => {
     return withRetry(async () => {
-        const ai = getAI();
+        const ai = await getAI();
         const response = await ai.models.generateContent({
             model: MODELS.TEXT,
             contents: `Analyze the following product name and description for any policy violations. Policies include: no hate speech, no illegal items, no explicit content, no misleading claims.
@@ -298,7 +298,7 @@ export const moderateContent = async (name: string, description: string): Promis
 
 export const generateSocialCaption = async (imageBase64: string): Promise<string> => {
     return withRetry(async () => {
-        const ai = getAI();
+        const ai = await getAI();
         const cleanBase64 = imageBase64.split(',')[1] || imageBase64;
         const response = await ai.models.generateContent({
             model: MODELS.TEXT,
@@ -315,7 +315,7 @@ export const generateSocialCaption = async (imageBase64: string): Promise<string
 
 export const generateSocialPost = async (product: Product): Promise<string> => {
     return withRetry(async () => {
-        const ai = getAI();
+        const ai = await getAI();
         const response = await ai.models.generateContent({
             model: MODELS.TEXT,
             contents: `Generate a compelling, high-converting social media post for this product:
@@ -336,7 +336,7 @@ export const generateSocialPost = async (product: Product): Promise<string> => {
 
 export const mapCSVColumnsToSchema = async (csvHeaders: string[]): Promise<Record<string, string>> => {
     return withRetry(async () => {
-        const ai = getAI();
+        const ai = await getAI();
         const response = await ai.models.generateContent({
             model: MODELS.TEXT,
             contents: `Map these CSV headers to our database schema.
@@ -354,7 +354,7 @@ export const mapCSVColumnsToSchema = async (csvHeaders: string[]): Promise<Recor
 
 export const suggestProductPrice = async (productName: string, category: string): Promise<number> => {
     return withRetry(async () => {
-        const ai = getAI();
+        const ai = await getAI();
         const response = await ai.models.generateContent({
             model: MODELS.TEXT,
             contents: `Suggest a competitive premium price in Tanzanian Shillings (TZS) for this product: "${productName}" in category "${category}". Return ONLY the number. Example: 45000`,
@@ -366,7 +366,7 @@ export const suggestProductPrice = async (productName: string, category: string)
 
 export const generateTags = async (name: string, description: string): Promise<string[]> => {
     return withRetry(async () => {
-        const ai = getAI();
+        const ai = await getAI();
         const response = await ai.models.generateContent({
             model: MODELS.TEXT,
             contents: `Generate 8 relevant SEO tags for a product named "${name}". Description: "${description}". Return ONLY a comma-separated list of tags. Example: "shoes, leather, mens fashion, summer, durable"`,
@@ -377,7 +377,7 @@ export const generateTags = async (name: string, description: string): Promise<s
 
 export const generateProductImage = async (prompt: string): Promise<string | null> => {
   return withImageModelFallback(async (model) => {
-    const ai = getAI();
+    const ai = await getAI();
     const response = await ai.models.generateContent({
       model,
       contents: {
@@ -426,7 +426,7 @@ export const refineProductImage = async (imageInput: string, instruction: string
     }
 
     return withImageModelFallback(async (model) => {
-        const ai = getAI();
+        const ai = await getAI();
         const response = await ai.models.generateContent({
             model,
             contents: {
@@ -453,7 +453,7 @@ export const refineProductImage = async (imageInput: string, instruction: string
 
 export const generateRecipesFromCart = async (ingredients: string[]): Promise<any[]> => {
   return withRetry(async () => {
-    const ai = getAI();
+    const ai = await getAI();
     const response = await ai.models.generateContent({
       model: MODELS.TEXT,
       contents: `Suggest 3 authentic recipes using: ${ingredients.join(', ')}. Return JSON. Use English for all text.`,
@@ -480,7 +480,7 @@ export const generateRecipesFromCart = async (ingredients: string[]): Promise<an
 
 export const analyzeImageForSearch = async (imageBase64: string): Promise<string[]> => {
     return withRetry(async () => {
-        const ai = getAI();
+        const ai = await getAI();
         const cleanBase64 = imageBase64.split(',')[1] || imageBase64;
         const response = await ai.models.generateContent({
             model: MODELS.TEXT,
@@ -497,7 +497,7 @@ export const analyzeImageForSearch = async (imageBase64: string): Promise<string
 
 export const identifyTrendingProduct = async (products: Product[]): Promise<{ id: string, reason: string } | null> => {
   return withRetry(async () => {
-    const ai = getAI();
+    const ai = await getAI();
     const candidates = products.filter(p => p.stock > 0).slice(0, 30);
     if (candidates.length === 0) return null;
 
@@ -519,7 +519,7 @@ export const identifyTrendingProduct = async (products: Product[]): Promise<{ id
 
 export const getAssistantResponse = async (query: string): Promise<string> => {
     return withRetry(async () => {
-        const ai = getAI();
+        const ai = await getAI();
         const response = await ai.models.generateContent({
             model: MODELS.TEXT,
             contents: query,
@@ -533,7 +533,7 @@ export const getAssistantResponse = async (query: string): Promise<string> => {
 
 export const generateRecipeCardImage = async (title: string): Promise<string | null> => {
     return withImageModelFallback(async (model) => {
-        const ai = getAI();
+        const ai = await getAI();
         const response = await ai.models.generateContent({
             model,
             contents: {
@@ -553,7 +553,7 @@ export const generateRecipeCardImage = async (title: string): Promise<string | n
 export const generateSellerReplies = async (context: string): Promise<string[]> => {
     if (!canRequest(MODELS.TEXT)) return ["Yes, it is available.", "I can ship this today.", "Let me check the stock."];
     return withRetry(async () => {
-        const ai = getAI();
+        const ai = await getAI();
         const response = await ai.models.generateContent({
             model: MODELS.TEXT,
             contents: `Seller on MaliMart. 3 short polite reply options for: "${context.slice(0, 200)}". Under 10 words each. JSON array of strings.`,
@@ -571,7 +571,7 @@ export const generateSellerReplies = async (context: string): Promise<string[]> 
 
 export const analyzeConversation = async (messages: string[]): Promise<{ sentiment: number, intent: string, suggestion: string } | null> => {
     return withRetry(async () => {
-        const ai = getAI();
+        const ai = await getAI();
         const response = await ai.models.generateContent({
             model: MODELS.TEXT,
             contents: `Analyze this buyer-seller conversation from the seller's perspective. 
@@ -601,7 +601,7 @@ export const analyzeConversation = async (messages: string[]): Promise<{ sentime
 
 export const analyzeDispute = async (reason: string, description: string): Promise<{ suggestion: string, riskScore: number, recommendedAction: string } | null> => {
     return withRetry(async () => {
-        const ai = getAI();
+        const ai = await getAI();
         const response = await ai.models.generateContent({
             model: MODELS.TEXT,
             contents: `Analyze this e-commerce dispute.
@@ -632,7 +632,7 @@ export const analyzeDispute = async (reason: string, description: string): Promi
 
 export const refineMessage = async (draft: string, tone: 'professional' | 'persuasive' | 'friendly' = 'professional'): Promise<string> => {
     return withRetry(async () => {
-        const ai = getAI();
+        const ai = await getAI();
         const response = await ai.models.generateContent({
             model: MODELS.TEXT,
             contents: `Rewrite the following draft message for a seller to a buyer. 

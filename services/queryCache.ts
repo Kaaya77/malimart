@@ -61,6 +61,34 @@ export function isStale(key: string): boolean {
 /** Stores data in the cache */
 export function setCached<T>(key: string, data: T, ttl: number): void {
     store.set(key, { data, fetchedAt: Date.now(), ttl });
+    persistIfWhitelisted(key, data);
+}
+
+// ── Durable fallback (localStorage) ──────────────────────────────────────────
+// A small whitelist of public, non-sensitive keys is mirrored to localStorage so
+// a COLD load while the backend is unreachable can still show last-known content
+// instead of a dead screen. In-memory cache stays the primary path; this is only
+// a last-resort fallback, read explicitly via loadPersisted().
+const PERSIST_PREFIX = 'mm_cache_';
+const PERSIST_KEYS = new Set<string>(['public:products', 'public:categories']);
+
+function persistIfWhitelisted<T>(key: string, data: T): void {
+    if (!PERSIST_KEYS.has(key)) return;
+    try {
+        localStorage.setItem(PERSIST_PREFIX + key, JSON.stringify({ data, at: Date.now() }));
+    } catch { /* quota/availability — non-fatal, fallback just won't exist */ }
+}
+
+/** Reads a durable fallback copy (if present and not older than maxAgeMs). */
+export function loadPersisted<T>(key: string, maxAgeMs = 24 * 60 * 60 * 1000): T | null {
+    try {
+        const raw = localStorage.getItem(PERSIST_PREFIX + key);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw) as { data: T; at: number };
+        if (!parsed || typeof parsed.at !== 'number') return null;
+        if (Date.now() - parsed.at > maxAgeMs) return null;
+        return parsed.data;
+    } catch { return null; }
 }
 
 /** Invalidates a cache entry (e.g. after a mutation) */
