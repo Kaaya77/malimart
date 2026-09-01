@@ -195,10 +195,6 @@ const CONTENT: Record<string, {
  body: 'support@malimart.tz — for general support and account issues\nsellers@malimart.tz — for seller onboarding and merchant support\nprivacy@malimart.tz — for data and privacy inquiries'
  },
  {
- heading: 'Phone',
- body: '+255 XXX XXX XXX — available during business hours'
- },
- {
  heading: 'Office',
  body: 'MaliMart Ltd.\nDar es Salaam, Tanzania\nUnited Republic of Tanzania'
  },

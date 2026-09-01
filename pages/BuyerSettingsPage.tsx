@@ -6,6 +6,7 @@ import { User as UserIcon, Mail, Phone, Home, PlusCircle, Trash2, Edit, Wallet, 
 import { BackButton } from '../components/BackButton';
 import { CURRENCY, TANZANIA_REGIONS, TANZANIA_DISTRICTS, MOBILE_MONEY_PROVIDERS, BANK_PROVIDERS, isValidTanzanianPhone } from '../constants';
 import { getMyOrdersForExport, listMyPaymentMethods, addMyPaymentMethod, deleteMyPaymentMethod, disconnectMyAccount, requestMyAccountDeletion } from '../services/accountApi';
+import { supabase } from '../services/supabaseClient';
 import { BuyerSettingsCtx } from './buyer-settings/context';
 import { ProfileTab } from './buyer-settings/ProfileTab';
 import { BillingTab } from './buyer-settings/BillingTab';
@@ -312,16 +313,20 @@ export const BuyerSettingsPage = () => {
 
   const handleConnectAccount = async (provider: string) => {
       if (!user) return;
-      // OAuth flow: in production redirect to Supabase OAuth provider
-      // For now, record the intent and show instructions
       const existing = connectedAccounts.find(a => a.provider === provider);
       if (existing) {
           addToast(provider + ' is already connected', 'info');
           return;
       }
-      addToast('Redirecting to ' + provider + ' authorization...', 'info');
-      // Supabase OAuth integration point
-      // await supabase.auth.signInWithOAuth({ provider: provider.toLowerCase() as any, options: { redirectTo: window.location.href } });
+      // Real OAuth: Supabase redirects the browser to the provider and back to
+      // redirectTo. If the provider isn't enabled in Supabase Auth, we surface the
+      // error instead of the old fake "Redirecting…" toast that did nothing.
+      const { error } = await supabase.auth.signInWithOAuth({
+          provider: provider.toLowerCase() as any,
+          options: { redirectTo: window.location.href },
+      });
+      // On success the browser navigates away; we only reach here on failure.
+      if (error) addToast(error.message || `Couldn't connect ${provider} — it may not be enabled yet.`, 'error');
   };
 
   const handleDisconnectAccount = async (provider: string) => {
@@ -340,9 +345,9 @@ export const BuyerSettingsPage = () => {
   };
 
   const handleRequestAccountDeletion = async () => {
+      if (!user) return;
       try {
-          // In a real app, this would flag the account or send an email
-          await requestMyAccountDeletion(user?.id);
+          await requestMyAccountDeletion(user.id);
           addToast('Account deletion requested', 'success');
       } catch (error) {
           addToast('Failed to request deletion', 'error');
