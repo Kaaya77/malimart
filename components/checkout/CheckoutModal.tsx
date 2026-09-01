@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Check, MapPin, Truck, ShieldCheck, X,
@@ -15,6 +15,7 @@ import { useAppState } from '../../context/AppContext';
 import { Order, OrderStatus, Address, VendorProfile, CartItem } from '../../types';
 import { fetchVendorProfiles, fetchSellerPaymentChannels } from '../../services/shopService';
 import { supabase } from '../../services/supabaseClient';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 import { getEffectiveUnitPrice } from './shared';
 import { AddressForm } from './AddressForm';
@@ -35,6 +36,8 @@ interface CheckoutModalProps {
 export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, discountLabel, couponCode = null, onClose, onComplete }: CheckoutModalProps) => {
   const { addresses, addAddress, cart, user } = useAppState();
   const { addToast } = useToast();
+  const panelRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(panelRef, true); // keyboard focus stays within the checkout dialog
 
   const [step, setStep] = useState<1 | 2>(1);
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
@@ -205,6 +208,7 @@ export const CheckoutModal = ({ total: initialTotal, subtotal, vat, discount, di
         style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(10px)' }}
       >
         <motion.div
+          ref={panelRef} tabIndex={-1}
           role="dialog" aria-modal="true" aria-label="Checkout"
           initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }}
           transition={{ type: 'spring', damping: 30, stiffness: 300 }}
