@@ -35,6 +35,15 @@ const MessagesPage = lazy(() => import('./pages/MessagesPage').then(m => ({ defa
 const AdminPage = lazy(() => import('./pages/AdminPage').then(m => ({ default: m.AdminPage })));
 const StaticPage = lazy(() => import('./pages/StaticPage').then(m => ({ default: m.StaticPage })));
 
+// Companion — the date/relationship concierge. Additive for now: these routes
+// sit alongside the marketplace rather than replacing it, so the pivot can be
+// evaluated against the live app before anything is torn out.
+const CompanionPage = lazy(() => import('./pages/CompanionPage').then(m => ({ default: m.CompanionPage })));
+const PartnerPage = lazy(() => import('./pages/PartnerPage').then(m => ({ default: m.PartnerPage })));
+const DiscoverPage = lazy(() => import('./pages/DiscoverPage').then(m => ({ default: m.DiscoverPage })));
+const DateModePage = lazy(() => import('./pages/DateModePage').then(m => ({ default: m.DateModePage })));
+const AdminCurationPage = lazy(() => import('./pages/AdminCurationPage').then(m => ({ default: m.AdminCurationPage })));
+
 // AI chat loads lazily AFTER the page is idle — keeps @google/genai (~330KB)
 // out of the critical path. The FAB appears within a couple of seconds.
 const AIChatAssistant = lazy(() => import('./components/AIChatAssistant').then(m => ({ default: m.AIChatAssistant })));
@@ -230,6 +239,10 @@ const ROUTE_TITLES: Record<string, string> = {
   '/notifications': 'Notifications | MaliMart',
   '/messages': 'Messages | MaliMart',
   '/settings': 'Settings | MaliMart',
+  '/companion': 'Today | Companion',
+  '/partner': 'Them | Companion',
+  '/discover': 'Where to go | Companion',
+  '/date-mode': 'Date mode | Companion',
 };
 
 const AppContent = () => {
@@ -321,6 +334,16 @@ const AppContent = () => {
               <Route path="/settings" element={<RouteGuard>{user?.role === 'seller' ? <SellerSettingsPage /> : <BuyerSettingsPage />}</RouteGuard>} />
               <Route path="/notifications" element={<RouteGuard><NotificationsPage /></RouteGuard>} />
               <Route path="/order-confirmation" element={<RouteGuard><OrderConfirmationPage /></RouteGuard>} />
+              {/* Companion. /discover and /date-mode are open to signed-out
+                  visitors on purpose — the curated list and the decks are the
+                  shop window, and gating them behind signup would kill the
+                  single-player promise. Anything touching partner data is
+                  guarded. */}
+              <Route path="/companion" element={<RouteGuard><CompanionPage /></RouteGuard>} />
+              <Route path="/partner" element={<RouteGuard><PartnerPage /></RouteGuard>} />
+              <Route path="/discover" element={<DiscoverPage />} />
+              <Route path="/date-mode" element={<DateModePage />} />
+              <Route path="/admin/curation" element={<RouteGuard requiredRole="admin"><AdminCurationPage /></RouteGuard>} />
               <Route path="/privacy" element={<StaticPage />} />
               <Route path="/terms" element={<StaticPage />} />
               <Route path="/contact" element={<StaticPage />} />
