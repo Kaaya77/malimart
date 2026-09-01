@@ -3,9 +3,10 @@ import React, { Component, ReactNode, useState } from 'react';
 import { motion, AnimatePresence } from "framer-motion";
 import { Slot } from '@radix-ui/react-slot';
 import { useAppState } from '../context/AppContext';
-import { Loader2, X, AlertTriangle, ChevronDown, Sun, Moon, ShieldCheck, Printer, Download, CheckCircle2, Package, Truck, CreditCard, Store, Sparkles, RotateCcw, Percent, MessageSquare, Share2, ShieldAlert, BadgeCheck } from 'lucide-react';
+import { Loader2, X, AlertTriangle, ChevronDown, Sun, Moon, ShieldCheck, Printer, Download, CheckCircle2, Package, Truck, CreditCard, Store, Sparkles, RotateCcw, Percent, MessageSquare, Share2, ShieldAlert, BadgeCheck, RefreshCw, WifiOff } from 'lucide-react';
 import { Order, VendorProfile, Product } from '../types';
 import { formatTZS } from '../constants';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 // --- Error Boundary ---
 interface ErrorBoundaryProps {
@@ -141,7 +142,14 @@ export const useToast = () => React.useContext(ToastContext);
 
 // --- Components ---
 
-export const Button = ({ variant = 'primary', size = 'default', className = '', asChild = false, isLoading, children, ...props }: any) => {
+type ButtonProps = {
+  variant?: 'primary' | 'secondary' | 'brand' | 'danger' | 'outline' | 'ghost' | 'link';
+  size?: 'default' | 'sm' | 'lg' | 'xl' | 'icon';
+  asChild?: boolean;
+  isLoading?: boolean;
+} & React.ButtonHTMLAttributes<HTMLButtonElement>;
+
+export const Button = ({ variant = 'primary', size = 'default', className = '', asChild = false, isLoading, children, ...props }: ButtonProps) => {
  const base = "relative inline-flex items-center justify-center transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-0 disabled:opacity-50 disabled:pointer-events-none overflow-hidden group whitespace-nowrap font-bold";
  
  const variants: any = {
@@ -166,20 +174,20 @@ export const Button = ({ variant = 'primary', size = 'default', className = '', 
 
  if (asChild) {
  return (
- <Slot className={classes} {...props}>
+ <Slot className={classes} {...(props as any)}>
  {children}
  </Slot>
  );
  }
 
  return (
- <motion.button 
+ <motion.button
  type="button"
  whileHover={{ scale: 1.02 }}
  whileTap={{ scale: 0.98 }}
- className={classes} 
- disabled={isLoading || props.disabled} 
- {...props}
+ className={classes}
+ disabled={isLoading || props.disabled}
+ {...(props as any)}
  >
  <span className="relative flex items-center justify-center">
  {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
@@ -189,10 +197,11 @@ export const Button = ({ variant = 'primary', size = 'default', className = '', 
  );
 };
 
-export const Input = ({ className = '', ...props }: any) => (
+export const Input = ({ className = '', icon: Icon, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { icon?: React.ComponentType<{ className?: string }> }) => (
  <div className="relative group w-full">
+ {Icon && <Icon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40 pointer-events-none" />}
  <input
- className={`glass-input flex h-14 w-full rounded-2xl px-4 text-sm font-medium text-foreground placeholder:text-foreground/35 focus:outline-none ${className}`}
+ className={`glass-input flex h-14 w-full rounded-2xl ${Icon ? 'pl-11' : 'px-4'} pr-4 text-sm font-medium text-foreground placeholder:text-foreground/35 focus:outline-none ${className}`}
  {...props}
  />
  </div>
@@ -200,7 +209,7 @@ export const Input = ({ className = '', ...props }: any) => (
 
 // Select primitive — mirrors Input (glass-input, h-14, rounded-2xl) with a chevron affordance.
 // API: <Select value onChange icon={OptionalLucideIcon} className>{<option/>s}</Select>
-export const Select = ({ className = '', icon: Icon, children, ...props }: any) => (
+export const Select = ({ className = '', icon: Icon, children, ...props }: React.SelectHTMLAttributes<HTMLSelectElement> & { icon?: React.ComponentType<{ className?: string }> }) => (
  <div className="relative group w-full">
  {Icon && <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40 pointer-events-none" />}
  <select
@@ -213,15 +222,15 @@ export const Select = ({ className = '', icon: Icon, children, ...props }: any) 
  </div>
 );
 
-export const Textarea = ({ className = '', ...props }: any) => (
+export const Textarea = ({ className = '', ...props }: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
  <textarea className={`glass-input flex min-h-[120px] w-full rounded-2xl px-4 py-4 text-sm font-medium text-foreground placeholder:text-foreground/35 focus:outline-none resize-none ${className}`} {...props} />
 );
 
-export const Label = ({ className = '', ...props }: any) => (
+export const Label = ({ className = '', ...props }: React.LabelHTMLAttributes<HTMLLabelElement>) => (
  <label className={`text-xs font-bold text-foreground/70 mb-2 block ${className}`} {...props} />
 );
 
-export const Card = ({ className = '', ...props }: any) => (
+export const Card = ({ className = '', ...props }: React.HTMLAttributes<HTMLDivElement>) => (
  <div
  className={`glass-surface rounded-3xl text-foreground relative overflow-hidden shadow-sm ${className}`}
  {...props}
@@ -230,23 +239,23 @@ export const Card = ({ className = '', ...props }: any) => (
  </div>
 );
 
-export const CardHeader = ({ className = '', ...props }: any) => (
+export const CardHeader = ({ className = '', ...props }: React.HTMLAttributes<HTMLDivElement>) => (
  <div className={`p-6 border-b border-foreground/8 ${className}`} {...props} />
 );
 
-export const CardContent = ({ className = '', ...props }: any) => (
+export const CardContent = ({ className = '', ...props }: React.HTMLAttributes<HTMLDivElement>) => (
  <div className={`p-6 ${className}`} {...props} />
 );
 
-export const CardTitle = ({ className = '', ...props }: any) => (
+export const CardTitle = ({ className = '', ...props }: React.HTMLAttributes<HTMLHeadingElement>) => (
  <h3 className={`text-xl font-black tracking-tight text-foreground/60 ${className}`} {...props} />
 );
 
-export const CardDescription = ({ className = '', ...props }: any) => (
+export const CardDescription = ({ className = '', ...props }: React.HTMLAttributes<HTMLParagraphElement>) => (
  <p className={`text-sm font-medium text-muted-foreground mt-1 ${className}`} {...props} />
 );
 
-export const Badge = ({ variant = 'default', className = '', ...props }: any) => {
+export const Badge = ({ variant = 'default', className = '', ...props }: { variant?: 'default' | 'secondary' | 'outline' | 'success' | 'danger' } & React.HTMLAttributes<HTMLDivElement>) => {
  const variants: any = {
  default: "bg-foreground/[0.08] text-foreground",
  secondary: "bg-foreground/[0.04] text-foreground/65 border border-foreground/10",
@@ -278,6 +287,43 @@ export const EmptyState = ({ icon: Icon, title, subtitle, action, className = ''
  </div>
 );
 
+// Shared "backend unreachable" state with a self-managing Retry button. Used
+// wherever a network/RPC fetch can fail (catalog, dashboards) so the failure UX
+// is one consistent thing, and repeated taps give feedback instead of nothing.
+export const BackendError = ({
+  message,
+  onRetry,
+  stale = false,
+  className = '',
+}: { message?: string; onRetry?: () => void | Promise<void>; stale?: boolean; className?: string }) => {
+  const [retrying, setRetrying] = React.useState(false);
+  const handle = async () => {
+    if (!onRetry || retrying) return;
+    setRetrying(true);
+    try { await onRetry(); } finally { setRetrying(false); }
+  };
+  return (
+    <div className={`flex flex-col items-center justify-center gap-4 py-16 px-6 text-center ${className}`}>
+      <div className="w-14 h-14 rounded-3xl bg-amber-500/10 flex items-center justify-center">
+        <WifiOff className="w-6 h-6 text-amber-500 stroke-[1.75]" />
+      </div>
+      <p className="text-foreground/70 text-sm font-medium max-w-xs leading-relaxed">
+        {message || "We couldn't reach the store right now. Check your connection and try again."}
+        {stale && <span className="block mt-1 text-[11px] text-foreground/40">Showing a saved copy — it may be out of date.</span>}
+      </p>
+      {onRetry && (
+        <button
+          onClick={handle}
+          disabled={retrying}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-foreground text-background text-xs font-bold uppercase tracking-widest hover:opacity-80 active:scale-95 transition-all disabled:opacity-50"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${retrying ? 'animate-spin' : ''}`} /> {retrying ? 'Retrying…' : 'Retry'}
+        </button>
+      )}
+    </div>
+  );
+};
+
 // Nav/tab count badge. `urgent` = needs action (red); default = informational.
 export const CountBadge = ({ count, urgent = false, className = '' }: { count: number, urgent?: boolean, className?: string }) => (
  count > 0 ? (
@@ -287,19 +333,19 @@ export const CountBadge = ({ count, urgent = false, className = '' }: { count: n
  ) : null
 );
 
-export const Switch = ({ checked, onCheckedChange, className = '' }: any) => (
- <button 
- type="button" 
- role="switch" 
- aria-checked={checked} 
- onClick={() => onCheckedChange(!checked)} 
+export const Switch = ({ checked, onCheckedChange, className = '' }: { checked?: boolean; onCheckedChange?: (checked: boolean) => void; className?: string }) => (
+ <button
+ type="button"
+ role="switch"
+ aria-checked={checked}
+ onClick={() => onCheckedChange?.(!checked)}
  className={`peer inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${checked ? 'bg-emerald-500' : 'bg-foreground/20'} ${className}`}
  >
  <span className={`pointer-events-none block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${checked ? 'translate-x-5' : 'translate-x-0.5'}`} />
  </button>
 );
 
-export const Skeleton = ({ className = '' }: any) => (
+export const Skeleton = ({ className = '' }: { className?: string }) => (
  <div className={`relative overflow-hidden bg-foreground/[0.06] rounded-2xl ${className}`}>
  <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/50 dark:via-white/10 to-transparent" />
  </div>
@@ -342,7 +388,7 @@ export const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, confi
  />
 );
 
-export const SpotlightCard = ({ children, className = '', ...props }: any) => (
+export const SpotlightCard = ({ children, className = '', ...props }: React.HTMLAttributes<HTMLDivElement>) => (
  <div className={`group relative overflow-hidden ${className}`} {...props}>
  {children}
  </div>
@@ -431,39 +477,15 @@ export const ImageDropzone = ({ currentImage, onImageSelected }: any) => {
 
 export const Modal = ({ isOpen, title, onClose, children, size = 'md' }: any) => {
  const panelRef = React.useRef<HTMLDivElement>(null);
- // Body scroll lock + ESC + focus trap/restore — applies to every Modal app-wide.
+ useFocusTrap(panelRef, !!isOpen); // shared trap/restore — one pattern app-wide
+ // Body scroll lock + ESC to close.
  React.useEffect(() => {
    if (!isOpen) return;
    const prev = document.body.style.overflow;
    document.body.style.overflow = 'hidden';
-   const previouslyFocused = document.activeElement as HTMLElement | null;
-
-   const focusables = () => Array.from(
-     panelRef.current?.querySelectorAll<HTMLElement>(
-       'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
-     ) ?? []
-   ).filter(el => el.offsetParent !== null);
-
-   // Move focus into the dialog once it's painted.
-   const t = window.setTimeout(() => (focusables()[0] ?? panelRef.current)?.focus(), 0);
-
-   const onKey = (e: KeyboardEvent) => {
-     if (e.key === 'Escape') { onClose?.(); return; }
-     if (e.key !== 'Tab') return;
-     const els = focusables();
-     if (els.length === 0) { e.preventDefault(); panelRef.current?.focus(); return; }
-     const first = els[0], last = els[els.length - 1];
-     const active = document.activeElement as HTMLElement;
-     if (e.shiftKey && (active === first || !panelRef.current?.contains(active))) { e.preventDefault(); last.focus(); }
-     else if (!e.shiftKey && active === last) { e.preventDefault(); first.focus(); }
-   };
-   window.addEventListener('keydown', onKey);
-   return () => {
-     window.clearTimeout(t);
-     document.body.style.overflow = prev;
-     window.removeEventListener('keydown', onKey);
-     previouslyFocused?.focus?.(); // restore focus to the trigger
-   };
+   const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose?.(); };
+   window.addEventListener('keydown', onEsc);
+   return () => { document.body.style.overflow = prev; window.removeEventListener('keydown', onEsc); };
  }, [isOpen, onClose]);
 
  const maxW = size === 'lg' ? 'max-w-4xl' : size === 'sm' ? 'max-w-md' : 'max-w-2xl';

@@ -290,8 +290,8 @@ export const AdminModeration = () => {
  </div>
  </div>
  <div className="grid grid-cols-2 gap-2">
- <Button size="sm" variant="default" className="text-xs font-bold rounded-xl" onClick={(e) => { e.stopPropagation(); handleAction(post, 'approve_content'); }}>Approve</Button>
- <Button size="sm" variant="destructive" className="text-xs font-bold rounded-xl" onClick={(e) => { e.stopPropagation(); handleAction(post, 'delete_content'); }}>Delete</Button>
+ <Button size="sm" variant="primary" className="text-xs font-bold rounded-xl" onClick={(e) => { e.stopPropagation(); handleAction(post, 'approve_content'); }}>Approve</Button>
+ <Button size="sm" variant="danger" className="text-xs font-bold rounded-xl" onClick={(e) => { e.stopPropagation(); handleAction(post, 'delete_content'); }}>Delete</Button>
  <Button size="sm" variant="outline" className="text-xs font-bold rounded-xl text-foreground/50" onClick={(e) => { e.stopPropagation(); handleAction(post, 'shadowban_content'); }}>Shadowban</Button>
  <Button size="sm" variant="secondary" className="text-xs font-bold rounded-xl text-blue-600 dark:text-blue-400 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950 dark:hover:bg-blue-900" onClick={(e) => { e.stopPropagation(); handleAction(post, 'boost_content'); }}>Boost</Button>
  </div>
@@ -307,7 +307,7 @@ export const AdminModeration = () => {
  <Card key={product.id} className={`p-6 rounded-3xl border flex flex-col transition-all duration-300 hover:shadow-md hover:-translate-y-1 ${selectedItems.includes(product.id) ? 'border-primary ring-1 ring-primary bg-foreground/[0.05]' : 'border-foreground/8 glass-surface'}`} onClick={() => toggleSelect(product.id)}>
  <div className="flex justify-between items-start mb-4">
  <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full">Product</Badge>
- <Badge variant={product.status === 'active' ? 'secondary' : 'destructive'} className="text-[10px] font-bold uppercase tracking-wider rounded-full">{product.status}</Badge>
+ <Badge variant={product.status === 'active' ? 'secondary' : 'danger'} className="text-[10px] font-bold uppercase tracking-wider rounded-full">{product.status}</Badge>
  </div>
  <div className="flex-1 space-y-3 mb-6">
  <h4 className="font-sans font-bold text-lg text-foreground tracking-tight">{product.name}</h4>
@@ -319,7 +319,7 @@ export const AdminModeration = () => {
  </div>
  <div className="grid grid-cols-2 gap-2">
  <Button size="sm" variant="outline" className="text-xs font-bold rounded-xl" onClick={(e) => { e.stopPropagation(); handleAction(product, 'moderate_product'); }}>Flag</Button>
- <Button size="sm" variant="destructive" className="text-xs font-bold rounded-xl" onClick={(e) => { e.stopPropagation(); handleAction(product, 'delete_content'); }}>Delete</Button>
+ <Button size="sm" variant="danger" className="text-xs font-bold rounded-xl" onClick={(e) => { e.stopPropagation(); handleAction(product, 'delete_content'); }}>Delete</Button>
  </div>
  </Card>
  ))}
@@ -338,7 +338,7 @@ export const AdminModeration = () => {
  <div>
  <span className="text-[10px] font-bold uppercase tracking-wider text-foreground">Appeal: {appeal.content_type}</span>
  <div className="flex items-center gap-2 mt-1">
- <Badge variant={appeal.status === 'pending' ? 'destructive' : 'secondary'} className="text-[10px] font-bold uppercase tracking-wider rounded-full">{appeal.status}</Badge>
+ <Badge variant={appeal.status === 'pending' ? 'danger' : 'secondary'} className="text-[10px] font-bold uppercase tracking-wider rounded-full">{appeal.status}</Badge>
  <span className="text-[10px] font-medium text-foreground/50">{new Date(appeal.created_at).toLocaleString()}</span>
  </div>
  </div>
@@ -353,8 +353,8 @@ export const AdminModeration = () => {
  <div className="flex gap-2 w-full md:w-auto">
  {appeal.status === 'pending' && (
  <>
- <Button size="sm" variant="default" className="flex-1 md:flex-none text-xs font-bold rounded-xl px-8" onClick={() => handleAction(appeal, 'resolve_appeal')}>Approve</Button>
- <Button size="sm" variant="destructive" className="flex-1 md:flex-none text-xs font-bold rounded-xl px-8" onClick={() => handleAction(appeal, 'reject_appeal')}>Reject</Button>
+ <Button size="sm" variant="primary" className="flex-1 md:flex-none text-xs font-bold rounded-xl px-8" onClick={() => handleAction(appeal, 'resolve_appeal')}>Approve</Button>
+ <Button size="sm" variant="danger" className="flex-1 md:flex-none text-xs font-bold rounded-xl px-8" onClick={() => handleAction(appeal, 'reject_appeal')}>Reject</Button>
  </>
  )}
  </div>
@@ -376,7 +376,7 @@ export const AdminModeration = () => {
  <div>
  <span className="text-[10px] font-bold uppercase tracking-wider text-foreground">Report: {report.reason}</span>
  <div className="flex items-center gap-2 mt-1">
- <Badge variant={report.status === 'pending' ? 'destructive' : 'secondary'} className="text-[10px] font-bold uppercase tracking-wider rounded-full">{report.status}</Badge>
+ <Badge variant={report.status === 'pending' ? 'danger' : 'secondary'} className="text-[10px] font-bold uppercase tracking-wider rounded-full">{report.status}</Badge>
  </div>
  </div>
  </div>
@@ -427,7 +427,7 @@ export const AdminModeration = () => {
  </td>
  <td className="p-6">
  {u.is_banned ? (
- <Badge variant="destructive" className="text-[10px] font-bold uppercase tracking-wider rounded-full">Banned</Badge>
+ <Badge variant="danger" className="text-[10px] font-bold uppercase tracking-wider rounded-full">Banned</Badge>
  ) : (
  <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-wider rounded-full">Active</Badge>
  )}
@@ -437,7 +437,7 @@ export const AdminModeration = () => {
  {u.is_banned ? (
  <Button size="sm" variant="outline" className="text-xs font-bold rounded-xl" onClick={() => handleAction(u, 'unban_user')}>Unban</Button>
  ) : (
- <Button size="sm" variant="destructive" className="text-xs font-bold rounded-xl" onClick={() => handleAction(u, 'ban_user')}>Ban User</Button>
+ <Button size="sm" variant="danger" className="text-xs font-bold rounded-xl" onClick={() => handleAction(u, 'ban_user')}>Ban User</Button>
  )}
  </td>
  </tr>
@@ -483,7 +483,7 @@ export const AdminModeration = () => {
  {!v.is_verified ? (
  <Button size="lg" className="flex-1 text-xs font-bold rounded-xl shadow-md" onClick={() => handleAction({ id: v.seller_id }, 'verify_vendor')}>Verify Store</Button>
  ) : (
- <Button size="lg" variant="destructive" className="flex-1 text-xs font-bold rounded-xl" onClick={() => handleAction({ id: v.seller_id }, 'reject_vendor')}>Revoke Verification</Button>
+ <Button size="lg" variant="danger" className="flex-1 text-xs font-bold rounded-xl" onClick={() => handleAction({ id: v.seller_id }, 'reject_vendor')}>Revoke Verification</Button>
  )}
  </div>
  </Card>
