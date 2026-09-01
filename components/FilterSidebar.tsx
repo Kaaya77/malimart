@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronDown, Filter, RotateCcw, Check, Star } from 'lucide-react';
 import { Category } from '../types';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 // FIX #1: Footer gains safe-area-inset-bottom so Apply/Reset buttons
 // don't sit behind the iOS home indicator.
@@ -24,6 +25,8 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
  onFilterChange,
  activeFilters
 }) => {
+ const panelRef = useRef<HTMLDivElement>(null);
+ useFocusTrap(panelRef, isOpen);
  const [priceRange, setPriceRange] = useState<[number, number]>(activeFilters.priceRange || [0, 5000000]);
  const [selectedCategories, setSelectedCategories] = useState<string[]>(activeFilters.categories || []);
  const [selectedMaterials, setSelectedMaterials] = useState<string[]>(activeFilters.materials || []);
@@ -96,11 +99,12 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
  className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100]"
  />
  <motion.div
+ ref={panelRef} role="dialog" aria-modal="true" aria-label="Advanced filters" tabIndex={-1}
  initial={{ x: '100%' }}
  animate={{ x: 0 }}
  exit={{ x: '100%' }}
  transition={{ type: 'spring', damping: 25, stiffness: 200 }}
- className="fixed top-0 right-0 h-full w-full max-w-md bg-background dark:bg-background shadow-2xl z-[101] flex flex-col"
+ className="fixed top-0 right-0 h-full w-full max-w-md bg-background dark:bg-background shadow-2xl z-[101] flex flex-col outline-none"
  >
  <div className="p-6 border-b border-foreground/10 flex items-center justify-between">
  <div className="flex items-center gap-3">

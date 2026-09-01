@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAppState } from '../context/AppContext';
 import { formatTZS } from '../constants';
 import { useDebounce } from '../src/hooks/useDebounce';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 import { quickSearchProducts } from '../services/searchService';
 import { getAI } from '../services/aiClient';
 import { MODELS } from '../services/aiModels';
@@ -46,6 +47,8 @@ export const SearchModal = ({
  searchInputRef,
 }: SearchModalProps) => {
  const navigate = useNavigate();
+ const panelRef = useRef<HTMLDivElement>(null);
+ useFocusTrap(panelRef, isSearchOpen);
  const { products } = useAppState();
 
  // Debounce prevents per-keystroke filtering
@@ -86,7 +89,7 @@ export const SearchModal = ({
    aiIntentTimer.current = setTimeout(async () => {
      lastParsedQuery.current = q;
      try {
-       const ai = getAI();
+       const ai = await getAI();
        const res = await ai.models.generateContent({
          model: MODELS.TEXT,
          contents: [{ role: 'user', parts: [{ text: `You are a search assistant for MaliMart, a Tanzanian e-commerce marketplace. The user typed this search query: "${q}". Extract structured intent as JSON with these fields: keywords (main search term, 1-3 words), note (what you understood, max 8 words), maxPrice (number in TZS if mentioned, else null). Respond ONLY with valid JSON, no markdown.` }] }],
@@ -215,6 +218,7 @@ export const SearchModal = ({
  className="fixed inset-0 z-[120] flex flex-col items-stretch bg-black/40 backdrop-blur-sm md:items-center md:pt-20"
  >
  <motion.div
+ ref={panelRef} role="dialog" aria-modal="true" aria-label="Search"
  initial={{ y: -16, opacity: 0.6 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -16, opacity: 0 }}
  transition={{ type: 'spring', damping: 30, stiffness: 300 }}
  className="flex flex-col w-full bg-background max-h-[70vh] rounded-b-3xl border-b border-foreground/10 shadow-2xl md:h-auto md:max-h-[75vh] md:w-full md:max-w-2xl md:rounded-3xl md:border md:border-foreground/10 overflow-hidden"

@@ -4,12 +4,15 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { useAppState } from '../context/AppContext';
 import { CURRENCY, getEffectiveUnitPrice } from '../constants';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 export const CartDrawer = () => {
   const { isCartOpen, closeCart, cart, updateQuantity, removeFromCart, clearCart } = useAppState();
   const navigate = useNavigate();
   const [isClearing, setIsClearing] = React.useState(false);
   const [removingId, setRemovingId] = React.useState<string | null>(null);
+  const panelRef = React.useRef<HTMLDivElement>(null);
+  useFocusTrap(panelRef, isCartOpen);
 
   const handleClearCart = async () => { setIsClearing(true); await clearCart(); setIsClearing(false); };
   const handleRemove = async (productId: string, variantId?: string) => {
@@ -43,12 +46,13 @@ export const CartDrawer = () => {
           {/* Sheet */}
           <motion.div
             key="cart-sheet"
+            ref={panelRef} role="dialog" aria-modal="true" aria-label="Shopping cart" tabIndex={-1}
             initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 32, stiffness: 320 }}
             drag="y" dragConstraints={{ top: 0, bottom: 0 }}
             dragElastic={{ top: 0, bottom: 0.4 }}
             onDragEnd={handleDragEnd}
-            className="fixed inset-x-0 bottom-0 z-[201] flex flex-col bg-background border-t border-foreground/10 rounded-t-[2rem] shadow-2xl"
+            className="fixed inset-x-0 bottom-0 z-[201] flex flex-col bg-background border-t border-foreground/10 rounded-t-[2rem] shadow-2xl outline-none"
             style={{ maxHeight: '90dvh' }}
           >
             {/* ── Drag pill ── */}

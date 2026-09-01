@@ -4,6 +4,7 @@ import { X, ShieldCheck, Star, MapPin, Instagram, Facebook, ArrowRight } from 'l
 import { Link, useNavigate } from 'react-router-dom';
 import { VendorProfile } from '../types';
 import { Button } from './UI';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface StoreModalProps {
  store: VendorProfile | null;
@@ -13,6 +14,8 @@ interface StoreModalProps {
 
 export const StoreModal: React.FC<StoreModalProps> = ({ store, isOpen, onClose }) => {
  const navigate = useNavigate();
+ const panelRef = React.useRef<HTMLDivElement>(null);
+ useFocusTrap(panelRef, isOpen && !!store);
  if (!store) return null;
 
  return (
@@ -32,7 +35,7 @@ export const StoreModal: React.FC<StoreModalProps> = ({ store, isOpen, onClose }
  exit={{ opacity: 0, scale: 0.95, y: 20 }}
  className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
  >
- <div className="bg-background w-full max-w-lg rounded-[2.5rem] shadow-2xl relative overflow-hidden flex flex-col items-center p-8 sm:p-12 border border-foreground/5">
+ <div ref={panelRef} role="dialog" aria-modal="true" aria-label={`${store.store_name || 'Store'} details`} tabIndex={-1} className="bg-background w-full max-w-lg rounded-[2.5rem] shadow-2xl relative overflow-hidden flex flex-col items-center p-8 sm:p-12 border border-foreground/5 outline-none">
  {/* Decorative background element */}
  <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-primary/10 to-transparent pointer-events-none" />
 
