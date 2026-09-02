@@ -383,7 +383,7 @@ export const ProductPage = () => {
  <div className="flex items-center justify-between gap-3 mb-3">
  <div className="flex items-center gap-2 min-w-0">
  <span className="text-xs font-bold uppercase tracking-widest text-foreground/50 truncate">{product.brand || product.seller_name || 'MaliMart'}</span>
- {product.is_verified && <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />}
+ {product.is_verified && <VerifiedBadge iconOnly />}
  </div>
  {viewers > 1 && (
  <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 shrink-0">

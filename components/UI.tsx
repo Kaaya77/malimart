@@ -307,7 +307,8 @@ let verifiedSeq = 0;
 export const VerifiedBadge = ({
  className = '',
  iconOnly = false,
-}: { className?: string; iconOnly?: boolean }) => {
+ size = 'w-4 h-4',
+}: { className?: string; iconOnly?: boolean; size?: string }) => {
  const gid = React.useMemo(() => `mm-verified-${++verifiedSeq}`, []);
 
  const Seal = ({ size }: { size: string }) => (
@@ -327,7 +328,7 @@ export const VerifiedBadge = ({
  );
 
  if (iconOnly) {
- return <span className={`inline-flex ${className}`}><Seal size="w-4 h-4" /></span>;
+ return <Seal size={`${size} ${className}`} />;
  }
 
  return (
@@ -845,7 +846,7 @@ export const ModernFollowCard = ({ vendor, onUnfollow, onViewStore }: { vendor: 
  <div className="text-white">
  <h3 className="font-black text-lg leading-tight flex items-center gap-2">
  {vendor.store_name}
- {vendor.is_verified && <BadgeCheck className="w-4 h-4 text-blue-400" />}
+ {vendor.is_verified && <VerifiedBadge iconOnly />}
  </h3>
  <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">Store</p>
  </div>

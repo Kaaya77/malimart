@@ -6,7 +6,7 @@ import {
   Wand2, Loader2, X, Paperclip, Ban, MoreVertical, ShieldAlert, Trash2, Plus,
 } from 'lucide-react';
 import { useAppState } from '../context/AppContext';
-import { Button, Input, useToast, ConfirmDialog, UserProfileModal } from './UI';
+import { Button, Input, useToast, ConfirmDialog, UserProfileModal, VerifiedBadge } from './UI';
 import { ProductModal } from './ProductModal';
 import { OrderDetailsModal } from './OrderDetailsModal';
 import { supabase } from '../services/supabaseClient';
@@ -456,7 +456,7 @@ export const BuyerMessages = ({ userId, initialSellerId, initialProductId, initi
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">
                     <p className="font-bold text-[13px] text-foreground truncate">{currentVendor?.store_name}</p>
-                    {currentVendor?.is_verified && <BadgeCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" />}
+                    {currentVendor?.is_verified && <VerifiedBadge iconOnly size="w-3.5 h-3.5" />}
                   </div>
                   <p className="text-[10px] text-foreground/40">Tap to view profile</p>
                 </div>

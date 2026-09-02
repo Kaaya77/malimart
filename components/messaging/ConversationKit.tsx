@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { VerifiedBadge } from '../UI';
 import { BadgeCheck, Pin, MessageSquare, Reply, Trash2, ShieldAlert, Smile, MoreVertical, Check, CheckCheck, Paperclip, Archive, ArchiveRestore, Search, X, Loader2, UserCircle2 } from 'lucide-react';
 import { searchMessagingContacts } from '../../services/messagesService';
 
@@ -116,7 +117,7 @@ export const ConversationListItem = ({
             <p className={`font-bold text-[13px] truncate flex-1 ${selected ? 'text-background' : 'text-foreground'}`}>
               {item.name}
             </p>
-            {item.isVerified && <BadgeCheck className={`w-3.5 h-3.5 shrink-0 ${selected ? 'text-background/70' : 'text-emerald-500'}`} />}
+            {item.isVerified && <VerifiedBadge iconOnly size="w-3.5 h-3.5" />}
             {pinned && <Pin className={`w-3 h-3 shrink-0 ${selected ? 'text-background/60' : 'text-foreground/40'}`} />}
             {item.lastMessageAt && (
               <span className={`text-[10px] shrink-0 ml-auto ${selected ? 'text-background/55' : unread > 0 ? 'text-emerald-500 font-bold' : 'text-foreground/35'}`}>

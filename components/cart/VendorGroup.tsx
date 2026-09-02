@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Store, CheckCircle2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Badge } from '../UI';
+import { Badge, VerifiedBadge } from '../UI';
 import { CartItemRow } from './CartItemRow';
 import { CartItem, Offer } from '../../types';
 import { formatTZS } from '../../constants';
@@ -48,7 +48,7 @@ export const VendorGroup: React.FC<VendorGroupProps> = ({
       >
         <Store className="w-4 h-4 text-brand-500" />
         <span>{vendor?.name || 'Loading Store...'}</span>
-        {vendor?.verified && <CheckCircle2 className="w-3.5 h-3.5 text-blue-500" />}
+        {vendor?.verified && <VerifiedBadge iconOnly size="w-3.5 h-3.5" />}
       </Link>
       <Badge variant="outline" className="text-[9px] font-bold border-brand-200 text-brand-700 bg-brand-50 dark:bg-brand-900/10 dark:border-brand-900/50">
         Delivery: {formatTZS(vendor?.fee || 0)}

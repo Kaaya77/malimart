@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { VerifiedBadge } from '../components/UI';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, Package, ShoppingBag, MapPin, CreditCard, Clock, Share2, Download, ChevronRight, Sparkles, Truck, ArrowRight, Store } from 'lucide-react';
@@ -202,7 +203,7 @@ export const OrderConfirmationPage = () => {
                     <div className="min-w-0">
                       <p className="font-black text-sm text-foreground truncate flex items-center gap-1.5">
                         {storeName}
-                        {profile?.is_verified && <CheckCircle2 className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />}
+                        {profile?.is_verified && <VerifiedBadge iconOnly size="w-3.5 h-3.5" />}
                       </p>
                       <p className="text-[10px] font-bold uppercase tracking-wider text-foreground/40">
                         {profile?.region ? `${profile.region} · ` : ''}Sold by this store

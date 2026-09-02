@@ -9,7 +9,7 @@ import {
  ChevronRight, Repeat, Sparkles, Search, ZapOff, Gift, Eye, AlertTriangle, RefreshCw
 } from 'lucide-react';
 import { useAppState } from '../context/AppContext';
-import { Button, Card, Badge, Input, useToast, PremiumStatCard, ModernFollowCard, GraphicalTag, EmptyState, CountBadge } from '../components/UI';
+import { Button, Card, Badge, Input, useToast, PremiumStatCard, ModernFollowCard, GraphicalTag, EmptyState, CountBadge, VerifiedBadge } from '../components/UI';
 import { listActiveOffersWithVendors, getVendorCardsBySellerIds } from '../services/accountApi';
 import { OrderTracking } from '../components/CheckoutComponents';
 import { formatTZS, CURRENCY } from '../constants';
@@ -132,7 +132,7 @@ const BuyerOffers = () => {
  </div>
  <div>
  <p className="text-[10px] text-white/80 font-semibold leading-none">{(offer as any).vendor?.store_name}</p>
- {(offer as any).vendor?.is_verified && <p className="text-[10px] text-white/60 mt-0.5 flex items-center gap-0.5"><BadgeCheck className="w-2.5 h-2.5"/> Verified</p>}
+ {(offer as any).vendor?.is_verified && <p className="text-[10px] text-white/60 mt-0.5 flex items-center gap-0.5"><VerifiedBadge iconOnly size="w-3 h-3" /> Verified</p>}
  </div>
  </div>
  <div className="text-right">
