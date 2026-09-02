@@ -56,7 +56,11 @@ export const ProductCardActions: React.FC<ProductCardActionsProps> = ({
  <button
  onClick={handleWishlist}
  aria-label={isLiked ? 'Remove from wishlist' : 'Add to wishlist'}
+ // TOUCH TARGET: the circle stays 32px visually, but `before:-inset-1.5`
+ // adds a transparent 6px ring that is part of the button, taking the real
+ // tap area to 44px — Apple HIG's minimum. Nothing moves on screen.
  className={`absolute top-2.5 right-2.5 z-30 w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-md ring-1 shadow-md transition-all duration-150 active:scale-90
+ before:absolute before:-inset-1.5 before:content-[''] before:rounded-full
  ${isLiked
  ? 'bg-rose-500/95 text-white ring-rose-400/30 shadow-rose-500/30'
  : 'bg-white/90 dark:bg-black/70 text-foreground/70 hover:text-rose-500 ring-black/10 dark:ring-white/10 hover:bg-white dark:hover:bg-black'}`}
@@ -91,7 +95,11 @@ export const ProductCardActions: React.FC<ProductCardActionsProps> = ({
  whileTap={{ scale: 0.95 }}
  onClick={onAdd}
  aria-label={stats.hasVariants ? 'Select options' : 'Add to cart'}
+ // TOUCH TARGET: this is the PRIMARY mobile CTA and it was a 32px-tall
+ // pill. Same technique as the heart — 6px of transparent tap area top and
+ // bottom brings it to 44px without changing the pill's look or position.
  className={`absolute bottom-2.5 left-2.5 z-30 md:hidden h-8 px-3 rounded-full flex items-center gap-1.5 text-[11px] font-bold tracking-wide shadow-md transition-all duration-150
+ before:absolute before:-inset-y-1.5 before:-inset-x-1 before:content-[''] before:rounded-full
  ${isAdding
  ? 'bg-emerald-600 text-white'
  : 'bg-white/95 dark:bg-black/85 text-foreground backdrop-blur-md ring-1 ring-black/15 dark:ring-white/10'}`}

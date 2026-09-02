@@ -41,18 +41,26 @@ export const ProductCardContent: React.FC<ProductCardContentProps> = ({
  meant to endorse. Location drops back to a quiet trailing detail.
  min-w-0 on the row lets the two truncating children actually truncate
  instead of overflowing the card. */}
- <div className="flex items-center gap-1.5 min-w-0">
+ <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 min-w-0">
+ {/* Shop + shield travel together as ONE flex item so the badge can never
+ be orphaned onto the next line by a long shop name. */}
+ <span className="flex items-center gap-1.5 min-w-0 max-w-full">
  <button
  onClick={onStoreClick}
  className="text-[11.5px] font-bold tracking-tight text-foreground/80 hover:text-emerald-600 transition-colors truncate min-w-0"
  >
  {product.seller_name || 'Store'}
  </button>
-
  {product.is_verified && <VerifiedBadge iconOnly />}
+ </span>
 
+ {/* `shrink-0` is deliberate: in a 2-up mobile grid the card is only
+ ~138px at 320px wide, and letting location shrink meant it collapsed
+ to an orphaned pin icon. Refusing to shrink makes it WRAP to its own
+ line when the shop name has taken the first — and it stays inline
+ the moment there is room, so no breakpoint guessing. */}
  {sellerLocation && (
- <span className="flex items-center gap-0.5 text-[10px] font-medium text-foreground/40 truncate min-w-0 shrink">
+ <span className="flex items-center gap-0.5 shrink-0 max-w-full text-[10px] font-medium text-foreground/40">
  <MapPin className="w-2.5 h-2.5 shrink-0 stroke-[2.5]" />
  <span className="truncate">{sellerLocation}</span>
  </span>
