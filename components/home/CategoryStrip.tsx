@@ -312,8 +312,8 @@ export const CategoryStrip: React.FC = () => {
       </div>
 
       {/* Mobile */}
-      <div className="md:hidden overflow-x-auto no-scrollbar pl-5 -mr-5">
-        <div className="flex gap-3 pr-5 snap-x snap-mandatory">
+      <div className="md:hidden overflow-x-auto no-scrollbar pl-4 -mr-4">
+        <div className="flex gap-3 pr-4 snap-x snap-mandatory">
           {displayCategories.map((c, i) => (
             <MobileCategoryCard key={c.name} {...c} count={countByCategory[c.name]} onClick={() => go(c.name)} index={i} />
           ))}

@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, ArrowUpRight, MapPin, Star, ShieldCheck, Package, Heart } from 'lucide-react';
 import { VendorProfile } from '../../types';
+import { VerifiedBadge } from '../UI';
 import { useAppState } from '../../context/AppContext';
 
 interface FeaturedStoresProps {
@@ -242,7 +243,13 @@ const StoreCard: React.FC<{
           </motion.div>
           <button
             onClick={onFollow}
-            className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors active:scale-90 ${isFollowed ? 'bg-rose-500/10 text-rose-500' : 'bg-foreground/[0.06] text-foreground/35 hover:text-rose-400'}`}
+            // TOUCH TARGET: 28px visually; `relative` + a transparent 8px
+            // ::before ring takes the real tap area to 44px. `relative` is
+            // required here (unlike the product card) because this button is
+            // a static flex child, so it is not otherwise a containing block.
+            className={`relative w-7 h-7 rounded-full flex items-center justify-center transition-colors active:scale-90
+            before:absolute before:-inset-2 before:content-[''] before:rounded-full
+            ${isFollowed ? 'bg-rose-500/10 text-rose-500' : 'bg-foreground/[0.06] text-foreground/35 hover:text-rose-400'}`}
             aria-label={isFollowed ? 'Unfollow' : 'Follow'}
           >
             <Heart className={`w-3.5 h-3.5 stroke-[2.5] ${isFollowed ? 'fill-current stroke-none' : ''}`} />
@@ -289,7 +296,7 @@ const MobileStoreCard: React.FC<{
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
           <p className="font-bold text-sm text-foreground truncate">{name}</p>
-          {(shop as any).is_verified && <ShieldCheck className="w-3 h-3 text-emerald-500 flex-shrink-0" />}
+          {(shop as any).is_verified && <VerifiedBadge iconOnly className="w-3 h-3" />}
         </div>
         <div className="flex items-center gap-2 mt-0.5">
           {region && <span className="text-[10px] text-foreground/45">{region}</span>}
@@ -305,7 +312,10 @@ const MobileStoreCard: React.FC<{
 
       <button
         onClick={onFollow}
-        className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-colors active:scale-90 ${isFollowed ? 'bg-rose-500/10 text-rose-500' : 'text-foreground/25 hover:text-rose-400'}`}
+        // TOUCH TARGET: 32px visually -> 44px tap area. See the note above.
+        className={`relative w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-colors active:scale-90
+        before:absolute before:-inset-1.5 before:content-[''] before:rounded-full
+        ${isFollowed ? 'bg-rose-500/10 text-rose-500' : 'text-foreground/25 hover:text-rose-400'}`}
         aria-label={isFollowed ? 'Unfollow' : 'Follow'}
       >
         <Heart className={`w-4 h-4 stroke-[2.5] ${isFollowed ? 'fill-current stroke-none' : ''}`} />
@@ -348,7 +358,7 @@ export const FeaturedStores: React.FC<FeaturedStoresProps> = ({ topShops, setAct
       </div>
 
       {/* Mobile: vertical list */}
-      <div className="md:hidden px-5 space-y-2">
+      <div className="md:hidden px-4 space-y-2">
         {topShops.slice(0, 5).map((s, i) => (
           <MobileStoreCard
             key={s.seller_id}

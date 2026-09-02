@@ -55,8 +55,8 @@ export const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
       </div>
 
       {/* Mobile: horizontal scroll */}
-      <div className="md:hidden overflow-x-auto no-scrollbar pl-5 -mr-5">
-        <div className="flex gap-3 pr-5 snap-x snap-mandatory">
+      <div className="md:hidden overflow-x-auto no-scrollbar pl-4 -mr-4">
+        <div className="flex gap-3 pr-4 snap-x snap-mandatory">
           {list.map((p, i) => (
             <div key={p.id} className="w-[168px] flex-shrink-0 snap-start">
               <ProductCard
