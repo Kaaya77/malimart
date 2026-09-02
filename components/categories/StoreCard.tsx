@@ -1,7 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Star, BadgeCheck, Heart, Package, MapPin, Crown } from 'lucide-react';
+import { Star, Heart, Package, MapPin, Crown } from 'lucide-react';
+import { VerifiedBadge } from '../UI';
 import { VendorProfile } from '../../types';
 
 interface StoreCardProps {
@@ -9,9 +10,18 @@ interface StoreCardProps {
   isFavorite: boolean;
   onFavoriteToggle: () => void;
   rank?: number;
+  /**
+   * Overrides the default navigation to /store/:id.
+   *
+   * The categories tab wants a full page navigation; the homepage opens a
+   * store preview modal instead (HomePage's setActiveStore). Without this the
+   * two surfaces could not share one card without one of them changing
+   * behaviour — which is the whole reason home had its own bespoke variants.
+   */
+  onClick?: () => void;
 }
 
-export const StoreCard: React.FC<StoreCardProps> = React.memo(({ vendor, isFavorite, onFavoriteToggle, rank }) => {
+export const StoreCard: React.FC<StoreCardProps> = React.memo(({ vendor, isFavorite, onFavoriteToggle, rank, onClick }) => {
   const navigate = useNavigate();
 
   return (
@@ -19,7 +29,7 @@ export const StoreCard: React.FC<StoreCardProps> = React.memo(({ vendor, isFavor
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       className="relative bg-background border border-foreground/8 rounded-3xl overflow-hidden hover:border-foreground/20 hover:shadow-lg transition-all group cursor-pointer"
-      onClick={() => navigate(`/store/${vendor.seller_id}`)}
+      onClick={() => (onClick ? onClick() : navigate(`/store/${vendor.seller_id}`))}
     >
       <div className="aspect-[16/7] relative overflow-hidden bg-foreground/[0.04]">
         {vendor.banner_url
@@ -36,7 +46,11 @@ export const StoreCard: React.FC<StoreCardProps> = React.memo(({ vendor, isFavor
         )}
         <button
           onClick={e => { e.stopPropagation(); onFavoriteToggle(); }}
-          className={`absolute top-3 right-3 w-8 h-8 rounded-full backdrop-blur-md flex items-center justify-center transition-all active:scale-90 ${isFavorite
+          aria-label={isFavorite ? `Unfollow ${vendor.store_name}` : `Follow ${vendor.store_name}`}
+          // TOUCH TARGET: 32px circle, 44px real tap area via a transparent
+          // ::before ring. Matters more now this card is also on the homepage.
+          className={`absolute top-3 right-3 w-8 h-8 rounded-full backdrop-blur-md flex items-center justify-center transition-all active:scale-90
+            before:absolute before:-inset-1.5 before:content-[''] before:rounded-full ${isFavorite
               ? 'bg-rose-500 text-white'
               // Was `bg-white/80 text-foreground/60`. The --foreground token
               // INVERTS between themes, so in dark mode that painted a
@@ -59,7 +73,7 @@ export const StoreCard: React.FC<StoreCardProps> = React.memo(({ vendor, isFavor
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5">
               <h3 className="font-bold text-foreground text-sm truncate">{vendor.store_name}</h3>
-              {vendor.is_verified && <BadgeCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" />}
+              {vendor.is_verified && <VerifiedBadge iconOnly />}
             </div>
             <p className="text-xs text-foreground/45 truncate">{vendor.description?.slice(0, 40) || 'Tanzanian Seller'}</p>
           </div>
