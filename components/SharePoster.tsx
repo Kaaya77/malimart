@@ -311,7 +311,7 @@ const PosterCanvas = ({
           </div>
           {salePrice && <span style={{ fontSize: 28, color: '#a1a1aa', textDecoration: 'line-through' }}>{price}</span>}
         </div>
-        {rating != null && (
+        {Number(rating) > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 28, fontWeight: 700, color: '#fafafa' }}>
             <Star style={{ width: 30, height: 30, fill: '#fbbf24', color: '#fbbf24' }} />
             {rating.toFixed(1)}

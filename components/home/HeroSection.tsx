@@ -71,7 +71,7 @@ const MagneticCard: React.FC<{
             <Sparkles className="w-3 h-3" />{badge}
           </span>
         )}
-        {product.rating != null && (
+        {Number(product.rating) > 0 && (
           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/10 backdrop-blur border border-white/20 text-white text-xs font-semibold ml-auto">
             <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
             {Number(product.rating).toFixed(1)}
@@ -141,7 +141,7 @@ const SideProductPill: React.FC<{
           <span className="text-sm font-bold text-foreground tabular-nums">
             {CURRENCY} {Math.round(product.price).toLocaleString()}
           </span>
-          {product.rating != null && (
+          {Number(product.rating) > 0 && (
             <span className="inline-flex items-center gap-1 text-[10px] text-foreground/50">
               <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
               {Number(product.rating).toFixed(1)}
@@ -300,7 +300,7 @@ export const HeroSection = ({
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/30 to-transparent" />
             <div className="absolute top-4 right-4 z-10">
-              {hero?.rating != null && (
+              {Number(hero?.rating) > 0 && (
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/10 backdrop-blur border border-white/20 text-white text-[10px] font-semibold">
                   <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
                   {Number(hero.rating).toFixed(1)}

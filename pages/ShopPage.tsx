@@ -226,9 +226,15 @@ export const ShopPage: React.FC = () => {
  <div className="min-h-screen bg-background pb-[calc(5rem+env(safe-area-inset-bottom))] pt-16 md:pt-20">
  {/* Header */}
  <div className="sticky top-[64px] z-20 bg-background/95 backdrop-blur-xl border-b border-foreground/8">
- <div className="container mx-auto px-4 md:px-8 py-3 flex items-center gap-3">
+ {/* `flex-wrap` + `w-full` search: the row is [search][Filter][Sort], and a
+ native <select> is sized by its LONGEST option (~120-160px), which it
+ will not give up. At 360px that left the input around 40px wide and the
+ placeholder rendered as "Se". Search now takes its own full-width line
+ on phones and shares the row from sm up, so it can never be squeezed by
+ the controls beside it. */}
+ <div className="container mx-auto px-4 md:px-8 py-3 flex flex-wrap items-center gap-3">
  {/* Search */}
- <form onSubmit={handleSearch} className="flex-1 relative">
+ <form onSubmit={handleSearch} className="w-full sm:flex-1 sm:w-auto min-w-0 relative">
  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40 stroke-[2]" />
  <input
  type="search"
@@ -280,7 +286,7 @@ export const ShopPage: React.FC = () => {
  return next;
  }, { replace: true });
  }}
- className="h-11 pl-9 pr-3 rounded-xl bg-foreground/[0.04] border border-foreground/10 text-foreground text-sm font-semibold focus:outline-none appearance-none cursor-pointer hover:bg-foreground/[0.08] transition-colors sm:pr-4"
+ className="h-11 pl-9 pr-3 max-w-[9.5rem] sm:max-w-none truncate rounded-xl bg-foreground/[0.04] border border-foreground/10 text-foreground text-sm font-semibold focus:outline-none appearance-none cursor-pointer hover:bg-foreground/[0.08] transition-colors sm:pr-4"
  aria-label="Sort products"
  >
  {SORT_OPTIONS.map(opt => (
@@ -329,8 +335,10 @@ export const ShopPage: React.FC = () => {
  )}
  </div>
 
- {/* Results count */}
- <div className="container mx-auto px-4 md:px-8 py-4">
+ {/* Results count — pt-6 not py-4: this sits directly beneath the sticky
+ filter bar's bottom border, and 16px left it looking clamped to the
+ filter pills above rather than heading the grid below. */}
+ <div className="container mx-auto px-4 md:px-8 pt-6 pb-3">
  <p className="text-sm text-foreground/50">
  {(shopLoading || isLoading) ? (
  <span className="flex items-center gap-2"><Loader2 className="w-3.5 h-3.5 animate-spin" /> Loading products…</span>

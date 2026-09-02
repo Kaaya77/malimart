@@ -21,6 +21,18 @@
  */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Height of whatever is currently pinned to the bottom of the viewport, used
+ * as a safe-zone by floating UI (the Mali chat launcher) so it never lands on
+ * top of a primary CTA.
+ *
+ * Default is the mobile bottom nav (Navbar's grid is h-[58px]). Pages that add
+ * their own bottom bar raise it while mounted — see ProductPage's sticky
+ * Add-to-Cart bar, which previously sat directly under the chat launcher.
+ */
+:root {
+  --mm-bottom-obstruction: 58px;
+}
+
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Playfair Display", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;

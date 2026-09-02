@@ -97,6 +97,16 @@ export const ProductPage = () => {
 
  const isLiked = product ? isInWishlist(product.id) : false;
 
+ // The sticky mobile CTA bar (h-14 + mb-3) occupies the bottom of the viewport
+ // on this page, on top of the usual nav allowance. Publish its real height so
+ // floating UI — the Mali chat launcher — clears it instead of landing on the
+ // Add-to-Cart button. Reset on unmount so other pages get the nav default.
+ useEffect(() => {
+   const root = document.documentElement;
+   root.style.setProperty('--mm-bottom-obstruction', 'calc(3.5rem + 0.75rem)');
+   return () => { root.style.removeProperty('--mm-bottom-obstruction'); };
+ }, []);
+
  const relatedProducts = useMemo(() => {
  if (!product) return [];
  return products
@@ -290,10 +300,16 @@ export const ProductPage = () => {
 
  {/* Overlay actions */}
  <div className="absolute top-4 right-4 flex flex-col gap-2">
+ {/* DEDUPE: hidden below lg. The sticky mobile CTA bar already carries a
+ wishlist button, so on phones this rendered a SECOND heart for the
+ same action on the same screen. Desktop has no sticky bar, so it
+ keeps this one. Share stays at every width — it has no duplicate.
+ `ring-1` + a stronger shadow so it stays legible on pale product
+ photos, where a plain translucent chip disappeared. */}
  <button
  aria-label={isLiked ? 'Remove from wishlist' : 'Add to wishlist'}
  onClick={e => { e.stopPropagation(); toggleWishlist(product); addToast(isLiked ? 'Removed from wishlist' : 'Saved to wishlist', 'success'); }}
- className={`w-11 h-11 rounded-2xl backdrop-blur-md flex items-center justify-center shadow-sm transition-all active:scale-90 ${isLiked ? 'bg-rose-500 text-white' : 'bg-background/85 text-foreground/70 hover:text-rose-500'}`}
+ className={`hidden lg:flex w-11 h-11 rounded-2xl backdrop-blur-md items-center justify-center shadow-md ring-1 ring-black/10 dark:ring-white/10 transition-all active:scale-90 ${isLiked ? 'bg-rose-500 text-white' : 'bg-background/85 text-foreground/70 hover:text-rose-500'}`}
  >
  <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : 'stroke-[2]'}`} />
  </button>
@@ -457,7 +473,12 @@ export const ProductPage = () => {
  {isAdding ? (<><Check className="w-4 h-4 mr-2 stroke-[3]" /> Added</>) : isOwnProduct ? 'Your Own Listing' : metrics.isOut ? 'Out of Stock' : onVacation ? 'Store on Vacation' : (<><ShoppingBag className="w-4 h-4 mr-2 stroke-[2.2]" /> Add to Cart</>)}
  </Button>
  </div>
- <Button size="lg" variant="secondary" className="w-full" onClick={() => { handleAdd(); navigate('/cart'); }} disabled={metrics.isOut || onVacation || isOwnProduct}>
+ {/* CTA HIERARCHY: Add to Cart is the solid primary; Buy Now is the
+ explicit secondary. It was `secondary` (a bg-foreground/[0.06] fill),
+ which read as muted/disabled rather than as a real alternative action.
+ `outline` gives it a visible border so the pair reads as
+ primary + alternative instead of enabled + greyed-out. */}
+ <Button size="lg" variant="outline" className="w-full" onClick={() => { handleAdd(); navigate('/cart'); }} disabled={metrics.isOut || onVacation || isOwnProduct}>
  Buy Now
  </Button>
  </div>

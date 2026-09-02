@@ -54,8 +54,10 @@ export const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
         </button>
       </div>
 
-      {/* Mobile: horizontal scroll */}
-      <div className="md:hidden overflow-x-auto no-scrollbar pl-4 -mr-4">
+      {/* Mobile: horizontal scroll. See CategoryStrip — the right-edge fade is
+          the only cue that this rail scrolls. */}
+      <div className="md:hidden relative">
+      <div className="overflow-x-auto no-scrollbar pl-4 -mr-4">
         <div className="flex gap-3 pr-4 snap-x snap-mandatory">
           {list.map((p, i) => (
             <div key={p.id} className="w-[168px] flex-shrink-0 snap-start">
@@ -67,6 +69,11 @@ export const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
             </div>
           ))}
         </div>
+      </div>
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-background to-transparent"
+        />
       </div>
 
       {/* Desktop: 4-col grid with stagger */}

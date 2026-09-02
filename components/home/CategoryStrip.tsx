@@ -311,13 +311,23 @@ export const CategoryStrip: React.FC = () => {
         </button>
       </div>
 
-      {/* Mobile */}
-      <div className="md:hidden overflow-x-auto no-scrollbar pl-4 -mr-4">
-        <div className="flex gap-3 pr-4 snap-x snap-mandatory">
-          {displayCategories.map((c, i) => (
-            <MobileCategoryCard key={c.name} {...c} count={countByCategory[c.name]} onClick={() => go(c.name)} index={i} />
-          ))}
+      {/* Mobile — `relative` wrapper carries a fade on the right edge so the
+          rail reads as scrollable. Without it the last chip was simply sliced
+          by the viewport with no affordance, and users had no cue to swipe.
+          The fade is pointer-events-none so it never eats a tap, and it is
+          painted from the theme background token so it works in both themes. */}
+      <div className="md:hidden relative">
+        <div className="overflow-x-auto no-scrollbar pl-4 -mr-4">
+          <div className="flex gap-3 pr-4 snap-x snap-mandatory">
+            {displayCategories.map((c, i) => (
+              <MobileCategoryCard key={c.name} {...c} count={countByCategory[c.name]} onClick={() => go(c.name)} index={i} />
+            ))}
+          </div>
         </div>
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-background to-transparent"
+        />
       </div>
 
       {/* Desktop: asymmetric bento */}
