@@ -416,7 +416,7 @@ export const SellerMessages = ({
             />
           </div>
         </div>
-        <div className="flex-1 overflow-y-auto p-2 space-y-0.5 no-scrollbar">
+        <div className="flex-1 min-h-0 overflow-y-auto p-2 space-y-0.5 no-scrollbar">
           {users.length === 0 ? (
             <ChatEmptyState
               title={showArchived ? 'No archived chats' : filterUnread ? 'No unread messages' : searchTerm ? 'No matches' : 'No conversations yet'}
@@ -512,7 +512,7 @@ export const SellerMessages = ({
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-4 py-5 bg-foreground/[0.01] no-scrollbar">
+            <div className="flex-1 min-h-0 overflow-y-auto px-4 py-5 bg-foreground/[0.01] no-scrollbar">
               {activeChats.map((c, index) => {
                 const prev = index > 0 ? activeChats[index - 1] : null;
                 const currDate = new Date(c.created_at!);

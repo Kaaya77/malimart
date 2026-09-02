@@ -27,19 +27,19 @@ export const MessageContainer = ({ children }: { children: React.ReactNode }) =>
 );
 
 export const SidebarContainer = ({ children, isVisible }: { children: React.ReactNode; isVisible: boolean }) => (
-  <div className={`md:col-span-4 lg:col-span-3 border-r border-foreground/8 flex flex-col bg-background ${isVisible ? 'hidden md:flex' : 'flex'}`}>
+  <div className={`md:col-span-4 lg:col-span-3 border-r border-foreground/8 flex flex-col min-h-0 bg-background ${isVisible ? 'hidden md:flex' : 'flex'}`}>
     {children}
   </div>
 );
 
 export const ChatAreaContainer = ({ children, isVisible }: { children: React.ReactNode; isVisible: boolean }) => (
-  <div className={`md:col-span-8 lg:col-span-6 flex flex-col min-w-0 ${isVisible ? 'hidden md:flex' : 'flex'}`}>
+  <div className={`md:col-span-8 lg:col-span-6 flex flex-col min-w-0 min-h-0 ${isVisible ? 'hidden md:flex' : 'flex'}`}>
     {children}
   </div>
 );
 
 export const DetailsAreaContainer = ({ children, isVisible }: { children: React.ReactNode; isVisible: boolean }) => (
-  <div className={`lg:col-span-3 border-l border-foreground/8 bg-foreground/[0.02] flex flex-col ${isVisible ? 'hidden lg:flex' : 'hidden'}`}>
+  <div className={`lg:col-span-3 border-l border-foreground/8 bg-foreground/[0.02] flex flex-col min-h-0 ${isVisible ? 'hidden lg:flex' : 'hidden'}`}>
     {children}
   </div>
 );

@@ -408,7 +408,7 @@ export const BuyerMessages = ({ userId, initialSellerId, initialProductId, initi
             />
           </div>
         </div>
-        <div className="flex-1 overflow-y-auto p-2 space-y-0.5 no-scrollbar">
+        <div className="flex-1 min-h-0 overflow-y-auto p-2 space-y-0.5 no-scrollbar">
           {vendorList.length === 0 ? (
             <ChatEmptyState
               title={showArchived ? 'No archived chats' : filterUnread ? 'No unread messages' : searchTerm ? 'No matches' : 'No conversations yet'}
@@ -496,7 +496,7 @@ export const BuyerMessages = ({ userId, initialSellerId, initialProductId, initi
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-4 py-5 space-y-0 bg-foreground/[0.01] no-scrollbar">
+            <div className="flex-1 min-h-0 overflow-y-auto px-4 py-5 space-y-0 bg-foreground/[0.01] no-scrollbar">
               {activeMessages.map((c, idx) => {
                 const prev = activeMessages[idx - 1];
                 const showDay = !prev || !isSameDay(new Date(prev.created_at!), new Date(c.created_at!));

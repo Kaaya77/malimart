@@ -258,7 +258,7 @@ export const AdminMessages = ({
             />
           </div>
         </div>
-        <div className="flex-1 overflow-y-auto p-2 space-y-0.5 no-scrollbar">
+        <div className="flex-1 min-h-0 overflow-y-auto p-2 space-y-0.5 no-scrollbar">
           {users.length === 0 ? (
             <ChatEmptyState title="No conversations" />
           ) : (users as any[]).map(u => (
@@ -327,7 +327,7 @@ export const AdminMessages = ({
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-4 py-5 space-y-1 bg-foreground/[0.01] no-scrollbar">
+            <div className="flex-1 min-h-0 overflow-y-auto px-4 py-5 space-y-1 bg-foreground/[0.01] no-scrollbar">
               {/* Active context banner */}
               {activeContext && (
                 <div className="mb-4 p-4 rounded-xl bg-foreground/[0.04] border border-foreground/8 flex items-center justify-between animate-in fade-in slide-in-from-top-4 duration-500">
