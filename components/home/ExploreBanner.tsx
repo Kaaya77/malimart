@@ -11,10 +11,10 @@ export const ExploreBanner: React.FC = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <Link
         to="/categories"
-        className="group relative overflow-hidden rounded-3xl bg-foreground text-background p-8 md:p-10 flex flex-col justify-between min-h-[200px] active:scale-[0.99] transition-transform"
+        className="group relative overflow-hidden rounded-3xl bg-stone-900 text-stone-50 p-8 md:p-10 flex flex-col justify-between min-h-[200px] active:scale-[0.99] transition-transform"
       >
         <div>
-          <p className="text-[10px] uppercase tracking-[0.3em] text-background/40 font-bold mb-3">Explore</p>
+          <p className="text-[10px] uppercase tracking-[0.3em] text-stone-50/55 font-bold mb-3">Explore</p>
           <h3 className="text-2xl md:text-3xl font-bold tracking-tight leading-tight">
             Every category,<br />one place
           </h3>
@@ -23,7 +23,7 @@ export const ExploreBanner: React.FC = () => (
           Browse categories
           <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
         </span>
-        <LayoutGrid className="absolute -right-4 -bottom-4 w-32 h-32 text-background/[0.06] stroke-[1]" />
+        <LayoutGrid className="absolute -right-4 -bottom-4 w-32 h-32 text-stone-50/[0.06] stroke-[1]" />
       </Link>
 
       <Link

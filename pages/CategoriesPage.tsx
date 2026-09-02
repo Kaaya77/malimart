@@ -164,40 +164,40 @@ export const CategoriesPage = () => {
     <div className="min-h-screen bg-background pt-16 md:pt-20 pb-[calc(5rem+env(safe-area-inset-bottom))]">
 
       {/* Hero */}
-      <div className="bg-foreground text-background px-4 md:px-8 pt-6 md:pt-10 pb-4 md:pb-0">
+      <div className="bg-stone-900 text-stone-50 px-4 md:px-8 pt-6 md:pt-10 pb-4 md:pb-0">
         <div className="container mx-auto max-w-7xl">
-          <p className="text-[10px] uppercase tracking-[0.3em] text-background/40 font-bold mb-2 md:mb-3">Explore MaliMart</p>
+          <p className="text-[10px] uppercase tracking-[0.3em] text-stone-50/55 font-bold mb-2 md:mb-3">Explore MaliMart</p>
           <h1 className="text-2xl md:text-5xl font-bold tracking-tight leading-tight mb-3 md:mb-4">
             Discover Tanzania's{' '}
             <span className="text-emerald-400">Best Marketplace</span>
           </h1>
-          <div className="flex items-center gap-5 text-xs text-background/50 mb-4">
+          <div className="flex items-center gap-5 text-xs text-stone-50/50 mb-4">
             {totalProducts > 0 && (
               <span className="flex items-center gap-1.5">
                 <Store className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="font-bold text-background/80">{totalProducts.toLocaleString()}</span> products
+                <span className="font-bold text-stone-50/80">{totalProducts.toLocaleString()}</span> products
               </span>
             )}
             {vendors.length > 0 && (
               <span className="flex items-center gap-1.5">
                 <Store className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="font-bold text-background/80">{vendors.length}</span> sellers
+                <span className="font-bold text-stone-50/80">{vendors.length}</span> sellers
               </span>
             )}
             <span className="flex items-center gap-1.5">
               <LayoutGrid className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="font-bold text-background/80">{organizedCategories.length || Object.keys(CATEGORY_HIERARCHY).length}</span> categories
+              <span className="font-bold text-stone-50/80">{organizedCategories.length || Object.keys(CATEGORY_HIERARCHY).length}</span> categories
             </span>
           </div>
           {/* Search — visible above the fold on mobile */}
           <div className="relative max-w-lg mb-4 md:mb-6">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-background/40 pointer-events-none" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-50/55 pointer-events-none" />
             <input
               type="search"
               value={searchQ}
               onChange={e => { setSearchQ(e.target.value); if (tab !== 'categories') setTab('categories'); }}
               placeholder="Search categories, stores…"
-              className="w-full h-11 bg-background/10 border border-background/20 rounded-2xl pl-10 pr-4 text-sm text-background placeholder:text-background/40 focus:outline-none focus:border-emerald-400/60 transition-colors"
+              className="w-full h-11 bg-white/10 border border-white/20 rounded-2xl pl-10 pr-4 text-sm text-stone-50 placeholder:text-stone-50/55 focus:outline-none focus:border-emerald-400/60 transition-colors"
             />
           </div>
         </div>
