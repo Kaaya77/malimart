@@ -14,10 +14,14 @@ interface ProductCardContentProps {
 
 /**
  * Product card text. Hierarchy:
- * 1. Eyebrow: shop name (11.5px, bold, foreground/80) · verified shield ·
- *    location (10px, muted). The shop leads the row — buyers pick sellers
- *    they recognise, and the old uppercase 10px/50% treatment made the name
- *    the quietest thing in a row it was supposed to head.
+ * 1. Header, always TWO fixed lines so every card in a grid aligns:
+ *      line 1 — shop name (11.5px, bold, foreground/80) + verified shield
+ *      line 2 — location (10px, muted), rendered even when absent
+ *    The shop leads — buyers pick sellers they recognise, and the old
+ *    uppercase 10px/50% treatment made the name the quietest thing in a row
+ *    it was supposed to head. Stacking (rather than wrapping) is deliberate:
+ *    a wrap-when-it-does-not-fit row made the layout depend on shop-name
+ *    length, so adjacent cards showed the same data two different ways.
  * 2. Title: product name (15px, semibold, 2-line clamp, tight tracking)
  * 3. Meta row: rating · review count (13px, muted)
  * 4. Price block: large price, strikethrough original, percent saved
@@ -41,10 +45,10 @@ export const ProductCardContent: React.FC<ProductCardContentProps> = ({
  meant to endorse. Location drops back to a quiet trailing detail.
  min-w-0 on the row lets the two truncating children actually truncate
  instead of overflowing the card. */}
- <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 min-w-0">
- {/* Shop + shield travel together as ONE flex item so the badge can never
- be orphaned onto the next line by a long shop name. */}
- <span className="flex items-center gap-1.5 min-w-0 max-w-full">
+ <div className="flex flex-col gap-0.5 min-w-0">
+ {/* Line 1 — shop name gets the full width, so it is never squeezed by a
+ neighbour. The shield rides with it and cannot be orphaned. */}
+ <span className="flex items-center gap-1.5 min-w-0">
  <button
  onClick={onStoreClick}
  className="text-[11.5px] font-bold tracking-tight text-foreground/80 hover:text-emerald-600 transition-colors truncate min-w-0"
@@ -54,17 +58,22 @@ export const ProductCardContent: React.FC<ProductCardContentProps> = ({
  {product.is_verified && <VerifiedBadge iconOnly />}
  </span>
 
- {/* `shrink-0` is deliberate: in a 2-up mobile grid the card is only
- ~138px at 320px wide, and letting location shrink meant it collapsed
- to an orphaned pin icon. Refusing to shrink makes it WRAP to its own
- line when the shop name has taken the first — and it stays inline
- the moment there is room, so no breakpoint guessing. */}
+ {/* Line 2 — location, always on its own row.
+ This was previously a wrap-if-it-does-not-fit flex item, which made the
+ layout depend on how long the shop name happened to be: a long name
+ pushed location onto its own line, a short one kept it inline. Two
+ cards side by side then used two different layouts for identical data,
+ and the inline variant truncated the shop name to make room.
+ The row is always rendered, even with no location, so every card has an
+ identical two-line header and the grid stays aligned. */}
+ <span className="flex items-center gap-0.5 min-w-0 h-[13px] text-[10px] font-medium text-foreground/40">
  {sellerLocation && (
- <span className="flex items-center gap-0.5 shrink-0 max-w-full text-[10px] font-medium text-foreground/40">
+ <>
  <MapPin className="w-2.5 h-2.5 shrink-0 stroke-[2.5]" />
  <span className="truncate">{sellerLocation}</span>
- </span>
+ </>
  )}
+ </span>
  </div>
 
  {/* Title — a real link so keyboard users can open the product and crawlers
