@@ -14,6 +14,7 @@ import { ExploreBanner } from '../components/home/ExploreBanner';
 import { StoreModal } from '../components/StoreModal';
 import { HomePageSkeleton } from '../components/skeletons/HomePageSkeleton';
 import { Product, VendorProfile } from '../types';
+import { isNewArrival } from '../constants';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -66,15 +67,24 @@ const HomePage: React.FC = () => {
     [products]
   );
 
-  // New arrivals — last 14 days
-  const newArrivals = useMemo(
+  // This comment used to claim "last 14 days" while the code filtered by
+  // nothing at all — it sorted by created_at and took 8, so 182-day-old stock
+  // sat under a "New arrivals" heading. Filter for real, and when nothing
+  // qualifies fall back to the newest items under an honest heading rather
+  // than either lying or leaving a hole in the feed.
+  const newestFirst = useMemo(
     () =>
       [...products]
         .filter(p => p.status !== 'inactive')
-        .sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
-        .slice(0, 8),
+        .sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()),
     [products]
   );
+  const trulyNew = useMemo(
+    () => newestFirst.filter(p => isNewArrival(p.created_at)).slice(0, 8),
+    [newestFirst]
+  );
+  const hasTrulyNew = trulyNew.length > 0;
+  const newArrivals = hasTrulyNew ? trulyNew : newestFirst.slice(0, 8);
 
   // Top rated — proven products with at least one review
   const topRated = useMemo(
@@ -129,8 +139,10 @@ const HomePage: React.FC = () => {
       {/* 4. New Arrivals */}
       {newArrivals.length > 0 && (
         <ProductGridSection
-          title="New arrivals"
-          description="Fresh drops from Tanzania's best sellers."
+          title={hasTrulyNew ? 'New arrivals' : 'Latest listings'}
+          description={hasTrulyNew
+            ? "Fresh drops from Tanzania's best sellers."
+            : 'The most recently listed products on MaliMart.'}
           products={newArrivals}
           navigate={navigate}
         />

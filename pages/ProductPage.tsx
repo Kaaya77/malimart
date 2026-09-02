@@ -12,7 +12,7 @@ import { Breadcrumb } from '../components/ui/Breadcrumb';
 import { ReviewSection } from '../components/ReviewSection';
 import { ProductCard } from '../components/ProductCard';
 import { ProductShare } from '../components/ProductShare';
-import { formatTZS, mapsUrl } from '../constants';
+import { formatTZS, mapsUrl, isNewArrival } from '../constants';
 import { Product, VendorProfile } from '../types';
 import { fetchProductById, fetchVendorProfile } from '../services/shopService';
 import { usePresence } from '../hooks/usePresence';
@@ -386,8 +386,15 @@ export const ProductPage = () => {
  <span className="text-foreground/70">{rating.toFixed(1)}</span>
  {(product.review_count ?? 0) > 0 && <a href="#reviews" className="text-emerald-600 hover:underline">({product.review_count} reviews)</a>}
  </span>
- ) : (
+ ) : isNewArrival(product.created_at) ? (
+ // Only genuinely recent listings get this. It used to render on the
+ // sole condition that rating was 0, so a 182-day-old product with no
+ // reviews was labelled "New arrival" indefinitely.
  <Badge variant="success" className="text-[10px] px-2 py-0.5">New arrival</Badge>
+ ) : (
+ // Older and unreviewed: say what is actually true rather than implying
+ // recency. Matches the review section further down the page.
+ <span className="text-foreground/40">No reviews yet</span>
  )}
  {product.location && (
  <a href={mapsUrl({ lat: product.latitude, lng: product.longitude, query: product.location })} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-foreground transition-colors">

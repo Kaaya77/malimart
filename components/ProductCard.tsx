@@ -9,6 +9,7 @@ import { ProductCardContent } from './product-card/ProductCardContent';
 import { ProductCardActions } from './product-card/ProductCardActions';
 import { useProductPricing } from '../hooks/useProductPricing';
 import { getCategoryEmoji, getActionMessage } from '../services/productExperience';
+import { isNewArrival } from '../constants';
 
 interface ProductCardProps {
  product: Product;
@@ -53,12 +54,10 @@ const ProductCardInner: React.FC<ProductCardProps> = ({
  // a variant happens on the detail page.
  const stats = useProductPricing(product, null);
 
- const isNew = useMemo(() => {
- if (!product.created_at) return false;
- const created = new Date(product.created_at).getTime();
- const days = (Date.now() - created) / (1000 * 60 * 60 * 24);
- return days <= 7;
- }, [product.created_at]);
+ // Shared window (constants.ts) so the card badge, the homepage row, the
+ // product page and the Explore tab cannot drift apart again. This was a
+ // local 7 days while the homepage comment claimed 14 and filtered by nothing.
+ const isNew = useMemo(() => isNewArrival(product.created_at), [product.created_at]);
 
  // Trending metric: seller/admin-boosted, OR strong ratings with enough reviews,
  // OR a lot of reviews outright (popular). Gives cards a real "Trending" signal

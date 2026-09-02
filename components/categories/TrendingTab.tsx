@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Star, Flame } from 'lucide-react';
 import { Product } from '../../types';
 import { CATEGORY_EMOJIS, TrendSubTab } from './categoryConstants';
-import { formatTZS } from '../../constants';
+import { formatTZS, isNewArrival } from '../../constants';
 
 interface TrendingTabProps {
   trendingProducts: Product[];
@@ -51,7 +51,9 @@ export const TrendingTab: React.FC<TrendingTabProps> = ({
                       <Flame className="w-2.5 h-2.5 fill-current stroke-none text-orange-400" /> #{i + 1}
                     </div>
                   )}
-                  {trendSub === 'new' && (
+                  {/* Age-gated: this pill used to render on every card in the tab,
+                      so months-old stock was labelled NEW. */}
+                  {trendSub === 'new' && isNewArrival((p as any).created_at) && (
                     <div className="bg-emerald-500 text-white text-[10px] font-black px-2 py-1 rounded-full">NEW</div>
                   )}
                   {trendSub === 'rated' && p.rating && (

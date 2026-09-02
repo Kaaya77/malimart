@@ -192,3 +192,22 @@ export const formatLocation = (raw?: string | null): string => {
     })
     .join(', ');
 };
+
+/**
+ * Single source of truth for "new arrival".
+ *
+ * There were four different answers in the app: the card badge used 7 days,
+ * the homepage row had a `// last 14 days` comment but no date filter at all
+ * (it just sorted by created_at and took 8, so it happily showed 6-month-old
+ * stock), the product page showed "New arrival" whenever review_count was 0
+ * — which never expires — and the Explore "New Arrivals" tab badged whatever
+ * the trending feed returned.
+ */
+export const NEW_ARRIVAL_DAYS = 14;
+
+export const isNewArrival = (createdAt?: string | null): boolean => {
+  if (!createdAt) return false;
+  const created = new Date(createdAt).getTime();
+  if (Number.isNaN(created)) return false;
+  return (Date.now() - created) / 86_400_000 <= NEW_ARRIVAL_DAYS;
+};
