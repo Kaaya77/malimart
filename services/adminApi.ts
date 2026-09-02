@@ -201,9 +201,16 @@ export const fetchRecentProducts = (): Promise<DbResult<any[]>> =>
     .order('created_at', { ascending: false })
     .limit(50) as any;
 
-/** The singleton platform_settings row (id = 1). */
+/**
+ * The singleton platform_settings row (id = 1), admin-only.
+ *
+ * Goes through an RPC rather than the table: `authenticated` only holds a
+ * column-level SELECT grant on the public hero columns, so `select('*')` here
+ * now returns 42501. The RPC is SECURITY DEFINER and gated on is_admin().
+ * See 20260902150000_platform_settings_admin_rpcs.sql.
+ */
 export const fetchPlatformSettings = (): Promise<DbResult<any>> =>
-  supabase.from('platform_settings').select('*').eq('id', 1).single() as any;
+  supabase.rpc('get_platform_settings') as any;
 
 /** Paid/shipped/delivered order totals for the last 180 days, oldest first (revenue trend). */
 export const fetchRevenueOrders = (): Promise<DbResult<any[]>> =>
@@ -256,9 +263,14 @@ export const softDeleteUser = (userId: string): Promise<DbResult> =>
 export const restoreProduct = (productId: string): Promise<DbResult> =>
   supabase.from('products').update({ status: 'active', takedown_reason: null }).eq('id', productId) as any;
 
-/** Upserts the singleton platform_settings row (id = 1). */
+/**
+ * Upserts the singleton platform_settings row (id = 1), admin-only.
+ *
+ * Also an RPC — the function whitelists the writable columns explicitly, so a
+ * crafted payload cannot reach columns added to the table later.
+ */
 export const upsertPlatformSettings = (settings: Record<string, any>): Promise<DbResult> =>
-  supabase.from('platform_settings').upsert({ id: 1, ...settings }) as any;
+  supabase.rpc('update_platform_settings', { p_settings: settings }) as any;
 
 /** Changes a user's role on profiles (promote/demote seller). */
 export const setUserRole = (userId: string, role: string): Promise<DbResult> =>

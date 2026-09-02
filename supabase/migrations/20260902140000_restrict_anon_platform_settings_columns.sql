@@ -29,9 +29,11 @@ grant select (
   hero_subheadline
 ) on public.platform_settings to anon;
 
--- KNOWN GAP (deliberately not fixed here): `authenticated` still reads the
--- full row, because services/adminApi.ts does `select('*')` for the admin
--- settings page and column grants are per-role, so tightening it would break
--- admin. Closing that properly means routing admin settings through a
--- SECURITY DEFINER RPC gated on is_admin(), which is an app change, not a
--- grant change. Until then any logged-in user can read global_commission.
+-- KNOWN GAP at the time of this migration: `authenticated` could still read
+-- the full row, because services/adminApi.ts did `select('*')` for the admin
+-- settings page and column grants are per-role, so tightening it would have
+-- broken admin.
+--
+-- CLOSED by 20260902150000_platform_settings_admin_rpcs.sql, which moves admin
+-- reads/writes behind is_admin()-gated RPCs and shrinks `authenticated` to the
+-- same hero-column grant `anon` has.
