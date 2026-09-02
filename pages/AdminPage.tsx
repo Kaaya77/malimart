@@ -17,7 +17,6 @@ import { AdminModeration } from '../components/AdminModeration';
 import { AdminDashboard } from '../components/AdminDashboard';
 import { AdminGrowth } from '../components/AdminGrowth';
 import { AdminVendorVerification } from '../components/AdminVendorVerification';
-import { AdminMessages } from '../components/AdminMessages';
 import { AdminAIHero } from '../components/AdminAIHero';
 import { analyzeDispute } from '../services/geminiService';
 import { adminTakedownProduct } from '../services/moderationApi';

@@ -118,26 +118,14 @@ export interface User {
     last_seen_at?: string;
 }
 
-export interface ChatMessage {
-    id: string;
-    sender_id: string;
-    receiver_id: string;
-    product_id?: string;
-    text: string; // alias for body
-    body?: string;
-    read: boolean;
-    attachment_url?: string;
-    attachment_type?: string;
-    deleted_at?: string;
-    reply_to_id?: string;
-    reply_to?: Partial<ChatMessage>;
-    created_at?: string;
-    sender?: { full_name: string; avatar_url: string };
-    receiver?: { full_name: string; avatar_url: string };
-    product?: Partial<Product>;
-    order?: Partial<Order>;
-    reactions?: { emoji: string; user_id: string }[];
-}
+// Messaging types live with the messaging service:
+//   services/messagesService.ts — Conversation, ThreadMessage, Reaction.
+//
+// The old ChatMessage shape modelled the whole-history client join that is
+// gone: it carried BOTH `text` and `body` (only body exists in the database)
+// and an `order` object that was never populated, because the query that
+// hydrated these rows joined products but never orders — so every
+// order-context tag in the chat silently rendered nothing.
 
 export interface Notification {
     id: string;

@@ -1,38 +1,10 @@
 // =====================================================================
-// accountApi.ts — typed wrappers around the new SECURITY DEFINER RPCs.
-// Every call is ONE round trip. Never query messages/notifications/
-// orders tables directly from components anymore — use these.
+// accountApi.ts — typed wrappers around the SECURITY DEFINER RPCs.
+// Every call is ONE round trip. Never query notifications/orders tables
+// directly from components — use these. Messaging has its own equivalent
+// in services/messagesService.ts.
 // =====================================================================
 import { supabase } from "./supabaseClient"; // adjust if your client lives elsewhere
-
-export interface Conversation {
-  peer_id: string;
-  peer_name: string | null;
-  peer_avatar: string | null;
-  peer_role: "buyer" | "seller" | "admin";
-  peer_last_seen: string | null;
-  last_message_id: string;
-  last_body: string;
-  last_sender_id: string;
-  last_created_at: string;
-  last_attachment_type: string | null;
-  unread_count: number;
-  is_blocked: boolean;
-}
-
-export interface Message {
-  id: string;
-  sender_id: string;
-  receiver_id: string;
-  product_id: string | null;
-  body: string;
-  read: boolean;
-  created_at: string;
-  attachment_url: string | null;
-  attachment_type: string | null;
-  reply_to_id: string | null;
-  deleted_at: string | null;
-}
 
 export interface AccountOverview {
   profile: Record<string, unknown>;
@@ -49,32 +21,9 @@ async function rpc<T>(fn: string, args?: Record<string, unknown>): Promise<T> {
 }
 
 // ---------- Messaging ----------
-export const getConversations = () =>
-  rpc<Conversation[]>("get_my_conversations");
-
-export const getThread = (peerId: string, before?: string, limit = 40) =>
-  rpc<Message[]>("get_thread", { p_peer: peerId, p_before: before ?? null, p_limit: limit });
-
-export const sendMessage = (args: {
-  receiverId: string; body: string; productId?: string;
-  replyToId?: string; attachmentUrl?: string; attachmentType?: string;
-}) =>
-  rpc<Message>("send_direct_message", {
-    p_receiver: args.receiverId, p_body: args.body,
-    p_product: args.productId ?? null, p_reply_to: args.replyToId ?? null,
-    p_attachment_url: args.attachmentUrl ?? null,
-    p_attachment_type: args.attachmentType ?? null,
-  });
-
-export const deleteMessage = (messageId: string, forEveryone = false) =>
-  rpc<void>("delete_my_message", { p_message: messageId, p_for_everyone: forEveryone });
-
-export const deleteConversation = (peerId: string) =>
-  rpc<void>("delete_my_conversation", { p_peer: peerId });
-
-/** Mark everything a peer sent ME as read (self-scoped server-side). */
-export const markThreadRead = (peerId: string) =>
-  rpc<void>("mark_thread_read", { p_peer: peerId });
+// Lives in services/messagesService.ts, together with the conversation list,
+// thread paging, reactions and attachments. This file used to carry a second
+// set of messaging wrappers that nothing imported.
 
 // ---------- Notifications ----------
 export const markAllNotificationsRead = () => rpc<void>("mark_all_notifications_read");

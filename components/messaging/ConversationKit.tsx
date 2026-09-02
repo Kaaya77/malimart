@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { VerifiedBadge } from '../UI';
-import { BadgeCheck, Pin, MessageSquare, Reply, Trash2, ShieldAlert, Smile, MoreVertical, Check, CheckCheck, Paperclip, Archive, ArchiveRestore, Search, X, Loader2, UserCircle2 } from 'lucide-react';
-import { searchMessagingContacts } from '../../services/messagesService';
+import { Pin, MessageSquare, Reply, Trash2, ShieldAlert, Smile, Check, CheckCheck, Paperclip, Archive, ArchiveRestore, Search, X, Loader2, UserCircle2, Package, Tag, AlertCircle, RotateCcw } from 'lucide-react';
+import { searchMessagingContacts, Reaction } from '../../services/messagesService';
+import { formatTZS } from '../../constants';
 
 // ─── Date helpers ────────────────────────────────────────────────────────────
 
@@ -192,33 +193,116 @@ export const TypingIndicator = () => (
   </div>
 );
 
+// ─── MessageContextTag ───────────────────────────────────────────────────────
+// The product/order a message is about, rendered inside the bubble.
+//
+// Was `ProductOrderTag` in SellerMessages.tsx, cross-imported by both other
+// inboxes. Two things changed: it lives with the rest of the kit now, and it
+// no longer uses UI.tsx's GraphicalTag, which paints `bg-blue-50` /
+// `bg-white` (fixed light surfaces) and puts `text-foreground` on top — an
+// inverting ink on a pinned surface, so the label vanished in dark mode.
+
+export const MessageContextTag = ({
+  product, orderId, onViewProduct, onViewOrder,
+}: {
+  product?: { id: string; name: string; price: number; slug: string | null; image: string | null } | null;
+  orderId?: string | null;
+  onViewProduct?: (productId: string) => void;
+  onViewOrder?: (orderId: string) => void;
+}) => {
+  if (!product && !orderId) return null;
+  return (
+    <div className="mb-2 flex flex-col gap-1.5 max-w-[80%]">
+      {orderId && (
+        <button
+          type="button"
+          onClick={() => onViewOrder?.(orderId)}
+          disabled={!onViewOrder}
+          className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-foreground/[0.05] border border-foreground/10 text-left transition-colors enabled:hover:bg-foreground/[0.09] disabled:cursor-default"
+        >
+          <span className="w-7 h-7 rounded-lg bg-foreground/[0.07] flex items-center justify-center shrink-0">
+            <Package className="w-3.5 h-3.5 text-foreground/60" />
+          </span>
+          <span className="min-w-0">
+            <span className="block text-[9px] font-black uppercase tracking-widest text-foreground/40">Order</span>
+            <span className="block text-[11px] font-bold text-foreground truncate">
+              #{orderId.slice(0, 8).toUpperCase()}
+            </span>
+          </span>
+        </button>
+      )}
+      {product && (
+        <button
+          type="button"
+          onClick={() => onViewProduct?.(product.id)}
+          disabled={!onViewProduct}
+          className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-foreground/[0.05] border border-foreground/10 text-left transition-colors enabled:hover:bg-foreground/[0.09] disabled:cursor-default"
+        >
+          {product.image ? (
+            <img
+              src={product.image}
+              alt=""
+              className="w-9 h-9 object-cover rounded-lg shrink-0"
+              loading="lazy"
+              decoding="async"
+            />
+          ) : (
+            <span className="w-9 h-9 rounded-lg bg-foreground/[0.07] flex items-center justify-center shrink-0">
+              <Tag className="w-3.5 h-3.5 text-foreground/60" />
+            </span>
+          )}
+          <span className="min-w-0">
+            <span className="block text-[11px] font-bold text-foreground truncate">{product.name}</span>
+            {typeof product.price === 'number' && (
+              <span className="block text-[10px] font-semibold text-foreground/50">
+                {formatTZS(product.price)}
+              </span>
+            )}
+          </span>
+        </button>
+      )}
+    </div>
+  );
+};
+
 // ─── MessageBubble ─────────────────────────────────────────────────────────
 
 export interface BubbleProps {
   id: string;
-  body?: string;
+  body?: string | null;
   attachmentUrl?: string | null;
   attachmentType?: 'image' | 'file' | null;
-  deletedAt?: string | null;
+  deleted?: boolean;
   createdAt?: string;
   isMine: boolean;
   read?: boolean;
-  reactions?: { emoji: string; user_id?: string }[];
+  reactions?: Reaction[];
+  /** Used to mark which reaction chips are the current user's own. */
+  myUserId?: string;
   replyToContent?: string | null;
-  /** Extra content rendered inside the bubble before the text (e.g. ProductOrderTag) */
+  /** Awaiting server confirmation — rendered dimmed with a clock. */
+  pending?: boolean;
+  /** The send failed; offer retry/discard instead of a timestamp. */
+  failed?: boolean;
+  /** Extra content rendered above the bubble (product/order tags). */
   contextSlot?: React.ReactNode;
   onReply?: () => void;
-  onDelete?: () => void;   // shown only if isMine
+  /** Hide from my side only. Shown for any message I can see. */
+  onDelete?: () => void;
+  /** Tombstone for both sides — sender only, inside the 1h window. */
+  onDeleteForEveryone?: () => void;
   onReport?: () => void;   // shown only if !isMine
   onReact?: (emoji: string) => void;
+  onRetry?: () => void;
+  onDiscard?: () => void;
 }
 
 const EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
 
 export const MessageBubble = ({
-  id, body, attachmentUrl, attachmentType, deletedAt, createdAt,
-  isMine, read, reactions, replyToContent, contextSlot,
-  onReply, onDelete, onReport, onReact,
+  id, body, attachmentUrl, attachmentType, deleted, createdAt,
+  isMine, read, reactions, myUserId, replyToContent, pending, failed, contextSlot,
+  onReply, onDelete, onDeleteForEveryone, onReport, onReact, onRetry, onDiscard,
 }: BubbleProps) => {
   const [showEmoji, setShowEmoji] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
@@ -227,7 +311,7 @@ export const MessageBubble = ({
   // Long-press (touch) reveals the reply/react/delete actions — on mobile there
   // is no hover, so "hold a message" is the only way to get to them (#19).
   const startPress = () => {
-    if (deletedAt) return;
+    if (deleted) return;
     pressTimer.current = setTimeout(() => {
       setShowMenu(true);
       try { navigator.vibrate?.(15); } catch { /* not supported */ }
@@ -235,11 +319,18 @@ export const MessageBubble = ({
   };
   const cancelPress = () => { if (pressTimer.current) { clearTimeout(pressTimer.current); pressTimer.current = null; } };
 
-  const reactionMap = (reactions ?? []).reduce<Record<string, number>>((acc, r) => {
-    acc[r.emoji] = (acc[r.emoji] || 0) + 1;
+  // Group identical emoji, and remember whether one of them is mine so the
+  // chip can show as active — the reaction toggle used to be an insert-only
+  // call, so there was never any "mine" state to show.
+  const grouped = (reactions ?? []).reduce<Record<string, { count: number; mine: boolean }>>((acc, r) => {
+    const entry = acc[r.emoji] ?? { count: 0, mine: false };
+    entry.count += 1;
+    if (myUserId && r.user_id === myUserId) entry.mine = true;
+    acc[r.emoji] = entry;
     return acc;
   }, {});
-  const hasReactions = Object.keys(reactionMap).length > 0;
+  const hasReactions = Object.keys(grouped).length > 0;
+  const actionable = !deleted && !pending && !failed;
 
   return (
     <div className={`flex flex-col ${isMine ? 'items-end' : 'items-start'} group relative mb-0.5`}>
@@ -262,20 +353,22 @@ export const MessageBubble = ({
       {/* Context slot (product/order tags) */}
       {contextSlot}
 
-      <div className="relative max-w-[80%] z-50">
+      <div className={`relative max-w-[80%] z-50 ${pending ? 'opacity-60' : ''}`}>
         {/* Bubble */}
         <div className={`px-4 py-2.5 text-[13px] leading-relaxed shadow-sm relative select-none
-          ${isMine
-            ? 'bg-foreground text-background rounded-2xl rounded-br-sm'
-            : 'glass-surface text-foreground border border-foreground/[0.08] rounded-2xl rounded-bl-sm'
+          ${failed
+            ? 'bg-rose-500/10 text-foreground border border-rose-500/30 rounded-2xl rounded-br-sm'
+            : isMine
+              ? 'bg-foreground text-background rounded-2xl rounded-br-sm'
+              : 'glass-surface text-foreground border border-foreground/[0.08] rounded-2xl rounded-bl-sm'
           }`}
           onTouchStart={startPress}
           onTouchEnd={cancelPress}
           onTouchMove={cancelPress}
-          onContextMenu={(e) => { if (onReply || onReact) { e.preventDefault(); setShowMenu(true); } }}
+          onContextMenu={(e) => { if (actionable && (onReply || onReact)) { e.preventDefault(); setShowMenu(true); } }}
         >
           {/* Attachment */}
-          {attachmentUrl && !deletedAt && (
+          {attachmentUrl && !deleted && (
             <div className="mb-2">
               {attachmentType === 'image' ? (
                 <img
@@ -291,7 +384,7 @@ export const MessageBubble = ({
                   target="_blank"
                   rel="noopener noreferrer"
                   className={`flex items-center gap-2 p-2.5 rounded-xl text-[11px] font-semibold transition-colors
-                    ${isMine ? 'bg-background/10 hover:bg-background/20' : 'bg-foreground/[0.05] hover:bg-foreground/[0.09]'}`}
+                    ${isMine && !failed ? 'bg-background/10 hover:bg-background/20' : 'bg-foreground/[0.05] hover:bg-foreground/[0.09]'}`}
                 >
                   <Paperclip className="w-3.5 h-3.5 shrink-0" />
                   View attachment
@@ -301,7 +394,7 @@ export const MessageBubble = ({
           )}
 
           {/* Body */}
-          {deletedAt ? (
+          {deleted ? (
             <em className={`text-[12px] ${isMine ? 'text-background/50' : 'text-foreground/40'}`}>
               Message deleted
             </em>
@@ -309,17 +402,41 @@ export const MessageBubble = ({
             <span className="whitespace-pre-wrap break-words">{body}</span>
           )}
 
-          {/* Timestamp + read receipt */}
-          <div className={`flex items-center gap-1 mt-1.5 ${isMine ? 'justify-end' : 'justify-end'}`}>
-            <span className={`text-[10px] font-medium ${isMine ? 'text-background/50' : 'text-foreground/35'}`}>
-              {shortTime(createdAt)}
-            </span>
-            {isMine && !deletedAt && (
-              read
-                ? <CheckCheck className={`w-3 h-3 ${isMine ? 'text-background/60' : 'text-emerald-500'}`} />
-                : <Check className={`w-3 h-3 ${isMine ? 'text-background/40' : 'text-foreground/30'}`} />
-            )}
-          </div>
+          {/* Footer: failure actions, or timestamp + receipt */}
+          {failed ? (
+            <div className="flex items-center gap-2 mt-2">
+              <AlertCircle className="w-3 h-3 text-rose-500 shrink-0" />
+              <span className="text-[10px] font-semibold text-rose-500 flex-1">Not sent</span>
+              {onRetry && (
+                <button
+                  onClick={onRetry}
+                  className="flex items-center gap-1 text-[10px] font-bold text-foreground/70 hover:text-foreground px-1.5 py-0.5 rounded-md hover:bg-foreground/[0.06] transition-colors"
+                >
+                  <RotateCcw className="w-2.5 h-2.5" /> Retry
+                </button>
+              )}
+              {onDiscard && (
+                <button
+                  onClick={onDiscard}
+                  aria-label="Discard unsent message"
+                  className="text-[10px] font-bold text-foreground/40 hover:text-rose-500 px-1.5 py-0.5 rounded-md transition-colors"
+                >
+                  Discard
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center justify-end gap-1 mt-1.5">
+              <span className={`text-[10px] font-medium ${isMine ? 'text-background/50' : 'text-foreground/35'}`}>
+                {pending ? 'Sending…' : shortTime(createdAt)}
+              </span>
+              {isMine && !deleted && !pending && (
+                read
+                  ? <CheckCheck className="w-3 h-3 text-background/60" />
+                  : <Check className="w-3 h-3 text-background/40" />
+              )}
+            </div>
+          )}
 
           {/* Emoji picker */}
           {showEmoji && (
@@ -331,7 +448,8 @@ export const MessageBubble = ({
               {EMOJIS.map((emoji) => (
                 <button
                   key={emoji}
-                  onClick={() => { onReact?.(emoji); setShowEmoji(false); }}
+                  onClick={() => { onReact?.(emoji); setShowEmoji(false); setShowMenu(false); }}
+                  aria-label={`React ${emoji}`}
                   className="hover:scale-125 transition-transform p-1 text-base"
                 >
                   {emoji}
@@ -344,23 +462,29 @@ export const MessageBubble = ({
         {/* Reactions row */}
         {hasReactions && (
           <div className={`flex flex-wrap gap-1 mt-1 ${isMine ? 'justify-end' : 'justify-start'}`}>
-            {Object.entries(reactionMap).map(([emoji, count]) => (
+            {Object.entries(grouped).map(([emoji, { count, mine }]) => (
               <button
                 key={emoji}
                 onClick={() => onReact?.(emoji)}
-                className="px-2 py-0.5 bg-foreground/[0.06] hover:bg-foreground/[0.1] border border-foreground/[0.08] rounded-full text-[11px] flex items-center gap-1 transition-colors"
+                aria-pressed={mine}
+                title={mine ? 'Remove your reaction' : `React ${emoji}`}
+                className={`px-2 py-0.5 rounded-full text-[11px] flex items-center gap-1 transition-colors border
+                  ${mine
+                    ? 'bg-emerald-500/15 border-emerald-500/40 text-foreground'
+                    : 'bg-foreground/[0.06] border-foreground/[0.08] text-foreground hover:bg-foreground/[0.1]'
+                  }`}
               >
-                {emoji} <span className="font-bold text-foreground/60">{count}</span>
+                {emoji} <span className={`font-bold ${mine ? 'text-emerald-600 dark:text-emerald-400' : 'text-foreground/60'}`}>{count}</span>
               </button>
             ))}
           </div>
         )}
 
         {/* Hover actions - floating pill beside bubble */}
-        {!deletedAt && (
+        {actionable && (
           <div
             className={`absolute top-1/2 -translate-y-1/2 transition-opacity flex items-center z-50
-              ${showMenu ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}
+              ${showMenu ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus-within:opacity-100'}
               ${isMine ? 'right-full pr-2' : 'left-full pl-2'}`}
             onClick={(e) => e.stopPropagation()}
           >
@@ -369,6 +493,7 @@ export const MessageBubble = ({
                 <button
                   onClick={() => { onReply(); setShowMenu(false); }}
                   title="Reply"
+                  aria-label="Reply"
                   className="p-1.5 rounded-full text-foreground/40 hover:bg-foreground/[0.06] hover:text-emerald-500 transition-colors"
                 >
                   <Reply className="w-3.5 h-3.5" />
@@ -378,15 +503,27 @@ export const MessageBubble = ({
                 <button
                   onClick={() => setShowEmoji((v) => !v)}
                   title="React"
+                  aria-label="React"
                   className="p-1.5 rounded-full text-foreground/40 hover:bg-foreground/[0.06] hover:text-amber-500 transition-colors"
                 >
                   <Smile className="w-3.5 h-3.5" />
                 </button>
               )}
-              {isMine && onDelete && (
+              {onDeleteForEveryone && (
+                <button
+                  onClick={() => { onDeleteForEveryone(); setShowMenu(false); }}
+                  title="Delete for everyone"
+                  aria-label="Delete for everyone"
+                  className="p-1.5 rounded-full text-foreground/40 hover:bg-red-500/10 hover:text-red-500 transition-colors"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              )}
+              {!onDeleteForEveryone && onDelete && (
                 <button
                   onClick={() => { onDelete(); setShowMenu(false); }}
-                  title="Delete"
+                  title="Remove from my side"
+                  aria-label="Remove from my side"
                   className="p-1.5 rounded-full text-foreground/40 hover:bg-red-500/10 hover:text-red-500 transition-colors"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
@@ -396,6 +533,7 @@ export const MessageBubble = ({
                 <button
                   onClick={() => { onReport(); setShowMenu(false); }}
                   title="Report"
+                  aria-label="Report message"
                   className="p-1.5 rounded-full text-foreground/40 hover:bg-red-500/10 hover:text-red-500 transition-colors"
                 >
                   <ShieldAlert className="w-3.5 h-3.5" />

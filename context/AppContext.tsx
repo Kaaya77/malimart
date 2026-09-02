@@ -5,7 +5,7 @@ import { withCache, invalidate, invalidatePrefix, loadPersisted, TTL } from '../
 import { applyTheme } from '../services/theme';
 import { requestMyAccountDeletion } from '../services/accountApi';
 import { usePresence } from '../hooks/usePresence';
-import { Product, CartItem, User, Order, Notification, VendorProfile, Address, ProductVariant, ChatMessage, Offer, Category, Payment, Shipment, TrustBadge, ReturnRequest, OrderNote, ActivityLog, WalletTransaction, SocialPost, SocialInteraction, Follower, Review } from '../types';
+import { Product, CartItem, User, Order, Notification, VendorProfile, Address, ProductVariant, Offer, Category, Payment, Shipment, TrustBadge, ReturnRequest, OrderNote, ActivityLog, WalletTransaction, SocialPost, SocialInteraction, Follower, Review } from '../types';
 import { useToast } from '../components/UI';
 
 interface AppContextType {
@@ -73,14 +73,14 @@ interface AppContextType {
     updateAddress: (id: string, address: Partial<Address>) => Promise<void>;
     updateUserProfile: (data: Partial<User>) => Promise<void>;
     deleteAccount: () => Promise<void>;
-    fetchMessages: (bust?: boolean) => Promise<ChatMessage[]>;
-    markMessagesAsRead: (senderId: string) => Promise<void>;
-    sendMessage: (to: string, text: string, productId?: string, orderId?: string, attachment?: { url: string, type: string }, replyToId?: string) => Promise<void>;
-    deleteMessage: (id: string) => Promise<void>;
-    softDeleteMessage: (id: string) => Promise<void>;
+    /**
+     * The unread badge only. Reading, sending, deleting and reacting to
+     * messages now live in services/messagesService.ts + hooks/useMessaging.ts.
+     * This context used to expose a fetchMessages() that pulled the user's
+     * ENTIRE message history, and three inboxes called it on every event.
+     */
+    refreshUnreadMessages: () => Promise<void>;
     reportUser: (reportedId: string, reason: string, details?: string) => Promise<void>;
-    addReaction: (messageId: string, emoji: string) => Promise<void>;
-    removeReaction: (messageId: string, emoji: string) => Promise<void>;
     markNotificationRead: (id: string) => Promise<void>;
     markAllNotificationsRead: () => Promise<void>;
     dismissNotification: (id: string) => Promise<void>;
@@ -101,7 +101,6 @@ interface AppContextType {
     buyerReturns: any[];
     refreshSellerData: () => Promise<void>;
     refreshBuyerReturns: () => Promise<void>;
-    preloadedMessages: any[];
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -130,10 +129,9 @@ type CartSlice = Pick<AppContextType,
     'addOrderNote' | 'fetchOrderDetails' | 'refreshCart' | 'refreshBuyerReturns'>;
 
 type CommsSlice = Pick<AppContextType,
-    'notifications' | 'unreadMessages' | 'preloadedMessages' | 'sellerInventory' | 'sellerOrders' |
-    'sellerOffers' | 'sellerStats' | 'notify' | 'fetchMessages' | 'markMessagesAsRead' |
-    'sendMessage' | 'deleteMessage' | 'softDeleteMessage' | 'reportUser' | 'addReaction' |
-    'removeReaction' | 'markNotificationRead' | 'markAllNotificationsRead' | 'dismissNotification' | 'deleteAllNotifications' |
+    'notifications' | 'unreadMessages' | 'sellerInventory' | 'sellerOrders' |
+    'sellerOffers' | 'sellerStats' | 'notify' | 'refreshUnreadMessages' | 'reportUser' |
+    'markNotificationRead' | 'markAllNotificationsRead' | 'dismissNotification' | 'deleteAllNotifications' |
     'refreshNotifications' | 'refreshSellerData'>;
 
 const AuthContext = createContext<AuthSlice | undefined>(undefined);
@@ -192,7 +190,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     const [sellerOffers, setSellerOffers] = useState<any[]>([]);
     const [sellerStats, setSellerStats] = useState<any | null>(null);
     const [buyerReturns, setBuyerReturns] = useState<any[]>([]);
-    const [preloadedMessages, setPreloadedMessages] = useState<any[]>([]);
+
     const [isDark, setIsDark] = useState(false);
     const [vendorProfile, setVendorProfile] = useState<VendorProfile | null>(null);
     const [isCartOpen, setIsCartOpen] = useState(false);
@@ -307,7 +305,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
                 fetchSellerData(profile.id);
             } else if (profile.role === 'buyer') {
                 fetchBuyerReturns(profile.id);
-                if (!eager) fetchPreloadedMessages();
+                if (!eager) fetchUnreadMessagesCount(session.user.id);
             }
         };
 
@@ -654,11 +652,17 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         }
     }, []);
 
+    // Deliberately narrow: the badge is the ONLY message data this context
+    // still owns. Deleted messages must not keep a badge lit forever, which
+    // they did — nothing filtered deleted_at, and read receipts never
+    // persisted (the UPDATE was blocked by RLS), so the count only ever grew.
     const fetchUnreadMessagesCount = useCallback(async (userId: string) => {
         const { count, error } = await supabase.from('messages')
             .select('*', { count: 'exact', head: true })
             .eq('receiver_id', userId)
-            .eq('read', false);
+            .eq('read', false)
+            .is('deleted_at', null)
+            .is('receiver_deleted_at', null);
         
         if (!error && count !== null) {
             setUnreadMessages(count);
@@ -733,18 +737,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
                     if (statsData) setSellerStats(statsData);
                 } catch (e: any) { console.error('[fetchSellerData:stats]', e?.message); }
             })(),
-            (async () => {
-                try {
-                    const msgs = await fetchMessages(false);
-                    if (msgs?.length) setPreloadedMessages(msgs);
-                } catch (e: any) { console.error('[fetchSellerData:messages]', e?.message); }
-            })(),
         ]);
-    }, []);
-
-    const fetchPreloadedMessages = useCallback(async () => {
-        const msgs = await fetchMessages(false);
-        if (msgs?.length) setPreloadedMessages(msgs);
     }, []);
 
     const fetchBuyerReturns = useCallback(async (userId: string, bust = false) => {
@@ -813,6 +806,16 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
 
     // Wire fetchUserData into the ref so applyDashboardRpc can call it
     React.useEffect(() => { fetchUserDataRef.current = fetchUserData; }, [fetchUserData]);
+
+    /**
+     * Re-read the unread badge. The messaging surface calls this after
+     * marking a thread read, so the navbar count drops without waiting for
+     * the realtime round trip.
+     */
+    const refreshUnreadMessages = useCallback(async () => {
+        if (!user) return;
+        await fetchUnreadMessagesCount(user.id);
+    }, [user, fetchUnreadMessagesCount]);
 
     // ─── BACKGROUND REFRESH ────────────────────────────────────────────────────
     // Silently re-fetches role data every 60s so the user never sees stale data
@@ -1168,132 +1171,6 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         if (data) setAddresses(data);
     }, [user, logActivity, addToast]);
 
-    const fetchMessages = useCallback(async (bust = false) => {
-      if (!user) return [];
-      const msgCacheKey = `messages:${user.id}`;
-      if (bust) invalidate(msgCacheKey);
-      
-      return await withCache(msgCacheKey, 30_000, async () => {
-      // Fetch messages without reactions first to avoid join errors
-      const { data: messages, error } = await supabase.from('messages')
-          .select('*, sender:profiles!sender_id(full_name, avatar_url), receiver:profiles!receiver_id(full_name, avatar_url), product:products(id, name, images, price, slug), reply_to:messages!reply_to_id(*)')
-          .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
-          .is('deleted_at', null)
-          .order('created_at', { ascending: true });
-      
-      if (error) {
-        console.error('Error fetching messages:', error);
-        return [];
-      }
-
-      if (!messages || messages.length === 0) return [];
-
-      // Fetch reactions separately
-      const messageIds = messages.map(m => m.id);
-      const { data: reactions, error: reactionsError } = await supabase.from('message_reactions')
-          .select('message_id, emoji, user_id')
-          .in('message_id', messageIds);
-
-      if (reactionsError) {
-          console.error('Error fetching message reactions:', reactionsError);
-          // Still return messages even if reactions fail
-          return (messages as any[]) || [];
-      }
-
-      // Map reactions to messages
-      const messagesWithReactions = messages.map(m => ({
-          ...m,
-          reactions: reactions?.filter(r => r.message_id === m.id) || []
-      }));
-      return (messagesWithReactions as any[]) || [];
-      }); // end withCache
-    }, [user]);
-
-    const markMessagesAsRead = useCallback(async (senderId: string) => {
-        if (!user) return;
-        const { error } = await supabase.from('messages')
-            .update({ read: true })
-            .eq('sender_id', senderId)
-            .eq('receiver_id', user.id)
-            .eq('read', false);
-        
-        if (error) {
-            console.error('Error marking messages as read:', error);
-        } else {
-            await fetchUnreadMessagesCount(user.id);
-        }
-    }, [user, fetchUnreadMessagesCount]);
-
-    const deleteMessage = useCallback(async (messageId: string) => {
-        if (!user) return;
-        const { error } = await supabase.from('messages').delete().eq('id', messageId);
-        if (error) {
-            console.error("Message delete failed:", error);
-            return;
-        }
-        invalidate(`messages:${user.id}`);
-    }, [user]);
-
-    const sendMessage = useCallback(async (to: string, text: string, productId?: string, orderId?: string, attachment?: { url: string, type: string }, replyToId?: string) => {
-        if (!user) return;
-        
-        if (blockedUsers.has(to)) {
-            addToast("You cannot send messages to this user.", "error");
-            return;
-        }
-        
-        const { error } = await supabase.from('messages').insert({
-            sender_id: user.id,
-            receiver_id: to,
-            body: text,
-            product_id: productId,
-            // messages has no order_id column — keep order context in metadata (jsonb).
-            // metadata is NOT NULL (defaults to {}), so never send null or the
-            // insert fails with "failed to send message".
-            metadata: orderId ? { order_id: orderId } : {},
-            attachment_url: attachment?.url,
-            attachment_type: attachment?.type,
-            reply_to_id: replyToId,
-            read: false
-        });
-
-        if (error) {
-            console.error("Message send failed:", error);
-            addToast("Failed to send message", "error");
-            return;
-        }
-
-        // Bust the messages cache FIRST — the realtime INSERT handler re-fetches
-        // immediately, and if the cache were still warm the just-sent message
-        // would be dropped from the UI (looking like the send silently failed).
-        invalidate(`messages:${user.id}`);
-
-        // Recipient notification is best-effort — a failure here must NEVER make a
-        // successfully-sent message look like it didn't go through.
-        try {
-            const { data: receiverProfile } = await supabase.from('profiles').select('role').eq('id', to).single();
-            const receiverRole = receiverProfile?.role;
-
-            let targetLink = '/messages';
-            if (receiverRole === 'buyer') {
-                targetLink = `/buyer?tab=inbox&chat=${user.id}`;
-            } else if (receiverRole === 'seller') {
-                targetLink = `/seller?tab=messages&chat=${user.id}`;
-            } else if (receiverRole === 'admin') {
-                targetLink = `/admin/messages?chat=${user.id}`;
-            }
-
-            await supabase.rpc('notify_message_recipient', {
-                p_receiver_id: to,
-                p_title: `New Message from ${user.name}`,
-                p_message: text,
-                p_link: targetLink
-            });
-        } catch (notifyErr) {
-            console.warn('Message sent, but recipient notification failed:', notifyErr);
-        }
-    }, [user, blockedUsers, addToast]);
-
     const getActiveOfferForProduct = useCallback((productId: string) => {
         const product = products.find(p => p.id === productId);
         if (!product) return null;
@@ -1556,16 +1433,6 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         logout();
     }, [user, logout]);
 
-    const softDeleteMessage = useCallback(async (id: string) => {
-        if (!user) return;
-        const { error } = await supabase.from('messages').update({ deleted_at: new Date().toISOString() }).eq('id', id).eq('sender_id', user.id);
-        if (error) {
-            console.error("Message soft delete failed:", error);
-            addToast("Failed to delete message", "error");
-        }
-        invalidate(`messages:${user.id}`);
-    }, [user, addToast]);
-
     const reportUser = useCallback(async (reportedId: string, reason: string, details?: string) => {
         if (!user) return;
         const { error } = await supabase.from('reports').insert({
@@ -1581,33 +1448,6 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
             addToast("Report submitted successfully", "success");
         }
     }, [user, addToast]);
-
-    const addReaction = useCallback(async (messageId: string, emoji: string) => {
-        if (!user) return;
-        const { error } = await supabase.from('message_reactions').insert({
-            message_id: messageId,
-            user_id: user.id,
-            emoji
-        });
-        if (error && error.code !== '23505') { // Ignore duplicate reactions
-            console.error("Add reaction failed:", error);
-        }
-        // Bust cache so the next fetchMessages reflects the reaction immediately.
-        invalidate(`messages:${user.id}`);
-    }, [user]);
-
-    const removeReaction = useCallback(async (messageId: string, emoji: string) => {
-        if (!user) return;
-        const { error } = await supabase.from('message_reactions').delete().match({
-            message_id: messageId,
-            user_id: user.id,
-            emoji
-        });
-        if (error) {
-            console.error("Remove reaction failed:", error);
-        }
-        invalidate(`messages:${user.id}`);
-    }, [user]);
 
     const markNotificationRead = useCallback(async (id: string) => {
         await supabase.from('notifications').update({ read: true }).eq('id', id);
@@ -1708,17 +1548,15 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         requestReturn, addOrderNote, fetchOrderDetails, refreshCart, refreshBuyerReturns]);
 
     const commsValue: CommsSlice = useMemo(() => ({
-        notifications, unreadMessages, preloadedMessages,
+        notifications, unreadMessages,
         sellerInventory, sellerOrders, sellerOffers, sellerStats,
-        notify, fetchMessages, markMessagesAsRead, sendMessage, deleteMessage, softDeleteMessage,
-        reportUser, addReaction, removeReaction,
+        notify, refreshUnreadMessages, reportUser,
         markNotificationRead, markAllNotificationsRead, dismissNotification, deleteAllNotifications,
         refreshNotifications, refreshSellerData,
-    }), [notifications, unreadMessages, preloadedMessages,
+    }), [notifications, unreadMessages,
         sellerInventory, sellerOrders, sellerOffers, sellerStats,
-        notify, fetchMessages, markMessagesAsRead, sendMessage, deleteMessage, softDeleteMessage,
-        reportUser, addReaction, removeReaction,
-        markNotificationRead, markAllNotificationsRead, dismissNotification,
+        notify, refreshUnreadMessages, reportUser,
+        markNotificationRead, markAllNotificationsRead, dismissNotification, deleteAllNotifications,
         refreshNotifications, refreshSellerData]);
 
     // Legacy merged value — changes when any slice changes (same behavior

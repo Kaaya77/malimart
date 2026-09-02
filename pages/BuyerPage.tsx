@@ -16,7 +16,7 @@ import { formatTZS, CURRENCY } from '../constants';
 import { VendorProfile, Order, Offer, Product } from '../types';
 import { BuyerOrders } from '../components/BuyerOrders';
 import { BuyerDashboard } from '../components/BuyerDashboard';
-import { MessagingHub } from '../components/messaging/MessagingHub';
+import { MessagingHub, MessageContext } from '../components/messaging/MessagingHub';
 import { ProductCard } from '../components/ProductCard';
 import { BuyerSettingsPage } from './BuyerSettingsPage';
 import { BuyerReturns } from '../components/BuyerReturns';
@@ -397,6 +397,22 @@ const PageHeader = ({ activeTab }: { activeTab: any }) => {
  );
 };
 
+// The reference a "Contact seller" link carries into the inbox. handleContactSeller
+// writes either productId, or contextType/contextId for an order or return; the
+// bare orderId key is kept for older links and notifications still in the wild.
+const buildMessageContext = (params: URLSearchParams): MessageContext | null => {
+ const productId = params.get('productId');
+ if (productId) return { type: 'product', id: productId };
+ const ctxType = params.get('contextType');
+ const ctxId = params.get('contextId');
+ if (ctxType && ctxId && (ctxType === 'order' || ctxType === 'return')) {
+  return { type: ctxType, id: ctxId, label: params.get('contextLabel') || undefined };
+ }
+ const orderId = params.get('orderId');
+ if (orderId) return { type: 'order', id: orderId };
+ return null;
+};
+
 export const BuyerPage = () => {
  const { user, orders, cancelOrder, deleteOrder, addToCart, fetchVendorProfile, wishlist, toggleWishlist, followers, unfollowSeller, unreadMessages } = useAppState();
  const { addToast } = useToast();
@@ -568,8 +584,12 @@ export const BuyerPage = () => {
  )}
 
  {tab==='inbox' && (
- <MessagingHub userId={user.id} initialSellerId={searchParams.get('sellerId')}
- initialProductId={searchParams.get('productId')} initialOrderId={searchParams.get('orderId')} />
+ <MessagingHub
+ role="buyer"
+ userId={user.id}
+ initialPeerId={searchParams.get('sellerId')}
+ initialContext={buildMessageContext(searchParams)}
+ />
  )}
 
  {tab==='offers' && <BuyerOffers/>}

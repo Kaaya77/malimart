@@ -396,10 +396,17 @@ export const SellerPage = () => {
                 )}
 
                 {tab === 'messages' && (
-                  <MessagingHub userId={user.id} selectedChatUser={selectedChatUser}
-                    setSelectedChatUser={setSelectedChatUser} products={products}
-                    initialProductId={selectedProductId} initialOrderId={selectedOrderId}
-                    initialChatUser={selectedChatUser} />
+                  <MessagingHub
+                    role="seller"
+                    userId={user.id}
+                    initialPeerId={selectedChatUser}
+                    initialContext={
+                      selectedProductId ? { type: 'product', id: selectedProductId }
+                      : selectedOrderId ? { type: 'order', id: selectedOrderId }
+                      : null
+                    }
+                    onPeerChange={setSelectedChatUser}
+                  />
                 )}
 
                 {tab === 'offers' && (
