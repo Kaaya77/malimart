@@ -285,39 +285,54 @@ export const Badge = ({ variant = 'default', className = '', ...props }: { varia
 };
 
 /**
- * Verified-seller marker.
+ * Verified seller mark.
  *
- * `iconOnly` drops the pill and the word "Verified" down to just the shield.
- * Use it inline next to a store name: the full pill is heavier than the name
- * it sits beside, so it read as the primary element and buried the shop.
+ * A solid scalloped seal rather than a stroked shield outline. A generic
+ * outline icon reads as a status glyph; a filled rosette with a crisp check is
+ * the visual language buyers already associate with verification, and it holds
+ * up at 14-16px where thin strokes go muddy.
  *
- * Callers used to shrink the pill with `scale-[0.65] origin-left -ml-0.5
- * -mr-1.5`. A CSS transform does NOT change layout size, so the element still
- * reserved its full-size box and those negative margins were clawing back
- * phantom space — which drifted out of sync at different font sizes. The
- * icon-only variant is genuinely small, so it needs no compensation.
+ * The rosette path is generated geometrically (12 lobes, smoothed with
+ * quadratic curves) rather than lifted from another product's mark.
+ *
+ * Deliberately NOT accent-tinted: this is a trust signal and should mean the
+ * same thing, and look the same, whatever theme the user picked. Gradient ids
+ * are suffixed per instance so several badges on one page cannot collide in
+ * the SVG id namespace.
  */
+const VERIFIED_ROSETTE = 'M 12.00 0.80 Q 14.41 3.02 16.00 2.66 Q 17.60 2.30 18.09 3.86 Q 18.58 5.42 20.14 5.91 Q 21.70 6.40 21.34 8.00 Q 20.98 9.59 22.09 10.80 Q 23.20 12.00 22.09 13.20 Q 20.98 14.41 21.34 16.00 Q 21.70 17.60 20.14 18.09 Q 18.58 18.58 18.09 20.14 Q 17.60 21.70 16.00 21.34 Q 14.41 20.98 13.20 22.09 Q 12.00 23.20 10.80 22.09 Q 9.59 20.98 8.00 21.34 Q 6.40 21.70 5.91 20.14 Q 5.42 18.58 3.86 18.09 Q 2.30 17.60 2.66 16.00 Q 3.02 14.41 1.91 13.20 Q 0.80 12.00 1.91 10.80 Q 3.02 9.59 2.66 8.00 Q 2.30 6.40 3.86 5.91 Q 5.42 5.42 5.91 3.86 Q 6.40 2.30 8.00 2.66 Q 9.59 3.02 10.80 1.91 Q 12.00 0.80 13.20 1.91 Z';
+
+let verifiedSeq = 0;
+
 export const VerifiedBadge = ({
  className = '',
  iconOnly = false,
 }: { className?: string; iconOnly?: boolean }) => {
- if (iconOnly) {
- return (
- <ShieldCheck
- role="img"
- aria-label="Verified seller"
- // <title> so it is discoverable on hover as well as to screen readers.
- // shrink-0 keeps it from being squashed by a truncating sibling.
- className={`w-3.5 h-3.5 shrink-0 stroke-[2.5] text-blue-600 dark:text-blue-400 ${className}`}
- >
+ const gid = React.useMemo(() => `mm-verified-${++verifiedSeq}`, []);
+
+ const Seal = ({ size }: { size: string }) => (
+ <svg viewBox="0 0 24 24" role="img" aria-label="Verified seller" className={`${size} shrink-0`}>
  <title>Verified seller</title>
- </ShieldCheck>
+ <defs>
+ <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
+ <stop offset="0%" stopColor="#3b9df7" />
+ <stop offset="100%" stopColor="#1d6fd0" />
+ </linearGradient>
+ </defs>
+ <path d={VERIFIED_ROSETTE} fill={`url(#${gid})`} />
+ {/* Top highlight so it reads as a struck medal rather than a flat sticker. */}
+ <path d={VERIFIED_ROSETTE} fill="white" opacity="0.16" transform="translate(0 -0.55) scale(1 0.5)" />
+ <path d="M8.2 12.3 L10.9 15 L16 9.6" fill="none" stroke="white" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+ </svg>
  );
+
+ if (iconOnly) {
+ return <span className={`inline-flex ${className}`}><Seal size="w-4 h-4" /></span>;
  }
 
  return (
- <div className={`inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest ${className}`}>
- <ShieldCheck className="w-3.5 h-3.5 stroke-[2.5]" />
+ <div className={`inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300 px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest ${className}`}>
+ <Seal size="w-3.5 h-3.5" />
  Verified
  </div>
  );

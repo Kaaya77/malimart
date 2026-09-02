@@ -256,8 +256,15 @@ export const BuyerMessages = ({ userId, initialSellerId, initialProductId, initi
   const handleSend = async (e?: React.FormEvent) => {
     if (!rateLimit('send_message', 15)) { addToast('Slow down', 'error'); return; }
     if (e) e.preventDefault();
-    if (!selectedSeller || (!msgText.trim() && !attachment)) return;
-    const text = msgText;
+    if (!msgText.trim() && !attachment) {
+      // Whitespace-only: reset so the placeholder returns instead of leaving
+      // an invisible, non-empty value that reads as a broken input.
+      setMsgText('');
+      if (textareaRef.current) textareaRef.current.style.height = 'auto';
+      return;
+    }
+    if (!selectedSeller) return;
+    const text = msgText.trim();
     const refProductId = contextProduct?.id;
     const refOrderId = contextOrder?.id;
     const refAttachment = attachment || undefined;
@@ -288,10 +295,10 @@ export const BuyerMessages = ({ userId, initialSellerId, initialProductId, initi
     finally { setIsUploading(false); }
   };
 
-  const handleMagicPolish = async () => {
-    if (!msgText.trim()) return;
+  const handleMagicPolish = async (toneOverride?: 'professional' | 'persuasive' | 'friendly') => {
+    if (!msgText.trim()) { addToast('Type a message first, then pick a tone', 'info'); return; }
     setIsPolishing(true);
-    const refined = await aiService.refineMessage(msgText, magicTone);
+    const refined = await aiService.refineMessage(msgText, toneOverride ?? magicTone);
     setMsgText(refined);
     setIsPolishing(false);
     addToast('Draft polished', 'success');
@@ -635,7 +642,7 @@ export const BuyerMessages = ({ userId, initialSellerId, initialProductId, initi
                     {(['professional', 'persuasive', 'friendly'] as const).map(tone => (
                       <button
                         key={tone}
-                        onClick={() => setMagicTone(tone)}
+                        onClick={() => { setMagicTone(tone); handleMagicPolish(tone); }}
                         className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase transition-all border
                           ${magicTone === tone ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm' : 'bg-background text-emerald-700 dark:text-emerald-300 border-transparent hover:border-emerald-300'}`}
                       >
@@ -678,11 +685,11 @@ export const BuyerMessages = ({ userId, initialSellerId, initialProductId, initi
                       setMsgText(e.target.value);
                       handleTyping();
                       e.target.style.height = 'auto';
-                      e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+                      e.target.style.height = Math.min(e.target.scrollHeight, 96) + 'px';
                     }}
                     onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
                     rows={1}
-                    className="w-full bg-transparent text-[13px] px-4 py-3 min-h-[44px] max-h-32 resize-none outline-none no-scrollbar placeholder:text-foreground/35 text-foreground"
+                    className="w-full bg-transparent text-[13px] px-4 py-3 min-h-[44px] max-h-24 resize-none outline-none overflow-y-auto placeholder:text-foreground/35 text-foreground"
                   />
                 </div>
 
@@ -691,6 +698,10 @@ export const BuyerMessages = ({ userId, initialSellerId, initialProductId, initi
                   type="submit"
                   variant="brand"
                   onClick={() => handleSend()}
+                  // Matches Seller/Admin, which already did this. Without it the
+                  // only feedback for a whitespace-only draft was an invisible
+                  // dead box.
+                  disabled={!msgText.trim() && !attachment}
                   className="h-11 w-11 p-0 rounded-xl flex items-center justify-center flex-shrink-0"
                   aria-label="Send"
                 >

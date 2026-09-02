@@ -270,7 +270,11 @@ export const SellerMessages = ({
   const handleSend = async (e?: React.FormEvent, textOverride?: string) => {
     if (!rateLimit('send_message', 15)) { addToast('Slow down', 'error'); return; }
     if (e) e.preventDefault();
-    const text = textOverride || newMsg;
+    const text = (textOverride || newMsg).trim();
+    // Whitespace-only via the Enter key (the button is disabled, the keyboard
+    // is not): reset so the placeholder returns instead of leaving an
+    // invisible, non-empty value that looks like a broken input.
+    if (!text && !attachment) { setNewMsg(''); return; }
     if (!selectedChatUser || (!text.trim() && !attachment)) return;
     await sendMessage(selectedChatUser, sanitizeText(text), undefined, undefined, attachment || undefined, replyingTo?.id);
     setNewMsg('');
@@ -297,10 +301,10 @@ export const SellerMessages = ({
     finally { setIsUploading(false); }
   };
 
-  const handleMagicPolish = async () => {
-    if (!newMsg.trim()) return;
+  const handleMagicPolish = async (toneOverride?: 'professional' | 'persuasive' | 'friendly') => {
+    if (!newMsg.trim()) { addToast('Type a message first, then pick a tone', 'info'); return; }
     setIsPolishing(true);
-    const refined = await aiService.refineMessage(newMsg, magicTone);
+    const refined = await aiService.refineMessage(newMsg, toneOverride ?? magicTone);
     setNewMsg(refined);
     setIsPolishing(false);
     addToast('Draft polished by AI', 'success');
@@ -650,7 +654,7 @@ export const SellerMessages = ({
                     {(['professional', 'persuasive', 'friendly'] as const).map(tone => (
                       <button
                         key={tone}
-                        onClick={() => setMagicTone(tone)}
+                        onClick={() => { setMagicTone(tone); handleMagicPolish(tone); }}
                         className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase transition-all border
                           ${magicTone === tone ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm' : 'bg-background text-emerald-700 dark:text-emerald-300 border-transparent hover:border-emerald-300'}`}
                       >
@@ -701,11 +705,11 @@ export const SellerMessages = ({
                       setNewMsg(e.target.value);
                       handleTyping();
                       e.target.style.height = 'auto';
-                      e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+                      e.target.style.height = Math.min(e.target.scrollHeight, 96) + 'px';
                     }}
                     onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
                     rows={1}
-                    className="w-full bg-transparent text-[13px] px-4 py-3 min-h-[44px] max-h-32 resize-none outline-none no-scrollbar placeholder:text-foreground/35 text-foreground disabled:opacity-50"
+                    className="w-full bg-transparent text-[13px] px-4 py-3 min-h-[44px] max-h-24 resize-none outline-none overflow-y-auto placeholder:text-foreground/35 text-foreground disabled:opacity-50"
                   />
                 </div>
 
