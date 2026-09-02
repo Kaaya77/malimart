@@ -12,7 +12,7 @@ import { OrderDetailsModal } from './OrderDetailsModal';
 import { supabase } from '../services/supabaseClient';
 import { compressImage, IMMUTABLE_CACHE } from '../services/imageCompression';
 import { VendorProfile, ChatMessage, Product, Order } from '../types';
-import { SidebarContainer, ChatAreaContainer, DetailsAreaContainer } from './MessageShared';
+import { MessageContainer, SidebarContainer, ChatAreaContainer, DetailsAreaContainer } from './MessageShared';
 import {
   ConversationListItem, ChatEmptyState, DayDivider, isSameDay,
   MessageBubble, TypingIndicator, NewConversationModal,
@@ -363,7 +363,7 @@ export const BuyerMessages = ({ userId, initialSellerId, initialProductId, initi
   const currentVendor = selectedSeller ? vendorList.find(v => v.seller_id === selectedSeller) : null;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-12 gap-0 h-[calc(100vh-7rem)] min-h-[520px] max-h-[900px] overflow-hidden bg-background border border-foreground/8 rounded-2xl shadow-sm animate-in fade-in duration-300">
+    <MessageContainer>
       {/* ── Sidebar ── */}
       <SidebarContainer isVisible={!!selectedSeller}>
         <div className="p-4 border-b border-foreground/8 flex flex-col gap-3">
@@ -818,6 +818,6 @@ export const BuyerMessages = ({ userId, initialSellerId, initialProductId, initi
           setSelectedSeller(contact.id);
         }}
       />
-    </div>
+    </MessageContainer>
   );
 };
