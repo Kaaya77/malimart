@@ -63,7 +63,7 @@ export const ProductCardActions: React.FC<ProductCardActionsProps> = ({
  before:absolute before:-inset-1.5 before:content-[''] before:rounded-full
  ${isLiked
  ? 'bg-rose-500/95 text-white ring-rose-400/30 shadow-rose-500/30'
- : 'bg-white/90 dark:bg-black/70 text-foreground/70 hover:text-rose-500 ring-black/15 dark:ring-white/15 hover:bg-white dark:hover:bg-black'}`}
+ : 'bg-black/55 text-white hover:bg-black/70 hover:text-rose-300 ring-white/20'}`}
  >
  <Heart className={`w-3.5 h-3.5 ${isLiked ? 'fill-current stroke-none' : 'stroke-[2.2]'}`} />
  </button>
@@ -102,7 +102,7 @@ export const ProductCardActions: React.FC<ProductCardActionsProps> = ({
  before:absolute before:-inset-y-1.5 before:-inset-x-1 before:content-[''] before:rounded-full
  ${isAdding
  ? 'bg-emerald-600 text-white'
- : 'bg-white/95 dark:bg-black/85 text-foreground backdrop-blur-md ring-1 ring-black/15 dark:ring-white/10'}`}
+ : 'bg-black/65 text-white backdrop-blur-md ring-1 ring-white/20'}`}
  >
  {isAdding
  ? <><Check className="w-3.5 h-3.5 stroke-[2.5]" /> Added</>
