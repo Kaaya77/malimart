@@ -244,8 +244,16 @@ export const ProductPage = () => {
  { id: 'shipping', label: 'Shipping & Returns' },
  ];
 
+ // Bottom padding is driven by the bar's MEASURED height
+ // (--mm-bottom-obstruction, published by useBottomObstruction on the sticky
+ // bar itself) rather than a hardcoded 6rem kept in sync by hand. The last
+ // section of the page now always stops short of the bar instead of ending
+ // underneath it.
  return (
- <div className="min-h-screen bg-background text-foreground pt-24 pb-[calc(6rem+env(safe-area-inset-bottom))] lg:pb-20">
+ <div
+ className="min-h-screen bg-background text-foreground pt-24 lg:pb-20"
+ style={{ paddingBottom: 'calc(var(--mm-bottom-obstruction, 58px) + 1.5rem + env(safe-area-inset-bottom))' }}
+ >
  <div className="container mx-auto px-4 md:px-8 max-w-7xl">
 
  {/* Breadcrumb / Back */}
@@ -329,11 +337,22 @@ export const ProductPage = () => {
  </>
  )}
 
- {/* Mobile dots */}
+ {/* Mobile dots.
+ These sit ON the photo, so they cannot use theme tokens: bg-foreground
+ INVERTS, and in dark mode painted near-white dots onto a pale product
+ photo. Pinned to white on a dark translucent track, which reads on any
+ image in either theme. The track also gives them an edge so they look
+ like a control rather than specks on the picture. */}
  {images.length > 1 && (
- <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 md:hidden">
+ <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 md:hidden px-2 py-1.5 rounded-full bg-black/45 backdrop-blur-sm ring-1 ring-white/15">
  {images.map((_, i) => (
- <button key={i} aria-label={`Image ${i + 1}`} onClick={e => { e.stopPropagation(); setActiveImage(i); }} className={`h-1.5 rounded-full transition-all ${i === activeImage ? 'w-5 bg-foreground' : 'w-1.5 bg-foreground/30'}`} />
+ <button
+ key={i}
+ aria-label={`Image ${i + 1}`}
+ aria-current={i === activeImage}
+ onClick={e => { e.stopPropagation(); setActiveImage(i); }}
+ className={`h-1.5 rounded-full transition-all ${i === activeImage ? 'w-5 bg-white' : 'w-1.5 bg-white/45'}`}
+ />
  ))}
  </div>
  )}
@@ -471,7 +490,13 @@ export const ProductPage = () => {
  <span className="w-8 text-center text-sm font-black tabular-nums" aria-live="polite">{qty}</span>
  <button aria-label="Increase quantity" onClick={() => setQty(Math.min(metrics.stock, qty + 1))} disabled={qty >= metrics.stock} className="w-10 h-10 rounded-xl flex items-center justify-center text-foreground/50 hover:bg-foreground/[0.06] hover:text-foreground transition-colors disabled:opacity-30 font-bold">+</button>
  </div>
- <Button size="lg" className="flex-1" onClick={handleAdd} disabled={metrics.isOut || onVacation || isOwnProduct}>
+ {/* Hidden below lg: the sticky bar already carries Add to Cart on
+ mobile, so rendering it here too put THREE buy actions on one
+ screen (this, Buy Now, and the sticky bar) with no hierarchy.
+ The quantity stepper stays — it is the reason this row exists,
+ and the sticky bar has no stepper of its own. Desktop has no
+ sticky bar, so it keeps the button. */}
+ <Button size="lg" className="hidden lg:flex flex-1" onClick={handleAdd} disabled={metrics.isOut || onVacation || isOwnProduct}>
  {isAdding ? (<><Check className="w-4 h-4 mr-2 stroke-[3]" /> Added</>) : isOwnProduct ? 'Your Own Listing' : metrics.isOut ? 'Out of Stock' : onVacation ? 'Store on Vacation' : (<><ShoppingBag className="w-4 h-4 mr-2 stroke-[2.2]" /> Add to Cart</>)}
  </Button>
  </div>
@@ -682,19 +707,31 @@ export const ProductPage = () => {
  </div>
 
  {/* ── Sticky mobile CTA ──────────────────────────────────────── */}
- <div ref={stickyBarRef} className="fixed bottom-0 inset-x-0 z-[60] lg:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
- <div className="mx-3 mb-3 flex gap-2.5">
+ {/* A real chrome layer, not two buttons floating over the page.
+ It used to be a transparent `fixed` container holding a detached pill
+ at mx-3 mb-3, so page content scrolled visibly BETWEEN and behind the
+ buttons — reading as content being clipped at every scroll position
+ rather than passing cleanly under a defined bar. An opaque, blurred,
+ full-width surface with a top border gives the bottom zone one edge,
+ and makes the heart + CTA read as one control instead of two floaters
+ with uneven gaps. */}
+ <div
+ ref={stickyBarRef}
+ className="fixed bottom-0 inset-x-0 z-[60] lg:hidden bg-background/95 backdrop-blur-xl border-t border-foreground/10 shadow-[0_-8px_24px_-12px_rgba(0,0,0,0.25)]"
+ style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+ >
+ <div className="flex items-center gap-2.5 px-3 py-2.5">
  <button
  aria-label={isLiked ? 'Remove from wishlist' : 'Add to wishlist'}
  onClick={() => { toggleWishlist(product); addToast(isLiked ? 'Removed from wishlist' : 'Saved to wishlist', 'success'); }}
- className={`w-14 h-14 rounded-2xl flex items-center justify-center border bg-background/96 backdrop-blur-xl transition-all active:scale-95 shadow-lg ${isLiked ? 'border-rose-400/50 text-rose-500' : 'border-foreground/12 text-foreground/60'}`}
+ className={`w-12 h-12 shrink-0 rounded-xl flex items-center justify-center border transition-all active:scale-95 ${isLiked ? 'border-rose-400/50 text-rose-500 bg-rose-500/5' : 'border-foreground/12 text-foreground/60'}`}
  >
  <Heart className={`w-5 h-5 ${isLiked ? 'fill-current stroke-none' : 'stroke-[1.8]'}`} />
  </button>
  <button
  onClick={handleAdd}
  disabled={metrics.isOut || onVacation || isOwnProduct}
- className={`flex-1 h-14 rounded-2xl font-bold text-[13px] flex items-center justify-center gap-2.5 active:scale-[0.98] transition-all shadow-lg ${(metrics.isOut || onVacation || isOwnProduct) ? 'bg-foreground/10 text-foreground/35 cursor-not-allowed' : isAdding ? 'bg-emerald-600 text-white' : 'bg-emerald-500 text-white'}`}
+ className={`flex-1 min-w-0 h-12 rounded-xl font-bold text-[13px] flex items-center justify-center gap-2.5 active:scale-[0.98] transition-all ${(metrics.isOut || onVacation || isOwnProduct) ? 'bg-foreground/10 text-foreground/35 cursor-not-allowed' : isAdding ? 'bg-emerald-600 text-white' : 'bg-emerald-500 text-white'}`}
  >
  {isAdding ? (
  <><Check className="w-4 h-4 stroke-[2.5]" /> Added to Cart</>
