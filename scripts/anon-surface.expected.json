@@ -1,0 +1,271 @@
+{
+  "_comment": "Baseline of what an ANONYMOUS caller can read. Regenerate intentionally with: node scripts/anon-surface-audit.mjs --update. Any unreviewed drift here is a data-exposure change.",
+  "relations": {
+    "addresses": {
+      "status": "denied"
+    },
+    "carriers": {
+      "status": "readable-empty"
+    },
+    "cart_items": {
+      "status": "denied"
+    },
+    "carts": {
+      "status": "denied"
+    },
+    "categories": {
+      "status": "readable-rows",
+      "columns": [
+        "created_at",
+        "deleted_at",
+        "icon_url",
+        "id",
+        "image_url",
+        "is_active",
+        "name",
+        "parent_id",
+        "slug",
+        "sort_order",
+        "updated_at"
+      ]
+    },
+    "connected_accounts": {
+      "status": "denied"
+    },
+    "disputes": {
+      "status": "denied"
+    },
+    "hero_recommendations": {
+      "status": "readable-rows",
+      "columns": [
+        "approved_at",
+        "created_at",
+        "description",
+        "id",
+        "offer_text",
+        "price_display",
+        "product_id",
+        "status",
+        "title"
+      ]
+    },
+    "login_history": {
+      "status": "denied"
+    },
+    "messages": {
+      "status": "denied"
+    },
+    "moderation_logs": {
+      "status": "denied"
+    },
+    "notifications": {
+      "status": "denied"
+    },
+    "offers": {
+      "status": "readable-empty"
+    },
+    "order_items": {
+      "status": "denied"
+    },
+    "orders": {
+      "status": "denied"
+    },
+    "payment_methods": {
+      "status": "denied"
+    },
+    "payments": {
+      "status": "denied"
+    },
+    "payout_methods": {
+      "status": "denied"
+    },
+    "payouts": {
+      "status": "denied"
+    },
+    "platform_settings": {
+      "status": "denied"
+    },
+    "posts": {
+      "status": "readable-empty"
+    },
+    "product_appeals": {
+      "status": "readable-empty"
+    },
+    "product_variants": {
+      "status": "readable-rows",
+      "columns": [
+        "attributes",
+        "base_price",
+        "cost_price",
+        "created_at",
+        "deleted_at",
+        "id",
+        "image_url",
+        "is_active",
+        "low_stock_threshold",
+        "min_stock",
+        "price",
+        "product_id",
+        "sale_price",
+        "sku",
+        "stock",
+        "updated_at",
+        "vat_rate",
+        "weight"
+      ]
+    },
+    "products": {
+      "status": "readable-rows",
+      "columns": [
+        "attributes",
+        "badges",
+        "barcode",
+        "base_price",
+        "brand",
+        "category",
+        "category_id",
+        "condition",
+        "cost_price",
+        "created_at",
+        "deleted_at",
+        "description",
+        "dimensions",
+        "height",
+        "id",
+        "images",
+        "is_boosted",
+        "is_verified",
+        "latitude",
+        "length",
+        "location",
+        "longitude",
+        "low_stock_threshold",
+        "name",
+        "price",
+        "rating",
+        "region",
+        "review_count",
+        "sale_price",
+        "search_vector",
+        "seller_id",
+        "sku",
+        "slug",
+        "sort_order",
+        "status",
+        "stock",
+        "subcategory",
+        "tags",
+        "takedown_reason",
+        "updated_at",
+        "variants",
+        "vat_rate",
+        "warranty_period",
+        "weight",
+        "width"
+      ]
+    },
+    "profiles": {
+      "status": "readable-empty"
+    },
+    "public_profiles": {
+      "status": "readable-rows",
+      "columns": [
+        "avatar_url",
+        "bio",
+        "full_name",
+        "id",
+        "role"
+      ]
+    },
+    "public_recent_activity": {
+      "status": "readable-rows",
+      "columns": [
+        "city",
+        "price_at_purchase",
+        "product_id",
+        "product_images",
+        "product_name"
+      ]
+    },
+    "public_vendor_profiles": {
+      "status": "readable-rows",
+      "columns": [
+        "accent_color",
+        "auto_reply_message",
+        "avg_response_minutes",
+        "banner_cta_text",
+        "banner_cta_url",
+        "banner_headline",
+        "banner_subtext",
+        "banner_url",
+        "currency",
+        "custom_domain",
+        "delivery_fee",
+        "description",
+        "district",
+        "facebook_url",
+        "instagram_url",
+        "is_active",
+        "is_verified",
+        "language",
+        "logo_url",
+        "opening_hours",
+        "processing_time",
+        "rating",
+        "region",
+        "return_policy",
+        "seller_id",
+        "shipping_policy",
+        "social_links",
+        "store_name",
+        "store_policy",
+        "tags",
+        "total_sales",
+        "trust_score",
+        "vacation_mode",
+        "verification_level",
+        "warranty",
+        "website_url"
+      ]
+    },
+    "returns": {
+      "status": "denied"
+    },
+    "reviews": {
+      "status": "readable-empty"
+    },
+    "social_posts": {
+      "status": "readable-empty"
+    },
+    "staff_accounts": {
+      "status": "denied"
+    },
+    "trust_badges": {
+      "status": "readable-empty"
+    },
+    "user_sessions": {
+      "status": "denied"
+    },
+    "v_order_fulfillment_summary": {
+      "status": "denied"
+    },
+    "v_shipment_timeline": {
+      "status": "denied"
+    },
+    "vendor_documents": {
+      "status": "denied"
+    },
+    "vendor_profiles": {
+      "status": "readable-empty"
+    },
+    "wallet_transactions": {
+      "status": "denied"
+    },
+    "wishlist": {
+      "status": "denied"
+    },
+    "wishlist_items": {
+      "status": "denied"
+    }
+  }
+}

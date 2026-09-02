@@ -24,6 +24,13 @@ jobs:
       - name: Type check
         run: npx tsc --noEmit
 
+      - name: Anonymous API surface audit
+        # Fails if the public (unauthenticated) read surface drifts from
+        # scripts/anon-surface.expected.json. Read-only, and needs no secrets:
+        # the anon key is public by design. Regression test for the
+        # 2026-09-02 view-grant escalation.
+        run: node scripts/anon-surface-audit.mjs
+
       - name: Production build
         run: npx vite build
         env:

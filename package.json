@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "audit:anon": "node scripts/anon-surface-audit.mjs",
+    "audit:rls": "echo \"Run against a DB: supabase db execute --file supabase/tests/rls_invariants.sql\""
   },
   "dependencies": {
     "@google/genai": "^1.33.0",
