@@ -33,6 +33,31 @@
   --mm-bottom-obstruction: 58px;
 }
 
+/* THEME FLASH FIX.
+ *
+ * `color-scheme` was never declared at the root — only inside `.dark select`.
+ * Without it the browser paints its own canvas (the area behind//beyond the
+ * body, the scrollbars, and any gap during a route swap) using the LIGHT
+ * default, even with .dark applied. Navigating Bag -> Explore flashed white
+ * for exactly one frame while the incoming lazy route mounted and the body
+ * had not yet grown to fill the viewport.
+ *
+ * Declaring it makes the UA paint its canvas in the right scheme, and also
+ * fixes form controls and scrollbars for free. The html element is painted
+ * too, so the canvas is never left showing through.
+ */
+:root {
+  color-scheme: light;
+}
+
+:root.dark {
+  color-scheme: dark;
+}
+
+html {
+  background-color: hsl(var(--background));
+}
+
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Playfair Display", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;

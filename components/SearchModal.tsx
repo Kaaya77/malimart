@@ -28,7 +28,7 @@ const RECENT_KEY = 'malimart:recent-searches';
  * Mobile-first full-screen search.
  *
  * No giant editorial heading (the previous version had a 7xl placeholder
- * input â€” looked dated, wasted vertical space on mobile).
+ * input — looked dated, wasted vertical space on mobile).
  *
  * Structure:
  * - Compact pill input at top with close button
@@ -74,7 +74,7 @@ export const SearchModal = ({
    return () => { cancelled = true; };
  }, [debouncedQuery]);
 
- // AI intent parsing â€” interprets natural language queries
+ // AI intent parsing — interprets natural language queries
  const [aiIntent, setAiIntent] = useState<{ keywords: string; note: string; maxPrice?: number } | null>(null);
  const aiIntentTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
  const lastParsedQuery = useRef('');
@@ -230,7 +230,7 @@ export const SearchModal = ({
  <input
  ref={searchInputRef}
  type="text"
- placeholder="Search products, brands, sellersâ€¦"
+ placeholder="Search products…"
  value={searchQuery}
  onChange={e => setSearchQuery(e.target.value)}
  className="w-full h-12 pl-11 pr-12 rounded-xl bg-foreground/[0.04] text-foreground text-[15px] font-medium placeholder:text-foreground/40 focus:outline-none focus:bg-foreground/[0.07] transition-colors"
@@ -264,7 +264,7 @@ export const SearchModal = ({
  <div className="px-4 md:px-5 py-4">
  {serverSearching ? (
  <div className="flex items-center justify-center py-12 text-foreground/45">
- <Loader2 className="w-5 h-5 animate-spin mr-2" /> Searchingâ€¦
+ <Loader2 className="w-5 h-5 animate-spin mr-2" /> Searching…
  </div>
  ) : liveResults.length === 0 ? (
  <div className="text-center py-12">

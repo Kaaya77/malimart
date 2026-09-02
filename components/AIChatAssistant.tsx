@@ -395,6 +395,7 @@ export const AIChatAssistant = () => {
   const _pick = <T,>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
   const greeting = firstName ? _pick(_greetWithName)(firstName, animalInfo) : _pick(_greetNoName)(animalInfo);
 
+  const [scrolledAway, setScrolledAway] = useState(false);
   const [isOpen, setIsOpen]         = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [messages, setMessages]     = useState<Msg[]>([
@@ -763,12 +764,36 @@ RESPONSE FORMAT:
     return prev.role !== curr.role || curr.ts - prev.ts > 60_000;
   };
 
+  // Auto-hide while scrolling DOWN, restore on scroll-up or when scrolling
+  // stops. The safe-zone variable only helps against bars that declare
+  // themselves; it cannot know about ordinary page content the launcher
+  // happens to sit on top of — the "Secure Checkout" button on the bag, a
+  // category label on Explore. Getting out of the way whenever the user is
+  // actively moving through content fixes that everywhere at once, instead of
+  // per-page patching, and the launcher is never more than a flick away.
+  useEffect(() => {
+    let lastY = window.scrollY;
+    let idle: ReturnType<typeof setTimeout>;
+    const onScroll = () => {
+      const y = window.scrollY;
+      const dy = y - lastY;
+      // Small threshold so momentum jitter does not flicker it.
+      if (y > 120 && dy > 6) setScrolledAway(true);
+      else if (dy < -6) setScrolledAway(false);
+      lastY = y;
+      clearTimeout(idle);
+      idle = setTimeout(() => setScrolledAway(false), 900);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => { window.removeEventListener('scroll', onScroll); clearTimeout(idle); };
+  }, []);
+
   // â”€â”€ FAB â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (!isOpen) return (
     // Sits above whatever is pinned to the bottom (mobile nav, or a page's own
     // sticky CTA bar) via --mm-bottom-obstruction, rather than a hardcoded
     // 58px that assumed the nav was the only thing down there.
-    <div className="fixed bottom-[calc(var(--mm-bottom-obstruction,58px)+1rem)] right-4 md:bottom-6 md:right-4 z-[90]">
+    <div className={`fixed bottom-[calc(var(--mm-bottom-obstruction,58px)+1rem)] right-4 md:bottom-6 md:right-4 z-[90] transition-all duration-200 ease-out ${scrolledAway ? 'opacity-0 translate-y-6 pointer-events-none' : 'opacity-100 translate-y-0'}`}>
       <motion.button initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 300, damping: 18, delay: 0.3 }}
         whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.9 }}

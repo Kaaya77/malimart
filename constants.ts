@@ -141,3 +141,54 @@ export const TANZANIA_DISTRICTS: Record<string, string[]> = {
 export const MOBILE_MONEY_PROVIDERS = ['M-Pesa (Vodacom)', 'Tigo Pesa', 'Airtel Money', 'HaloPesa', 'Ezypesa (Zantel)', 'T-Pesa (TTCL)'];
 export const BANK_PROVIDERS = ['CRDB Bank', 'NMB Bank', 'Equity Bank', 'KCB Bank', 'Stanbic Bank', 'Standard Chartered', 'NBC', 'Absa Bank', 'Exim Bank'];
 export const SOCIAL_PLATFORMS = ['WhatsApp', 'Instagram', 'TikTok', 'Facebook', 'X (Twitter)', 'YouTube', 'LinkedIn'];
+/**
+ * Tidies free-text seller locations for display.
+ *
+ * Sellers type these by hand, so the raw values arrive like
+ * "Daresalaam,survey" — no space after the comma, inconsistent casing, and
+ * run-together place names. Rendering that verbatim made product cards look
+ * like they were showing unparsed database rows.
+ *
+ * Deliberately display-only: it does NOT rewrite what is stored, so a seller's
+ * own text is never silently altered, and search/filtering keeps matching the
+ * raw value.
+ *
+ *   "Daresalaam,survey"  -> "Dar es Salaam, Survey"
+ *   "DAR ES SALAAM"      -> "Dar es Salaam"
+ *   "arusha , njiro"     -> "Arusha, Njiro"
+ */
+const TZ_PLACE_FIXUPS: Record<string, string> = {
+  daressalaam: 'Dar es Salaam',
+  daresalaam: 'Dar es Salaam',
+  dsm: 'Dar es Salaam',
+  daressalam: 'Dar es Salaam',
+  // Small words that should stay lowercase inside a longer name.
+  es: 'es',
+  na: 'na',
+  la: 'la',
+};
+
+export const formatLocation = (raw?: string | null): string => {
+  if (!raw) return '';
+
+  return raw
+    .split(',')
+    .map(part => part.trim())
+    .filter(Boolean)
+    .map(part => {
+      const collapsed = part.replace(/\s+/g, ' ');
+      const key = collapsed.toLowerCase().replace(/\s+/g, '');
+      if (TZ_PLACE_FIXUPS[key]) return TZ_PLACE_FIXUPS[key];
+
+      return collapsed
+        .split(' ')
+        .map((word, i) => {
+          const lower = word.toLowerCase();
+          // Keep connecting words lowercase unless they lead the segment.
+          if (i > 0 && TZ_PLACE_FIXUPS[lower] === lower) return lower;
+          return lower.charAt(0).toUpperCase() + lower.slice(1);
+        })
+        .join(' ');
+    })
+    .join(', ');
+};

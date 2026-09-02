@@ -1,22 +1,60 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { LayoutGrid, Package, Tag } from 'lucide-react';
 import { CATEGORY_IMAGES, CATEGORY_EMOJIS } from './categoryConstants';
 
-// Honeycomb (Apple-Watch-style) column count by viewport width.
-const useHoneycombCols = () => {
-  const [cols, setCols] = useState(4);
-  useEffect(() => {
-    const calc = () => {
-      const w = window.innerWidth;
-      setCols(w < 380 ? 3 : w < 640 ? 4 : w < 1024 ? 6 : 8);
-    };
-    calc();
-    window.addEventListener('resize', calc);
-    return () => window.removeEventListener('resize', calc);
+// Bubble geometry, kept in sync with the Bubble markup below.
+const TILE = 88;        // w-[5.5rem]
+const GAP_SM = 8;       // gap-x-2
+const GAP_LG = 12;      // sm:gap-x-3
+const MAX_OFFSET = 22;  // the honeycomb half-step (translateX)
+
+/**
+ * Honeycomb layout, MEASURED rather than guessed.
+ *
+ * The old version picked columns from hardcoded viewport breakpoints
+ * (`w < 380 ? 3 : w < 640 ? 4 : ...`). Those numbers did not account for the
+ * tiles' fixed 88px width, the gaps, the page gutter, OR the ±22px translateX
+ * that offsets alternate rows — so a 4-column row is 376px wide and needs
+ * ~452px of viewport before it fits. The result was clipped tiles at 320px and
+ * again across 390-430px, i.e. most phones: the right-hand label ran off the
+ * screen edge instead of wrapping.
+ *
+ * Now: fit the columns to the measured container, then SHRINK the decorative
+ * offset to whatever slack is actually left over. Density is preserved and the
+ * row can never exceed its container.
+ */
+const useHoneycomb = () => {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [layout, setLayout] = useState({ cols: 3, offset: 0 });
+
+  const measure = useCallback(() => {
+    const avail = ref.current?.clientWidth ?? 0;
+    if (!avail) return;
+    const gap = avail >= 640 ? GAP_LG : GAP_SM;
+    const cols = Math.max(2, Math.min(8, Math.floor((avail + gap) / (TILE + gap))));
+    const rowWidth = TILE * cols + gap * (cols - 1);
+    // Half the leftover slack, capped at the design's half-step.
+    const offset = Math.max(0, Math.min(MAX_OFFSET, (avail - rowWidth) / 2));
+    setLayout(prev => (prev.cols === cols && prev.offset === offset ? prev : { cols, offset }));
   }, []);
-  return cols;
+
+  useEffect(() => {
+    measure();
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', measure);
+      return () => window.removeEventListener('resize', measure);
+    }
+    // Observes the container itself, so it stays correct when a sidebar or
+    // modal changes the available width without the viewport resizing.
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [measure]);
+
+  return { ref, ...layout };
 };
 
 const chunk = <T,>(arr: T[], size: number): T[][] => {
@@ -40,7 +78,7 @@ export const CategoriesTab: React.FC<CategoriesTabProps> = ({
   visibleCategories, categoryCounts, categoryThumbs = {}, searchQ, expandedCat,
   onSearchChange, onExpandCat, onViewDeals,
 }) => {
-  const cols = useHoneycombCols();
+  const { ref: honeycombRef, cols, offset } = useHoneycomb();
   const rows = chunk(visibleCategories, cols);
 
   const Bubble = ({ cat }: { cat: any }) => {
@@ -82,7 +120,7 @@ export const CategoriesTab: React.FC<CategoriesTabProps> = ({
     ) : (
       // Honeycomb bubble cluster (Apple-Watch style): each row is offset by half
       // a bubble from the last so the circles nest into a hex packing.
-      <div className="flex flex-col items-center gap-y-4 py-2">
+      <div ref={honeycombRef} className="flex flex-col items-center gap-y-4 py-2 overflow-hidden">
         {rows.map((row, ri) => (
           <div
             key={ri}
@@ -90,7 +128,7 @@ export const CategoriesTab: React.FC<CategoriesTabProps> = ({
             // Offset alternate rows by ±¼ cell around the centre axis so the
             // circles nest into a hex packing without the whole cluster leaning
             // right (a plain marginLeft on odd rows shifted everything sideways).
-            style={{ transform: rows.length > 1 ? `translateX(${ri % 2 === 1 ? '1.375rem' : '-1.375rem'})` : undefined }}
+            style={{ transform: rows.length > 1 && offset > 0 ? `translateX(${ri % 2 === 1 ? offset : -offset}px)` : undefined }}
           >
             {row.map((cat: any) => <Bubble key={cat.id} cat={cat} />)}
           </div>

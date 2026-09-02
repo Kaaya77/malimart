@@ -104,13 +104,22 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
                 disabled={!!appliedCoupon}
               />
             </div>
+            {/* Labelled, not a bare icon square. It was `w-12 p-0` with only an
+                arrow, and it is disabled until a code is typed — so at
+                disabled:opacity-50 over bg-foreground it read as an inert grey
+                tile rather than a button. The word carries the affordance;
+                aria-label covers the applied state where the icon changes. */}
             <Button
-              className="h-12 w-12 p-0 rounded-2xl bg-foreground text-background shadow-lg"
+              className="h-12 px-5 rounded-2xl bg-foreground text-background shadow-lg gap-2 shrink-0"
               onClick={onApplyCoupon}
               disabled={!!appliedCoupon || !couponCode}
               isLoading={validatingCoupon}
+              aria-label={appliedCoupon ? 'Coupon applied' : 'Apply coupon code'}
             >
-              {appliedCoupon ? <CheckCircle2 className="w-5 h-5" /> : <ArrowRight className="w-5 h-5" />}
+              {appliedCoupon ? <CheckCircle2 className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
+              <span className="text-xs font-black uppercase tracking-widest">
+                {appliedCoupon ? 'Applied' : 'Apply'}
+              </span>
             </Button>
           </div>
           {appliedCoupon && (

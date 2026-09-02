@@ -26,10 +26,10 @@ interface ProductModalProps {
 }
 
 /**
- * ProductModal â€” premium editorial redesign.
+ * ProductModal — premium editorial redesign.
  *
- * Mobile: stacked layout â€” full-bleed image â†’ content â†’ floating sticky CTA
- * Desktop: three-column â€” filmstrip thumbnails | main image (52%) | content panel
+ * Mobile: stacked layout — full-bleed image â†’ content â†’ floating sticky CTA
+ * Desktop: three-column — filmstrip thumbnails | main image (52%) | content panel
  *
  * Rules of Hooks: all hooks called unconditionally before any early return.
  */
@@ -464,7 +464,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
  : 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/25 active:bg-emerald-700'}`}
  >
  {isAdding ? (
- <span className="opacity-70">Addingâ€¦</span>
+ <span className="opacity-70">Adding…</span>
  ) : stats.isOut ? 'Out of stock' : (
  <>
  <ShoppingBag className="w-[17px] h-[17px] stroke-[2]" />
@@ -698,7 +698,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onC
  ? 'bg-foreground/10 text-foreground/40 cursor-not-allowed'
  : 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/25 hover:bg-emerald-700'}`}
  >
- {isAdding ? 'Addingâ€¦' : stats.isOut ? 'Out of stock' : (
+ {isAdding ? 'Adding…' : stats.isOut ? 'Out of stock' : (
  <>
  Add to bag
  <span className="opacity-55 font-medium text-[13px] tabular-nums">

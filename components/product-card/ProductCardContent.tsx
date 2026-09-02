@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Star, MapPin } from 'lucide-react';
 import { Product } from '../../types';
 import { VerifiedBadge } from '../UI';
-import { formatTZS } from '../../constants';
+import { formatTZS, formatLocation } from '../../constants';
 
 interface ProductCardContentProps {
  product: Product;
@@ -31,7 +31,7 @@ export const ProductCardContent: React.FC<ProductCardContentProps> = ({
  const isGrid = layout === 'grid';
  const reviewCount = product.review_count || 0;
  const rating = product.rating ? Number(product.rating).toFixed(1) : null;
- const sellerLocation = (product as any).seller_location || product.location;
+ const sellerLocation = formatLocation((product as any).seller_location || product.location);
 
  return (
  <div className={`flex flex-col ${isGrid ? 'pt-3 gap-1' : 'pt-2 px-1 gap-1.5 flex-1'}`}>
