@@ -164,7 +164,7 @@ export const CategoriesPage = () => {
     <div className="min-h-screen bg-background pt-16 md:pt-20 pb-[calc(5rem+env(safe-area-inset-bottom))]">
 
       {/* Hero */}
-      <div className="bg-foreground text-background px-5 md:px-8 pt-6 md:pt-10 pb-4 md:pb-0">
+      <div className="bg-foreground text-background px-4 md:px-8 pt-6 md:pt-10 pb-4 md:pb-0">
         <div className="container mx-auto max-w-7xl">
           <p className="text-[10px] uppercase tracking-[0.3em] text-background/40 font-bold mb-2 md:mb-3">Explore MaliMart</p>
           <h1 className="text-2xl md:text-5xl font-bold tracking-tight leading-tight mb-3 md:mb-4">

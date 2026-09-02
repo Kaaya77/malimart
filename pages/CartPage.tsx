@@ -286,7 +286,7 @@ export const CartPage = () => {
   // ── Main render ──────────────────────────────────────────────────────────
   return (
     <>
-      <div className="container mx-auto px-4 md:px-6 font-sans pt-20 md:pt-28 pb-[calc(5rem+env(safe-area-inset-bottom))]">
+      <div className="container mx-auto px-4 md:px-8 font-sans pt-20 md:pt-28 pb-[calc(5rem+env(safe-area-inset-bottom))]">
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-16 relative">
 
           {/* LEFT: Items by vendor */}

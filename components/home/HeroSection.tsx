@@ -228,7 +228,7 @@ export const HeroSection = ({
 
   if (featuredProducts.length === 0) {
     return (
-      <section className="pt-20 md:pt-28 pb-10 px-5 md:px-8">
+      <section className="pt-20 md:pt-28 pb-10 px-4 md:px-8">
         <div className="container mx-auto">
           <div className="aspect-[5/6] md:aspect-[16/9] rounded-3xl bg-foreground/5 animate-pulse" />
         </div>

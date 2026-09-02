@@ -41,7 +41,7 @@ export const ProductEditPage = () => {
   return (
     <div className="min-h-screen bg-background pt-16 md:pt-20 pb-10">
       {/* Slim back bar */}
-      <div className="container mx-auto max-w-7xl px-4 md:px-6">
+      <div className="container mx-auto max-w-7xl px-4 md:px-8">
         <button
           onClick={() => navigate(backUrl)}
           className="group inline-flex items-center gap-2 h-10 pl-2 pr-4 rounded-xl text-sm font-semibold text-foreground/55 hover:text-foreground hover:bg-foreground/[0.05] transition-all my-4"
@@ -55,7 +55,7 @@ export const ProductEditPage = () => {
 
       {/* Loading skeleton */}
       {loading && (
-        <div className="container mx-auto max-w-3xl px-4 md:px-6 space-y-4">
+        <div className="container mx-auto max-w-3xl px-4 md:px-8 space-y-4">
           {[1, 2, 3].map(i => (
             <div key={i} className="h-24 rounded-2xl bg-foreground/[0.04] animate-pulse"
               style={{ animationDelay: `${i * 80}ms` }} />

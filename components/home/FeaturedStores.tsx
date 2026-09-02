@@ -334,7 +334,7 @@ export const FeaturedStores: React.FC<FeaturedStoresProps> = ({ topShops, setAct
 
   return (
     <section className="py-10 md:py-16">
-      <div className="container mx-auto px-5 md:px-8 mb-6 flex items-end justify-between gap-4">
+      <div className="container mx-auto px-4 md:px-8 mb-6 flex items-end justify-between gap-4">
         <div>
           <p className="text-[10px] font-black uppercase tracking-[0.25em] text-foreground/35 mb-2">Sellers</p>
           <h2 className="font-sans text-2xl md:text-[2rem] font-bold tracking-tight text-foreground">

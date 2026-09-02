@@ -24,7 +24,7 @@ export const ProductGridSection = ({
  initial={{ opacity: 0, y: 12 }}
  animate={{ opacity: 1, y: 0 }}
  transition={{ duration: 0.4 }}
- className="container mx-auto px-5 md:px-8 py-12 md:py-16"
+ className="container mx-auto px-4 md:px-8 py-12 md:py-16"
  >
  <header className="flex items-end justify-between gap-4 mb-6 md:mb-8">
  <div>

@@ -36,7 +36,13 @@ export const StoreCard: React.FC<StoreCardProps> = React.memo(({ vendor, isFavor
         )}
         <button
           onClick={e => { e.stopPropagation(); onFavoriteToggle(); }}
-          className={`absolute top-3 right-3 w-8 h-8 rounded-full backdrop-blur-md flex items-center justify-center transition-all active:scale-90 ${isFavorite ? 'bg-rose-500 text-white' : 'bg-white/80 text-foreground/60 hover:text-rose-500'}`}
+          className={`absolute top-3 right-3 w-8 h-8 rounded-full backdrop-blur-md flex items-center justify-center transition-all active:scale-90 ${isFavorite
+              ? 'bg-rose-500 text-white'
+              // Was `bg-white/80 text-foreground/60`. The --foreground token
+              // INVERTS between themes, so in dark mode that painted a
+              // near-white icon onto a near-white chip. Pin both ends of this
+              // pair instead of mixing a fixed surface with a themed ink.
+              : 'bg-black/45 text-white hover:text-rose-400'}`}
         >
           <Heart className={`w-3.5 h-3.5 stroke-[2.5] ${isFavorite ? 'fill-current stroke-none' : ''}`} />
         </button>

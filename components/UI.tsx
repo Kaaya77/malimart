@@ -266,12 +266,44 @@ export const Badge = ({ variant = 'default', className = '', ...props }: { varia
  return <div className={`inline-flex items-center rounded-xl px-3 py-1 text-xs font-bold transition-all ${variants[variant]} ${className}`} {...props} />;
 };
 
-export const VerifiedBadge = ({ className = '' }: { className?: string }) => (
+/**
+ * Verified-seller marker.
+ *
+ * `iconOnly` drops the pill and the word "Verified" down to just the shield.
+ * Use it inline next to a store name: the full pill is heavier than the name
+ * it sits beside, so it read as the primary element and buried the shop.
+ *
+ * Callers used to shrink the pill with `scale-[0.65] origin-left -ml-0.5
+ * -mr-1.5`. A CSS transform does NOT change layout size, so the element still
+ * reserved its full-size box and those negative margins were clawing back
+ * phantom space — which drifted out of sync at different font sizes. The
+ * icon-only variant is genuinely small, so it needs no compensation.
+ */
+export const VerifiedBadge = ({
+ className = '',
+ iconOnly = false,
+}: { className?: string; iconOnly?: boolean }) => {
+ if (iconOnly) {
+ return (
+ <ShieldCheck
+ role="img"
+ aria-label="Verified seller"
+ // <title> so it is discoverable on hover as well as to screen readers.
+ // shrink-0 keeps it from being squashed by a truncating sibling.
+ className={`w-3.5 h-3.5 shrink-0 stroke-[2.5] text-blue-600 dark:text-blue-400 ${className}`}
+ >
+ <title>Verified seller</title>
+ </ShieldCheck>
+ );
+ }
+
+ return (
  <div className={`inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest ${className}`}>
  <ShieldCheck className="w-3.5 h-3.5 stroke-[2.5]" />
  Verified
  </div>
-);
+ );
+};
 
 // Shared empty state for dashboard tabs — keeps icon/copy/action treatment consistent.
 export const EmptyState = ({ icon: Icon, title, subtitle, action, className = '' }: { icon?: any, title: string, subtitle?: string, action?: ReactNode, className?: string }) => (

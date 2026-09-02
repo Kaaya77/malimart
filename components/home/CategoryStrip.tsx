@@ -297,7 +297,7 @@ export const CategoryStrip: React.FC = () => {
   return (
     <section className="pt-14 md:pt-20 pb-2">
       {/* Header */}
-      <div className="container mx-auto px-5 md:px-8 mb-6 md:mb-8 flex items-end justify-between gap-4">
+      <div className="container mx-auto px-4 md:px-8 mb-6 md:mb-8 flex items-end justify-between gap-4">
         <div>
           <p className="text-[10px] font-black uppercase tracking-[0.25em] text-foreground/55 mb-2">Explore</p>
           <h2 className="font-sans text-2xl md:text-[2rem] font-bold tracking-tight text-foreground">

@@ -14,7 +14,10 @@ interface ProductCardContentProps {
 
 /**
  * Product card text. Hierarchy:
- * 1. Eyebrow: SELLER · location (10px, semibold, tracking-wide, muted)
+ * 1. Eyebrow: shop name (11.5px, bold, foreground/80) · verified shield ·
+ *    location (10px, muted). The shop leads the row — buyers pick sellers
+ *    they recognise, and the old uppercase 10px/50% treatment made the name
+ *    the quietest thing in a row it was supposed to head.
  * 2. Title: product name (15px, semibold, 2-line clamp, tight tracking)
  * 3. Meta row: rating · review count (13px, muted)
  * 4. Price block: large price, strikethrough original, percent saved
@@ -32,20 +35,25 @@ export const ProductCardContent: React.FC<ProductCardContentProps> = ({
 
  return (
  <div className={`flex flex-col ${isGrid ? 'pt-3 gap-1' : 'pt-2 px-1 gap-1.5 flex-1'}`}>
- {/* Eyebrow: store + verified + location */}
- <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground/50 truncate">
+ {/* Eyebrow: store + verified + location.
+ The shop is the point of this row, so it carries the weight and contrast.
+ Verified is a bare shield — the full pill out-shouted the name it was
+ meant to endorse. Location drops back to a quiet trailing detail.
+ min-w-0 on the row lets the two truncating children actually truncate
+ instead of overflowing the card. */}
+ <div className="flex items-center gap-1.5 min-w-0">
  <button
  onClick={onStoreClick}
- className="hover:text-foreground transition-colors truncate"
+ className="text-[11.5px] font-bold tracking-tight text-foreground/80 hover:text-emerald-600 transition-colors truncate min-w-0"
  >
  {product.seller_name || 'Store'}
  </button>
- {product.is_verified && (
- <VerifiedBadge className="scale-[0.65] origin-left -ml-0.5 -mr-1.5 opacity-90" />
- )}
+
+ {product.is_verified && <VerifiedBadge iconOnly />}
+
  {sellerLocation && (
- <span className="flex items-center gap-0.5 text-foreground/40 truncate">
- <MapPin className="w-2.5 h-2.5 stroke-[2.5]" />
+ <span className="flex items-center gap-0.5 text-[10px] font-medium text-foreground/40 truncate min-w-0 shrink">
+ <MapPin className="w-2.5 h-2.5 shrink-0 stroke-[2.5]" />
  <span className="truncate">{sellerLocation}</span>
  </span>
  )}

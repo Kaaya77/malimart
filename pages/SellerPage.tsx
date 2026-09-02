@@ -305,7 +305,7 @@ export const SellerPage = () => {
       pb-[calc(5.5rem+env(safe-area-inset-bottom))]
       lg:pb-8 pt-[72px] lg:pt-[80px]">
 
-      <div className="container mx-auto max-w-7xl px-4 md:px-6">
+      <div className="container mx-auto max-w-7xl px-4 md:px-8">
         <div className="flex gap-8 pt-6">
 
           {/* Desktop sidebar */}

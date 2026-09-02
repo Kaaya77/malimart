@@ -13,7 +13,7 @@ const ITEMS = [
 ];
 
 export const TrustStrip: React.FC = () => (
-  <section className="container mx-auto px-5 md:px-8 py-10 md:py-14">
+  <section className="container mx-auto px-4 md:px-8 py-10 md:py-14">
     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
       {ITEMS.map((it, i) => {
         const Icon = it.icon;

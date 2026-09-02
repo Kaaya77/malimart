@@ -1,6 +1,26 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
 
+/* Make `dark:` follow the .dark CLASS instead of the OS media query.
+ *
+ * Tailwind v4 defaults `dark:` to @media (prefers-color-scheme: dark). This
+ * app does NOT theme by OS — it toggles a `.dark` class on <html> (see
+ * index.html's bootstrap, services/theme.ts applyTheme, and AppContext
+ * toggleTheme), and the design tokens below are scoped to `.dark` too.
+ *
+ * Without this line the app sat in two half-themes at once: token-driven
+ * colours (bg-background, text-foreground, border-foreground/10) followed the
+ * in-app toggle, while all 451 `dark:` utilities across 70 files followed the
+ * OS. Anyone whose OS theme differed from their chosen theme saw a mix of
+ * both — light chips on dark cards, invisible borders, washed-out text.
+ *
+ * Safe for OS-dark users: the inline bootstrap in index.html already adds
+ * `.dark` when localStorage is unset and the OS prefers dark, and applyTheme
+ * re-derives it for theme_mode 'system'. So the class is always an accurate
+ * reflection of the intended mode, never just an explicit user choice.
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Playfair Display", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;

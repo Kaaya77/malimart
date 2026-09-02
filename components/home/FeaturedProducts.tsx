@@ -30,7 +30,7 @@ export const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
       className="pt-12 md:pt-18 pb-2"
     >
       {/* Header */}
-      <div className="container mx-auto px-5 md:px-8 mb-6 md:mb-8 flex items-end justify-between gap-4">
+      <div className="container mx-auto px-4 md:px-8 mb-6 md:mb-8 flex items-end justify-between gap-4">
         <div>
           <div className="hidden md:flex items-center gap-2 mb-2">
             <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
