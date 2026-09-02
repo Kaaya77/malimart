@@ -7,7 +7,7 @@ import {
  Home, Store, LayoutGrid, UserCircle, User,
  Sun, Moon, BellRing, MessageCircle, LogOut,
  ChevronRight, Info, ArrowRight, Zap,
- Package, Settings, ShieldAlert
+ Package, Settings, ShieldAlert, Sparkles
 } from 'lucide-react';
 import { useAuth, useCart, useComms, useCatalog } from '../context/AppContext';
 import { supabase } from '../services/supabaseClient';
@@ -536,9 +536,15 @@ export const MobileBottomNav = () => {
  { id:'cats', label:'Explore', icon:LayoutGrid,path:'/categories' },
  { id:'cart', label:'Bag', icon:ShoppingBag,path:'/cart', badge:cartCount },
  { id:'me', label:(user||isLoading)?'Account':'Sign in', icon:UserCircle, path:accountPath, badge:unread },
+ // Mali lives IN the nav on mobile rather than as a floating launcher. A
+ // fixed FAB inevitably sits on top of whatever is beneath it — the checkout
+ // CTA, a category label, an order row — which is why it kept resurfacing as
+ // a bug on page after page. Docking gives it reserved space that page
+ // content already scrolls clear of. Desktop keeps the floating FAB.
+ { id:'mali', label:'Mali', icon:Sparkles, action:() => window.dispatchEvent(new CustomEvent('mali:open')) },
  ];
 
- const active = (path: string) => path==='/' ? location.pathname==='/' : location.pathname.startsWith(path);
+ const active = (path?: string) => !path ? false : path==='/' ? location.pathname==='/' : location.pathname.startsWith(path);
  const activeIdx = tabs.findIndex(t => active(t.path));
 
  // Hide the bottom tab bar on screens that own the bottom edge with their own
@@ -565,12 +571,12 @@ export const MobileBottomNav = () => {
      style={{ width: `${100/tabs.length}%`, left: `${activeIdx * (100/tabs.length)}%` }}
    />
  )}
- <div className="grid grid-cols-5 h-[58px]">
+ <div className="grid h-[58px]" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
  {tabs.map((t,i)=>{
  const Icon=t.icon;
  const on=active(t.path);
  return (
- <button key={t.id} onClick={()=>navigate(t.path)}
+ <button key={t.id} onClick={()=> (t as any).action ? (t as any).action() : navigate(t.path!)}
  aria-label={t.label} aria-current={on?'page':undefined}
  className={`relative z-10 flex flex-col items-center justify-center gap-0.5 transition-all active:scale-[0.88]
  ${on?'text-foreground':'text-foreground/35'}`}>

@@ -584,14 +584,55 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
     }, []);
 
     const fetchAndSetWishlist = useCallback(async (userId: string) => {
-        // Server wishlist takes over — discard any guest wishlist in localStorage.
+        // MERGE, don't discard. Saving while signed out toasts "sign in to keep
+        // it across devices", but this used to just delete the guest wishlist,
+        // so the promise was never kept. Adopt the guest items into the account
+        // first, then read the server list back.
+        let guest: any[] = [];
+        try { guest = JSON.parse(localStorage.getItem('mali_guest_wishlist') || '[]'); } catch {}
+
+        if (guest.length) {
+            const ids = Array.from(new Set(guest.map((p: any) => p?.id).filter(Boolean)));
+            if (ids.length) {
+                // Re-activate anything previously removed, then insert the rest.
+                // ignoreDuplicates keeps this safe if the row already exists.
+                await supabase.from('wishlist_items')
+                    .update({ deleted_at: null })
+                    .eq('user_id', userId)
+                    .in('product_id', ids);
+                await supabase.from('wishlist_items')
+                    .upsert(
+                        ids.map(pid => ({ user_id: userId, product_id: pid })),
+                        { onConflict: 'user_id,product_id', ignoreDuplicates: true }
+                    );
+            }
+        }
         try { localStorage.removeItem('mali_guest_wishlist'); } catch {}
+
         const { data } = await supabase.from('wishlist_items').select('product:products(*)').eq('user_id', userId).is('deleted_at', null);
         if (data) setWishlist(data.map((w: any) => w.product).filter(Boolean));
     }, []);
 
     const fetchAndSetCart = useCallback(async (userId: string) => {
-        // Server cart takes over — discard any guest cart that was in localStorage.
+        // Same problem as the wishlist, with money attached: a signed-out
+        // shopper who filled a bag lost the whole thing on sign-in. Merge the
+        // guest cart into the server cart before reading it back.
+        let guestCart: any[] = [];
+        try { guestCart = JSON.parse(localStorage.getItem('mali_guest_cart') || '[]'); } catch {}
+
+        for (const item of guestCart) {
+            if (!item?.id) continue;
+            try {
+                // upsert_cart_item get-or-creates the cart and merges quantities,
+                // so re-adding an item the account already has is safe.
+                await supabase.rpc('upsert_cart_item', {
+                    p_product_id: item.id,
+                    p_variant_id: item.variant_id ?? item.selectedVariant?.id ?? null,
+                    p_quantity:   Math.max(1, Number(item.quantity) || 1),
+                    p_price:      item.price_at_add ?? item.price ?? 0,
+                });
+            } catch { /* one bad line must not block sign-in */ }
+        }
         try { localStorage.removeItem('mali_guest_cart'); } catch {}
         const { data: cartData } = await supabase.from('carts').select('id, items:cart_items(*, product:products(id, name, price, images, stock, seller_id, variants:product_variants(*)))').eq('user_id', userId).single();
         if (cartData) {

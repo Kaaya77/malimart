@@ -496,11 +496,20 @@ export const AIChatAssistant = () => {
     };
     const onAsk = (e: Event) => ask((e as CustomEvent).detail?.q);
     window.addEventListener('mali:ask', onAsk);
+
+    // `mali:ask` requires a question and bails without one, so there was no way
+    // to just OPEN the panel from elsewhere. The mobile bottom nav needs
+    // exactly that — see the docked "Mali" tab in components/Navbar.tsx.
+    const onOpen = () => { setIsOpen(true); setIsMinimized(false); };
+    window.addEventListener('mali:open', onOpen);
     // The assistant mounts lazily (post-idle) — consume any ask dispatched
     // before the listener existed.
     const pending = (window as any).__maliPendingAsk;
     if (pending) { (window as any).__maliPendingAsk = null; ask(pending); }
-    return () => window.removeEventListener('mali:ask', onAsk);
+    return () => {
+      window.removeEventListener('mali:ask', onAsk);
+      window.removeEventListener('mali:open', onOpen);
+    };
   });
 
   const clearChat = () => {
@@ -793,7 +802,7 @@ RESPONSE FORMAT:
     // Sits above whatever is pinned to the bottom (mobile nav, or a page's own
     // sticky CTA bar) via --mm-bottom-obstruction, rather than a hardcoded
     // 58px that assumed the nav was the only thing down there.
-    <div className={`fixed bottom-[calc(var(--mm-bottom-obstruction,58px)+1rem)] right-4 md:bottom-6 md:right-4 z-[90] transition-all duration-200 ease-out ${scrolledAway ? 'opacity-0 translate-y-6 pointer-events-none' : 'opacity-100 translate-y-0'}`}>
+    <div className={`hidden md:block fixed md:bottom-6 md:right-4 z-[90] transition-all duration-200 ease-out ${scrolledAway ? 'opacity-0 translate-y-6 pointer-events-none' : 'opacity-100 translate-y-0'}`}>
       <motion.button initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 300, damping: 18, delay: 0.3 }}
         whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.9 }}
