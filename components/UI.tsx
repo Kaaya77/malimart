@@ -130,7 +130,20 @@ export const ToastProvider = ({ children }: { children?: ReactNode }) => {
   return (
     <ToastContext.Provider value={{ addToast }}>
       {children}
-      <div className="fixed bottom-6 right-4 z-[250] flex flex-col-reverse gap-2 items-end pointer-events-none w-full max-w-xs sm:max-w-sm">
+      {/* Toasts stack ABOVE everything pinned to the bottom-right.
+       *
+       * `bottom-6` put them 24px up, which on the product page landed them on
+       * the sticky Add-to-Cart bar, the seller / "Visit store" card and the
+       * wishlist button.
+       *
+       * Mobile: --mm-bottom-obstruction is the bottom nav (58px) or a page's
+       * own sticky bar. The Mali launcher sits at obstruction + 1rem and is
+       * 56px tall (w-14/h-14), so it occupies up to obstruction + 72px;
+       * 5.25rem (84px) clears it with a 12px gap.
+       * Desktop: no bottom nav and the launcher sits at bottom-6, so a flat
+       * 6rem clears it without inheriting the mobile nav allowance.
+       */}
+      <div className="fixed bottom-[calc(var(--mm-bottom-obstruction,58px)+5.25rem)] md:bottom-24 right-4 z-[250] flex flex-col-reverse gap-2 items-end pointer-events-none w-full max-w-xs sm:max-w-sm">
         <AnimatePresence mode="popLayout">
           {toasts.map(t => <ToastItem key={t.id} t={t} onDismiss={dismiss} />)}
         </AnimatePresence>
