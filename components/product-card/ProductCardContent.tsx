@@ -84,12 +84,19 @@ export const ProductCardContent: React.FC<ProductCardContentProps> = ({
  </h3>
 
  {/* Rating */}
+ {/* A bare "★ 5.0 (1)" reads as an established rating when it is one
+ person's opinion. Below a handful of reviews, spell the count out so the
+ sample size is unmistakable rather than looking inflated. */}
  {rating && (
  <div className="flex items-center gap-1 text-[11px] text-foreground/55">
  <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
  <span className="font-semibold text-foreground/70">{rating}</span>
  {reviewCount > 0 && (
- <span className="text-foreground/40">({reviewCount})</span>
+ <span className="text-foreground/40">
+ {reviewCount < 5
+ ? `(${reviewCount} review${reviewCount === 1 ? '' : 's'})`
+ : `(${reviewCount})`}
+ </span>
  )}
  </div>
  )}

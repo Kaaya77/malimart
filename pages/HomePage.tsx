@@ -108,7 +108,14 @@ const HomePage: React.FC = () => {
         itemVariants={itemVariants}
       />
 
-      {/* 2. Categories — real DB categories with real product counts */}
+      {/* 2. Trust strip — moved directly under the hero. Nationwide delivery,
+             buyer protection, easy returns and mobile money (M-Pesa / Tigo
+             Pesa / Airtel Money) are precisely the reassurances a first-time
+             buyer needs BEFORE deciding to browse, and it was buried at the
+             very bottom of the feed where new buyers never scrolled. */}
+      <TrustStrip />
+
+      {/* 3. Categories — real DB categories with real product counts */}
       <CategoryStrip />
 
       {/* 3. Featured / Boosted Products */}
@@ -175,8 +182,8 @@ const HomePage: React.FC = () => {
         </section>
       )}
 
-      {/* 10. Trust signals */}
-      <TrustStrip />
+      {/* Trust signals now sit under the hero (see above) rather than here at
+          the very bottom, so they are seen before the buying decision. */}
 
       <AnimatePresence>
         {activeStore && (

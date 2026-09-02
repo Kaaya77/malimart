@@ -89,12 +89,12 @@ const HeroCategoryCard: React.FC<{
       />
 
       {/* Layered gradients */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/45 to-transparent" />
       <motion.div
         className="absolute inset-0"
         animate={{ opacity: hovered ? 0.35 : 0 }}
         transition={{ duration: 0.4 }}
-        style={{ background: `linear-gradient(135deg, ${color}88 0%, transparent 60%)` }}
+        style={{ background: `linear-gradient(135deg, ${color}55 0%, transparent 60%)` }}
       />
 
       {/* Category label top-left */}
@@ -161,7 +161,7 @@ const MediumCategoryCard: React.FC<{
         className="absolute inset-0 w-full h-full object-cover"
         loading="lazy" decoding="async"
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/45 to-transparent" />
       <motion.div
         className="absolute inset-0"
         animate={{ opacity: hovered ? 0.4 : 0 }}
@@ -254,8 +254,8 @@ const MobileCategoryCard: React.FC<{
   >
     <div className="relative w-32 h-40 rounded-2xl overflow-hidden">
       <img src={img} alt={name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-active:scale-105" loading="lazy" decoding="async" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-transparent" />
-      <motion.div className="absolute inset-0" style={{ background: `linear-gradient(to top, ${color}88, transparent)` }} />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/45 to-transparent" />
+      <motion.div className="absolute inset-0" style={{ background: `linear-gradient(to top, ${color}55, transparent)` }} />
       <div className="absolute inset-x-0 bottom-0 p-3">
         <p className="font-bold text-white text-xs leading-tight line-clamp-2">{name}</p>
         {count != null && count > 0 && <p className="text-[9px] text-white/75 mt-0.5">{count}</p>}

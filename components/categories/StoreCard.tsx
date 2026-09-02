@@ -5,6 +5,32 @@ import { Star, Heart, Package, MapPin, Crown } from 'lucide-react';
 import { VerifiedBadge } from '../UI';
 import { VendorProfile } from '../../types';
 
+/**
+ * Deterministic identity for stores with no banner/logo.
+ *
+ * Most sellers have uploaded neither, and the old fallback was
+ * `from-emerald-500/10 to-foreground/10` — a near-invisible wash that read as
+ * a broken/blank image on the feed, which is corrosive on a marketplace.
+ * FeaturedStores' now-deleted bespoke cards had exactly this treatment; it was
+ * lost when both surfaces were consolidated onto this component.
+ *
+ * Hashed from the store name so a given store always gets the same colours.
+ */
+const STORE_GRADIENTS: [string, string][] = [
+  ['#10b981', '#059669'], ['#6366f1', '#4f46e5'], ['#f59e0b', '#d97706'],
+  ['#ec4899', '#db2777'], ['#14b8a6', '#0d9488'], ['#8b5cf6', '#7c3aed'],
+  ['#f97316', '#ea580c'], ['#06b6d4', '#0891b2'],
+];
+
+const gradientFor = (name: string): [string, string] => {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return STORE_GRADIENTS[Math.abs(hash) % STORE_GRADIENTS.length];
+};
+
+const initialsFor = (name: string) =>
+  name.trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?';
+
 interface StoreCardProps {
   vendor: VendorProfile;
   isFavorite: boolean;
@@ -23,6 +49,8 @@ interface StoreCardProps {
 
 export const StoreCard: React.FC<StoreCardProps> = React.memo(({ vendor, isFavorite, onFavoriteToggle, rank, onClick }) => {
   const navigate = useNavigate();
+  const name = vendor.store_name || 'Store';
+  const [g1, g2] = gradientFor(name);
 
   return (
     <motion.div
@@ -34,7 +62,26 @@ export const StoreCard: React.FC<StoreCardProps> = React.memo(({ vendor, isFavor
       <div className="aspect-[16/7] relative overflow-hidden bg-foreground/[0.04]">
         {vendor.banner_url
           ? <img src={vendor.banner_url} alt="" className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500" loading="lazy" decoding="async" />
-          : <div className="w-full h-full bg-gradient-to-br from-emerald-500/10 to-foreground/10" />
+          : (
+            <div
+              className="w-full h-full flex items-center justify-center relative overflow-hidden"
+              style={{ background: `linear-gradient(135deg, ${g1} 0%, ${g2} 100%)` }}
+            >
+              {/* Subtle dot texture so the panel reads as designed rather than
+                  as an image that failed to load. */}
+              <div
+                className="absolute inset-0 opacity-[0.12]"
+                style={{
+                  backgroundImage:
+                    'radial-gradient(circle at 20% 80%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)',
+                  backgroundSize: '36px 36px, 52px 52px',
+                }}
+              />
+              <span className="relative text-2xl font-black tracking-tight text-white/90">
+                {initialsFor(name)}
+              </span>
+            </div>
+          )
         }
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
         {rank && rank <= 3 && (
@@ -67,7 +114,7 @@ export const StoreCard: React.FC<StoreCardProps> = React.memo(({ vendor, isFavor
           <div className="w-12 h-12 rounded-2xl overflow-hidden bg-foreground/[0.06] border-2 border-background -mt-8 shrink-0 shadow-md">
             {vendor.logo_url
               ? <img src={vendor.logo_url} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
-              : <div className="w-full h-full flex items-center justify-center font-black text-lg text-foreground/40">{(vendor.store_name || '?')[0]}</div>
+              : <div className="w-full h-full flex items-center justify-center font-black text-sm text-white" style={{ background: `linear-gradient(135deg, ${g1} 0%, ${g2} 100%)` }}>{initialsFor(name)}</div>
             }
           </div>
           <div className="min-w-0 flex-1">
