@@ -18,12 +18,13 @@
  *    i.e. OUTSIDE the bubble, so in a narrow pane they rendered off the edge
  *    of the scroll container. They now sit inside the bubble's own column.
  */
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { VerifiedBadge, EmptyState } from '../UI';
 import {
   Pin, MessageSquare, Reply, Trash2, ShieldAlert, Smile, Check, CheckCheck,
   Paperclip, Archive, ArchiveRestore, Search, X, Loader2, UserCircle2,
-  Package, Tag, AlertCircle, RotateCcw, Clock,
+  Package, Tag, AlertCircle, RotateCcw, Clock, ArrowUpRight,
 } from 'lucide-react';
 import { searchMessagingContacts, Reaction, PeerRole } from '../../services/messagesService';
 import { formatTZS } from '../../constants';
@@ -132,8 +133,100 @@ export interface ConversationItem {
   isOnline?: boolean;
 }
 
+// ─── Row swipe / hold ────────────────────────────────────────────────────────
+
+/** Width of one revealed action button. Two of them = the full drawer. */
+const ACTION_W = 72;
+/** Past this much horizontal travel, the drawer snaps open on release. */
+const SNAP_AT = 32;
+/** Below this, treat the gesture as a vertical list scroll and let it go. */
+const AXIS_LOCK = 8;
+/** Hold this long to open the drawer without swiping. */
+const HOLD_MS = 480;
+
+/**
+ * Swipe-left / press-and-hold to reveal a row's actions.
+ *
+ * The pin and archive buttons were `opacity-0 group-hover:opacity-100` — on a
+ * phone there is no hover, so on the surface most of this app's users are on,
+ * they did not exist. This gives the same actions a touch affordance.
+ *
+ * The axis lock matters: the row lives inside a vertical scroller, so a
+ * gesture is only claimed once it is clearly more horizontal than vertical,
+ * and `touch-action: pan-y` on the row tells the browser the same thing.
+ */
+function useRowSwipe({ enabled }: { enabled: boolean }) {
+  const [dragX, setDragX] = useState(0);
+  const [revealed, setRevealed] = useState(false);
+  const start = useRef<{ x: number; y: number } | null>(null);
+  const axis = useRef<'undecided' | 'x' | 'y'>('undecided');
+  const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const width = ACTION_W * 2;
+
+  const close = useCallback(() => {
+    setRevealed(false);
+    setDragX(0);
+  }, []);
+
+  const open = useCallback(() => {
+    setRevealed(true);
+    setDragX(-width);
+    try { navigator.vibrate?.(12); } catch { /* not supported */ }
+  }, [width]);
+
+  const clearHold = () => {
+    if (holdTimer.current) { clearTimeout(holdTimer.current); holdTimer.current = null; }
+  };
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    if (!enabled) return;
+    const t = e.touches[0];
+    start.current = { x: t.clientX, y: t.clientY };
+    axis.current = 'undecided';
+    clearHold();
+    holdTimer.current = setTimeout(() => { if (axis.current !== 'x') open(); }, HOLD_MS);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (!enabled || !start.current) return;
+    const t = e.touches[0];
+    const dx = t.clientX - start.current.x;
+    const dy = t.clientY - start.current.y;
+
+    if (axis.current === 'undecided') {
+      if (Math.abs(dx) < AXIS_LOCK && Math.abs(dy) < AXIS_LOCK) return;
+      axis.current = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+      if (axis.current === 'x') clearHold();
+    }
+    if (axis.current !== 'x') { clearHold(); return; }
+
+    const base = revealed ? -width : 0;
+    // Left-swipe only, and never past the drawer's own width.
+    setDragX(Math.max(-width, Math.min(0, base + dx)));
+  };
+
+  const onTouchEnd = () => {
+    clearHold();
+    if (!enabled || axis.current !== 'x') { start.current = null; return; }
+    start.current = null;
+    if (dragX < -SNAP_AT) open(); else close();
+  };
+
+  useEffect(() => () => clearHold(), []);
+
+  return {
+    dragX,
+    revealed,
+    open,
+    close,
+    actionWidth: width,
+    handlers: { onTouchStart, onTouchMove, onTouchEnd, onTouchCancel: onTouchEnd },
+  };
+}
+
 export const ConversationListItem = ({
-  item, selected, pinned, archived, onSelect, onTogglePin, onToggleArchive,
+  item, selected, pinned, archived, onSelect, onTogglePin, onToggleArchive, onDelete,
 }: {
   item: ConversationItem;
   selected: boolean;
@@ -142,78 +235,138 @@ export const ConversationListItem = ({
   onSelect: () => void;
   onTogglePin?: (e: React.MouseEvent) => void;
   onToggleArchive?: (e: React.MouseEvent) => void;
+  /** Delete the whole conversation from my side. Enables the swipe action. */
+  onDelete?: () => void;
 }) => {
   const unread = item.unreadCount ?? 0;
+  const { dragX, revealed, close, handlers } = useRowSwipe({ enabled: !!(onToggleArchive || onDelete) });
+
+  const runAction = (fn?: (e: any) => void) => (e: React.MouseEvent) => {
+    e.stopPropagation();
+    close();
+    fn?.(e);
+  };
+
   return (
-    <div
-      className={`group relative rounded-2xl border transition-all
-        ${selected
-          ? 'border-emerald-500/40 bg-emerald-500/[0.08]'
-          : 'border-transparent hover:border-foreground/[0.08] hover:bg-foreground/[0.03]'
-        }`}
-    >
-      {/* Selected marker — an emerald spine rather than an inverted slab, so
-          the accent means the same thing in both themes. */}
-      {selected && (
-        <span className="absolute left-0 top-1/2 -translate-y-1/2 h-7 w-[3px] rounded-r-full bg-emerald-500" aria-hidden="true" />
-      )}
-      <button
-        onClick={onSelect}
-        aria-current={selected ? 'true' : undefined}
-        className="w-full text-left px-3 py-3 min-h-[68px] flex items-center gap-3 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
-      >
-        <PeerAvatar name={item.name} url={item.avatarUrl} online={item.isOnline} />
-
-        <span className="flex-1 min-w-0">
-          <span className="flex items-center gap-1.5 mb-0.5">
-            <span className={`truncate text-sm ${unread > 0 ? 'font-black text-foreground' : 'font-bold text-foreground/85'}`}>
-              {item.name}
-            </span>
-            {item.isVerified && <VerifiedBadge iconOnly size="w-3.5 h-3.5" />}
-            {pinned && <Pin className="w-3 h-3 shrink-0 text-emerald-600 dark:text-emerald-400" />}
-            {item.lastMessageAt && (
-              <span className={`ml-auto shrink-0 text-[10px] font-bold tabular-nums ${unread > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-foreground/35'}`}>
-                {relativeTime(item.lastMessageAt)}
-              </span>
-            )}
-          </span>
-          <span className="flex items-center gap-2">
-            <span className={`flex-1 truncate text-xs leading-snug ${unread > 0 ? 'text-foreground/75 font-semibold' : 'text-foreground/45 font-medium'}`}>
-              {item.lastMessage || item.subtitle || 'Start the conversation'}
-            </span>
-            {unread > 0 && (
-              <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-emerald-500 text-white text-[10px] font-black tabular-nums shrink-0">
-                {unread > 99 ? '99+' : unread}
-              </span>
-            )}
-          </span>
-        </span>
-      </button>
-
-      {/* Row actions. Sized to the 44px touch floor and always reachable by
-          keyboard, not hover-only. */}
-      {(onTogglePin || onToggleArchive) && (
-        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
-          {onTogglePin && (
-            <button
-              onClick={onTogglePin}
-              aria-label={pinned ? `Unpin ${item.name}` : `Pin ${item.name}`}
-              className="h-11 w-11 flex items-center justify-center rounded-2xl bg-background/90 border border-foreground/[0.08] text-foreground/45 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
-            >
-              <Pin className="w-3.5 h-3.5" />
-            </button>
-          )}
+    <div className="relative overflow-hidden rounded-2xl">
+      {/* Swipe/hold drawer, sitting behind the row. Revealed by dragging the
+          row left on touch, or by holding it — on a phone there is no hover,
+          so the pin/archive affordances above were desktop-only. */}
+      {(onToggleArchive || onDelete) && (dragX !== 0 || revealed) && (
+        <div className="absolute inset-y-0 right-0 flex items-stretch">
           {onToggleArchive && (
             <button
-              onClick={onToggleArchive}
+              onClick={runAction(onToggleArchive)}
+              tabIndex={revealed ? 0 : -1}
               aria-label={archived ? `Unarchive ${item.name}` : `Archive ${item.name}`}
-              className="h-11 w-11 flex items-center justify-center rounded-2xl bg-background/90 border border-foreground/[0.08] text-foreground/45 hover:text-foreground hover:border-foreground/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+              className="w-[72px] flex flex-col items-center justify-center gap-1 bg-foreground/[0.07] text-foreground/70 hover:bg-foreground/[0.12] transition-colors"
             >
-              {archived ? <ArchiveRestore className="w-3.5 h-3.5" /> : <Archive className="w-3.5 h-3.5" />}
+              {archived ? <ArchiveRestore className="w-4 h-4" /> : <Archive className="w-4 h-4" />}
+              <span className="text-[10px] font-black uppercase tracking-[0.1em]">
+                {archived ? 'Restore' : 'Archive'}
+              </span>
+            </button>
+          )}
+          {onDelete && (
+            <button
+              onClick={runAction(onDelete)}
+              tabIndex={revealed ? 0 : -1}
+              aria-label={`Delete conversation with ${item.name}`}
+              className="w-[72px] flex flex-col items-center justify-center gap-1 bg-rose-500 text-white hover:bg-rose-600 transition-colors"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span className="text-[10px] font-black uppercase tracking-[0.1em]">Delete</span>
             </button>
           )}
         </div>
       )}
+
+      <div
+        {...handlers}
+        style={{
+          transform: `translateX(${dragX}px)`,
+          // pan-y keeps vertical list scrolling native while we own the
+          // horizontal axis.
+          touchAction: 'pan-y',
+        }}
+        className={`group relative rounded-2xl border bg-background transition-[border-color]
+          ${dragX !== 0 || revealed ? 'rounded-r-none' : ''}
+          ${dragX === 0 ? 'duration-200' : 'duration-0'}
+          ${selected
+            ? 'border-emerald-500/40'
+            : 'border-transparent hover:border-foreground/[0.08]'
+          }`}
+      >
+        {/* Tint as an overlay, not as the row's own background: the row has to
+            stay opaque or the swipe drawer shows through it. */}
+        <span
+          aria-hidden="true"
+          className={`absolute inset-0 rounded-2xl pointer-events-none transition-colors duration-200
+            ${selected ? 'bg-emerald-500/[0.08]' : 'group-hover:bg-foreground/[0.03]'}`}
+        />
+        {/* Selected marker — an emerald spine rather than an inverted slab, so
+            the accent means the same thing in both themes. */}
+        {selected && (
+          <span className="absolute left-0 top-1/2 -translate-y-1/2 h-7 w-[3px] rounded-r-full bg-emerald-500" aria-hidden="true" />
+        )}
+        <button
+          onClick={() => { if (revealed) { close(); return; } onSelect(); }}
+          aria-current={selected ? 'true' : undefined}
+          className="w-full text-left px-3 py-3 min-h-[68px] flex items-center gap-3 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+        >
+          <PeerAvatar name={item.name} url={item.avatarUrl} online={item.isOnline} />
+
+          <span className="flex-1 min-w-0">
+            <span className="flex items-center gap-1.5 mb-0.5">
+              <span className={`truncate text-sm ${unread > 0 ? 'font-black text-foreground' : 'font-bold text-foreground/85'}`}>
+                {item.name}
+              </span>
+              {item.isVerified && <VerifiedBadge iconOnly size="w-3.5 h-3.5" />}
+              {pinned && <Pin className="w-3 h-3 shrink-0 text-emerald-600 dark:text-emerald-400" />}
+              {item.lastMessageAt && (
+                <span className={`ml-auto shrink-0 text-[10px] font-bold tabular-nums ${unread > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-foreground/35'}`}>
+                  {relativeTime(item.lastMessageAt)}
+                </span>
+              )}
+            </span>
+            <span className="flex items-center gap-2">
+              <span className={`flex-1 truncate text-xs leading-snug ${unread > 0 ? 'text-foreground/75 font-semibold' : 'text-foreground/45 font-medium'}`}>
+                {item.lastMessage || item.subtitle || 'Start the conversation'}
+              </span>
+              {unread > 0 && (
+                <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-emerald-500 text-white text-[10px] font-black tabular-nums shrink-0">
+                  {unread > 99 ? '99+' : unread}
+                </span>
+              )}
+            </span>
+          </span>
+        </button>
+
+        {/* Pointer-device actions. Hidden once the swipe drawer is open, so the
+            two affordances never stack on top of each other. */}
+        {(onTogglePin || onToggleArchive) && !revealed && (
+          <div className="absolute right-2 top-1/2 -translate-y-1/2 hidden md:flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+            {onTogglePin && (
+              <button
+                onClick={runAction(onTogglePin)}
+                aria-label={pinned ? `Unpin ${item.name}` : `Pin ${item.name}`}
+                className="h-11 w-11 flex items-center justify-center rounded-2xl bg-background/90 border border-foreground/[0.08] text-foreground/45 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+              >
+                <Pin className="w-3.5 h-3.5" />
+              </button>
+            )}
+            {onToggleArchive && (
+              <button
+                onClick={runAction(onToggleArchive)}
+                aria-label={archived ? `Unarchive ${item.name}` : `Archive ${item.name}`}
+                className="h-11 w-11 flex items-center justify-center rounded-2xl bg-background/90 border border-foreground/[0.08] text-foreground/45 hover:text-foreground hover:border-foreground/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+              >
+                {archived ? <ArchiveRestore className="w-3.5 h-3.5" /> : <Archive className="w-3.5 h-3.5" />}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
@@ -256,12 +409,11 @@ export const TypingIndicator = ({ name }: { name?: string }) => (
 // surface, so the label disappeared in dark mode.
 
 export const MessageContextTag = ({
-  product, orderId, mine, onViewProduct, onViewOrder,
+  product, orderId, mine, onViewOrder,
 }: {
   product?: { id: string; name: string; price: number; slug: string | null; image: string | null } | null;
   orderId?: string | null;
   mine?: boolean;
-  onViewProduct?: (productId: string) => void;
   onViewOrder?: (orderId: string) => void;
 }) => {
   if (!product && !orderId) return null;
@@ -281,8 +433,11 @@ export const MessageContextTag = ({
           </span>
         </button>
       )}
+      {/* A real <Link>, not a button that opened a modal. "Asking about this
+          product" has to be able to take you BACK to the product — including
+          via middle-click or copy-link, which a button can never offer. */}
       {product && (
-        <button type="button" onClick={() => onViewProduct?.(product.id)} disabled={!onViewProduct} className={shell}>
+        <Link to={`/product/${product.id}`} className={shell} aria-label={`View ${product.name}`}>
           {product.image ? (
             <img src={product.image} alt="" className="w-10 h-10 object-cover rounded-xl shrink-0" loading="lazy" decoding="async" />
           ) : (
@@ -298,7 +453,8 @@ export const MessageContextTag = ({
               </span>
             )}
           </span>
-        </button>
+          <ArrowUpRight className="w-3.5 h-3.5 shrink-0 text-foreground/35" />
+        </Link>
       )}
     </div>
   );

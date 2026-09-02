@@ -1,5 +1,71 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
+
+/** Never shrink below this, however cramped the host page is. */
+const MIN_SHELL_HEIGHT = 380;
+
+/**
+ * Measure the height the shell can actually occupy, instead of guessing it
+ * from a viewport formula.
+ *
+ * The previous height was `calc(100dvh - var(--mm-bottom-obstruction) - 7rem)`.
+ * That formula assumed messaging was the only thing under a 7rem header — but
+ * on mobile the dashboards ALSO reserve their own bottom padding for the fixed
+ * tab bar (BuyerPage/SellerPage use `pb-[calc(5.5rem+env(safe-area-inset-bottom))]`),
+ * and they render a mobile PageHeader plus `pt-6` above the tab content.
+ *
+ * So the bottom obstruction was subtracted twice and the top was understated,
+ * which is the reported "scrolling a bit on mobile leaves empty space at the
+ * bottom": the page grew taller than the viewport, and scrolling revealed the
+ * host's leftover padding under a shell that had already ended.
+ *
+ * Measuring the shell's own document offset and the padding that ancestors
+ * reserve below it is self-correcting — it stays right if a host page changes
+ * its header or padding, which a magic number never does.
+ */
+function useAvailableHeight<T extends HTMLElement>() {
+  const ref = useRef<T>(null);
+  const [height, setHeight] = useState<number | null>(null);
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const measure = () => {
+      // Document offset, not viewport offset: this must not change as the
+      // user scrolls, or the measurement would feed back into itself.
+      const top = el.getBoundingClientRect().top + window.scrollY;
+
+      // Padding ancestors reserve BELOW us — the mobile tab-bar allowance.
+      let reservedBelow = 0;
+      for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) {
+        reservedBelow += parseFloat(getComputedStyle(p).paddingBottom) || 0;
+      }
+
+      // Anything pinned over the bottom of the viewport (the mobile nav).
+      const obstruction = parseFloat(
+        getComputedStyle(document.documentElement).getPropertyValue('--mm-bottom-obstruction'),
+      ) || 0;
+
+      // Whichever is larger already covers the nav; counting both is the bug.
+      const below = Math.max(reservedBelow, obstruction);
+      setHeight(Math.max(MIN_SHELL_HEIGHT, window.innerHeight - top - below));
+    };
+
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(document.documentElement);
+    window.addEventListener('resize', measure);
+    window.addEventListener('orientationchange', measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', measure);
+      window.removeEventListener('orientationchange', measure);
+    };
+  }, []);
+
+  return { ref, height };
+}
 
 /**
  * Messaging layout chassis — two panes and an overlay drawer.
@@ -33,11 +99,20 @@ import { X } from 'lucide-react';
  * uses. `min-h` is dropped below md, because forcing 520px on a 519px
  * viewport guarantees the overflow it was meant to prevent.
  */
-export const MessagingShell = ({ children }: { children: React.ReactNode }) => (
-  <div className="relative flex h-[calc(100dvh-var(--mm-bottom-obstruction,58px)-7rem)] md:h-[calc(100dvh-7rem)] min-h-0 md:min-h-[560px] max-h-[920px] overflow-hidden rounded-3xl border border-foreground/[0.08] bg-background shadow-sm animate-in fade-in duration-300">
-    {children}
-  </div>
-);
+export const MessagingShell = ({ children }: { children: React.ReactNode }) => {
+  const { ref, height } = useAvailableHeight<HTMLDivElement>();
+  return (
+    <div
+      ref={ref}
+      // The dvh fallback only applies for the first paint, before the measure
+      // lands — after that the measured height is authoritative.
+      style={height ? { height } : undefined}
+      className="relative flex h-[calc(100dvh-var(--mm-bottom-obstruction,58px)-7rem)] min-h-0 max-h-[920px] overflow-hidden rounded-3xl border border-foreground/[0.08] bg-background shadow-sm animate-in fade-in duration-300"
+    >
+      {children}
+    </div>
+  );
+};
 
 /**
  * The conversation list. A fixed rail on desktop rather than a grid fraction,

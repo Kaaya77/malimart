@@ -260,6 +260,39 @@ export async function uploadAttachment(
   return { url: data.publicUrl, type: isImage ? 'image' : 'file' };
 }
 
+// ─── Shared history ──────────────────────────────────────────────────────────
+
+export interface SharedEngagement {
+  orderId: string;
+  createdAt: string;
+  status: string;
+  total: number;
+  itemCount: number;
+  /** Which side of the trade the CURRENT user was on. */
+  direction: 'i_bought' | 'i_sold';
+}
+
+/**
+ * The orders the two people in a conversation share, in whichever direction
+ * they run — what a seller opening a buyer's chat actually wants to know.
+ * Scoped server-side to the caller being one of the two parties.
+ */
+export async function listSharedEngagements(peerId: string, limit = 6): Promise<SharedEngagement[]> {
+  const { data, error } = await supabase.rpc('get_shared_engagements', {
+    p_peer: peerId,
+    p_limit: limit,
+  });
+  if (error) { console.error('listSharedEngagements failed', error); return []; }
+  return (data ?? []).map((r: any) => ({
+    orderId: r.order_id,
+    createdAt: r.created_at,
+    status: r.status,
+    total: Number(r.total ?? 0),
+    itemCount: Number(r.item_count ?? 0),
+    direction: r.direction,
+  }));
+}
+
 // ─── Profile lookups ─────────────────────────────────────────────────────────
 
 export interface PeerProfile {

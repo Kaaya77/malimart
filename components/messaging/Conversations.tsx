@@ -28,15 +28,14 @@
  * supabase.from() in this file.
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   ChevronLeft, Send, Loader2, Sparkles, Wand2, Search, X, Paperclip, Ban,
   ShieldAlert, MoreVertical, Truck, MessageSquarePlus, Plus, Trash2, ArrowUpRight,
-  ArrowUp, Info, Reply as ReplyIcon, Package, Inbox, MailOpen, UserRound, Archive, MessageSquare,
+  ArrowUp, Info, Reply as ReplyIcon, Package, Inbox, MailOpen, UserRound, Archive, MessageSquare, Store, Receipt,
 } from 'lucide-react';
 import { useAppState } from '../../context/AppContext';
 import { Button, Input, useToast, ConfirmDialog, UserProfileModal, Skeleton } from '../UI';
-import { ProductModal } from '../ProductModal';
 import { OrderDetailsModal } from '../OrderDetailsModal';
 import { compressImage, IMMUTABLE_CACHE } from '../../services/imageCompression';
 import { formatTZS } from '../../constants';
@@ -45,8 +44,8 @@ import * as aiService from '../../services/geminiService';
 import { sanitizeText, rateLimit } from '../../src/security';
 import { useMessaging, isOnline } from '../../hooks/useMessaging';
 import {
-  Conversation, PeerRole, ThreadMessage, PeerProfile,
-  uploadAttachment, fetchPeerProfile, fetchProfileRole,
+  Conversation, PeerRole, ThreadMessage, PeerProfile, SharedEngagement,
+  uploadAttachment, fetchPeerProfile, fetchProfileRole, listSharedEngagements,
 } from '../../services/messagesService';
 import { fetchProductById } from '../../services/shopService';
 import { getOrderAsAdmin } from '../../services/adminApi';
@@ -272,8 +271,8 @@ export const Conversations = ({
   // ─── Panels & modals ───────────────────────────────────────────────────────
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [peerDetail, setPeerDetail] = useState<PeerProfile | null>(null);
+  const [engagements, setEngagements] = useState<SharedEngagement[] | null>(null);
   const [viewingProfile, setViewingProfile] = useState<any | null>(null);
-  const [viewingProduct, setViewingProduct] = useState<Product | null>(null);
   const [viewingOrder, setViewingOrder] = useState<Order | null>(null);
   const [chatMenuOpen, setChatMenuOpen] = useState(false);
   const [reportingPeer, setReportingPeer] = useState<Conversation | null>(null);
@@ -391,15 +390,24 @@ export const Conversations = ({
     setChatMenuOpen(false);
     setDetailsOpen(false);
     setPeerDetail(null);
+    setEngagements(null);
     lastSuggestedFor.current = null;
     if (textareaRef.current) textareaRef.current.style.height = 'auto';
   }, [activePeerId]);
 
-  // Load the richer profile only when the drawer actually opens.
+  // Load the richer profile and the shared order history only when the drawer
+  // actually opens — neither is needed to read a conversation.
   useEffect(() => {
     if (!detailsOpen || !activePeerId || peerDetail?.id === activePeerId) return;
     let cancelled = false;
-    fetchPeerProfile(activePeerId).then(p => { if (!cancelled) setPeerDetail(p); });
+    void Promise.all([
+      fetchPeerProfile(activePeerId),
+      listSharedEngagements(activePeerId),
+    ]).then(([p, e]) => {
+      if (cancelled) return;
+      setPeerDetail(p);
+      setEngagements(e);
+    });
     return () => { cancelled = true; };
   }, [detailsOpen, activePeerId, peerDetail?.id]);
 
@@ -598,12 +606,6 @@ export const Conversations = ({
     });
   };
 
-  const openProduct = async (productId: string) => {
-    const p = await fetchProductById(productId);
-    if (p) setViewingProduct(p);
-    else addToast('That product is no longer available', 'info');
-  };
-
   const openOrder = async (orderId: string) => {
     const own = orders.find(o => o.id === orderId);
     if (own) { setViewingOrder(own); return; }
@@ -725,6 +727,10 @@ export const Conversations = ({
                           if (activePeerId === c.peerId) selectPeer(null);
                         }
                       : undefined}
+                    // Swiping to delete still goes through the confirm dialog —
+                    // a gesture that destroys a conversation on contact is the
+                    // one place a swipe should NOT be the whole interaction.
+                    onDelete={() => setConfirmAction({ type: 'delete-chat', peerId: c.peerId })}
                   />
                 ))}
               </div>
@@ -903,7 +909,6 @@ export const Conversations = ({
                               product={msg.product}
                               orderId={msg.orderId}
                               mine={mine}
-                              onViewProduct={openProduct}
                               onViewOrder={openOrder}
                             />
                           ) : undefined}
@@ -1190,6 +1195,25 @@ export const Conversations = ({
               </div>
             </div>
 
+            {/* A seller peer has a storefront — the thing you actually want
+                when you tap their avatar. Buyers have no shop, so they get
+                their shared trading history below instead. */}
+            {active.role === 'seller' && (
+              <Link
+                to={`/store/${active.peerId}`}
+                className="flex items-center gap-3 p-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/[0.07] hover:bg-emerald-500/[0.12] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+              >
+                <span className="w-10 h-10 rounded-2xl bg-emerald-500/15 flex items-center justify-center shrink-0">
+                  <Store className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <SectionLabel className="text-emerald-600/80 dark:text-emerald-400/80">Storefront</SectionLabel>
+                  <span className="block text-xs font-black text-foreground truncate">Visit {active.name}'s shop</span>
+                </span>
+                <ArrowUpRight className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              </Link>
+            )}
+
             <div className="rounded-2xl border border-foreground/[0.08] bg-foreground/[0.02] px-4 py-1">
               <DetailRow label="Role" value={<span className="capitalize">{active.role}</span>} />
               {peerDetail?.region && <DetailRow label="Region" value={peerDetail.region} />}
@@ -1202,6 +1226,59 @@ export const Conversations = ({
               <DetailRow label="Unread" value={<span className="tabular-nums">{active.unreadCount}</span>} />
             </div>
 
+            {/* Past engagements — the orders we have actually done together,
+                in whichever direction they ran. For a seller opening a buyer's
+                chat this is the real question: have they bought before? */}
+            {engagements === null ? (
+              <div className="space-y-1.5">
+                <SectionLabel className="mb-2">Past engagements</SectionLabel>
+                <Skeleton className="h-14 w-full rounded-2xl" />
+                <Skeleton className="h-14 w-full rounded-2xl" />
+              </div>
+            ) : engagements.length > 0 ? (
+              <div>
+                <SectionLabel className="mb-2">Past engagements · {engagements.length}</SectionLabel>
+                <div className="space-y-1.5">
+                  {engagements.map(e => (
+                    <button
+                      key={e.orderId}
+                      onClick={() => void openOrder(e.orderId)}
+                      className="w-full flex items-center gap-2.5 p-2.5 rounded-2xl border border-foreground/[0.08] bg-foreground/[0.02] hover:bg-foreground/[0.05] hover:border-foreground/[0.14] transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+                    >
+                      <span className="w-9 h-9 rounded-xl bg-foreground/[0.06] flex items-center justify-center shrink-0">
+                        <Receipt className="w-4 h-4 text-foreground/45" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="flex items-center gap-1.5">
+                          <span className="text-xs font-black text-foreground tabular-nums">
+                            #{e.orderId.slice(0, 8).toUpperCase()}
+                          </span>
+                          <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-foreground/40">
+                            {e.direction === 'i_bought' ? 'Bought' : 'Sold'}
+                          </span>
+                        </span>
+                        <span className="block text-[10px] font-bold text-foreground/45 tabular-nums">
+                          {new Date(e.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                          {' · '}{e.itemCount} item{e.itemCount === 1 ? '' : 's'}
+                          {' · '}{formatTZS(e.total)}
+                        </span>
+                      </span>
+                      <span className="text-[10px] font-black uppercase tracking-[0.1em] text-foreground/35 shrink-0 capitalize">
+                        {e.status}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div>
+                <SectionLabel className="mb-2">Past engagements</SectionLabel>
+                <p className="text-xs font-medium text-foreground/40 px-1">
+                  No orders between you yet.
+                </p>
+              </div>
+            )}
+
             {/* What this conversation has been about. Free — it comes from the
                 thread already loaded, and it is the question the old details
                 column could never answer. */}
@@ -1210,9 +1287,9 @@ export const Conversations = ({
                 <SectionLabel className="mb-2">Referenced here</SectionLabel>
                 <div className="space-y-1.5">
                   {threadReferences.products.map(p => (
-                    <button
+                    <Link
                       key={p.id}
-                      onClick={() => void openProduct(p.id)}
+                      to={`/product/${p.id}`}
                       className="w-full flex items-center gap-2.5 p-2 rounded-2xl border border-foreground/[0.08] bg-foreground/[0.02] hover:bg-foreground/[0.05] hover:border-foreground/[0.14] transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
                     >
                       {p.image
@@ -1228,7 +1305,8 @@ export const Conversations = ({
                           <span className="block text-[10px] font-bold text-foreground/45 tabular-nums">{formatTZS(p.price)}</span>
                         )}
                       </span>
-                    </button>
+                      <ArrowUpRight className="w-3.5 h-3.5 text-foreground/35 shrink-0" />
+                    </Link>
                   ))}
                   {threadReferences.orderIds.map(id => (
                     <button
@@ -1292,7 +1370,6 @@ export const Conversations = ({
 
       {/* ══ Modals ══ */}
       <UserProfileModal isOpen={!!viewingProfile} onClose={() => setViewingProfile(null)} user={viewingProfile} />
-      <ProductModal isOpen={!!viewingProduct} onClose={() => setViewingProduct(null)} product={viewingProduct} />
       <OrderDetailsModal isOpen={!!viewingOrder} onClose={() => setViewingOrder(null)} order={viewingOrder} />
 
       {reportingPeer && (
