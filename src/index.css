@@ -749,3 +749,132 @@ html, body {
 ::selection {
   background: rgba(5, 150, 105, 0.25);
 }
+
+
+/* ─── Accent-tinted hairlines ───────────────────────────────────────────────
+ * Borders and dividers follow the accent chosen in Settings.
+ *
+ * Accent theming overrides --color-emerald-* on <html> (services/theme.ts
+ * applyAccent), so anything referencing that scale recolours automatically.
+ * Borders did NOT: Tailwind emits
+ *   border-color: color-mix(in oklab, var(--color-foreground) N%, transparent)
+ * i.e. pure neutral. --color-foreground cannot just be repointed, because
+ * text-foreground/* shares the same variable.
+ *
+ * So the border utilities are overridden here, one per alpha step, blending
+ * accent into the foreground while KEEPING each step's own alpha. The
+ * 5/8/10/15/25/40 ladder is what separates a hairline from a hard edge;
+ * flattening it to one colour would erase that hierarchy.
+ *
+ * These sit after @import "tailwindcss", so at equal specificity they win on
+ * source order. .mm-high-contrast still overrides them (it uses !important).
+ *
+ * --mm-line-tint is the single control: 0% = fully neutral lines (previous
+ * behaviour), higher = closer to the accent. Only alpha steps actually used in
+ * the app are listed; a new one stays neutral until added here.
+ */
+:root {
+  --mm-line-tint: 55%;
+}
+
+.border-foreground\/5 {
+  border-color: color-mix(in srgb,
+    color-mix(in srgb, var(--color-emerald-500) var(--mm-line-tint), hsl(var(--foreground)))
+    5%, transparent);
+}
+
+.border-foreground\/6 {
+  border-color: color-mix(in srgb,
+    color-mix(in srgb, var(--color-emerald-500) var(--mm-line-tint), hsl(var(--foreground)))
+    6%, transparent);
+}
+
+.border-foreground\/8 {
+  border-color: color-mix(in srgb,
+    color-mix(in srgb, var(--color-emerald-500) var(--mm-line-tint), hsl(var(--foreground)))
+    8%, transparent);
+}
+
+.border-foreground\/10 {
+  border-color: color-mix(in srgb,
+    color-mix(in srgb, var(--color-emerald-500) var(--mm-line-tint), hsl(var(--foreground)))
+    10%, transparent);
+}
+
+.border-foreground\/12 {
+  border-color: color-mix(in srgb,
+    color-mix(in srgb, var(--color-emerald-500) var(--mm-line-tint), hsl(var(--foreground)))
+    12%, transparent);
+}
+
+.border-foreground\/15 {
+  border-color: color-mix(in srgb,
+    color-mix(in srgb, var(--color-emerald-500) var(--mm-line-tint), hsl(var(--foreground)))
+    15%, transparent);
+}
+
+.border-foreground\/20 {
+  border-color: color-mix(in srgb,
+    color-mix(in srgb, var(--color-emerald-500) var(--mm-line-tint), hsl(var(--foreground)))
+    20%, transparent);
+}
+
+.border-foreground\/25 {
+  border-color: color-mix(in srgb,
+    color-mix(in srgb, var(--color-emerald-500) var(--mm-line-tint), hsl(var(--foreground)))
+    25%, transparent);
+}
+
+.border-foreground\/30 {
+  border-color: color-mix(in srgb,
+    color-mix(in srgb, var(--color-emerald-500) var(--mm-line-tint), hsl(var(--foreground)))
+    30%, transparent);
+}
+
+.border-foreground\/40 {
+  border-color: color-mix(in srgb,
+    color-mix(in srgb, var(--color-emerald-500) var(--mm-line-tint), hsl(var(--foreground)))
+    40%, transparent);
+}
+
+.border-foreground\/\[0\.06\] {
+  border-color: color-mix(in srgb,
+    color-mix(in srgb, var(--color-emerald-500) var(--mm-line-tint), hsl(var(--foreground)))
+    6%, transparent);
+}
+
+.border-foreground\/\[0\.07\] {
+  border-color: color-mix(in srgb,
+    color-mix(in srgb, var(--color-emerald-500) var(--mm-line-tint), hsl(var(--foreground)))
+    7%, transparent);
+}
+
+.border-foreground\/\[0\.08\] {
+  border-color: color-mix(in srgb,
+    color-mix(in srgb, var(--color-emerald-500) var(--mm-line-tint), hsl(var(--foreground)))
+    8%, transparent);
+}
+
+.border-foreground\/\[0\.12\] {
+  border-color: color-mix(in srgb,
+    color-mix(in srgb, var(--color-emerald-500) var(--mm-line-tint), hsl(var(--foreground)))
+    12%, transparent);
+}
+
+.divide-foreground\/5 > :not([hidden]) ~ :not([hidden]) {
+  border-color: color-mix(in srgb,
+    color-mix(in srgb, var(--color-emerald-500) var(--mm-line-tint), hsl(var(--foreground)))
+    5%, transparent);
+}
+
+.divide-foreground\/8 > :not([hidden]) ~ :not([hidden]) {
+  border-color: color-mix(in srgb,
+    color-mix(in srgb, var(--color-emerald-500) var(--mm-line-tint), hsl(var(--foreground)))
+    8%, transparent);
+}
+
+.divide-foreground\/10 > :not([hidden]) ~ :not([hidden]) {
+  border-color: color-mix(in srgb,
+    color-mix(in srgb, var(--color-emerald-500) var(--mm-line-tint), hsl(var(--foreground)))
+    10%, transparent);
+}
