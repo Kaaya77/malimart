@@ -202,6 +202,11 @@ export const Button = ({ variant = 'primary', size = 'default', className = '', 
  disabled={isLoading || props.disabled}
  {...(props as any)}
  >
+ {/* NOTE: children are wrapped in this inner span, so a `gap-*` passed to
+ Button via className lands on the OUTER button and never spaces an icon
+ from its label. The convention here is `mr-2` on the icon itself (as the
+ loader below does, and ~20 existing call sites). Adding gap-2 here would
+ double the spacing on every one of them. */}
  <span className="relative flex items-center justify-center">
  {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
  {children}

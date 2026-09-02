@@ -72,7 +72,7 @@ export const ProfileTab = () => {
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleProfileUpdate} className="space-y-6">
-                    <div className="flex items-center gap-6 mb-6">
+                    <div className="flex items-center gap-4 sm:gap-6 mb-6 min-w-0">
                       <div className="relative w-20 h-20 shrink-0 group">
                         <div className="w-20 h-20 rounded-full bg-foreground/[0.06] overflow-hidden border-2 border-foreground/10 flex items-center justify-center">
                           {profileData.avatar_url ? (
@@ -92,7 +92,10 @@ export const ProfileTab = () => {
                         </button>
                         <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
                       </div>
-                      <div>
+                      {/* min-w-0 so this column can shrink beside the fixed
+                          80px avatar instead of overflowing and clipping
+                          "Change photo" to "Change ph…" on narrow screens. */}
+                      <div className="min-w-0">
                         <p className="text-sm font-medium text-foreground">Profile Photo</p>
                         <p className="text-xs text-muted-foreground mt-1">Hover the circle and click to upload. Max 5 MB.</p>
                         <button type="button" onClick={() => avatarInputRef.current?.click()} disabled={uploadingAvatar} className="mt-2 text-xs font-semibold text-foreground underline underline-offset-2 hover:opacity-60 transition-opacity">

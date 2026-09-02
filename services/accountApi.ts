@@ -154,14 +154,45 @@ export const getProfileBanStatus = (userId: string) =>
 // ---------- Public marketplace reads (buyer dashboard) ----------
 
 /** Active, unexpired offers with their vendor card info (newest first, max 30). */
-export const listActiveOffersWithVendors = (nowIso: string) =>
-  supabase
+/**
+ * Active offers, each with its seller's public vendor card.
+ *
+ * Does NOT use a PostgREST embed. `offers.seller_id` has a foreign key to
+ * `profiles(id)`, not to `vendor_profiles`, so
+ *   vendor:vendor_profiles!seller_id(...)
+ * failed with PGRST200 ("Could not find a relationship between 'offers' and
+ * 'vendor_profiles'") on EVERY call — a deterministic 400, which is why the
+ * Rewards tab always showed its error state and "Try again" never helped.
+ *
+ * Adding a second FK onto vendor_profiles would fix the embed but would then
+ * reject any offer from a seller without a vendor profile, so the join is done
+ * in two queries instead and stitched here.
+ */
+export const listActiveOffersWithVendors = async (nowIso: string) => {
+  const { data, error } = await supabase
     .from("offers")
-    .select("*, vendor:vendor_profiles!seller_id(seller_id,store_name,logo_url,is_verified)")
+    .select("*")
     .eq("status", "active")
     .or(`end_date.is.null,end_date.gte.${nowIso}`)
     .order("created_at", { ascending: false })
     .limit(30);
+
+  if (error || !data?.length) return { data: data ?? [], error };
+
+  const sellerIds = Array.from(
+    new Set(data.map((o: any) => o.seller_id).filter(Boolean))
+  );
+  if (!sellerIds.length) return { data, error: null };
+
+  // A missing vendor card must not fail the whole tab — offers still render.
+  const { data: vendors } = await getVendorCardsBySellerIds(sellerIds);
+  const byId = new Map((vendors ?? []).map((v: any) => [v.seller_id, v]));
+
+  return {
+    data: data.map((o: any) => ({ ...o, vendor: byId.get(o.seller_id) ?? null })),
+    error: null,
+  };
+};
 
 /** Public vendor cards for a set of followed sellers. */
 export const getVendorCardsBySellerIds = (sellerIds: string[]) =>

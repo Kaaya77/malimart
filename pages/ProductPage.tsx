@@ -182,8 +182,9 @@ export const ProductPage = () => {
  if (isOwnProduct) { addToast("You can't buy your own product", 'error'); return; }
  if (onVacation) { addToast(`${vendor?.store_name || 'This store'} is on vacation — not accepting orders right now`, 'error'); return; }
  setIsAdding(true);
+ // addToCart already notifies ("Added <name> to your cart"), so a second
+ // toast here stacked two near-identical messages on every add.
  addToCart(product, selectedVariant || undefined, qty);
- addToast('Added to cart', 'success');
  setTimeout(() => setIsAdding(false), 1500);
  };
 
@@ -483,7 +484,7 @@ export const ProductPage = () => {
  which read as muted/disabled rather than as a real alternative action.
  `outline` gives it a visible border so the pair reads as
  primary + alternative instead of enabled + greyed-out. */}
- <Button size="lg" variant="outline" className="w-full" onClick={() => { handleAdd(); navigate('/cart'); }} disabled={metrics.isOut || onVacation || isOwnProduct}>
+ <Button size="lg" variant="outline" className="w-full" onClick={() => { handleAdd(); navigate('/checkout'); }} disabled={metrics.isOut || onVacation || isOwnProduct}>
  Buy Now
  </Button>
  </div>

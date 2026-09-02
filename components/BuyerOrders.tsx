@@ -5,7 +5,7 @@ import {
   ShoppingBag, MapPin, CreditCard, MessageCircle, Truck, CheckCircle2,
   XCircle, RefreshCw, Star, Trash2
 } from 'lucide-react';
-import { Badge, useToast } from './UI';
+import { Badge, useToast, ConfirmModal } from './UI';
 import { formatTZS } from '../constants';
 import { Order, VendorProfile } from '../types';
 import { CancelOrderModal } from './CancelOrderModal';
@@ -63,6 +63,10 @@ export const BuyerOrders = ({
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [cancelModal, setCancelModal] = useState(false);
+  // "Remove from history" was a one-click, unconfirmed, irreversible-looking
+  // action on real order data. It now confirms first.
+  const [removeModal, setRemoveModal] = useState(false);
+  const [removing, setRemoving] = useState(false);
 
   const filtered = useMemo(() => {
     return orders
@@ -241,7 +245,7 @@ export const BuyerOrders = ({
                 the seller's and admin's records are unaffected). */}
             {['delivered','cancelled','refunded','failed'].includes(selectedOrder.status) && (
               <button
-                onClick={async () => { await onDelete(selectedOrder.id); setSelectedOrder(null); }}
+                onClick={() => setRemoveModal(true)}
                 className="w-full flex items-center justify-center gap-2 h-11 rounded-2xl border border-foreground/10 text-sm font-semibold text-foreground/45 hover:text-red-500 hover:border-red-200 dark:hover:border-red-900/40 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40">
                 <Trash2 className="w-4 h-4" />Remove from history
               </button>
@@ -261,6 +265,33 @@ export const BuyerOrders = ({
             }}
           />
         )}
+
+        {/* Destructive-action guard. The copy states plainly that this only
+            affects the buyer's own view — which is now actually true: it sets
+            orders.hidden_at rather than the global deleted_at, so the seller's
+            records and the order totals are untouched. */}
+        <ConfirmModal
+          isOpen={removeModal}
+          isDestructive
+          title="Remove from your history?"
+          message="This hides the order from your list. Your order totals and reward points stay as they are, and the seller's records are unaffected."
+          confirmText={removing ? 'Removing…' : 'Remove'}
+          cancelText="Keep it"
+          onClose={() => setRemoveModal(false)}
+          onConfirm={async () => {
+            if (removing) return;
+            setRemoving(true);
+            try {
+              await onDelete(selectedOrder.id);
+              setRemoveModal(false);
+              setSelectedOrder(null);
+            } catch {
+              // deleteOrder already rolls back optimistic state and toasts.
+            } finally {
+              setRemoving(false);
+            }
+          }}
+        />
       </div>
     );
   }
@@ -279,8 +310,11 @@ export const BuyerOrders = ({
         />
       </div>
 
-      {/* Status tabs */}
-      <div className="flex gap-1 mb-4 overflow-x-auto no-scrollbar flex-shrink-0">
+      {/* Status tabs. Wrapped in a relative shell so the right edge can carry a
+          fade — the rail was sliced by the viewport, so "Cancelled" read as
+          truncated text rather than as a scrollable row. */}
+      <div className="relative mb-4">
+      <div className="flex gap-1 overflow-x-auto no-scrollbar flex-shrink-0">
         {FILTER_TABS.map(tab => (
           <button key={tab.value} onClick={() => setStatusFilter(tab.value)}
             className={`flex-shrink-0 h-7 px-3 rounded-full text-[10px] font-bold transition-all ${
@@ -289,6 +323,11 @@ export const BuyerOrders = ({
             {tab.label}
           </button>
         ))}
+      </div>
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-background to-transparent"
+        />
       </div>
 
       {/* List */}

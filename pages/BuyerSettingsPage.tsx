@@ -399,13 +399,13 @@ export const BuyerSettingsPage = () => {
                 }}
                 onClick={() => setActiveTab(tab.id)}
                 aria-current={activeTab === tab.id ? 'page' : undefined}
-                className={`flex items-center gap-3 px-4 py-3 min-h-11 rounded-2xl text-sm font-bold transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 ${
+                className={`flex items-center gap-3 px-4 py-3 min-h-11 rounded-2xl text-sm font-bold transition-colors whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 ${
                   activeTab === tab.id
                     ? 'bg-foreground text-background'
                     : 'text-foreground/50 hover:text-foreground hover:bg-foreground/[0.06]'
                 }`}
               >
-                <tab.icon className="w-4 h-4" />
+                <tab.icon className="w-4 h-4 shrink-0" />
                 {tab.label}
               </motion.button>
             ))}

@@ -109,14 +109,18 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
                 disabled:opacity-50 over bg-foreground it read as an inert grey
                 tile rather than a button. The word carries the affordance;
                 aria-label covers the applied state where the icon changes. */}
+            {/* Spacing comes from mr-2 on the icon, NOT gap on the button:
+                Button wraps its children in an inner span, so a `gap-*` in
+                className lands on the outer button and never separates the
+                icon from the label — it rendered as "→APPLY". */}
             <Button
-              className="h-12 px-5 rounded-2xl bg-foreground text-background shadow-lg gap-2 shrink-0"
+              className="h-12 px-5 rounded-2xl bg-foreground text-background shadow-lg shrink-0"
               onClick={onApplyCoupon}
               disabled={!!appliedCoupon || !couponCode}
               isLoading={validatingCoupon}
               aria-label={appliedCoupon ? 'Coupon applied' : 'Apply coupon code'}
             >
-              {appliedCoupon ? <CheckCircle2 className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
+              {appliedCoupon ? <CheckCircle2 className="w-4 h-4 mr-2" /> : <ArrowRight className="w-4 h-4 mr-2" />}
               <span className="text-xs font-black uppercase tracking-widest">
                 {appliedCoupon ? 'Applied' : 'Apply'}
               </span>
