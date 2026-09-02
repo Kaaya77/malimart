@@ -541,7 +541,7 @@ export const MobileBottomNav = () => {
  // CTA, a category label, an order row — which is why it kept resurfacing as
  // a bug on page after page. Docking gives it reserved space that page
  // content already scrolls clear of. Desktop keeps the floating FAB.
- { id:'mali', label:'Mali', icon:Sparkles, action:() => window.dispatchEvent(new CustomEvent('mali:open')) },
+ { id:'mali', label:'Mali', icon:Sparkles, action:() => window.dispatchEvent(new CustomEvent('mali:toggle')) },
  ];
 
  const active = (path?: string) => !path ? false : path==='/' ? location.pathname==='/' : location.pathname.startsWith(path);

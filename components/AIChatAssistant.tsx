@@ -502,6 +502,19 @@ export const AIChatAssistant = () => {
     // exactly that — see the docked "Mali" tab in components/Navbar.tsx.
     const onOpen = () => { setIsOpen(true); setIsMinimized(false); };
     window.addEventListener('mali:open', onOpen);
+
+    // The docked nav tab TOGGLES: tapping "Mali" again closes the panel, which
+    // is what people instinctively try first.
+    const onToggle = () => setIsOpen(v => { if (v) stopLiveSession(); return !v; });
+    window.addEventListener('mali:toggle', onToggle);
+
+    // Escape always closes. Independent of the header buttons, so a layout
+    // regression can never leave the panel un-dismissable again — which is
+    // exactly what happened when the header rendered off-screen.
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { stopLiveSession(); setIsOpen(false); }
+    };
+    window.addEventListener('keydown', onKey);
     // The assistant mounts lazily (post-idle) — consume any ask dispatched
     // before the listener existed.
     const pending = (window as any).__maliPendingAsk;
@@ -509,6 +522,8 @@ export const AIChatAssistant = () => {
     return () => {
       window.removeEventListener('mali:ask', onAsk);
       window.removeEventListener('mali:open', onOpen);
+      window.removeEventListener('mali:toggle', onToggle);
+      window.removeEventListener('keydown', onKey);
     };
   });
 
@@ -848,7 +863,23 @@ RESPONSE FORMAT:
     <motion.div initial={{ opacity: 0, y: 28, scale: 0.92 }} animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: 28, scale: 0.92 }}
       transition={{ type: 'spring', stiffness: 320, damping: 26 }}
-      className={`fixed bottom-[100px] right-4 md:bottom-4 md:right-4 z-[90] w-[calc(100vw-2rem)] md:w-[390px] ${isMinimized ? 'h-16' : 'h-[550px] md:h-[590px]'} transition-[height] duration-300 ease-out`}
+      // BLOCKER FIX: the panel was `bottom-[100px]` + a hardcoded `h-[550px]`,
+      // so it demanded 650px of vertical space. On a phone with browser chrome
+      // (~519px visible) the panel's top landed at 519-650 = -131px, putting
+      // the header — and with it the ONLY close and minimise buttons — off the
+      // top of the screen, unreachable at any scroll position. The chat could
+      // be opened and never closed.
+      //
+      // Height is now viewport-relative and clamped, so the top edge can never
+      // go negative. dvh (not vh) so it tracks mobile browser chrome as it
+      // collapses. It sits above whatever is pinned to the bottom, reusing the
+      // same safe-zone variable as everything else.
+      className={`fixed right-4 z-[90] w-[calc(100vw-2rem)] md:w-[390px]
+        bottom-[calc(var(--mm-bottom-obstruction,58px)+0.75rem)] md:bottom-4 md:right-4
+        ${isMinimized
+          ? 'h-16'
+          : 'h-[min(550px,calc(100dvh-var(--mm-bottom-obstruction,58px)-2.5rem))] md:h-[min(590px,calc(100dvh-6rem))]'}
+        transition-[height] duration-300 ease-out`}
     >
       {/* Gradient border wrapper */}
       <div className="h-full p-px rounded-3xl bg-gradient-to-b from-emerald-500/20 via-foreground/5 to-teal-500/15 shadow-2xl shadow-black/25">
