@@ -29,11 +29,17 @@ export const CartItemRow: React.FC<CartItemRowProps> = ({
   onUpdateQuantity, onRemove, onSaveForLater, onNavigate,
 }) => {
   const variant = item.selectedVariant;
+  // `selectedVariant` is only hydrated when the cart payload embeds
+  // product.variants. The dashboard RPC (the login path) does not, so it is
+  // undefined on first load while `variant_id` is still set — and passing
+  // undefined made remove/quantity silently target the wrong row and no-op.
+  // Always prefer the resolved variant, but fall back to the raw id.
+  const variantId = variant?.id ?? item.variant_id;
   const stock = variant?.stock ?? item.stock ?? 0;
   const isStockLow = stock > 0 && stock < 5;
   const variantLabel = variant ? Object.values(variant.attributes ?? {}).join(' / ') : null;
   const image = variant?.image_url || item.images?.[0] || FALLBACK_IMG;
-  const itemKey = variant?.id ? `${item.id}-${variant.id}` : `${item.id}-no-variant`;
+  const itemKey = variantId ? `${item.id}-${variantId}` : `${item.id}-no-variant`;
   const productPath = `/product/${(item as any).product_id || item.id}`;
 
   return (
@@ -52,7 +58,7 @@ export const CartItemRow: React.FC<CartItemRowProps> = ({
         drag="x"
         dragConstraints={{ left: -80, right: 0 }}
         dragElastic={0.08}
-        onDragEnd={(_: any, info: any) => { if (info.offset.x < -60) onRemove(item, variant?.id); }}
+        onDragEnd={(_: any, info: any) => { if (info.offset.x < -60) onRemove(item, variantId); }}
         className="flex flex-col sm:flex-row gap-6 p-6 group hover:bg-foreground/[0.02] bg-background transition-colors relative"
         style={{ touchAction: 'pan-y' }}
       >
@@ -114,7 +120,7 @@ export const CartItemRow: React.FC<CartItemRowProps> = ({
           <div className="flex justify-between items-end mt-6">
             <div className="flex items-center gap-1 bg-foreground/[0.05] p-1 rounded-xl border border-foreground/8">
               <button
-                onClick={() => onUpdateQuantity(item.id, -1, variant?.id)}
+                onClick={() => onUpdateQuantity(item.id, -1, variantId)}
                 disabled={item.quantity <= 1}
                 className="w-11 h-11 rounded-lg flex items-center justify-center bg-background shadow-sm hover:scale-95 transition-all disabled:opacity-50 text-foreground/60"
                 aria-label="Decrease quantity"
@@ -123,7 +129,7 @@ export const CartItemRow: React.FC<CartItemRowProps> = ({
               </button>
               <span className="text-sm font-black w-10 text-center tabular-nums">{item.quantity}</span>
               <button
-                onClick={() => onUpdateQuantity(item.id, 1, variant?.id)}
+                onClick={() => onUpdateQuantity(item.id, 1, variantId)}
                 disabled={item.quantity >= stock}
                 className="w-11 h-11 rounded-lg flex items-center justify-center bg-background shadow-sm hover:scale-95 transition-all text-foreground"
                 aria-label="Increase quantity"
@@ -139,7 +145,7 @@ export const CartItemRow: React.FC<CartItemRowProps> = ({
               </div>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => onSaveForLater(item, variant?.id)}
+                  onClick={() => onSaveForLater(item, variantId)}
                   className="w-11 h-11 flex items-center justify-center text-foreground/25 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all"
                   title="Save for later"
                   aria-label="Save for later"
@@ -147,7 +153,7 @@ export const CartItemRow: React.FC<CartItemRowProps> = ({
                   <Heart className="w-5 h-5" />
                 </button>
                 <button
-                  onClick={() => onRemove(item, variant?.id)}
+                  onClick={() => onRemove(item, variantId)}
                   className="w-11 h-11 flex items-center justify-center text-foreground/25 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all"
                   title="Remove"
                   aria-label="Remove item"

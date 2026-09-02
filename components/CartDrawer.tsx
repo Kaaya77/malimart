@@ -135,7 +135,11 @@ export const CartDrawer = () => {
                   {cart.map((item, index) => {
                     const price = getEffectiveUnitPrice(item);
                     const variant = item.selectedVariant;
-                    const variantId = variant?.id;
+                    // Fall back to the raw variant_id: the dashboard RPC used on
+                    // login does not embed product.variants, so selectedVariant
+                    // is undefined there and remove/quantity would silently
+                    // no-op against a variant line.
+                    const variantId = variant?.id ?? item.variant_id;
                     const stock = variant?.stock ?? item.stock ?? 0;
                     const variantLabel = variant ? Object.values(variant.attributes ?? {}).join(' / ') : null;
                     const image = variant?.image_url || item.images?.[0] || 'https://images.unsplash.com/photo-1560393464-5c69a73c5770?q=80&w=800&auto=format&fit=crop';
