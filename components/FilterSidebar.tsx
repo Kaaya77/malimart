@@ -120,18 +120,47 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
  {/* Price Range */}
  <section>
  <h3 className="text-xs uppercase tracking-[0.2em] font-bold mb-6 opacity-50">Price Range (TZS)</h3>
+ {/* There was only ONE slider, bound to the MAX. priceRange[0] was
+ rendered next to it but had no control at all, so the minimum was
+ permanently 0 and the number beside it was decorative. Both bounds are
+ now settable, each clamped so they cannot cross. */}
  <div className="space-y-4">
  <div className="flex items-center justify-between text-sm font-mono">
- <span>{priceRange[0].toLocaleString()}</span>
- <span>{priceRange[1].toLocaleString()}</span>
+ <span className="flex flex-col">
+ <span className="text-[10px] font-sans font-bold uppercase tracking-widest opacity-40">Min</span>
+ {priceRange[0].toLocaleString()}
+ </span>
+ <span className="flex flex-col items-end">
+ <span className="text-[10px] font-sans font-bold uppercase tracking-widest opacity-40">Max</span>
+ {priceRange[1].toLocaleString()}
+ </span>
  </div>
+
  <input
  type="range"
+ aria-label="Minimum price"
+ min="0"
+ max="5000000"
+ step="10000"
+ value={priceRange[0]}
+ onChange={(e) => {
+ const next = parseInt(e.target.value);
+ // Never let the floor pass the ceiling.
+ setPriceRange([Math.min(next, priceRange[1] - 10000), priceRange[1]]);
+ }}
+ className="w-full accent-foreground dark:accent-background"
+ />
+ <input
+ type="range"
+ aria-label="Maximum price"
  min="0"
  max="5000000"
  step="10000"
  value={priceRange[1]}
- onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
+ onChange={(e) => {
+ const next = parseInt(e.target.value);
+ setPriceRange([priceRange[0], Math.max(next, priceRange[0] + 10000)]);
+ }}
  className="w-full accent-foreground dark:accent-background"
  />
  </div>

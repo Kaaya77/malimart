@@ -111,8 +111,17 @@ export const LoginPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
+
+    // Replaces the native bubble suppressed by noValidate. Uses the same error
+    // banner as every other auth failure, so the UI stays consistent.
+    const email = formData.email.trim();
+    if (!email) { setError('Enter your email address.'); return; }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { setError('Enter a valid email address.'); return; }
+    if (mode !== 'forgot' && !formData.password) { setError('Enter your password.'); return; }
+    if (mode === 'signup' && !formData.name.trim()) { setError('Enter your name.'); return; }
+
+    setLoading(true);
 
     try {
       if (mode === 'login') {
@@ -243,7 +252,11 @@ export const LoginPage = () => {
           )}
         </AnimatePresence>
 
-        <form onSubmit={handleSubmit} method="post" className="space-y-4">
+        {/* noValidate: the browser bubble (orange "Please fill out this field")
+              ignores the app design language and fires BEFORE handleSubmit, so the
+              in-app error banner below never got a chance to show. `required` is
+              kept on the inputs so screen readers still announce them. */}
+        <form onSubmit={handleSubmit} method="post" noValidate className="space-y-4">
           {/* Role selector (signup) */}
           {mode === 'signup' && (
             <div className="grid grid-cols-2 gap-2 p-1 rounded-2xl bg-white/[0.06] border border-white/15">

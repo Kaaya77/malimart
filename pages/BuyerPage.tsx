@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useBottomObstruction } from '../hooks/useBottomObstruction';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -292,9 +293,10 @@ const SideNav = ({ tab, setTab, unread, user, onShop }: any) => (
 
 // Bottom tab bar (mobile) — mirrors SellerPage's MobileTabBar.
 const MobileTabBar = ({ tab, setTab, unread }: any) => {
+ const bottomBarRef = useBottomObstruction<HTMLDivElement>();
  const primary = TABS.slice(0, 5);
  return (
- <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 pb-[env(safe-area-inset-bottom)]
+ <div ref={bottomBarRef} className="lg:hidden fixed bottom-0 left-0 right-0 z-40 pb-[env(safe-area-inset-bottom)]
  bg-background/80 backdrop-blur-2xl border-t border-foreground/[0.08]">
  <nav aria-label="Buyer account sections" className="flex">
  {primary.map((t: any) => {

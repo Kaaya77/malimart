@@ -538,7 +538,7 @@ export const SellerInventory = ({
       <div className="rounded-2xl border border-foreground/8 glass-surface p-3 space-y-3">
         {/* Row 1: search + view/tools */}
         <div className="flex items-center gap-2.5">
-          <div className="relative flex-1">
+          <div className="relative flex-1 min-w-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/30" />
             <input
               value={search}
@@ -609,7 +609,7 @@ export const SellerInventory = ({
             <select
               value={category}
               onChange={e => setCategory(e.target.value)}
-              className="h-9 px-3 rounded-xl border border-foreground/12 bg-foreground/[0.03] text-xs font-medium text-foreground outline-none focus:border-emerald-500/50 transition-colors flex-shrink-0"
+              className="h-9 px-3 max-w-[9.5rem] sm:max-w-none truncate rounded-xl border border-foreground/12 bg-foreground/[0.03] text-xs font-medium text-foreground outline-none focus:border-emerald-500/50 transition-colors flex-shrink-0"
             >
               <option value="All">All Categories</option>
               {Object.keys(CATEGORY_HIERARCHY).map(c => <option key={c} value={c}>{c}</option>)}

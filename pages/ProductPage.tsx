@@ -7,6 +7,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppState } from '../context/AppContext';
 import { Button, Badge, Skeleton, VerifiedBadge, useToast } from '../components/UI';
+import { useBottomObstruction } from '../hooks/useBottomObstruction';
 import { Breadcrumb } from '../components/ui/Breadcrumb';
 import { ReviewSection } from '../components/ReviewSection';
 import { ProductCard } from '../components/ProductCard';
@@ -97,15 +98,8 @@ export const ProductPage = () => {
 
  const isLiked = product ? isInWishlist(product.id) : false;
 
- // The sticky mobile CTA bar (h-14 + mb-3) occupies the bottom of the viewport
- // on this page, on top of the usual nav allowance. Publish its real height so
- // floating UI — the Mali chat launcher — clears it instead of landing on the
- // Add-to-Cart button. Reset on unmount so other pages get the nav default.
- useEffect(() => {
-   const root = document.documentElement;
-   root.style.setProperty('--mm-bottom-obstruction', 'calc(3.5rem + 0.75rem)');
-   return () => { root.style.removeProperty('--mm-bottom-obstruction'); };
- }, []);
+ // Publishes this page's sticky CTA bar height so the chat launcher clears it.
+ const stickyBarRef = useBottomObstruction<HTMLDivElement>();
 
  const relatedProducts = useMemo(() => {
  if (!product) return [];
@@ -473,6 +467,17 @@ export const ProductPage = () => {
  {isAdding ? (<><Check className="w-4 h-4 mr-2 stroke-[3]" /> Added</>) : isOwnProduct ? 'Your Own Listing' : metrics.isOut ? 'Out of Stock' : onVacation ? 'Store on Vacation' : (<><ShoppingBag className="w-4 h-4 mr-2 stroke-[2.2]" /> Add to Cart</>)}
  </Button>
  </div>
+
+ {/* The "Low stock" line further up only appears at stock <= 5, so hitting
+ the cap at, say, 7 disabled "+" with no explanation at all. Explain the
+ wall at the moment the user reaches it, at any stock level. aria-live so
+ it is announced rather than silently appearing. Sits BELOW the row, not
+ inside it, so it cannot squeeze the Add-to-Cart button. */}
+ {metrics.stock > 0 && qty >= metrics.stock && (
+ <p aria-live="polite" className="-mt-1 text-[11px] font-semibold text-amber-600 dark:text-amber-400">
+ Only {metrics.stock} left in stock — that's the maximum you can add.
+ </p>
+ )}
  {/* CTA HIERARCHY: Add to Cart is the solid primary; Buy Now is the
  explicit secondary. It was `secondary` (a bg-foreground/[0.06] fill),
  which read as muted/disabled rather than as a real alternative action.
@@ -669,7 +674,7 @@ export const ProductPage = () => {
  </div>
 
  {/* ── Sticky mobile CTA ──────────────────────────────────────── */}
- <div className="fixed bottom-0 inset-x-0 z-[60] lg:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+ <div ref={stickyBarRef} className="fixed bottom-0 inset-x-0 z-[60] lg:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
  <div className="mx-3 mb-3 flex gap-2.5">
  <button
  aria-label={isLiked ? 'Remove from wishlist' : 'Add to wishlist'}

@@ -213,22 +213,32 @@ export const ReviewSection: React.FC<ReviewSectionProps> = ({ productId }) => {
       {/* ── Summary row ─────────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row gap-6 items-start">
 
-        {/* Big average */}
-        <div className="flex flex-col items-center justify-center min-w-[100px] pt-1">
-          <p className="text-5xl font-black text-foreground leading-none">
-            {stats.avg > 0 ? stats.avg.toFixed(1) : '—'}
-          </p>
-          <Stars value={Math.round(stats.avg)} size="xs"/>
-          <p className="text-[10px] text-foreground/35 mt-1 font-medium">{stats.total} review{stats.total !== 1 ? 's' : ''}</p>
-        </div>
+        {/* Big average + distribution — only once there is something to
+            distribute. On a new product this rendered a "—" and five empty
+            bars, a tall block of zeros that read as broken rather than new.
+            The review list below already carries a proper "No reviews yet"
+            empty state, so this row is pure noise until the first review. */}
+        {stats.total > 0 && (
+          <>
+            <div className="flex flex-col items-center justify-center min-w-[100px] pt-1">
+              <p className="text-5xl font-black text-foreground leading-none">
+                {stats.avg.toFixed(1)}
+              </p>
+              <Stars value={Math.round(stats.avg)} size="xs"/>
+              <p className="text-[10px] text-foreground/35 mt-1 font-medium">{stats.total} review{stats.total !== 1 ? 's' : ''}</p>
+            </div>
 
-        {/* Distribution bars */}
-        <div className="flex-1 space-y-1 py-1">
-          {[5,4,3,2,1].map((star, i) => (
-            <RatingBar key={star} star={star} count={stats.dist[star-1]} total={stats.total}
-              onClick={() => setSortBy(star >= 4 ? 'highest' : 'lowest')}/>
-          ))}
-        </div>
+            <div className="flex-1 space-y-1 py-1">
+              {[5,4,3,2,1].map(star => (
+                <RatingBar key={star} star={star} count={stats.dist[star-1]} total={stats.total}
+                  onClick={() => setSortBy(star >= 4 ? 'highest' : 'lowest')}/>
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* Keeps the CTA right-aligned once the stats block is gone. */}
+        {stats.total === 0 && <div className="flex-1" />}
 
         {/* Write review CTA — any signed-in user */}
         {user && !userHasReviewed && !showForm && (
