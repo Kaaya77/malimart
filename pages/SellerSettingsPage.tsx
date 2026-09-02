@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { SettingsShell } from '../components/settings/SettingsShell';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppState } from '../context/AppContext';
-import { Button, Input, Card, CardHeader, CardContent, CardTitle, CardDescription, Textarea, useToast, Badge, Switch } from '../components/UI';
+import { Button, Input, Card, CardHeader, CardContent, CardTitle, CardDescription, Textarea, useToast, Badge, Switch, VerifiedBadge } from '../components/UI';
 import { Store, DollarSign, Truck, Loader2, Wallet, ArrowUpRight, Clock, CheckCircle2, XCircle, Briefcase, Settings, PlusCircle, Trash2, Globe, MapPin, Info, ShieldCheck, AlertTriangle, ChevronLeft } from 'lucide-react';
 import { listMyPayoutMethods, addMyPayoutMethod, deleteMyPayoutMethod, listMyShippingZones, addMyShippingZone, deleteMyShippingZone } from '../services/sellerApi';
 import { CURRENCY, TANZANIA_REGIONS, TANZANIA_DISTRICTS, MOBILE_MONEY_PROVIDERS, BANK_PROVIDERS, SOCIAL_PLATFORMS, isValidTIN, isValidVRN, isValidTanzanianPhone, resolveShippingFee } from '../constants';
@@ -282,8 +283,13 @@ export const SellerSettingsPage = ({ onBack }: { onBack?: () => void } = {}) => 
  return (
   <SellerSettingsCtx.Provider value={__ctx}>
 
- <div className="max-w-6xl mx-auto px-4 md:px-0 pb-24 md:pb-12 animate-in fade-in">
-
+ <SettingsShell
+      title="Store Settings"
+      subtitle="Manage your storefront, business details and operations."
+      tabs={tabs}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      header={<>
  {/* ── Hero header ── */}
  <div className="glass-surface rounded-3xl p-5 sm:p-6 mb-5 mt-1 relative overflow-hidden">
    {/* subtle accent wash */}
@@ -311,7 +317,7 @@ export const SellerSettingsPage = ({ onBack }: { onBack?: () => void } = {}) => 
        <div className="flex items-center gap-2">
          <h1 className="text-lg sm:text-2xl font-bold text-foreground tracking-tight truncate">{storeName}</h1>
          {vendorProfile?.is_verified && (
-           <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 shrink-0" />
+           <VerifiedBadge iconOnly size="w-4 h-4 sm:w-5 sm:h-5" />
          )}
        </div>
        <p className="text-xs sm:text-sm text-foreground/45 mt-0.5">Store settings & operations</p>
@@ -343,47 +349,9 @@ export const SellerSettingsPage = ({ onBack }: { onBack?: () => void } = {}) => 
      </p>
    )}
  </div>
-
- <div className="flex flex-col md:flex-row gap-5 md:gap-8">
- {/* Sidebar Navigation */}
- <aside className="w-full md:w-72 shrink-0">
- <motion.nav
- initial="hidden"
- animate="visible"
- variants={{ hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0, transition: { staggerChildren: 0.04 } } }}
- className="flex flex-row md:flex-col gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 md:mx-0 md:px-0 pb-1 md:pb-0"
- >
- {tabs.map(tab => {
- const active = activeTab === tab.id;
- return (
- <motion.button
- key={tab.id}
- variants={{ hidden: { opacity: 0, y: 6 }, visible: { opacity: 1, y: 0 } }}
- onClick={() => setActiveTab(tab.id)}
- className={`group flex items-center gap-3 rounded-2xl text-left transition-all shrink-0 md:w-full
- px-3.5 py-2.5 md:px-4 md:py-3.5 ${
- active
- ? 'glass-surface ring-1 ring-emerald-500/30 shadow-sm'
- : 'text-foreground/60 hover:bg-foreground/[0.04] border border-transparent'
- }`}
- >
- <span className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
- active ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/25' : 'bg-foreground/[0.06] text-foreground/45 group-hover:text-foreground/70'
- }`}>
- <tab.icon className="w-4 h-4 stroke-[2]" />
- </span>
- <span className="min-w-0">
- <span className={`block text-sm font-semibold leading-tight whitespace-nowrap md:whitespace-normal ${active ? 'text-foreground' : ''}`}>{tab.label}</span>
- <span className="hidden md:block text-[11px] text-foreground/40 mt-0.5">{tab.desc}</span>
- </span>
- </motion.button>
- );
- })}
- </motion.nav>
- </aside>
-
- {/* Main Content Area */}
- <main className="flex-1 min-w-0 space-y-6">
+      </>}
+    >
+      <main className="space-y-6">
  <AnimatePresence mode="wait">
  <motion.div
  key={activeTab}
@@ -409,9 +377,8 @@ export const SellerSettingsPage = ({ onBack }: { onBack?: () => void } = {}) => 
  {activeTab === 'preferences' && <PreferencesTab />}
  </motion.div>
  </AnimatePresence>
- </main>
- </div>
- </div>
+</main>
+    </SettingsShell>
   </SellerSettingsCtx.Provider>
  );
 };

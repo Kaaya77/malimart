@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { SettingsShell } from '../components/settings/SettingsShell';
 import { motion } from 'framer-motion';
 import { useAppState } from '../context/AppContext';
 import { Button, Input, Card, CardHeader, CardContent, CardTitle, CardDescription, ConfirmDialog, useToast, Switch, ConfirmModal, Badge } from '../components/UI';
@@ -367,68 +368,19 @@ export const BuyerSettingsPage = () => {
   return (
   <BuyerSettingsCtx.Provider value={__ctx}>
 
-    <div className="max-w-6xl mx-auto pb-12 animate-in fade-in">
-      <div className="mb-8">
-        <BackButton label="Back" className="mb-3" />
-        <h1 className="text-3xl font-display font-bold tracking-tight text-foreground">Settings</h1>
-        <p className="text-muted-foreground mt-1">Manage your account preferences and settings.</p>
-      </div>
-
-      <div className="flex flex-col md:flex-row gap-8">
-        {/* Sidebar Navigation */}
-        <aside className="w-full md:w-64 shrink-0">
-          <motion.nav 
-            initial="hidden"
-            animate="visible"
-            variants={{
-                hidden: { opacity: 0, y: 10 },
-                visible: {
-                    opacity: 1,
-                    y: 0,
-                    transition: { staggerChildren: 0.05 }
-                }
-            }}
-            className="flex flex-row md:flex-col gap-1 overflow-x-auto no-scrollbar pb-2 md:pb-0"
-          >
-            {tabs.map(tab => (
-              <motion.button
-                key={tab.id}
-                variants={{
-                    hidden: { opacity: 0, x: -10 },
-                    visible: { opacity: 1, x: 0, transition: { duration: 0.3 } }
-                }}
-                onClick={() => setActiveTab(tab.id)}
-                aria-current={activeTab === tab.id ? 'page' : undefined}
-                className={`flex items-center gap-3 px-4 py-3 min-h-11 rounded-2xl text-sm font-bold transition-colors whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 ${
-                  activeTab === tab.id
-                    ? 'bg-foreground text-background'
-                    : 'text-foreground/50 hover:text-foreground hover:bg-foreground/[0.06]'
-                }`}
-              >
-                <tab.icon className="w-4 h-4 shrink-0" />
-                {tab.label}
-              </motion.button>
-            ))}
-          </motion.nav>
-        </aside>
-
-        {/* Main Content Area */}
-        <main className="flex-1 space-y-6">
-          
-          {/* PROFILE TAB */}
-          {activeTab === 'profile' && <ProfileTab />}
-
-          {/* BILLING & SHIPPING TAB */}
-          {activeTab === 'billing' && <BillingTab />}
-
-          {/* WALLET & REWARDS TAB */}
-          {activeTab === 'wallet' && <WalletTab />}
-
-          {/* SECURITY & PRIVACY TAB */}
-          {activeTab === 'security' && <SecurityTab />}
-
-        </main>
-      </div>
+    <SettingsShell
+      title="Settings"
+      subtitle="Manage your account preferences and settings."
+      tabs={tabs}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+    >
+      <main className="space-y-6">
+        {activeTab === 'profile'  && <ProfileTab />}
+        {activeTab === 'billing'  && <BillingTab />}
+        {activeTab === 'wallet'   && <WalletTab />}
+        {activeTab === 'security' && <SecurityTab />}
+      </main>
 
       {editingAddress && (
         <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
@@ -516,7 +468,7 @@ export const BuyerSettingsPage = () => {
         confirmText="Request Deletion"
         isDestructive={true}
       />
-    </div>
+    </SettingsShell>
   </BuyerSettingsCtx.Provider>
   );
 };
