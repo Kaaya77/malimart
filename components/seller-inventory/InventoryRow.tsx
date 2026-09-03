@@ -35,7 +35,7 @@ export interface RowModeration {
 export const InventoryRow = ({
   product, isSelected, onSelect, onEdit, onArchive, onRestore,
   onToggleStatus, onToggleBoost, onDuplicate, onStockAdjust,
-  onDragStart, onDragOver, onDrop, onCreatePromo, onAutoDiscount,
+  onDragStart, onDragOver, onDrop, onCreatePromo, onAutoDiscount, onQuickAdjust,
   updating, moderation, onAppeal,
 }: {
   product: InventoryProduct;
@@ -53,6 +53,8 @@ export const InventoryRow = ({
   onDrop: (e: React.DragEvent, targetId: string) => void;
   onCreatePromo: (p: InventoryProduct) => void;
   onAutoDiscount: (p: InventoryProduct) => void;
+  /** Instant +/-1, no modal — the row buttons promise this, so they must do it. */
+  onQuickAdjust: (p: InventoryProduct, delta: 1 | -1) => void;
   updating: boolean;
   moderation?: RowModeration | null;
   onAppeal?: (p: InventoryProduct) => void;
@@ -71,7 +73,15 @@ export const InventoryRow = ({
   const margin = product.cost_price && displayPrice
     ? ((displayPrice - product.cost_price) / displayPrice * 100)
     : 0;
-  const stockPct = Math.min(100, Math.max(0, (product.stock / Math.max(product.stock, 50)) * 100));
+  // Was `stock / Math.max(stock, 50) * 100` — for any stock >= 50 that is
+  // `stock / stock`, i.e. ALWAYS exactly 100%. A product with 51 units and one
+  // with 5,000 rendered an identical full bar; the bar could never distinguish
+  // "healthy" from "wildly overstocked", and stopped moving right when it
+  // would have started being useful. Scaled against the seller's own reorder
+  // point instead, so it reads relative to what "enough stock" means for THIS
+  // product rather than a flat, arbitrary ceiling.
+  const stockReference = Math.max((product.low_stock_threshold || 5) * 4, 20);
+  const stockPct = Math.min(100, Math.max(0, (product.stock / stockReference) * 100));
 
   // Close menu on outside click
   useEffect(() => {
@@ -243,7 +253,7 @@ export const InventoryRow = ({
               </span>
               <div className="flex items-center gap-1">
                 <button
-                  onClick={e => { e.stopPropagation(); onStockAdjust({ ...product, _quickDelta: -1 } as any); }}
+                  onClick={e => { e.stopPropagation(); onQuickAdjust(product, -1); }}
                   className="w-5 h-5 rounded-md bg-foreground/[0.05] flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-colors text-foreground/30 flex-shrink-0 opacity-0 group-hover:opacity-100"
                   title="Remove 1"
                 >
@@ -251,7 +261,7 @@ export const InventoryRow = ({
                 </button>
                 <span className="text-xs font-black text-foreground tabular-nums w-7 text-center">{product.stock}</span>
                 <button
-                  onClick={e => { e.stopPropagation(); onStockAdjust({ ...product, _quickDelta: 1 } as any); }}
+                  onClick={e => { e.stopPropagation(); onQuickAdjust(product, 1); }}
                   className="w-5 h-5 rounded-md bg-foreground/[0.05] flex items-center justify-center hover:bg-emerald-50 hover:text-emerald-600 transition-colors text-foreground/30 flex-shrink-0 opacity-0 group-hover:opacity-100"
                   title="Add 1"
                 >

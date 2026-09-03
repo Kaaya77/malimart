@@ -1,22 +1,7 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import {
-  Search, Filter, Plus, Zap, Trash2,
-  CheckSquare, Square, Copy, Package, X,
-  Download, ArrowUpDown, History, Layers,
-  DollarSign, BarChart3, AlertCircle, Clock,
-  Percent, Upload, ChevronDown, ChevronUp,
-  RefreshCw, Edit2, ToggleLeft, ToggleRight,
-  Minus, TrendingUp, TrendingDown, Loader2,
-  GripVertical, MoreHorizontal, Star, Eye,
-  Check, AlertTriangle, ArrowUpRight, Wand2, Share2
-} from 'lucide-react';
-import { useToast } from '../UI';
-import { Product } from '../../types';
-import { formatTZS, CURRENCY } from '../../constants';
-import { supabase } from '../../services/supabaseClient';
-import { withCache, invalidate, TTL } from '../../services/queryCache';
-import { STATUS_CFG, REASON_LABELS, timeAgo } from './config';
-import type { InventoryProduct, InventoryMovement } from './config';
+import React from 'react';
+import { History } from 'lucide-react';
+import { REASON_LABELS, timeAgo } from './config';
+import type { InventoryMovement } from './config';
 
 export const MovementHistory = ({ movements }: { movements: InventoryMovement[] }) => {
   if (!movements || movements.length === 0) {

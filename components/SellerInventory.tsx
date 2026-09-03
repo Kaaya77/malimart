@@ -18,16 +18,15 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Search, Filter, Plus, Zap, Trash2,
-  CheckSquare, Square, Copy, Package, X,
-  Download, ArrowUpDown, History, Layers,
-  DollarSign, BarChart3, AlertCircle, Clock,
-  Percent, Upload, ChevronDown, ChevronUp,
-  RefreshCw, Edit2, ToggleLeft, ToggleRight,
-  Minus, TrendingUp, TrendingDown, Loader2,
-  GripVertical, MoreHorizontal, Star, Eye,
-  Check, AlertTriangle, ArrowUpRight, Wand2, Share2,
-  RotateCcw, Wifi, LayoutGrid, List, ChevronRight
+  Search, Plus, Zap, Trash2,
+  CheckSquare, Square, Package, X,
+  Download, ArrowUpDown,
+  DollarSign, AlertCircle,
+  Upload,
+  RefreshCw, Edit2,
+  TrendingUp,
+  Check, AlertTriangle, Wand2,
+  RotateCcw, LayoutGrid, List
 } from 'lucide-react';
 import { useAppState } from '../context/AppContext';
 import { useDebounce } from '../src/hooks/useDebounce';
@@ -220,7 +219,20 @@ export const SellerInventory = ({
     }
   }, [contextInventory]);
 
-  useEffect(() => { setPage(0); }, [debouncedSearch, status, category, lowStockOnly]);
+  useEffect(() => {
+    setPage(0);
+    // Selection used to survive a filter change untouched. Select 5 rows,
+    // narrow the search or switch tabs, and those 5 ids stayed in
+    // `selectedIds` — invisible, since the products they pointed at were no
+    // longer in `products`. The bulk-action bar still said "5 selected," and
+    // Archive/Bulk Edit acted on ids the seller could no longer see and had
+    // likely forgotten selecting. Selection is scoped to what's on screen.
+    setSelectedIds(new Set());
+  }, [debouncedSearch, status, category, lowStockOnly]);
+
+  // Same reasoning, for manual pagination: Next/Prev swaps `products` without
+  // touching the filters above, so it needs its own clear.
+  useEffect(() => { setSelectedIds(new Set()); }, [page]);
   useEffect(() => { fetchInventory(!!contextInventory?.length); }, [fetchInventory]);
 
   // Supabase Realtime: live stock updates when products change in DB
@@ -709,7 +721,17 @@ export const SellerInventory = ({
                       className={`relative glass-surface rounded-2xl border overflow-hidden cursor-pointer group transition-all hover:shadow-md ${
                         selectedIds.has(p.id) ? 'border-emerald-500/50 ring-2 ring-emerald-500/20' : 'border-foreground/8 hover:border-foreground/15'
                       }`}
-                      onClick={() => toggleSelect(p.id)}
+                      // The whole card used to BE the select toggle, with no
+                      // visible checkbox anywhere — clicking a product photo
+                      // silently selected it instead of opening it, the
+                      // opposite of what table view (checkbox to select,
+                      // thumbnail/name to open) already trained the seller to
+                      // expect. The card body now opens the product, matching
+                      // the table row; the checkbox below is the only way to
+                      // select, and is not hover-gated — a hover-only
+                      // affordance does not exist on the phones most sellers
+                      // are actually using this on.
+                      onClick={() => navigate(`/seller/products/${p.id}/edit`)}
                     >
                       {/* Product image */}
                       <div className="relative aspect-square bg-foreground/[0.03] overflow-hidden">
@@ -724,17 +746,27 @@ export const SellerInventory = ({
                         <div className={`absolute top-2 left-2 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${statusColor}`}>
                           {p.status}
                         </div>
+                        {/* Select checkbox — explicit and always visible, not
+                            the card's implicit click target anymore. */}
+                        <button
+                          onClick={e => { e.stopPropagation(); toggleSelect(p.id); }}
+                          aria-label={selectedIds.has(p.id) ? `Deselect ${p.name}` : `Select ${p.name}`}
+                          aria-pressed={selectedIds.has(p.id)}
+                          className={`absolute top-2 right-2 w-6 h-6 rounded-lg flex items-center justify-center shadow-sm transition-colors ${
+                            selectedIds.has(p.id)
+                              ? 'bg-emerald-500 text-white'
+                              : 'bg-background/80 backdrop-blur-sm text-foreground/40 hover:text-foreground/70 border border-foreground/10'
+                          }`}
+                        >
+                          {selectedIds.has(p.id) ? <Check className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
+                        </button>
                         {/* Selected overlay */}
                         {selectedIds.has(p.id) && (
                           <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
-                            className="absolute inset-0 bg-emerald-500/20 flex items-center justify-center"
-                          >
-                            <div className="w-7 h-7 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg">
-                              <Check className="w-4 h-4 text-white" />
-                            </div>
-                          </motion.div>
+                            className="absolute inset-0 bg-emerald-500/10 pointer-events-none"
+                          />
                         )}
                       </div>
 
@@ -867,6 +899,7 @@ export const SellerInventory = ({
                   onToggleBoost={handleToggleBoost}
                   onDuplicate={handleDuplicate}
                   onStockAdjust={prod => setStockAdjProduct(prod)}
+                  onQuickAdjust={(prod, delta) => handleStockAdjust(prod, delta, 'adjustment', '')}
                   onDragStart={handleDragStart}
                   onDragOver={e => e.preventDefault()}
                   onDrop={handleDrop}
