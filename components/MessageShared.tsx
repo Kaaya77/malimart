@@ -1,31 +1,33 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 
-/** Never shrink below this, however cramped the host page is. */
-const MIN_SHELL_HEIGHT = 380;
-
 /**
- * Measure the height the shell can actually occupy, instead of guessing it
- * from a viewport formula.
+ * Publish the shell's vertical offsets as CSS custom properties, instead of
+ * measuring a pixel height into React state.
  *
- * The previous height was `calc(100dvh - var(--mm-bottom-obstruction) - 7rem)`.
- * That formula assumed messaging was the only thing under a 7rem header — but
- * on mobile the dashboards ALSO reserve their own bottom padding for the fixed
- * tab bar (BuyerPage/SellerPage use `pb-[calc(5.5rem+env(safe-area-inset-bottom))]`),
- * and they render a mobile PageHeader plus `pt-6` above the tab content.
+ * The first version of this fix called `setState` from the measurement, so
+ * every recompute forced a React re-render of the whole shell. On mobile,
+ * `window.innerHeight` changes as the browser chrome (URL bar) animates
+ * during a scroll gesture, which fires `resize` and the ResizeObserver below
+ * many times over the course of one fast scroll — each one re-rendering the
+ * tree and visibly juddering the page down to its loading skeletons. THAT was
+ * the "scroll hard and the whole UI moves" report: a resize handler that
+ * updated state was resizing something on almost every scroll frame.
  *
- * So the bottom obstruction was subtracted twice and the top was understated,
- * which is the reported "scrolling a bit on mobile leaves empty space at the
- * bottom": the page grew taller than the viewport, and scrolling revealed the
- * host's leftover padding under a shell that had already ended.
+ * The fix is to let `100dvh` do what it is FOR: the browser recalculates it
+ * on every one of those chrome-animation frames natively, with no JS and no
+ * React render. This hook only needs to publish the two numbers that do NOT
+ * change during a scroll — how far down the page the shell sits, and how
+ * much space is reserved below it — as CSS variables, written directly onto
+ * the element via `style.setProperty`. That is a plain DOM mutation with no
+ * React reconciliation attached, so however many times the observer below
+ * fires, nothing about the component tree moves.
  *
- * Measuring the shell's own document offset and the padding that ancestors
- * reserve below it is self-correcting — it stays right if a host page changes
- * its header or padding, which a magic number never does.
+ * The actual height is then `max(380px, 100dvh - top - below)` in CSS,
+ * computed at paint time by the browser on every frame for free.
  */
-function useAvailableHeight<T extends HTMLElement>() {
+function useShellOffsets<T extends HTMLElement>() {
   const ref = useRef<T>(null);
-  const [height, setHeight] = useState<number | null>(null);
 
   useLayoutEffect(() => {
     const el = ref.current;
@@ -47,12 +49,18 @@ function useAvailableHeight<T extends HTMLElement>() {
         getComputedStyle(document.documentElement).getPropertyValue('--mm-bottom-obstruction'),
       ) || 0;
 
-      // Whichever is larger already covers the nav; counting both is the bug.
+      // Whichever is larger already covers the nav; counting both is the bug
+      // this hook exists to fix.
       const below = Math.max(reservedBelow, obstruction);
-      setHeight(Math.max(MIN_SHELL_HEIGHT, window.innerHeight - top - below));
+
+      // Direct DOM write, deliberately not React state — see the doc comment.
+      el.style.setProperty('--mm-shell-top', `${Math.round(top)}px`);
+      el.style.setProperty('--mm-shell-below', `${Math.round(below)}px`);
     };
 
     measure();
+    // A real layout change (font swap, header height change, keyboard) still
+    // needs to re-measure — this just no longer routes through React to do it.
     const ro = new ResizeObserver(measure);
     ro.observe(document.documentElement);
     window.addEventListener('resize', measure);
@@ -64,7 +72,7 @@ function useAvailableHeight<T extends HTMLElement>() {
     };
   }, []);
 
-  return { ref, height };
+  return ref;
 }
 
 /**
@@ -81,33 +89,23 @@ function useAvailableHeight<T extends HTMLElement>() {
  * the reclaimed width and lets the panel hold more than it could at 25%.
  *
  * ── Height ──────────────────────────────────────────────────────────────────
- * Kept verbatim from the previous chassis, because it encodes a real fix.
- * Height was `calc(100vh - 7rem)` with `min-h-[520px]`. Two problems, both
- * mobile-only and both severe:
- *
- *  1. `100vh` on a phone measures the viewport as if the browser URL bar were
- *     collapsed, so the container is TALLER than what is actually visible.
- *  2. It never subtracted the fixed bottom nav (58px).
- *
- * Measured, the composer ended up 94-162px BELOW the fold on common phones
- * (iPhone SE 94px, Android mid 117px, iPhone 12 162px) — and since the
- * container is `overflow-hidden`, you could not scroll to reach it. The
- * message input was simply unreachable.
- *
- * `100dvh` tracks the browser chrome as it collapses, and the bottom
- * obstruction is subtracted via the same variable every other pinned element
- * uses. `min-h` is dropped below md, because forcing 520px on a 519px
- * viewport guarantees the overflow it was meant to prevent.
+ * See useShellOffsets above for the full history. Short version: the height
+ * is `max(380px, 100dvh - top - below)`, where `top`/`below` are CSS
+ * variables that hook publishes — a document offset and a reserved-space
+ * allowance that do not change mid-scroll, leaving `100dvh` to absorb the
+ * browser chrome's show/hide animation the way it is designed to.
  */
 export const MessagingShell = ({ children }: { children: React.ReactNode }) => {
-  const { ref, height } = useAvailableHeight<HTMLDivElement>();
+  const ref = useShellOffsets<HTMLDivElement>();
   return (
     <div
       ref={ref}
-      // The dvh fallback only applies for the first paint, before the measure
-      // lands — after that the measured height is authoritative.
-      style={height ? { height } : undefined}
-      className="relative flex h-[calc(100dvh-var(--mm-bottom-obstruction,58px)-7rem)] min-h-0 max-h-[920px] overflow-hidden rounded-3xl border border-foreground/[0.08] bg-background shadow-sm animate-in fade-in duration-300"
+      // Fallback values (top/below) only matter for the very first paint,
+      // before useLayoutEffect above has written the real ones — and since
+      // that hook runs before the browser paints, this should never actually
+      // be visible.
+      style={{ ['--mm-shell-top' as any]: '160px', ['--mm-shell-below' as any]: '58px' }}
+      className="relative flex h-[max(380px,calc(100dvh-var(--mm-shell-top)-var(--mm-shell-below)))] min-h-0 max-h-[920px] overflow-hidden rounded-3xl border border-foreground/[0.08] bg-background shadow-sm animate-in fade-in duration-300"
     >
       {children}
     </div>

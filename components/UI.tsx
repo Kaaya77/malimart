@@ -2,6 +2,7 @@
 import React, { Component, ReactNode, useState } from 'react';
 import { motion, AnimatePresence } from "framer-motion";
 import { Slot } from '@radix-ui/react-slot';
+import { Link } from 'react-router-dom';
 import { useAppState } from '../context/AppContext';
 import { Loader2, X, AlertTriangle, ChevronDown, Sun, Moon, ShieldCheck, Printer, Download, CheckCircle2, Package, Truck, CreditCard, Store, Sparkles, RotateCcw, Percent, MessageSquare, Share2, ShieldAlert, BadgeCheck, RefreshCw, WifiOff } from 'lucide-react';
 import { Order, VendorProfile, Product } from '../types';
@@ -717,7 +718,24 @@ export const UserProfileModal = ({ isOpen, onClose, user }: { isOpen: boolean, o
  </div>
  </div>
 
- <div className="w-full pt-6 border-t border-foreground/8 dark:border-foreground/8 space-y-4">
+ 
+        {user.role === 'seller' && (
+          <Link
+            to={`/store/${user.id}`}
+            onClick={onClose}
+            className="w-full flex items-center gap-3 p-3 rounded-2xl border border-emerald-500/25 bg-emerald-500/[0.06] hover:bg-emerald-500/[0.1] transition-colors"
+          >
+            <span className="w-9 h-9 rounded-xl bg-emerald-500/15 flex items-center justify-center shrink-0">
+              <Store className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            </span>
+            <span className="text-left flex-1 min-w-0">
+              <span className="block text-[10px] font-bold uppercase tracking-[0.15em] text-emerald-600/80 dark:text-emerald-400/80">Storefront</span>
+              <span className="block text-sm font-black text-foreground truncate">Visit their shop</span>
+            </span>
+          </Link>
+        )}
+
+        <div className="w-full pt-6 border-t border-foreground/8 dark:border-foreground/8 space-y-4">
  <div className="flex justify-between text-sm font-bold text-foreground/55">
  <span>Member Since</span>
  <span className="text-foreground/60 ">{new Date(user.created_at).toLocaleDateString()}</span>

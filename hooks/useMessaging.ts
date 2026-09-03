@@ -333,6 +333,10 @@ export function useMessaging(userId: string | undefined, options: MessagingOptio
       replyToSenderId: null,
       product: null,
       orderId: args.orderId ?? null,
+      // The optimistic bubble does not know the order's items yet — the real
+      // ones arrive with the RPC response or the realtime echo, which
+      // upsertIntoThread merges in without disturbing this placeholder.
+      orderItems: [],
       reactions: [],
       pending: true,
     };

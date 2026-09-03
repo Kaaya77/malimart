@@ -908,6 +908,7 @@ export const Conversations = ({
                             <MessageContextTag
                               product={msg.product}
                               orderId={msg.orderId}
+                              orderItems={msg.orderItems}
                               mine={mine}
                               onViewOrder={openOrder}
                             />

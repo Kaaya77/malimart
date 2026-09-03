@@ -61,6 +61,11 @@ export interface ThreadMessage {
   replyToSenderId: string | null;
   product: { id: string; name: string; price: number; slug: string | null; image: string | null } | null;
   orderId: string | null;
+  /** The items of the referenced order — what someone actually wants when a
+   *  message says "about this order": something that links to the products,
+   *  not an opaque id. Scoped server-side: a seller only sees the items they
+   *  sold on that order, never a buyer's items from another seller. */
+  orderItems: Array<{ id: string; name: string; image: string | null; quantity: number; price: number }>;
   reactions: Reaction[];
   /** True only for a message shown optimistically before the server confirms. */
   pending?: boolean;
@@ -106,6 +111,7 @@ export const toThreadMessage = (r: any): ThreadMessage => ({
   replyToSenderId: r.reply_to_sender_id ?? null,
   product: r.product ?? null,
   orderId: r.order_id ?? null,
+  orderItems: Array.isArray(r.order_items) ? r.order_items : [],
   reactions: Array.isArray(r.reactions) ? r.reactions : [],
 });
 

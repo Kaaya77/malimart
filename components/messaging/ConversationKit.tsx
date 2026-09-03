@@ -409,19 +409,62 @@ export const TypingIndicator = ({ name }: { name?: string }) => (
 // surface, so the label disappeared in dark mode.
 
 export const MessageContextTag = ({
-  product, orderId, mine, onViewOrder,
+  product, orderId, orderItems, mine, onViewOrder,
 }: {
   product?: { id: string; name: string; price: number; slug: string | null; image: string | null } | null;
   orderId?: string | null;
+  /** The order's line items, hydrated server-side. Each one links straight to
+   *  its product page — the opaque order id alone had nowhere useful to go. */
+  orderItems?: Array<{ id: string; name: string; image: string | null; quantity: number; price: number }>;
   mine?: boolean;
   onViewOrder?: (orderId: string) => void;
 }) => {
   if (!product && !orderId) return null;
   const shell = 'flex items-center gap-2.5 px-3 py-2 rounded-2xl bg-foreground/[0.04] border border-foreground/[0.08] text-left transition-colors enabled:hover:bg-foreground/[0.07] enabled:hover:border-foreground/[0.14] disabled:cursor-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40';
+  const hasItems = !!orderItems && orderItems.length > 0;
   return (
     <div className={`mb-1.5 flex flex-col gap-1.5 max-w-[85%] ${mine ? 'items-end self-end' : 'items-start self-start'}`}>
-      {orderId && (
-        <button type="button" onClick={() => onViewOrder?.(orderId)} disabled={!onViewOrder} className={shell}>
+      {orderId && hasItems && (
+        <div className="w-full rounded-2xl border border-foreground/[0.08] bg-foreground/[0.04] overflow-hidden">
+          <div className="flex items-center gap-2 px-3 py-2 border-b border-foreground/[0.06]">
+            <Package className="w-3.5 h-3.5 text-foreground/45 shrink-0" />
+            <SectionLabel>Order #{orderId.slice(0, 8).toUpperCase()}</SectionLabel>
+          </div>
+          {/* Each line item is its own link — this is the whole point: the tag
+              used to say "about order #4A2B91C7" and go nowhere. Now it goes
+              straight to the thing that was actually ordered. */}
+          <div className="divide-y divide-foreground/[0.06]">
+            {orderItems!.map(item => (
+              <Link
+                key={item.id}
+                to={`/product/${item.id}`}
+                className="flex items-center gap-2.5 px-3 py-2 hover:bg-foreground/[0.05] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-inset"
+                aria-label={`View ${item.name}`}
+              >
+                {item.image ? (
+                  <img src={item.image} alt="" className="w-9 h-9 object-cover rounded-lg shrink-0" loading="lazy" decoding="async" />
+                ) : (
+                  <span className="w-9 h-9 rounded-lg bg-foreground/[0.06] flex items-center justify-center shrink-0">
+                    <Tag className="w-3.5 h-3.5 text-foreground/50" />
+                  </span>
+                )}
+                <span className="min-w-0 flex-1">
+                  <span className="block text-xs font-bold text-foreground truncate">{item.name}</span>
+                  <span className="block text-[10px] font-bold text-foreground/45 tabular-nums">
+                    {item.quantity} × {formatTZS(item.price)}
+                  </span>
+                </span>
+                <ArrowUpRight className="w-3.5 h-3.5 shrink-0 text-foreground/35" />
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+      {/* Fallback: the order id is known but its items could not be resolved
+          (permission boundary, or a legacy order without item rows) — still
+          say WHICH order, without pretending there is somewhere to click. */}
+      {orderId && !hasItems && (
+        <div className={shell}>
           <span className="w-8 h-8 rounded-xl bg-foreground/[0.06] flex items-center justify-center shrink-0">
             <Package className="w-4 h-4 text-foreground/55" />
           </span>
@@ -431,7 +474,7 @@ export const MessageContextTag = ({
               #{orderId.slice(0, 8).toUpperCase()}
             </span>
           </span>
-        </button>
+        </div>
       )}
       {/* A real <Link>, not a button that opened a modal. "Asking about this
           product" has to be able to take you BACK to the product — including
