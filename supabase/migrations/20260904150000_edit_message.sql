@@ -98,6 +98,12 @@ create trigger messages_enforce_body_edit
   before update on public.messages
   for each row execute function public.enforce_message_body_edit();
 
+-- Trigger functions don't need EXECUTE to fire — only a direct RPC call
+-- does. Without this, Supabase's advisor (correctly) flags it as callable
+-- by anon/authenticated at /rest/v1/rpc/enforce_message_body_edit, unlike
+-- every other function in this codebase.
+revoke all on function public.enforce_message_body_edit() from public, anon, authenticated;
+
 -- ---------------------------------------------------------------------------
 -- 2. get_thread_page — add edited_at to the page shape.
 -- ---------------------------------------------------------------------------
