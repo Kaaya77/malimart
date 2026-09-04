@@ -507,6 +507,8 @@ export const MessageContextTag = ({
 
 export interface BubbleProps {
   id: string;
+  /** Briefly ringed after a search jump lands on this message. */
+  highlighted?: boolean;
   body?: string | null;
   attachmentUrl?: string | null;
   attachmentType?: 'image' | 'file' | null;
@@ -538,7 +540,7 @@ export interface BubbleProps {
 const EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
 
 export const MessageBubble = ({
-  id, body, attachmentUrl, attachmentType, deleted, createdAt,
+  id, highlighted, body, attachmentUrl, attachmentType, deleted, createdAt,
   isMine, read, reactions, myUserId, replyToContent, pending, failed, contextSlot,
   onReply, onDelete, onDeleteForEveryone, onReport, onReact, onRetry, onDiscard,
 }: BubbleProps) => {
@@ -572,7 +574,11 @@ export const MessageBubble = ({
   const hasActions = actionable && (onReply || onReact || onDelete || onDeleteForEveryone || onReport);
 
   return (
-    <div className={`flex flex-col ${isMine ? 'items-end' : 'items-start'} group relative mb-1`}>
+    <div
+      id={`msg-${id}`}
+      className={`flex flex-col ${isMine ? 'items-end' : 'items-start'} group relative mb-1 rounded-2xl transition-shadow duration-500
+        ${highlighted ? 'ring-2 ring-emerald-500/60' : ''}`}
+    >
       {/* Tap-catcher to dismiss the long-press menu */}
       {(showMenu || showEmoji) && (
         <div
@@ -767,6 +773,103 @@ export const MessageBubble = ({
           </div>
         )}
       </div>
+    </div>
+  );
+};
+
+// ─── In-thread search ────────────────────────────────────────────────────────
+// Searches the body of THIS conversation's messages, server-side — the
+// conversation list's own search box only ever matched a name or the last
+// message preview, never the rest of a long thread's history.
+
+const highlightMatch = (text: string, query: string) => {
+  const q = query.trim();
+  if (!q) return text;
+  const idx = text.toLowerCase().indexOf(q.toLowerCase());
+  if (idx === -1) return text;
+  return (
+    <>
+      {text.slice(0, idx)}
+      <mark className="bg-emerald-500/30 text-inherit rounded-sm">{text.slice(idx, idx + q.length)}</mark>
+      {text.slice(idx + q.length)}
+    </>
+  );
+};
+
+export interface MessageSearchHitLike {
+  id: string;
+  senderId: string;
+  body: string;
+  createdAt: string;
+}
+
+export const MessageSearchPanel = ({
+  query, onQueryChange, onClose, results, loading, myUserId, onSelect,
+}: {
+  query: string;
+  onQueryChange: (q: string) => void;
+  onClose: () => void;
+  results: MessageSearchHitLike[];
+  loading: boolean;
+  myUserId: string;
+  onSelect: (hit: MessageSearchHitLike) => void;
+}) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => { inputRef.current?.focus(); }, []);
+  useEffect(() => {
+    const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onEsc);
+    return () => window.removeEventListener('keydown', onEsc);
+  }, [onClose]);
+
+  return (
+    <div className="border-b border-foreground/[0.08] bg-background shrink-0 animate-in slide-in-from-top-2 duration-150">
+      <div className="flex items-center gap-2.5 px-3 sm:px-4 py-2.5">
+        <Search className="w-4 h-4 text-foreground/35 shrink-0" />
+        <input
+          ref={inputRef}
+          value={query}
+          onChange={(e) => onQueryChange(e.target.value)}
+          placeholder="Search this conversation"
+          aria-label="Search this conversation"
+          className="flex-1 min-w-0 bg-transparent text-sm font-medium text-foreground placeholder:text-foreground/35 outline-none"
+        />
+        {loading && <Loader2 className="w-3.5 h-3.5 animate-spin text-foreground/35 shrink-0" />}
+        <button
+          onClick={onClose}
+          aria-label="Close search"
+          className="h-9 w-9 -mr-1 flex items-center justify-center rounded-2xl hover:bg-foreground/[0.06] text-foreground/40 transition-colors shrink-0"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+      {query.trim().length > 0 && (
+        <div className="max-h-64 overflow-y-auto no-scrollbar border-t border-foreground/[0.06]">
+          {!loading && results.length === 0 && (
+            <p className="text-center text-xs font-medium text-foreground/40 py-6">
+              No messages match "{query.trim()}"
+            </p>
+          )}
+          {results.map(hit => (
+            <button
+              key={hit.id}
+              onClick={() => onSelect(hit)}
+              aria-label={`Jump to message: ${hit.senderId === myUserId ? 'You said ' : ''}${hit.body.slice(0, 60)}`}
+              className="w-full flex items-start gap-2.5 px-4 py-2.5 text-left hover:bg-foreground/[0.04] transition-colors focus-visible:outline-none focus-visible:bg-foreground/[0.04]"
+            >
+              <span className="flex-1 min-w-0">
+                <span className="block text-xs font-semibold text-foreground/80 leading-snug line-clamp-2">
+                  {hit.senderId === myUserId ? 'You: ' : ''}{highlightMatch(hit.body, query)}
+                </span>
+                <span className="block text-[10px] font-bold text-foreground/35 mt-0.5">
+                  {new Date(hit.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                  {' · '}{shortTime(hit.createdAt)}
+                </span>
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

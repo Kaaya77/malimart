@@ -25,6 +25,12 @@ async function rpc<T>(fn: string, args?: Record<string, unknown>): Promise<T> {
 // thread paging, reactions and attachments. This file used to carry a second
 // set of messaging wrappers that nothing imported.
 
+// ---------- Presence ----------
+// Refreshes MY OWN profiles.last_seen_at — the input to the "online within
+// the last 2 minutes" heuristic used across messaging and store pages. Call
+// on a visibility-aware heartbeat, not on every render.
+export const touchPresence = () => rpc<void>("touch_presence");
+
 // ---------- Notifications ----------
 export const markAllNotificationsRead = () => rpc<void>("mark_all_notifications_read");
 export const deleteNotifications = (ids: string[]) =>

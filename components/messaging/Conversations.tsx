@@ -44,7 +44,7 @@ import * as aiService from '../../services/geminiService';
 import { sanitizeText, rateLimit } from '../../src/security';
 import { useMessaging, isOnline } from '../../hooks/useMessaging';
 import {
-  Conversation, PeerRole, ThreadMessage, PeerProfile, SharedEngagement,
+  Conversation, PeerRole, ThreadMessage, PeerProfile, SharedEngagement, ThreadSearchHit,
   uploadAttachment, fetchPeerProfile, fetchProfileRole, listSharedEngagements,
 } from '../../services/messagesService';
 import { fetchProductById } from '../../services/shopService';
@@ -53,6 +53,7 @@ import { MessagingShell, ConversationPane, ThreadPane, DetailsDrawer } from '../
 import {
   ConversationListItem, ChatEmptyState, DayDivider, isSameDay, SectionLabel,
   MessageBubble, TypingIndicator, NewConversationModal, MessageContextTag, PeerAvatar,
+  MessageSearchPanel,
 } from './ConversationKit';
 
 // ─── Role configuration ──────────────────────────────────────────────────────
@@ -298,6 +299,45 @@ export const Conversations = ({
 
   const { selectPeer, openPeer, activePeerId } = m;
 
+  // ─── In-thread search ───────────────────────────────────────────────────────
+  const [showThreadSearch, setShowThreadSearch] = useState(false);
+  const [threadSearchQuery, setThreadSearchQuery] = useState('');
+  const [highlightMsgId, setHighlightMsgId] = useState<string | null>(null);
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const closeThreadSearch = useCallback(() => {
+    setShowThreadSearch(false);
+    setThreadSearchQuery('');
+    m.clearSearch();
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+  }, [m]);
+
+  const handleSearchQueryChange = useCallback((q: string) => {
+    setThreadSearchQuery(q);
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    if (!activePeerId) return;
+    if (!q.trim()) { m.clearSearch(); return; }
+    searchDebounceRef.current = setTimeout(() => { void m.searchThread(activePeerId, q); }, 300);
+  }, [activePeerId, m]);
+
+  useEffect(() => () => {
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
+  }, []);
+
+  const jumpToSearchHit = useCallback(async (hit: ThreadSearchHit) => {
+    if (!activePeerId) return;
+    closeThreadSearch();
+    await m.jumpToMessage(activePeerId, hit);
+    setHighlightMsgId(hit.id);
+    requestAnimationFrame(() => {
+      document.getElementById(`msg-${hit.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+    if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
+    highlightTimerRef.current = setTimeout(() => setHighlightMsgId(null), 2200);
+  }, [activePeerId, closeThreadSearch, m]);
+
   // ─── Deep link ─────────────────────────────────────────────────────────────
   const openedRef = useRef<string | null>(null);
   useEffect(() => {
@@ -391,8 +431,13 @@ export const Conversations = ({
     setDetailsOpen(false);
     setPeerDetail(null);
     setEngagements(null);
+    setShowThreadSearch(false);
+    setThreadSearchQuery('');
+    setHighlightMsgId(null);
+    m.clearSearch();
     lastSuggestedFor.current = null;
     if (textareaRef.current) textareaRef.current.style.height = 'auto';
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activePeerId]);
 
   // Load the richer profile and the shared order history only when the drawer
@@ -764,7 +809,7 @@ export const Conversations = ({
                 onClick={() => setDetailsOpen(true)}
                 className="flex items-center gap-3 flex-1 min-w-0 text-left rounded-2xl px-1 py-1 hover:bg-foreground/[0.04] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
               >
-                <PeerAvatar name={active.name} url={active.avatarUrl} online={isOnline(active.lastSeenAt)} size="sm" />
+                <PeerAvatar name={active.name} url={active.avatarUrl} online={m.peerPresent || isOnline(active.lastSeenAt)} size="sm" />
                 <span className="min-w-0">
                   <span className="block text-sm font-black text-foreground truncate">{active.name}</span>
                   {context && context.type !== 'product' ? (
@@ -774,12 +819,20 @@ export const Conversations = ({
                     </span>
                   ) : (
                     <span className="block text-[10px] font-bold uppercase tracking-[0.12em] text-foreground/40">
-                      {peerBlocked ? 'Blocked' : isOnline(active.lastSeenAt) ? 'Online' : cfg.peerNoun}
+                      {peerBlocked ? 'Blocked' : (m.peerPresent || isOnline(active.lastSeenAt)) ? 'Online' : cfg.peerNoun}
                     </span>
                   )}
                 </span>
               </button>
 
+              <button
+                onClick={() => setShowThreadSearch(v => !v)}
+                aria-label="Search this conversation"
+                aria-pressed={showThreadSearch}
+                className={`hidden sm:flex ${iconBtn} shrink-0 ${showThreadSearch ? 'bg-emerald-500 text-white' : 'text-foreground/50 hover:text-foreground hover:bg-foreground/[0.06]'}`}
+              >
+                <Search className="w-4 h-4" />
+              </button>
               <button
                 onClick={() => setDetailsOpen(true)}
                 aria-label="Conversation details"
@@ -801,6 +854,12 @@ export const Conversations = ({
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setChatMenuOpen(false)} />
                     <div className="absolute right-0 top-full mt-1 w-56 bg-background border border-foreground/[0.1] rounded-2xl shadow-xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
+                      <button
+                        onClick={() => { setChatMenuOpen(false); setShowThreadSearch(true); }}
+                        className={`${menuItem} text-foreground/70 hover:bg-foreground/[0.05] sm:hidden`}
+                      >
+                        <Search className="w-4 h-4" /> Search conversation
+                      </button>
                       <button
                         onClick={() => { setChatMenuOpen(false); setDetailsOpen(true); }}
                         className={`${menuItem} text-foreground/70 hover:bg-foreground/[0.05]`}
@@ -836,6 +895,18 @@ export const Conversations = ({
                 )}
               </div>
             </div>
+
+            {showThreadSearch && (
+              <MessageSearchPanel
+                query={threadSearchQuery}
+                onQueryChange={handleSearchQueryChange}
+                onClose={closeThreadSearch}
+                results={m.searchResults}
+                loading={m.searching}
+                myUserId={userId}
+                onSelect={(hit) => void jumpToSearchHit(hit)}
+              />
+            )}
 
             {/* Messages */}
             <div ref={scrollBoxRef} className="flex-1 min-h-0 overflow-y-auto no-scrollbar px-3 sm:px-5 py-4">
@@ -892,6 +963,7 @@ export const Conversations = ({
                         {showDay && <DayDivider date={new Date(msg.createdAt)} />}
                         <MessageBubble
                           id={msg.id}
+                          highlighted={msg.id === highlightMsgId}
                           body={msg.body}
                           attachmentUrl={msg.attachmentUrl}
                           attachmentType={msg.attachmentType}
@@ -1187,11 +1259,11 @@ export const Conversations = ({
         {active && (
           <div className="space-y-6">
             <div className="flex flex-col items-center text-center gap-3">
-              <PeerAvatar name={active.name} url={active.avatarUrl} size="lg" online={isOnline(active.lastSeenAt)} />
+              <PeerAvatar name={active.name} url={active.avatarUrl} size="lg" online={m.peerPresent || isOnline(active.lastSeenAt)} />
               <div>
                 <h4 className="text-lg font-black tracking-tight text-foreground">{active.name}</h4>
                 <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-foreground/40 mt-0.5">
-                  {isOnline(active.lastSeenAt) ? 'Online now' : active.role}
+                  {m.peerPresent || isOnline(active.lastSeenAt) ? 'Online now' : active.role}
                 </p>
               </div>
             </div>

@@ -299,6 +299,38 @@ export async function listSharedEngagements(peerId: string, limit = 6): Promise<
   }));
 }
 
+// ─── Search ──────────────────────────────────────────────────────────────────
+
+export interface ThreadSearchHit {
+  id: string;
+  senderId: string;
+  body: string;
+  createdAt: string;
+}
+
+/**
+ * Search the body of every message in one conversation — server-side, scoped
+ * to the two participants exactly like get_thread_page. The conversation
+ * list's search box only ever matched a name or the last message preview;
+ * this reaches the rest of a long thread's history.
+ */
+export async function searchThread(peerId: string, query: string, limit = 25): Promise<ThreadSearchHit[]> {
+  const q = query.trim();
+  if (!q) return [];
+  const { data, error } = await supabase.rpc('search_thread_messages', {
+    p_peer: peerId,
+    p_query: q,
+    p_limit: limit,
+  });
+  if (error) { console.error('searchThread failed', error); return []; }
+  return (data ?? []).map((r: any) => ({
+    id: r.id,
+    senderId: r.sender_id,
+    body: r.body,
+    createdAt: r.created_at,
+  }));
+}
+
 // ─── Profile lookups ─────────────────────────────────────────────────────────
 
 export interface PeerProfile {

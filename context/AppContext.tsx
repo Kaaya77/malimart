@@ -3,7 +3,7 @@ import React, { createContext, useContext, useEffect, useState, ReactNode, useCa
 import { supabase } from '../services/supabaseClient';
 import { withCache, invalidate, invalidatePrefix, loadPersisted, TTL } from '../services/queryCache';
 import { applyTheme } from '../services/theme';
-import { requestMyAccountDeletion } from '../services/accountApi';
+import { requestMyAccountDeletion, touchPresence } from '../services/accountApi';
 import { usePresence } from '../hooks/usePresence';
 import { Product, CartItem, User, Order, Notification, VendorProfile, Address, ProductVariant, Offer, Category, Payment, Shipment, TrustBadge, ReturnRequest, OrderNote, ActivityLog, WalletTransaction, SocialPost, SocialInteraction, Follower, Review } from '../types';
 import { useToast } from '../components/UI';
@@ -293,8 +293,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
             if (!profile) return;
             setUser({ ...profile, name: profile.full_name || 'User', email: session.user.email } as User);
             applyTheme(profile as any); // saved theme_mode/accent/motion/contrast follow the user
-            supabase.from('profiles').update({ last_seen_at: new Date().toISOString() }).eq('id', session.user.id)
-                .then(() => {}, () => {});
+            void touchPresence().catch(() => {});
             // 🚀 Single RPC for ALL user data (+ public data on init) in parallel
             await Promise.all([
                 applyDashboardRpc(session.user.email || '', profile),
@@ -831,6 +830,33 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         }, 60_000);
         return () => clearInterval(interval);
     }, [user, fetchSellerData, fetchBuyerReturns, fetchAndSetOrders]);
+
+    // ─── PRESENCE HEARTBEAT ─────────────────────────────────────────────────────
+    // last_seen_at used to be written once, at login — so isOnline()'s 2-minute
+    // window read a user active for hours as offline the moment that window
+    // elapsed. Refresh it periodically while the tab is actually visible: a
+    // background tab should go quiet like a real client would, not keep
+    // reporting the user online while they are looking at something else.
+    useEffect(() => {
+        if (!user) return;
+        let lastBeat = 0;
+        const beat = () => {
+            if (document.hidden) return;
+            // visibilitychange can fire in quick bursts (fast tab switching);
+            // the interval already covers steady presence, so this only needs
+            // to catch "tab just became visible again after a while".
+            if (Date.now() - lastBeat < 60_000) return;
+            lastBeat = Date.now();
+            void touchPresence().catch(() => {});
+        };
+        beat();
+        const interval = setInterval(beat, 90_000);
+        document.addEventListener('visibilitychange', beat);
+        return () => {
+            clearInterval(interval);
+            document.removeEventListener('visibilitychange', beat);
+        };
+    }, [user]);
 
     const logActivity = useCallback(async (action: string, details?: string, metadata: any = {}) => {
         if (!user) return;

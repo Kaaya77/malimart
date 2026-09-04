@@ -25,7 +25,7 @@ import {
   listConversations, listThread, sendMessage as sendMessageRpc, markThreadRead,
   deleteMessage as deleteMessageRpc, deleteConversation as deleteConversationRpc,
   toggleReaction as toggleReactionRpc, setConversationPref, toThreadMessage,
-  fetchPeerProfile, SendArgs,
+  fetchPeerProfile, SendArgs, searchThread as searchThreadRpc, ThreadSearchHit,
 } from '../services/messagesService';
 
 /** A peer is "online" if the server saw them within this window. */
@@ -68,6 +68,60 @@ export function useMessaging(userId: string | undefined, options: MessagingOptio
   const [threadError, setThreadError] = useState<string | null>(null);
 
   const [peerTyping, setPeerTyping] = useState(false);
+  /** True only while the peer has THIS exact thread open right now — a
+   *  stronger, instant signal than the last_seen_at heuristic, which lags by
+   *  up to the heartbeat interval. Falls back to isOnline(lastSeenAt) when
+   *  the peer isn't in this room (e.g. they're online but on another page). */
+  const [peerPresent, setPeerPresent] = useState(false);
+
+  // ─── Search ────────────────────────────────────────────────────────────────
+  const [searchResults, setSearchResults] = useState<ThreadSearchHit[]>([]);
+  const [searching, setSearching] = useState(false);
+  const searchSeq = useRef(0);
+
+  const searchThread = useCallback(async (peerId: string, query: string) => {
+    const seq = ++searchSeq.current;
+    const q = query.trim();
+    if (!q) { setSearchResults([]); setSearching(false); return; }
+    setSearching(true);
+    try {
+      const hits = await searchThreadRpc(peerId, q);
+      if (seq === searchSeq.current) setSearchResults(hits);
+    } finally {
+      if (seq === searchSeq.current) setSearching(false);
+    }
+  }, []);
+
+  const clearSearch = useCallback(() => {
+    searchSeq.current++;
+    setSearchResults([]);
+    setSearching(false);
+  }, []);
+
+  /**
+   * Reset the open thread to the page ending just after a found message, so
+   * it's on screen, then let the caller scroll to it. Older history is still
+   * reachable from there via loadOlder; to return to the live tail, reselect
+   * the peer (selectPeer(peerId)) the way opening the conversation fresh does.
+   */
+  const jumpToMessage = useCallback(async (peerId: string, hit: ThreadSearchHit) => {
+    // Jumping only makes sense within the thread that's already open — search
+    // itself is scoped to the active conversation.
+    if (activePeerRef.current !== peerId) return;
+    setThreadLoading(true);
+    setThreadError(null);
+    try {
+      const anchor = new Date(new Date(hit.createdAt).getTime() + 1).toISOString();
+      const { messages, hasMore: more } = await listThread(peerId, anchor);
+      if (activePeerRef.current !== peerId) return;
+      setThread(messages);
+      setHasMore(more);
+    } catch (e: any) {
+      if (activePeerRef.current === peerId) setThreadError(e?.message || 'Could not load this conversation.');
+    } finally {
+      if (activePeerRef.current === peerId) setThreadLoading(false);
+    }
+  }, []);
 
   /**
    * A conversation that does not exist server-side yet — a "Contact seller"
@@ -269,7 +323,12 @@ export function useMessaging(userId: string | undefined, options: MessagingOptio
     // changes, and every handler reads current state through a ref.
   }, [userId, scheduleListRefresh, upsertIntoThread]);
 
-  // ─── Typing ────────────────────────────────────────────────────────────────
+  // ─── Typing + live presence ─────────────────────────────────────────────────
+  // One channel per open pair, shared by both signals: broadcast for typing
+  // (already existed), Presence for "the peer has this thread open right
+  // now" — a second channel per pair would double the sockets for no reason,
+  // and presence is exactly the per-resource scope usePresence's own
+  // convention asks for (never a global "who's online" topic).
 
   const typingChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const typingSendTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -278,7 +337,7 @@ export function useMessaging(userId: string | undefined, options: MessagingOptio
   useEffect(() => {
     if (!userId || !activePeerId) return;
     const ch = supabase
-      .channel(typingRoom(userId, activePeerId))
+      .channel(typingRoom(userId, activePeerId), { config: { presence: { key: userId } } })
       .on('broadcast', { event: 'typing' }, ({ payload }: any) => {
         if (payload?.userId !== activePeerId) return;
         setPeerTyping(!!payload.isTyping);
@@ -287,7 +346,12 @@ export function useMessaging(userId: string | undefined, options: MessagingOptio
           typingClearTimer.current = setTimeout(() => setPeerTyping(false), TYPING_TTL_MS);
         }
       })
-      .subscribe();
+      .on('presence', { event: 'sync' }, () => {
+        setPeerPresent(activePeerId in ch.presenceState());
+      })
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') void ch.track({ at: Date.now() });
+      });
     typingChannelRef.current = ch;
 
     return () => {
@@ -295,6 +359,7 @@ export function useMessaging(userId: string | undefined, options: MessagingOptio
       if (typingClearTimer.current) clearTimeout(typingClearTimer.current);
       typingChannelRef.current = null;
       setPeerTyping(false);
+      setPeerPresent(false);
       void supabase.removeChannel(ch);
     };
   }, [userId, activePeerId]);
@@ -512,9 +577,16 @@ export function useMessaging(userId: string | undefined, options: MessagingOptio
     loadingOlder,
     hasMore,
     loadOlder,
-    // typing
+    // typing / presence
     peerTyping,
+    peerPresent,
     notifyTyping,
+    // search
+    searchResults,
+    searching,
+    searchThread,
+    clearSearch,
+    jumpToMessage,
     // writes
     send,
     discardFailed,
