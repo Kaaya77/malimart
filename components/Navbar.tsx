@@ -4,7 +4,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
  Search, ShoppingBag, Menu, Heart, X,
- Home, Store, LayoutGrid, UserCircle, User,
+ Home, Store, UserCircle, User,
  Sun, Moon, BellRing, MessageCircle, LogOut,
  ChevronRight, Info, ArrowRight, Zap,
  Package, Settings, ShieldAlert, Sparkles
@@ -82,13 +82,12 @@ const MegaMenu = ({ isHome, scrolled, categories }: { isHome: boolean; scrolled:
  </div>
  <div className="mt-6 pt-5 border-t border-foreground/8 flex justify-between items-center">
  <p className="text-xs text-foreground/40">Discover Tanzania's finest products</p>
- <Link to="/categories" className="flex items-center gap-2 text-xs font-bold text-foreground hover:opacity-70 transition-opacity">
+ <Link to="/shop" className="flex items-center gap-2 text-xs font-bold text-foreground hover:opacity-70 transition-opacity">
  View all <ArrowRight className="w-3.5 h-3.5"/>
  </Link>
  </div>
  </div>
  </div>
- <Link to="/categories" className={link}>Explore</Link>
  </nav>
  );
 };
@@ -117,7 +116,8 @@ const MobileDrawer = ({ open, onClose, user, logout, isDark, toggleDark, notific
  ? (user.role==='admin'?'/admin':user.role==='seller'?'/seller':'/buyer')
  : '/login';
 
- // Bottom bar owns: Home, Shop, Explore, Bag, Account.
+ // Bottom bar owns: Home, Shop, Bag, Account, Mali. Shop absorbed Explore's
+ // stores/deals discovery as tabs, so the bottom bar dropped its own tab.
  // Drawer owns secondary actions only.
  const navItems = [
  { label:'Wishlist', path:'/wishlist', icon:Heart, desc:'Your saved items' },
@@ -533,7 +533,6 @@ export const MobileBottomNav = () => {
  const tabs = [
  { id:'home', label:'Home', icon:Home, path:'/' },
  { id:'shop', label:'Shop', icon:Store, path:'/shop' },
- { id:'cats', label:'Explore', icon:LayoutGrid,path:'/categories' },
  { id:'cart', label:'Bag', icon:ShoppingBag,path:'/cart', badge:cartCount },
  { id:'me', label:(user||isLoading)?'Account':'Sign in', icon:UserCircle, path:accountPath, badge:unread },
  // Mali lives IN the nav on mobile rather than as a floating launcher. A

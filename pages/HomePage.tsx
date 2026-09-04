@@ -187,7 +187,7 @@ const HomePage: React.FC = () => {
             <p className="font-bold text-foreground mb-1">The marketplace is just getting started</p>
             <p className="text-sm text-foreground/45 mb-5 max-w-sm">New products land daily. Explore categories or become a seller and list yours first.</p>
             <div className="flex gap-3">
-              <button onClick={() => navigate('/categories')} className="h-11 px-5 rounded-2xl bg-foreground text-background text-sm font-bold active:scale-95 transition-transform">Explore categories</button>
+              <button onClick={() => navigate('/shop')} className="h-11 px-5 rounded-2xl bg-foreground text-background text-sm font-bold active:scale-95 transition-transform">Explore categories</button>
               <button onClick={() => navigate('/login?mode=signup&role=seller')} className="h-11 px-5 rounded-2xl border border-foreground/15 text-foreground text-sm font-semibold hover:bg-foreground/[0.04] transition-colors">Start selling</button>
             </div>
           </div>

@@ -10,7 +10,7 @@ export const ExploreBanner: React.FC = () => (
   <section className="container mx-auto px-4 md:px-8 py-10">
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <Link
-        to="/categories"
+        to="/shop"
         className="group relative overflow-hidden rounded-3xl bg-stone-900 text-stone-50 p-8 md:p-10 flex flex-col justify-between min-h-[200px] active:scale-[0.99] transition-transform"
       >
         <div>
@@ -27,7 +27,7 @@ export const ExploreBanner: React.FC = () => (
       </Link>
 
       <Link
-        to="/categories?tab=stores"
+        to="/shop?tab=stores"
         className="group relative overflow-hidden rounded-3xl border border-foreground/10 bg-foreground/[0.03] text-foreground p-8 md:p-10 flex flex-col justify-between min-h-[200px] hover:border-foreground/25 active:scale-[0.99] transition-all"
       >
         <div>

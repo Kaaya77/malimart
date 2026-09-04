@@ -30,7 +30,6 @@ const ProductEditPage = lazy(() => import('./pages/ProductEditPage').then(m => (
 const CheckoutPage = lazy(() => import('./pages/CheckoutPage').then(m => ({ default: m.CheckoutPage })));
 const ReceiptPage = lazy(() => import('./pages/ReceiptPage').then(m => ({ default: m.ReceiptPage })));
 const BuyerSettingsPage = lazy(() => import('./pages/BuyerSettingsPage').then(m => ({ default: m.BuyerSettingsPage })));
-const CategoriesPage = lazy(() => import('./pages/CategoriesPage').then(m => ({ default: m.CategoriesPage })));
 const MessagesPage = lazy(() => import('./pages/MessagesPage').then(m => ({ default: m.MessagesPage })));
 const AdminPage = lazy(() => import('./pages/AdminPage').then(m => ({ default: m.AdminPage })));
 const StaticPage = lazy(() => import('./pages/StaticPage').then(m => ({ default: m.StaticPage })));
@@ -220,9 +219,8 @@ const ScrollProgress = () => {
 
 const ROUTE_TITLES: Record<string, string> = {
   '/': 'MaliMart — Tanzania\'s Marketplace',
-  '/shop': 'Shop All Products | MaliMart',
+  '/shop': 'Shop & Explore | MaliMart',
   '/cart': 'Shopping Bag | MaliMart',
-  '/categories': 'Explore Categories | MaliMart',
   '/login': 'Sign In | MaliMart',
   '/buyer': 'My Account | MaliMart',
   '/seller': 'Seller Dashboard | MaliMart',
@@ -300,8 +298,9 @@ const AppContent = () => {
               <Route path="/cart" element={<CartPage />} />
               <Route path="/wishlist" element={<Navigate to="/buyer?tab=wishlist" replace />} />
               <Route path="/login" element={<LoginPage />} />
-              <Route path="/categories" element={<CategoriesPage />} />
-              <Route path="/explore" element={<Navigate to="/categories" replace />} />
+              {/* Explore and Categories merged into Shop's tabbed experience. */}
+              <Route path="/categories" element={<Navigate to="/shop" replace />} />
+              <Route path="/explore" element={<Navigate to="/shop" replace />} />
               <Route path="/messages" element={<RouteGuard><MessagesPage /></RouteGuard>} />
               {/* MessagesPage reads :peerId via useParams — without this route,
                   opening any conversation 404'd on the catch-all */}

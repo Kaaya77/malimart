@@ -127,7 +127,7 @@ export const StorePage: React.FC = () => {
         <h2 className="font-bold text-lg text-foreground">Store not found</h2>
         <p className="text-sm text-foreground/45 mt-1">This store may no longer be active.</p>
       </div>
-      <button onClick={() => navigate('/categories?tab=stores')}
+      <button onClick={() => navigate('/shop?tab=stores')}
         className="h-10 px-5 rounded-2xl bg-foreground text-background text-sm font-bold">
         Browse Stores
       </button>

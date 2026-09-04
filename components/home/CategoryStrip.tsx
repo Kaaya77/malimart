@@ -1,12 +1,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import {
-  ArrowRight, ArrowUpRight, Tag, Shirt, Sparkles, HeartPulse, Cpu,
-  ShoppingBasket, Soup, Sofa, Palette, Sprout, BookOpen, Dumbbell,
-  ToyBrick, Car, Wrench, HardHat,
-} from 'lucide-react';
+import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import { useAppState } from '../../context/AppContext';
+import { categoryMeta, CATEGORY_META } from '../categoryIcons';
 
 /**
  * CategoryStrip — Browse by category.
@@ -22,37 +19,6 @@ import { useAppState } from '../../context/AppContext';
  * instead of two. The colour-per-category identity carries over from the old
  * map; only the photography is gone.
  */
-
-const CAT_META: Record<string, { icon: React.ElementType; color: string }> = {
-  'Fashion':                 { icon: Shirt, color: '#e879a0' },
-  'Fashion & Beauty':        { icon: Shirt, color: '#e879a0' },
-  'Beauty':                  { icon: Sparkles, color: '#f472b6' },
-  'Health & Beauty':         { icon: HeartPulse, color: '#fb7185' },
-  'Electronics':             { icon: Cpu, color: '#38bdf8' },
-  'Food & Groceries':        { icon: ShoppingBasket, color: '#fb923c' },
-  'Food & Pantry':           { icon: ShoppingBasket, color: '#fb923c' },
-  'Pantry & Spices':         { icon: Soup, color: '#f59e0b' },
-  'Food & Spices':           { icon: Soup, color: '#f59e0b' },
-  'Home & Living':           { icon: Sofa, color: '#34d399' },
-  'Crafts & Art':            { icon: Palette, color: '#a78bfa' },
-  'Handicrafts':             { icon: Palette, color: '#a78bfa' },
-  'Handicrafts & Products':  { icon: Palette, color: '#a78bfa' },
-  'Agriculture':             { icon: Sprout, color: '#4ade80' },
-  'Books':                   { icon: BookOpen, color: '#60a5fa' },
-  'Books & Education':       { icon: BookOpen, color: '#818cf8' },
-  'Books & Stationery':      { icon: BookOpen, color: '#60a5fa' },
-  'Sports':                  { icon: Dumbbell, color: '#f97316' },
-  'Sports & Outdoors':       { icon: Dumbbell, color: '#22d3ee' },
-  'Toys & Kids':             { icon: ToyBrick, color: '#f43f5e' },
-  'Kids & Toys':             { icon: ToyBrick, color: '#f43f5e' },
-  'Vehicles & Parts':        { icon: Car, color: '#64748b' },
-  'Vehicles':                { icon: Car, color: '#64748b' },
-  'Services':                { icon: Wrench, color: '#0ea5e9' },
-  'Construction':            { icon: HardHat, color: '#eab308' },
-  'Construction & Hardware': { icon: HardHat, color: '#eab308' },
-};
-
-const FALLBACK = { icon: Tag, color: '#10b981' };
 
 const CategoryTile: React.FC<{
   name: string; icon: React.ElementType; color: string; count?: number; onClick: () => void; index: number;
@@ -94,12 +60,11 @@ export const CategoryStrip: React.FC = () => {
 
   const displayCategories = React.useMemo(() => {
     const base = (liveCategories?.filter(c => c.is_active !== false) || []);
-    const names = base.length > 0 ? base.map(c => c.name) : Object.keys(CAT_META);
-    return names.slice(0, 10).map(name => ({
-      name,
-      icon: CAT_META[name]?.icon || FALLBACK.icon,
-      color: CAT_META[name]?.color || FALLBACK.color,
-    }));
+    const names = base.length > 0 ? base.map(c => c.name) : Object.keys(CATEGORY_META);
+    return names.slice(0, 10).map(name => {
+      const meta = categoryMeta(name);
+      return { name, icon: meta.icon, color: meta.color };
+    });
   }, [liveCategories]);
 
   const countByCategory = React.useMemo(() => {
@@ -123,7 +88,7 @@ export const CategoryStrip: React.FC = () => {
             Browse by category
           </h2>
         </div>
-        <button onClick={() => navigate('/categories')}
+        <button onClick={() => navigate('/shop')}
           className="group flex items-center gap-1.5 text-sm font-bold text-foreground/50 hover:text-foreground transition-colors flex-shrink-0">
           All categories
           <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />

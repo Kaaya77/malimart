@@ -42,7 +42,7 @@ export const FeaturedStores: React.FC<FeaturedStoresProps> = ({ topShops, setAct
           </h2>
         </div>
         <button
-          onClick={() => navigate('/shop')}
+          onClick={() => navigate('/shop?tab=stores')}
           className="group flex items-center gap-1.5 text-sm font-bold text-foreground/50 hover:text-foreground transition-colors flex-shrink-0"
         >
           Browse all <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
