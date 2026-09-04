@@ -13,23 +13,24 @@ interface FeaturedStoresProps {
 /**
  * FeaturedStores — the "Featured stores" strip on the homepage.
  *
- * Renders the SHARED components/categories/StoreCard, the same component the
- * Stores tab uses. This file previously carried three bespoke card variants of
- * its own (a 340x420 hero, a 220x280 desktop card, and a compact mobile row)
- * plus its own gradient/initials helpers. That duplication is why the verified
- * badge, the follow button's touch target and the section's gutters kept
- * drifting away from the rest of the app and had to be fixed separately here
- * every time.
+ * Was a static 1/2/3-column grid — fine, but it gave every store equal
+ * visual weight and left an awkward gap in the last row whenever `topShops`
+ * wasn't a multiple of 3. Now a horizontal spotlight rail: the #1 store gets
+ * a wider card to lead the eye, the rest scroll past at a uniform size — the
+ * same snap-scroll affordance CategoryStrip already uses on mobile, here
+ * carried to desktop too, since a rail of sellers is something you skim
+ * past rather than scan as a grid.
  *
- * Two behaviours are preserved through props rather than a fork:
- *  - `onClick` keeps home's store PREVIEW MODAL (setActiveStore) instead of
- *    the card's default /store/:id navigation.
- *  - `rank` reuses the card's existing crown badge for the top 3 sellers.
+ * Still the SHARED components/categories/StoreCard underneath — only the
+ * arrangement around it changed. `onClick`/`rank` behaviour is unchanged
+ * from before (see StoreCard's own docstring for why both exist).
  */
 export const FeaturedStores: React.FC<FeaturedStoresProps> = ({ topShops, setActiveStore, navigate }) => {
   const { followSeller, unfollowSeller, isFollowing } = useAppState();
 
   if (!topShops || topShops.length === 0) return null;
+
+  const shops = topShops.slice(0, 8);
 
   return (
     <section className="py-10 md:py-16">
@@ -48,19 +49,34 @@ export const FeaturedStores: React.FC<FeaturedStoresProps> = ({ topShops, setAct
         </button>
       </div>
 
-      <div className="container mx-auto px-4 md:px-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {topShops.slice(0, 6).map((s, i) => (
-          <StoreCard
-            key={s.seller_id}
-            vendor={s}
-            rank={i < 3 ? i + 1 : undefined}
-            onClick={() => setActiveStore(s)}
-            isFavorite={isFollowing(s.seller_id)}
-            onFavoriteToggle={() =>
-              isFollowing(s.seller_id) ? unfollowSeller(s.seller_id) : followSeller(s.seller_id)
-            }
-          />
-        ))}
+      {/* Same scroll-fade affordance as CategoryStrip's mobile rail, carried
+          to every breakpoint here — a spotlight rail should read as
+          scrollable everywhere, not just on phones. */}
+      <div className="relative">
+        <div className="overflow-x-auto no-scrollbar pl-4 md:pl-8 -mr-4 md:-mr-8">
+          <div className="flex gap-4 pr-4 md:pr-8 snap-x snap-mandatory">
+            {shops.map((s, i) => (
+              <div
+                key={s.seller_id}
+                className={`shrink-0 snap-start ${i === 0 ? 'w-[280px] sm:w-[340px]' : 'w-[260px] sm:w-[300px]'}`}
+              >
+                <StoreCard
+                  vendor={s}
+                  rank={i < 3 ? i + 1 : undefined}
+                  onClick={() => setActiveStore(s)}
+                  isFavorite={isFollowing(s.seller_id)}
+                  onFavoriteToggle={() =>
+                    isFollowing(s.seller_id) ? unfollowSeller(s.seller_id) : followSeller(s.seller_id)
+                  }
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-background to-transparent"
+        />
       </div>
     </section>
   );
