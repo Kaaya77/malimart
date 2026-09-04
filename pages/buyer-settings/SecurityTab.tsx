@@ -1,12 +1,19 @@
 import React, { useState } from 'react';
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, EmptyState, Switch } from '../../components/UI';
-import { Activity, CheckCircle2, Download, LogOut, Mail } from 'lucide-react';
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, EmptyState, Input, Switch } from '../../components/UI';
+import { Activity, CheckCircle2, Download, KeyRound, LogOut, Mail, ShieldOff } from 'lucide-react';
 import { supabase } from '../../services/supabaseClient';
+import { changeMyPassword, revokeOtherSessions, revokeSession } from '../../services/accountApi';
 import { useBuyerSettings } from './context';
 
 export const SecurityTab = () => {
     const { addToast, confirmRequestAccountDeletion, connectedAccounts, handleConnectAccount, handleExportData, isExporting, loginHistory, preferences, setPreferences, togglePreference, updateUserProfile, user } = useBuyerSettings();
     const [sendingReset, setSendingReset] = useState(false);
+    const [showChangePassword, setShowChangePassword] = useState(false);
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [changingPassword, setChangingPassword] = useState(false);
+    const [revokingId, setRevokingId] = useState<string | null>(null);
+    const [revokingOthers, setRevokingOthers] = useState(false);
 
     const handlePasswordReset = async () => {
         if (!user?.email) return;
@@ -23,6 +30,51 @@ export const SecurityTab = () => {
             setSendingReset(false);
         }
     };
+
+    const handleChangePassword = async () => {
+        if (newPassword.length < 8) { addToast('Password must be at least 8 characters', 'error'); return; }
+        if (newPassword !== confirmPassword) { addToast('Passwords do not match', 'error'); return; }
+        setChangingPassword(true);
+        try {
+            await changeMyPassword(newPassword);
+            addToast('Password updated', 'success');
+            setShowChangePassword(false);
+            setNewPassword('');
+            setConfirmPassword('');
+        } catch (err: any) {
+            addToast(err.message || 'Failed to update password', 'error');
+        } finally {
+            setChangingPassword(false);
+        }
+    };
+
+    // Only offer per-row revoke where the row actually carries a session id —
+    // login_history is a display log first, and not every row is guaranteed
+    // to have one wired through.
+    const handleRevokeSession = async (id: string) => {
+        setRevokingId(id);
+        try {
+            await revokeSession(id);
+            addToast('Session signed out', 'success');
+        } catch (err: any) {
+            addToast(err.message || 'Could not sign out that session', 'error');
+        } finally {
+            setRevokingId(null);
+        }
+    };
+
+    const handleRevokeOthers = async () => {
+        setRevokingOthers(true);
+        try {
+            const count = await revokeOtherSessions();
+            addToast(count ? `Signed out ${count} other session${count === 1 ? '' : 's'}` : 'No other sessions to sign out', 'success');
+        } catch (err: any) {
+            addToast(err.message || 'Could not sign out other sessions', 'error');
+        } finally {
+            setRevokingOthers(false);
+        }
+    };
+
     return (
             <div className="space-y-6 animate-in fade-in">
               <Card>
@@ -61,23 +113,45 @@ export const SecurityTab = () => {
                       <CardDescription>Protect your account.</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                      {/* Password reset */}
-                      <div className="flex items-center justify-between py-3 border-b border-foreground/[0.06]">
-                          <div>
-                              <p className="font-medium text-sm text-foreground">Password</p>
-                              <p className="text-xs text-muted-foreground">We'll email you a secure reset link</p>
+                      {/* Password */}
+                      <div className="py-3 border-b border-foreground/[0.06]">
+                          <div className="flex items-center justify-between gap-3">
+                              <div>
+                                  <p className="font-medium text-sm text-foreground">Password</p>
+                                  <p className="text-xs text-muted-foreground">Set a new one now, or get a reset link by email</p>
+                              </div>
+                              <div className="flex items-center gap-2 shrink-0">
+                                  <Button variant="ghost" size="sm" className="text-xs gap-1.5" onClick={() => setShowChangePassword(v => !v)}>
+                                      <KeyRound className="w-3.5 h-3.5" /> Change
+                                  </Button>
+                                  <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={handlePasswordReset} isLoading={sendingReset}>
+                                      {!sendingReset && <Mail className="w-3.5 h-3.5" />}
+                                      {sendingReset ? 'Sending…' : 'Email link'}
+                                  </Button>
+                              </div>
                           </div>
-                          <Button variant="outline" size="sm" className="text-xs gap-1.5 shrink-0" onClick={handlePasswordReset} isLoading={sendingReset}>
-                              {!sendingReset && <Mail className="w-3.5 h-3.5" />}
-                              {sendingReset ? 'Sending…' : 'Send Reset Email'}
-                          </Button>
+                          {showChangePassword && (
+                              <div className="mt-3 p-3 rounded-xl bg-foreground/[0.03] border border-foreground/[0.08] space-y-2.5 animate-in fade-in slide-in-from-top-1 duration-150">
+                                  <Input type="password" placeholder="New password (min. 8 characters)" value={newPassword} onChange={(e: any) => setNewPassword(e.target.value)} aria-label="New password" />
+                                  <Input type="password" placeholder="Confirm new password" value={confirmPassword} onChange={(e: any) => setConfirmPassword(e.target.value)} aria-label="Confirm new password" />
+                                  <div className="flex justify-end gap-2 pt-1">
+                                      <Button variant="ghost" size="sm" onClick={() => { setShowChangePassword(false); setNewPassword(''); setConfirmPassword(''); }}>Cancel</Button>
+                                      <Button variant="primary" size="sm" onClick={handleChangePassword} isLoading={changingPassword} disabled={!newPassword || !confirmPassword}>
+                                          {changingPassword ? 'Saving…' : 'Save password'}
+                                      </Button>
+                                  </div>
+                              </div>
+                          )}
                       </div>
-                      <div className="flex items-center justify-between py-3 border-b border-foreground/[0.06]">
-                          <div>
-                              <p className="font-medium text-sm text-foreground">Two-Factor Authentication (2FA)</p>
-                              <p className="text-xs text-muted-foreground">Add an extra layer of security</p>
+                      <div className="flex items-center justify-between py-3 border-b border-foreground/[0.06] opacity-60">
+                          <div className="flex items-center gap-2">
+                              <ShieldOff className="w-4 h-4 text-foreground/40 shrink-0" />
+                              <div>
+                                  <p className="font-medium text-sm text-foreground">Two-Factor Authentication (2FA)</p>
+                                  <p className="text-xs text-muted-foreground">Coming soon — not yet available to turn on</p>
+                              </div>
                           </div>
-                          <Switch checked={preferences.twoFactorAuth} onCheckedChange={() => togglePreference('twoFactorAuth')} className="focus-visible:ring-2 focus-visible:ring-emerald-500/40" />
+                          <Switch checked={false} disabled aria-label="Two-factor authentication (coming soon)" className="focus-visible:ring-2 focus-visible:ring-emerald-500/40" />
                       </div>
                       <div className="flex items-center justify-between py-3 border-b border-foreground/[0.06]">
                           <div>
@@ -176,8 +250,18 @@ export const SecurityTab = () => {
 
               <Card>
                   <CardHeader>
-                      <CardTitle>Recent Logins</CardTitle>
-                      <CardDescription>Devices that recently signed in to your account.</CardDescription>
+                      <div className="flex items-center justify-between gap-3">
+                          <div>
+                              <CardTitle>Recent Logins</CardTitle>
+                              <CardDescription>Devices that recently signed in to your account.</CardDescription>
+                          </div>
+                          {loginHistory.length > 0 && (
+                              <Button variant="ghost" size="sm" className="text-xs gap-1.5 shrink-0" onClick={handleRevokeOthers} isLoading={revokingOthers}>
+                                  {!revokingOthers && <LogOut className="w-3.5 h-3.5" />}
+                                  {revokingOthers ? 'Signing out…' : 'Sign out other devices'}
+                              </Button>
+                          )}
+                      </div>
                   </CardHeader>
                   <CardContent>
                       <div className="space-y-2">
@@ -189,15 +273,33 @@ export const SecurityTab = () => {
                                   className="py-10"
                               />
                           ) : (
-                              loginHistory.map((login, idx) => (
-                                  <div key={idx} className="flex justify-between items-center py-3 border-b border-foreground/[0.06] last:border-0 last:pb-0">
-                                      <div>
-                                          <p className="text-sm font-medium text-foreground">{login.device_info || 'Unknown Device'}</p>
-                                          <p className="text-xs text-muted-foreground">{login.ip_address || 'Unknown IP'}</p>
+                              loginHistory.map((login, idx) => {
+                                  // Only login.session_id is actually a session identifier —
+                                  // login.id names the login_history ROW, and revoking that
+                                  // would silently no-op while the toast claimed success.
+                                  const sessionId = login.session_id;
+                                  return (
+                                      <div key={sessionId || idx} className="flex justify-between items-center gap-3 py-3 border-b border-foreground/[0.06] last:border-0 last:pb-0">
+                                          <div className="min-w-0">
+                                              <p className="text-sm font-medium text-foreground truncate">{login.device_info || 'Unknown Device'}</p>
+                                              <p className="text-xs text-muted-foreground">{login.ip_address || 'Unknown IP'}</p>
+                                          </div>
+                                          <div className="flex items-center gap-3 shrink-0">
+                                              <p className="text-xs text-muted-foreground whitespace-nowrap">{new Date(login.login_time).toLocaleString()}</p>
+                                              {sessionId && (
+                                                  <Button
+                                                      variant="ghost" size="sm"
+                                                      className="text-[11px] text-rose-500 hover:text-rose-600 h-7 px-2"
+                                                      onClick={() => handleRevokeSession(sessionId)}
+                                                      isLoading={revokingId === sessionId}
+                                                  >
+                                                      {revokingId === sessionId ? 'Signing out…' : 'Sign out'}
+                                                  </Button>
+                                              )}
+                                          </div>
                                       </div>
-                                      <p className="text-xs text-muted-foreground">{new Date(login.login_time).toLocaleString()}</p>
-                                  </div>
-                              ))
+                                  );
+                              })
                           )}
                       </div>
                   </CardContent>

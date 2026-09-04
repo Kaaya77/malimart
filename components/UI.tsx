@@ -144,7 +144,12 @@ export const ToastProvider = ({ children }: { children?: ReactNode }) => {
        * Desktop: no bottom nav and the launcher sits at bottom-6, so a flat
        * 6rem clears it without inheriting the mobile nav allowance.
        */}
-      <div className="fixed bottom-[calc(var(--mm-bottom-obstruction,58px)+5.25rem)] md:bottom-24 right-4 z-[250] flex flex-col-reverse gap-2 items-end pointer-events-none w-full max-w-xs sm:max-w-sm">
+      <div
+        role="status"
+        aria-live="polite"
+        aria-atomic="false"
+        className="fixed bottom-[calc(var(--mm-bottom-obstruction,58px)+5.25rem)] md:bottom-24 right-4 z-[250] flex flex-col-reverse gap-2 items-end pointer-events-none w-full max-w-xs sm:max-w-sm"
+      >
         <AnimatePresence mode="popLayout">
           {toasts.map(t => <ToastItem key={t.id} t={t} onDismiss={dismiss} />)}
         </AnimatePresence>
@@ -400,11 +405,12 @@ export const CountBadge = ({ count, urgent = false, className = '' }: { count: n
  ) : null
 );
 
-export const Switch = ({ checked, onCheckedChange, className = '' }: { checked?: boolean; onCheckedChange?: (checked: boolean) => void; className?: string }) => (
+export const Switch = ({ checked, onCheckedChange, disabled, className = '' }: { checked?: boolean; onCheckedChange?: (checked: boolean) => void; disabled?: boolean; className?: string }) => (
  <button
  type="button"
  role="switch"
  aria-checked={checked}
+ disabled={disabled}
  onClick={() => onCheckedChange?.(!checked)}
  className={`peer inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${checked ? 'bg-emerald-500' : 'bg-foreground/20'} ${className}`}
  >

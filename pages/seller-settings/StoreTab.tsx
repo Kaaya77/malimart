@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Textarea } from '../../components/UI';
-import { SOCIAL_PLATFORMS, TANZANIA_DISTRICTS, TANZANIA_REGIONS } from '../../constants';
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, EmptyState, Input, Textarea } from '../../components/UI';
+import { SOCIAL_PLATFORMS, TANZANIA_DISTRICTS, TANZANIA_REGIONS, isValidTanzanianPhone } from '../../constants';
 import { Globe, ImageIcon, Info, Loader2, Store, Trash2, Upload } from 'lucide-react';
 import { supabase } from '../../services/supabaseClient';
 import { compressImage } from '../../services/imageCompression';
@@ -8,8 +8,19 @@ import { useSellerSettings } from './context';
 import { useAppState } from '../../context/AppContext';
 
 export const StoreTab = () => {
-    const { addToast, handleAddSocial, handleGenericSave, handleRemoveSocial, isSaving, newSocial, policiesData, profileData, setNewSocial, setPoliciesData, setProfileData, socialLinks, user } = useSellerSettings();
+    const { addToast, handleAddSocial, handleGenericSave, handleRemoveSocial, newSocial, policiesData, profileData, setNewSocial, setPoliciesData, setProfileData, socialLinks, user } = useSellerSettings();
     const { updateUserProfile } = useAppState();
+    // Scoped independently of the page-wide `isSaving` flag (shared by all
+    // three cards on this tab, and by the other tabs too) — saving Basic
+    // Info used to also spin/disable the Policies and Social Links buttons.
+    const [savingBasic, setSavingBasic] = useState(false);
+    const [savingPolicies, setSavingPolicies] = useState(false);
+    const phoneError = profileData.contact_phone && !isValidTanzanianPhone(profileData.contact_phone)
+        ? 'Enter a valid Tanzanian number, e.g. 0712345678' : '';
+    const colorError = profileData.accent_color && !/^#[0-9A-Fa-f]{6}$/.test(profileData.accent_color)
+        ? 'Must be a hex code like #10b981' : '';
+    const ctaUrlError = profileData.banner_cta_url && !/^https?:\/\//.test(profileData.banner_cta_url)
+        ? 'Must start with http:// or https://' : '';
     const logoInputRef = useRef<HTMLInputElement>(null);
     const bannerInputRef = useRef<HTMLInputElement>(null);
     const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -134,7 +145,10 @@ export const StoreTab = () => {
    <div className="space-y-1">
      <label className="text-xs font-semibold text-foreground/70 mb-1.5 block">Button link</label>
      <Input placeholder="https://wa.me/255..." value={profileData.banner_cta_url || ''}
-       onChange={(e: any) => setProfileData({ ...profileData, banner_cta_url: e.target.value })} />
+       onChange={(e: any) => setProfileData({ ...profileData, banner_cta_url: e.target.value })}
+       className={ctaUrlError ? 'border-rose-500/60 focus:ring-rose-500/30 focus:border-rose-500/60' : undefined}
+       aria-invalid={!!ctaUrlError} />
+     {ctaUrlError && <p className="text-[11px] text-rose-500 mt-0.5">{ctaUrlError}</p>}
    </div>
  </div>
 
@@ -153,7 +167,8 @@ export const StoreTab = () => {
      placeholder="#10b981"
      value={profileData.accent_color || ''}
      onChange={(e: any) => setProfileData({ ...profileData, accent_color: e.target.value })}
-     className="flex-1 max-w-[160px] font-mono"
+     className={`flex-1 max-w-[160px] font-mono ${colorError ? 'border-rose-500/60 focus:ring-rose-500/30 focus:border-rose-500/60' : ''}`}
+     aria-invalid={!!colorError}
    />
    {profileData.accent_color && (
      <button type="button" onClick={() => setProfileData({ ...profileData, accent_color: '' })}
@@ -162,7 +177,11 @@ export const StoreTab = () => {
      </button>
    )}
  </div>
- <p className="text-[11px] text-foreground/40">Used for your storefront's Follow/CTA buttons. Leave blank for the default emerald.</p>
+ {colorError ? (
+   <p className="text-[11px] text-rose-500">{colorError}</p>
+ ) : (
+   <p className="text-[11px] text-foreground/40">Used for your storefront's Follow/CTA buttons. Leave blank for the default emerald.</p>
+ )}
  </div>
  <div className="space-y-1">
  <label className="text-xs font-semibold text-foreground/70 mb-1.5 block">Your Name <span className="font-normal text-foreground/40">(personal — shown in chat & reviews)</span></label>
@@ -178,12 +197,15 @@ export const StoreTab = () => {
  <Input placeholder="Store Name" value={profileData.store_name || ''} onChange={(e: any) => setProfileData({...profileData, store_name: e.target.value})} />
  </div>
  <div className="space-y-1">
- <label className="text-xs font-semibold text-foreground/70 mb-1.5 block">Contact Phone</label>
- <Input placeholder="Contact Phone" value={profileData.contact_phone} onChange={(e: any) => setProfileData({...profileData, contact_phone: e.target.value})} />
+ <label htmlFor="store-contact-phone" className="text-xs font-semibold text-foreground/70 mb-1.5 block">Contact Phone</label>
+ <Input id="store-contact-phone" placeholder="Contact Phone" value={profileData.contact_phone} onChange={(e: any) => setProfileData({...profileData, contact_phone: e.target.value})}
+   className={phoneError ? 'border-rose-500/60 focus:ring-rose-500/30 focus:border-rose-500/60' : undefined} aria-invalid={!!phoneError} />
+ {phoneError && <p className="text-xs text-rose-500 mt-0.5">{phoneError}</p>}
  </div>
  <div className="space-y-1">
- <label className="text-xs font-semibold text-foreground/70 mb-1.5 block">Region</label>
- <select 
+ <label htmlFor="store-region" className="text-xs font-semibold text-foreground/70 mb-1.5 block">Region</label>
+ <select
+ id="store-region"
  className="flex h-11 w-full rounded-xl border border-foreground/15 bg-foreground/[0.04] px-4 text-sm text-foreground focus:outline-none focus:border-foreground/30 transition-all"
  value={profileData.region}
  onChange={(e) => setProfileData({...profileData, region: e.target.value, district: TANZANIA_DISTRICTS[e.target.value]?.[0] || ''})}
@@ -194,8 +216,9 @@ export const StoreTab = () => {
  </select>
  </div>
  <div className="space-y-1">
- <label className="text-xs font-semibold text-foreground/70 mb-1.5 block">District</label>
- <select 
+ <label htmlFor="store-district" className="text-xs font-semibold text-foreground/70 mb-1.5 block">District</label>
+ <select
+ id="store-district"
  className="flex h-11 w-full rounded-xl border border-foreground/15 bg-foreground/[0.04] px-4 text-sm text-foreground focus:outline-none focus:border-foreground/30 transition-all disabled:opacity-50"
  value={profileData.district}
  onChange={(e) => setProfileData({...profileData, district: e.target.value})}
@@ -217,8 +240,12 @@ export const StoreTab = () => {
  </div>
  </div>
  <div className="flex justify-end pt-6">
- <Button variant="primary" onClick={() => handleGenericSave({ ...profileData, social_links: socialLinks }, "Store info saved")} disabled={isSaving}>
- {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : 'Save Basic Info'}
+ <Button
+   variant="primary"
+   onClick={async () => { setSavingBasic(true); try { await handleGenericSave({ ...profileData, social_links: socialLinks }, "Store info saved"); } finally { setSavingBasic(false); } }}
+   disabled={savingBasic}
+ >
+ {savingBasic ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : 'Save Basic Info'}
  </Button>
  </div>
  </CardContent>
@@ -232,8 +259,9 @@ export const StoreTab = () => {
  <CardContent className="space-y-5">
  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
  <div className="space-y-1">
- <label className="text-xs font-semibold text-foreground/70 mb-1.5 block">Return Policy</label>
- <select 
+ <label htmlFor="return-policy" className="text-xs font-semibold text-foreground/70 mb-1.5 block">Return Policy</label>
+ <select
+ id="return-policy"
  className="flex h-11 w-full rounded-xl border border-foreground/15 bg-foreground/[0.04] px-4 text-sm text-foreground focus:outline-none focus:border-foreground/30 transition-all"
  value={policiesData.return_policy}
  onChange={(e) => setPoliciesData({...policiesData, return_policy: e.target.value})}
@@ -245,8 +273,9 @@ export const StoreTab = () => {
  </select>
  </div>
  <div className="space-y-1">
- <label className="text-xs font-semibold text-foreground/70 mb-1.5 block">Processing Time</label>
- <select 
+ <label htmlFor="processing-time" className="text-xs font-semibold text-foreground/70 mb-1.5 block">Processing Time</label>
+ <select
+ id="processing-time"
  className="flex h-11 w-full rounded-xl border border-foreground/15 bg-foreground/[0.04] px-4 text-sm text-foreground focus:outline-none focus:border-foreground/30 transition-all"
  value={policiesData.processing_time}
  onChange={(e) => setPoliciesData({...policiesData, processing_time: e.target.value})}
@@ -263,8 +292,12 @@ export const StoreTab = () => {
  </div>
  </div>
  <div className="flex justify-end pt-4">
- <Button variant="primary" onClick={() => handleGenericSave(policiesData, "Policies saved")} disabled={isSaving}>
- {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : 'Save Policies'}
+ <Button
+   variant="primary"
+   onClick={async () => { setSavingPolicies(true); try { await handleGenericSave(policiesData, "Policies saved"); } finally { setSavingPolicies(false); } }}
+   disabled={savingPolicies}
+ >
+ {savingPolicies ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : 'Save Policies'}
  </Button>
  </div>
  </CardContent>
@@ -277,7 +310,7 @@ export const StoreTab = () => {
  <CardDescription>Add the platforms where buyers can reach you.</CardDescription>
  </CardHeader>
  <CardContent className="space-y-4">
- {socialLinks.length > 0 && (
+ {socialLinks.length > 0 ? (
  <div className="space-y-2 mb-4">
  {socialLinks.map((link, idx) => (
  <div key={idx} className="flex items-center justify-between p-3 border border-foreground/8 rounded-xl bg-foreground/[0.02]">
@@ -286,34 +319,36 @@ export const StoreTab = () => {
  <span className="font-bold text-sm text-foreground">{link.platform}</span>
  <span className="text-[11px] font-medium text-foreground/60 truncate max-w-[200px]">{link.url}</span>
  </div>
- <Button variant="ghost" size="icon" className="text-red-500 h-8 w-8" onClick={() => handleRemoveSocial(idx)}>
+ <Button variant="ghost" size="icon" className="text-red-500 h-8 w-8" onClick={() => handleRemoveSocial(idx)} aria-label={`Remove ${link.platform} link`}>
  <Trash2 className="w-4 h-4 stroke-[1.5]" />
  </Button>
  </div>
  ))}
  </div>
+ ) : (
+ <EmptyState icon={Globe} title="No links yet" subtitle="Add WhatsApp, Instagram or any other place buyers can reach you." className="py-8" />
  )}
 
+ {/* Add/remove persist immediately — there is no separate Save button
+     here on purpose. A prior version had one, which just re-saved the
+     same array a second time and implied unsaved risk that didn't exist. */}
  <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-foreground/10">
- <select 
+ <select
+ aria-label="Platform"
  className="flex h-11 w-full sm:w-auto rounded-xl border border-foreground/15 bg-foreground/[0.04] px-4 text-sm text-foreground focus:outline-none focus:border-foreground/30 transition-all"
  value={newSocial.platform}
  onChange={(e) => setNewSocial({...newSocial, platform: e.target.value})}
  >
  {SOCIAL_PLATFORMS.map(p => <option key={p} value={p}>{p}</option>)}
  </select>
- <Input 
- placeholder={newSocial.platform === 'WhatsApp' ? 'Phone Number (e.g., +255...)' : 'Profile URL or Username'} 
- value={newSocial.url} 
- onChange={(e: any) => setNewSocial({...newSocial, url: e.target.value})} 
+ <Input
+ placeholder={newSocial.platform === 'WhatsApp' ? 'Phone Number (e.g., +255...)' : 'Profile URL or Username'}
+ aria-label={newSocial.platform === 'WhatsApp' ? 'WhatsApp phone number' : 'Profile URL or username'}
+ value={newSocial.url}
+ onChange={(e: any) => setNewSocial({...newSocial, url: e.target.value})}
  className="flex-1"
  />
  <Button variant="secondary" onClick={handleAddSocial} disabled={!newSocial.url}>Add Link</Button>
- </div>
- <div className="flex justify-end pt-4">
- <Button variant="primary" onClick={() => handleGenericSave({ social_links: socialLinks }, "Social links saved")} disabled={isSaving}>
- {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : 'Save Links'}
- </Button>
  </div>
  </CardContent>
  </Card>

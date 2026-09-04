@@ -54,6 +54,22 @@ export const revokeSession = (sessionId: string) =>
 export const revokeOtherSessions = (keepId?: string) =>
   rpc<number>("revoke_my_other_sessions", { p_keep: keepId ?? null });
 
+/**
+ * Change the signed-in user's password directly (Supabase Auth, not an RPC —
+ * `supabase.auth.updateUser` only ever touches the CALLER's own session, so
+ * this needs no server-side scoping). An alternative to the email-link reset
+ * flow for someone who is already signed in and just wants to set a new one.
+ */
+export const changeMyPassword = async (newPassword: string) => {
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
+  if (error) throw new Error(error.message);
+  // Supabase does not revoke other refresh tokens on a password change —
+  // without this, a session that leaked earlier stays valid even after the
+  // owner "secures" the account by changing the password. Best-effort: a
+  // failure here shouldn't undo the password change itself.
+  try { await revokeOtherSessions(); } catch { /* password change still succeeded */ }
+};
+
 // ---------- Account overview (navbar / dashboards) ----------
 export const getAccountOverview = () => rpc<AccountOverview>("get_account_overview");
 
@@ -94,11 +110,18 @@ export const disconnectMyAccount = (userId: string, provider: string) =>
     .eq("provider", provider);
 
 /** Soft-flag my profile for deletion (sets deleted_at). */
-export const requestMyAccountDeletion = (userId?: string) =>
-  supabase
+export const requestMyAccountDeletion = async (userId?: string) => {
+  // .select().single() turns "0 rows matched" (an RLS denial, or a stale/
+  // wrong id) into a real error instead of a silent no-op that the caller
+  // would otherwise report as "Account deletion requested" regardless.
+  const { error } = await supabase
     .from("profiles")
     .update({ deleted_at: new Date().toISOString() })
-    .eq("id", userId);
+    .eq("id", userId)
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+};
 
 /** Ban-status check used right after password login (pre-session gate). */
 export const getProfileBanStatus = (userId: string) =>

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { SettingsShell } from '../components/settings/SettingsShell';
 import { motion } from 'framer-motion';
 import { useAppState } from '../context/AppContext';
-import { Button, Input, Card, CardHeader, CardContent, CardTitle, CardDescription, ConfirmDialog, useToast, Switch, ConfirmModal, Badge } from '../components/UI';
+import { Button, Input, Card, CardHeader, CardContent, CardTitle, CardDescription, ConfirmDialog, useToast, Switch, Badge } from '../components/UI';
 import { User as UserIcon, Mail, Phone, Home, PlusCircle, Trash2, Edit, Wallet, Gift, Copy, ArrowUpRight, ArrowDownLeft, Bell, Shield, Globe, CreditCard, Download, LogOut, CheckCircle2, MapPin, Settings, Lock, Activity } from 'lucide-react';
 import { BackButton } from '../components/BackButton';
 import { CURRENCY, TANZANIA_REGIONS, TANZANIA_DISTRICTS, MOBILE_MONEY_PROVIDERS, BANK_PROVIDERS, isValidTanzanianPhone } from '../constants';
@@ -19,7 +20,17 @@ export const BuyerSettingsPage = () => {
   const { user, addresses, addAddress, updateAddress, deleteAddress, updateUserProfile, walletTransactions, paymentMethods, connectedAccounts, loginHistory } = useAppState();
   const { addToast } = useToast();
 
-  const [activeTab, setActiveTab] = useState('profile');
+  // Deep-linkable / refresh-safe tab selection — a settings tab used to
+  // always reset to Profile on reload or when someone shared/bookmarked a
+  // link into a specific section.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const validTabs = ['profile', 'billing', 'wallet', 'security'];
+  const initialTab = searchParams.get('tab');
+  const [activeTab, setActiveTabState] = useState(initialTab && validTabs.includes(initialTab) ? initialTab : 'profile');
+  const setActiveTab = (id: string) => {
+    setActiveTabState(id);
+    setSearchParams(prev => { const next = new URLSearchParams(prev); next.set('tab', id); return next; }, { replace: true });
+  };
 
   const [profileData, setProfileData] = useState({ 
     full_name: user?.full_name || user?.name || '', 
@@ -65,11 +76,18 @@ export const BuyerSettingsPage = () => {
   });
   const [isExporting, setIsExporting] = useState(false);
   const [isConfirmAccountDeleteOpen, setIsConfirmAccountDeleteOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [isRequestingDeletion, setIsRequestingDeletion] = useState(false);
+
+  // Snapshot of the last-loaded/saved profile form, so the Profile tab can
+  // tell whether there's unsaved work worth warning about before it's lost
+  // to a tab switch or a closed tab.
+  const profileSnapshotRef = React.useRef<string>('');
 
   useEffect(() => {
     if (user) {
-        setProfileData({ 
-            full_name: user.full_name || user.name || '', 
+        const loaded = {
+            full_name: user.full_name || user.name || '',
             display_name: user.display_name || '',
             phone: user.phone || '',
             avatar_url: user.avatar_url || '',
@@ -80,7 +98,9 @@ export const BuyerSettingsPage = () => {
             pronouns: user.pronouns || '',
             signature_emoji: user.signature_emoji || '',
             greeting_style: user.greeting_style || 'karibu',
-        });
+        };
+        setProfileData(loaded);
+        profileSnapshotRef.current = JSON.stringify(loaded);
         setPreferences({
             emailNotifications: user.email_notifications ?? true,
             smsNotifications: user.sms_notifications ?? false,
@@ -215,6 +235,14 @@ export const BuyerSettingsPage = () => {
       }
   };
 
+  const downloadBlob = (blob: Blob, filename: string) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a); URL.revokeObjectURL(url);
+  };
+
   const handleExportData = async () => {
       if (!user) return;
       setIsExporting(true);
@@ -225,6 +253,48 @@ export const BuyerSettingsPage = () => {
               setIsExporting(false);
               return;
           }
+          const datedName = 'malimart-orders-' + new Date().toISOString().split('T')[0];
+          const format = preferences.exportFormat || 'csv';
+
+          if (format === 'json') {
+              const blob = new Blob([JSON.stringify(orders, null, 2)], { type: 'application/json' });
+              downloadBlob(blob, datedName + '.json');
+              addToast('Exported ' + orders.length + ' orders as JSON', 'success');
+              return;
+          }
+
+          if (format === 'pdf') {
+              // Lazy-loaded — same library ReceiptModal already uses, kept off
+              // the critical path since most exports are still CSV.
+              const { default: jsPDF } = await import('jspdf');
+              const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+              const marginX = 14;
+              let y = 18;
+              pdf.setFontSize(14);
+              pdf.text('MaliMart — Order History', marginX, y);
+              pdf.setFontSize(9);
+              y += 6;
+              pdf.text(`Exported ${new Date().toLocaleDateString()} · ${orders.length} orders`, marginX, y);
+              y += 8;
+              (orders as any[]).forEach((order: any) => {
+                  if (y > 280) { pdf.addPage(); y = 18; }
+                  pdf.setFontSize(10);
+                  pdf.text(`#${order.id.slice(0, 8).toUpperCase()}  ·  ${new Date(order.created_at).toLocaleDateString()}  ·  ${order.status}  ·  Total ${order.total}`, marginX, y);
+                  y += 5;
+                  const items: any[] = order.items || [];
+                  pdf.setFontSize(8.5);
+                  items.forEach((item: any) => {
+                      if (y > 280) { pdf.addPage(); y = 18; }
+                      pdf.text(`   ${item.quantity} x ${item.product?.name || 'Unknown'} — ${item.price_at_purchase}`, marginX, y);
+                      y += 4.5;
+                  });
+                  y += 3;
+              });
+              pdf.save(datedName + '.pdf');
+              addToast('Exported ' + orders.length + ' orders as PDF', 'success');
+              return;
+          }
+
           const headers = ['Order ID','Date','Status','Product','Category','Qty','Unit Price','Subtotal','Delivery','Total','Payment'];
           const rows: string[] = [headers.join(',')];
           (orders as any[]).forEach((order: any) => {
@@ -250,13 +320,7 @@ export const BuyerSettingsPage = () => {
               }
           });
           const csv = rows.join('\n');
-          const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = 'malimart-orders-'+new Date().toISOString().split('T')[0]+'.csv';
-          document.body.appendChild(a); a.click();
-          document.body.removeChild(a); URL.revokeObjectURL(url);
+          downloadBlob(new Blob([csv], { type: 'text/csv;charset=utf-8;' }), datedName + '.csv');
           addToast('Exported '+orders.length+' orders as CSV', 'success');
       } catch (e) {
           addToast('Export failed. Please try again.', 'error');
@@ -346,14 +410,18 @@ export const BuyerSettingsPage = () => {
   };
 
   const handleRequestAccountDeletion = async () => {
-      if (!user) return;
+      if (!user || deleteConfirmText.trim().toLowerCase() !== (user.email || '').toLowerCase()) return;
+      setIsRequestingDeletion(true);
       try {
           await requestMyAccountDeletion(user.id);
           addToast('Account deletion requested', 'success');
+          setIsConfirmAccountDeleteOpen(false);
+          setDeleteConfirmText('');
       } catch (error) {
           addToast('Failed to request deletion', 'error');
+      } finally {
+          setIsRequestingDeletion(false);
       }
-      setIsConfirmAccountDeleteOpen(false);
   };
 
   const tabs = [
@@ -362,6 +430,7 @@ export const BuyerSettingsPage = () => {
     { id: 'wallet', label: 'Wallet & Rewards', icon: Wallet },
     { id: 'security', label: 'Security & Privacy', icon: Shield },
   ];
+  const isProfileDirty = activeTab === 'profile' && JSON.stringify(profileData) !== profileSnapshotRef.current;
   const __ctx = { addToast, addressData, addressToDelete, addresses, confirmDeleteAddress, confirmDeletePayment, confirmRequestAccountDeletion, connectedAccounts, copyReferralCode, handleAddAddress, handleAddPaymentMethod, handleConnectAccount, handleExportData, handleLanguageChange, handleProfileUpdate, handleSetDefaultAddress, isAddingAddress, isAddingPayment, isDeletingAddress, isExporting, isSavingProfile, loginHistory, paymentData, paymentMethods: activePaymentMethods, preferences, profileData, setAddressData, setEditingAddress, setPaymentData, setPreferences, setProfileData, togglePreference, updateUserProfile, user, walletTransactions };
 
 
@@ -371,6 +440,7 @@ export const BuyerSettingsPage = () => {
     <SettingsShell
       title="Settings"
       subtitle="Manage your account preferences and settings."
+      isDirty={isProfileDirty}
       tabs={tabs}
       activeTab={activeTab}
       onTabChange={setActiveTab}
@@ -459,15 +529,41 @@ export const BuyerSettingsPage = () => {
         isDangerous
         isLoading={isDeletingPayment}
       />
-      <ConfirmModal 
-        isOpen={isConfirmAccountDeleteOpen}
-        onClose={() => setIsConfirmAccountDeleteOpen(false)}
-        onConfirm={handleRequestAccountDeletion}
-        title="Request Account Deletion"
-        message="Are you sure you want to request account deletion? This action is irreversible."
-        confirmText="Request Deletion"
-        isDestructive={true}
-      />
+      {isConfirmAccountDeleteOpen && (
+        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
+          <Card className="max-w-md w-full shadow-2xl border-none">
+            <CardContent className="pt-6">
+              <h3 className="text-lg font-bold text-foreground">Request Account Deletion</h3>
+              <p className="text-sm text-muted-foreground mt-1.5">
+                This is irreversible. To confirm, type your account email
+                {user?.email && <> — <span className="font-mono font-semibold text-foreground">{user.email}</span></>} — below.
+              </p>
+              <Input
+                className="mt-4"
+                placeholder="Type your email to confirm"
+                aria-label="Type your email to confirm account deletion"
+                value={deleteConfirmText}
+                onChange={(e: any) => setDeleteConfirmText(e.target.value)}
+                autoFocus
+              />
+              <div className="flex gap-3 pt-5">
+                <Button variant="secondary" className="flex-1" onClick={() => { setIsConfirmAccountDeleteOpen(false); setDeleteConfirmText(''); }}>
+                  Cancel
+                </Button>
+                <Button
+                  variant="danger"
+                  className="flex-1"
+                  onClick={handleRequestAccountDeletion}
+                  isLoading={isRequestingDeletion}
+                  disabled={deleteConfirmText.trim().toLowerCase() !== (user?.email || '').toLowerCase()}
+                >
+                  {isRequestingDeletion ? 'Requesting…' : 'Request Deletion'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </SettingsShell>
   </BuyerSettingsCtx.Provider>
   );

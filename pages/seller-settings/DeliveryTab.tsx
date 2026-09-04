@@ -45,7 +45,8 @@ export const DeliveryTab = () => {
  )}
 
  <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-foreground/8 dark:border-white/5">
- <select 
+ <select
+ aria-label="Region for this fee"
  className="h-10 bg-background border border-foreground/10 rounded-xl px-3 text-sm outline-none flex-1"
  value={newZone.region}
  onChange={(e) => setNewZone({...newZone, region: e.target.value, district: 'All Districts'})}
@@ -54,7 +55,8 @@ export const DeliveryTab = () => {
  <option key={region} value={region}>{region}</option>
  ))}
  </select>
- <select 
+ <select
+ aria-label="District for this fee"
  className="h-10 bg-background border border-foreground/10 rounded-xl px-3 text-sm outline-none flex-1 disabled:opacity-50"
  value={newZone.district}
  onChange={(e) => setNewZone({...newZone, district: e.target.value})}
@@ -80,7 +82,8 @@ export const DeliveryTab = () => {
  Select a destination to see exactly what a buyer will be charged based on your rules above.
  </p>
  <div className="flex flex-col sm:flex-row gap-3 items-center">
- <select 
+ <select
+ aria-label="Test region"
  className="h-10 bg-background border border-emerald-200 dark:border-emerald-800/30 rounded-xl px-3 text-sm outline-none flex-1 w-full"
  value={calcRegion}
  onChange={(e) => {
@@ -92,7 +95,8 @@ export const DeliveryTab = () => {
  <option key={region} value={region}>{region}</option>
  ))}
  </select>
- <select 
+ <select
+ aria-label="Test district"
  className="h-10 bg-background border border-emerald-200 dark:border-emerald-800/30 rounded-xl px-3 text-sm outline-none flex-1 w-full disabled:opacity-50"
  value={calcDistrict}
  onChange={(e) => setCalcDistrict(e.target.value)}

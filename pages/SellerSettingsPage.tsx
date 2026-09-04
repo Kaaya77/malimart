@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { SettingsShell } from '../components/settings/SettingsShell';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppState } from '../context/AppContext';
 import { Button, Input, Card, CardHeader, CardContent, CardTitle, CardDescription, Textarea, useToast, Badge, Switch, VerifiedBadge } from '../components/UI';
-import { Store, DollarSign, Truck, Loader2, Wallet, ArrowUpRight, Clock, CheckCircle2, XCircle, Briefcase, Settings, PlusCircle, Trash2, Globe, MapPin, Info, ShieldCheck, AlertTriangle, ChevronLeft } from 'lucide-react';
+import { Store, DollarSign, Truck, Loader2, Wallet, ArrowUpRight, Clock, CheckCircle2, XCircle, Briefcase, Settings, PlusCircle, Trash2, Globe, MapPin, Info, ShieldCheck, AlertTriangle, ChevronLeft, Shield } from 'lucide-react';
 import { listMyPayoutMethods, addMyPayoutMethod, deleteMyPayoutMethod, listMyShippingZones, addMyShippingZone, deleteMyShippingZone } from '../services/sellerApi';
 import { CURRENCY, TANZANIA_REGIONS, TANZANIA_DISTRICTS, MOBILE_MONEY_PROVIDERS, BANK_PROVIDERS, SOCIAL_PLATFORMS, isValidTIN, isValidVRN, isValidTanzanianPhone, resolveShippingFee } from '../constants';
 import { SellerSettingsCtx } from './seller-settings/context';
@@ -11,13 +12,22 @@ import { StoreTab } from './seller-settings/StoreTab';
 import { BusinessTab } from './seller-settings/BusinessTab';
 import { DeliveryTab } from './seller-settings/DeliveryTab';
 import { PreferencesTab } from './seller-settings/PreferencesTab';
+import { SecurityTab } from './seller-settings/SecurityTab';
 
 
 export const SellerSettingsPage = ({ onBack }: { onBack?: () => void } = {}) => {
  const { user, vendorProfile, updateVendorProfile, walletTransactions } = useAppState();
  const { addToast } = useToast();
- 
- const [activeTab, setActiveTab] = useState('store');
+
+ // Deep-linkable / refresh-safe tab selection, matching Buyer Settings.
+ const [searchParams, setSearchParams] = useSearchParams();
+ const validTabs = ['store', 'business', 'delivery', 'preferences', 'security'];
+ const initialTab = searchParams.get('tab');
+ const [activeTab, setActiveTabState] = useState(initialTab && validTabs.includes(initialTab) ? initialTab : 'store');
+ const setActiveTab = (id: string) => {
+   setActiveTabState(id);
+   setSearchParams(prev => { const next = new URLSearchParams(prev); next.set('tab', id); return next; }, { replace: true });
+ };
 
  // --- STORE PROFILE STATE ---
  const [profileData, setProfileData] = useState({
@@ -56,10 +66,14 @@ export const SellerSettingsPage = ({ onBack }: { onBack?: () => void } = {}) => 
 
  const [isSaving, setIsSaving] = useState(false);
 
+ // Snapshot of the last-loaded/saved Basic Info form, so the Store tab can
+ // warn before an in-progress edit is lost to a tab switch or closed tab.
+ const profileSnapshotRef = React.useRef<string>('');
+
  // Load initial data
  useEffect(() => {
  if (vendorProfile) {
- setProfileData({
+ const loadedProfile = {
  store_name: vendorProfile.store_name || '',
  description: vendorProfile.description || '',
  contact_phone: vendorProfile.contact_phone || '',
@@ -74,7 +88,9 @@ export const SellerSettingsPage = ({ onBack }: { onBack?: () => void } = {}) => 
  banner_subtext: vendorProfile.banner_subtext || '',
  banner_cta_text: vendorProfile.banner_cta_text || '',
  banner_cta_url: vendorProfile.banner_cta_url || ''
- });
+ };
+ setProfileData(loadedProfile);
+ profileSnapshotRef.current = JSON.stringify(loadedProfile);
  setBusinessData({
  tin_number: vendorProfile.tin_number || '',
  business_reg_no: vendorProfile.business_reg_no || '',
@@ -272,6 +288,7 @@ export const SellerSettingsPage = ({ onBack }: { onBack?: () => void } = {}) => 
  { id: 'business', label: 'Business & Payments', desc: 'Tax, payouts & methods', icon: Briefcase },
  { id: 'delivery', label: 'Delivery & Shipping', desc: 'Zones & fees', icon: Truck },
  { id: 'preferences', label: 'Preferences', desc: 'Alerts & vacation mode', icon: Settings },
+ { id: 'security', label: 'Security', desc: 'Password & account', icon: Shield },
  ];
   const __ctx = { addToast, businessData, calcDistrict, calcRegion, deliveryData, handleAddPayment, handleAddSocial, handleAddZone, handleGenericSave, handleRemovePayment, handleRemoveSocial, handleRemoveZone, isSaving, newPayment, newSocial, newZone, paymentMethods, policiesData, preferences, profileData, setBusinessData, setCalcDistrict, setCalcRegion, setDeliveryData, setNewPayment, setNewSocial, setNewZone, setPoliciesData, setPreferences, setProfileData, shippingZones, socialLinks, user };
 
@@ -279,6 +296,7 @@ export const SellerSettingsPage = ({ onBack }: { onBack?: () => void } = {}) => 
  const storeName = profileData.store_name || vendorProfile?.store_name || 'Your store';
  // circumference for the progress ring (r=18)
  const RING = 2 * Math.PI * 18;
+ const isProfileDirty = activeTab === 'store' && JSON.stringify(profileData) !== profileSnapshotRef.current;
 
  return (
   <SellerSettingsCtx.Provider value={__ctx}>
@@ -286,6 +304,7 @@ export const SellerSettingsPage = ({ onBack }: { onBack?: () => void } = {}) => 
  <SettingsShell
       title="Store Settings"
       subtitle="Manage your storefront, business details and operations."
+      isDirty={isProfileDirty}
       tabs={tabs}
       activeTab={activeTab}
       onTabChange={setActiveTab}
@@ -375,6 +394,7 @@ export const SellerSettingsPage = ({ onBack }: { onBack?: () => void } = {}) => 
  {activeTab === 'business' && <BusinessTab />}
  {activeTab === 'delivery' && <DeliveryTab />}
  {activeTab === 'preferences' && <PreferencesTab />}
+ {activeTab === 'security' && <SecurityTab />}
  </motion.div>
  </AnimatePresence>
 </main>

@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Select, Switch } from '../../components/UI';
-import { TANZANIA_REGIONS } from '../../constants';
-import { Globe, Home, Loader2, Mail, Phone, Upload, User as UserIcon } from 'lucide-react';
+import { TANZANIA_REGIONS, isValidTanzanianPhone } from '../../constants';
+import { Globe, Home, Loader2, Mail, Phone, Trash2, Upload, User as UserIcon } from 'lucide-react';
 import { supabase } from '../../services/supabaseClient';
 import { compressImage } from '../../services/imageCompression';
 import { AccentThemePicker } from '../../components/AccentThemePicker';
@@ -13,6 +13,30 @@ export const ProfileTab = () => {
     const coverInputRef = useRef<HTMLInputElement>(null);
     const [uploadingAvatar, setUploadingAvatar] = useState(false);
     const [uploadingCover, setUploadingCover] = useState(false);
+    const [removingAvatar, setRemovingAvatar] = useState(false);
+    const [removingCover, setRemovingCover] = useState(false);
+    const phoneError = profileData.phone && !isValidTanzanianPhone(profileData.phone)
+        ? 'Enter a valid Tanzanian number, e.g. 0712345678' : '';
+
+    const handleRemoveAvatar = async () => {
+        setRemovingAvatar(true);
+        try {
+            setProfileData((prev: any) => ({ ...prev, avatar_url: '' }));
+            await updateUserProfile({ avatar_url: null });
+            addToast('Profile photo removed', 'success');
+        } catch { addToast('Could not remove photo', 'error'); }
+        finally { setRemovingAvatar(false); }
+    };
+
+    const handleRemoveCover = async () => {
+        setRemovingCover(true);
+        try {
+            setProfileData((prev: any) => ({ ...prev, cover_image_url: '' }));
+            await updateUserProfile({ cover_image_url: null });
+            addToast('Cover image removed', 'success');
+        } catch { addToast('Could not remove cover image', 'error'); }
+        finally { setRemovingCover(false); }
+    };
 
     const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -98,9 +122,16 @@ export const ProfileTab = () => {
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-foreground">Profile Photo</p>
                         <p className="text-xs text-muted-foreground mt-1">Hover the circle and click to upload. Max 5 MB.</p>
-                        <button type="button" onClick={() => avatarInputRef.current?.click()} disabled={uploadingAvatar} className="mt-2 text-xs font-semibold text-foreground underline underline-offset-2 hover:opacity-60 transition-opacity">
-                          {uploadingAvatar ? 'Uploading…' : 'Change photo'}
-                        </button>
+                        <div className="flex items-center gap-3 mt-2">
+                          <button type="button" onClick={() => avatarInputRef.current?.click()} disabled={uploadingAvatar} className="text-xs font-semibold text-foreground underline underline-offset-2 hover:opacity-60 transition-opacity">
+                            {uploadingAvatar ? 'Uploading…' : 'Change photo'}
+                          </button>
+                          {profileData.avatar_url && (
+                            <button type="button" onClick={handleRemoveAvatar} disabled={removingAvatar || uploadingAvatar} className="text-xs font-semibold text-rose-500 hover:text-rose-600 transition-colors">
+                              {removingAvatar ? 'Removing…' : 'Remove'}
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
 
@@ -119,7 +150,15 @@ export const ProfileTab = () => {
                         </div>
                         <div className="space-y-1">
                           <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">Phone Number</label>
-                          <Input icon={Phone} placeholder="Phone Number" value={profileData.phone || ''} onChange={(e: any) => setProfileData({ ...profileData, phone: e.target.value })} />
+                          <Input
+                            icon={Phone}
+                            placeholder="Phone Number"
+                            value={profileData.phone || ''}
+                            onChange={(e: any) => setProfileData({ ...profileData, phone: e.target.value })}
+                            aria-invalid={!!phoneError}
+                            className={phoneError ? 'border-rose-500/60 focus:ring-rose-500/30 focus:border-rose-500/60' : undefined}
+                          />
+                          {phoneError && <p className="text-xs text-rose-500 mt-0.5">{phoneError}</p>}
                         </div>
                         <div className="space-y-1">
                           <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">Region</label>
@@ -182,6 +221,16 @@ export const ProfileTab = () => {
                             </div>
                           </button>
                           <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} />
+                          {profileData.cover_image_url && (
+                            <button
+                              type="button"
+                              onClick={handleRemoveCover}
+                              disabled={removingCover || uploadingCover}
+                              className="mt-1.5 text-xs font-semibold text-rose-500 hover:text-rose-600 transition-colors flex items-center gap-1"
+                            >
+                              <Trash2 className="w-3 h-3" /> {removingCover ? 'Removing…' : 'Remove cover'}
+                            </button>
+                          )}
                         </div>
                     </div>
                     <div className="flex justify-end pt-4 border-t border-foreground/[0.06]">

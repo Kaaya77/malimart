@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { BackButton } from '../BackButton';
 
@@ -35,12 +35,30 @@ interface SettingsShellProps {
   onTabChange: (id: string) => void;
   /** Role-specific block rendered above the nav (e.g. the seller store card). */
   header?: ReactNode;
+  /** True while the active tab has unsaved edits — gates both the tab-switch
+   *  confirm and a browser close/refresh warning, so a form using an explicit
+   *  Save button (most of them, in these pages) doesn't lose work silently. */
+  isDirty?: boolean;
   children: ReactNode;
 }
 
 export const SettingsShell: React.FC<SettingsShellProps> = ({
-  title, subtitle, tabs, activeTab, onTabChange, header, children,
-}) => (
+  title, subtitle, tabs, activeTab, onTabChange, header, isDirty, children,
+}) => {
+  useEffect(() => {
+    if (!isDirty) return;
+    const onBeforeUnload = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ''; };
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, [isDirty]);
+
+  const handleTabChange = (id: string) => {
+    if (id === activeTab) return;
+    if (isDirty && !window.confirm('You have unsaved changes on this tab. Discard them and switch?')) return;
+    onTabChange(id);
+  };
+
+  return (
   <div className="max-w-6xl mx-auto pb-12 animate-in fade-in">
     <div className="mb-6">
       <BackButton label="Back" className="mb-3" />
@@ -72,14 +90,18 @@ export const SettingsShell: React.FC<SettingsShellProps> = ({
                   hidden: { opacity: 0, x: -10 },
                   visible: { opacity: 1, x: 0, transition: { duration: 0.3 } },
                 }}
-                onClick={() => onTabChange(tab.id)}
+                onClick={() => handleTabChange(tab.id)}
                 aria-current={active ? 'page' : undefined}
                 // shrink-0 is load-bearing: without it a flex row squeezes each
                 // button below its own whitespace-nowrap text, so labels
                 // overlap and the shortest one clips. That was a real bug.
                 className={`flex items-center gap-3 px-4 py-3 min-h-11 rounded-2xl text-sm font-bold transition-colors whitespace-nowrap shrink-0 md:w-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 ${
                   active
-                    ? 'bg-foreground text-background'
+                    // A fixed pair, not bg-foreground/text-background — that
+                    // pair inverts with the theme (near-black in light mode,
+                    // cream in dark), so the "active" colour would change
+                    // identity between themes instead of staying emerald.
+                    ? 'bg-emerald-600 text-white'
                     : 'text-foreground/50 hover:text-foreground hover:bg-foreground/[0.06]'
                 }`}
               >
@@ -87,7 +109,7 @@ export const SettingsShell: React.FC<SettingsShellProps> = ({
                 <span className="min-w-0">
                   <span className="block leading-tight">{tab.label}</span>
                   {tab.desc && (
-                    <span className={`hidden md:block text-[11px] font-medium mt-0.5 ${active ? 'text-background/60' : 'text-foreground/40'}`}>
+                    <span className={`hidden md:block text-[11px] font-medium mt-0.5 ${active ? 'text-white/70' : 'text-foreground/40'}`}>
                       {tab.desc}
                     </span>
                   )}
@@ -101,4 +123,5 @@ export const SettingsShell: React.FC<SettingsShellProps> = ({
       <div className="flex-1 min-w-0">{children}</div>
     </div>
   </div>
-);
+  );
+};

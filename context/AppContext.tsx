@@ -1454,8 +1454,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
 
     const deleteAccount = useCallback(async () => {
         if (!user) return;
-        const { error } = await requestMyAccountDeletion(user.id);
-        if (error) throw error;
+        await requestMyAccountDeletion(user.id);
         logout();
     }, [user, logout]);
 
