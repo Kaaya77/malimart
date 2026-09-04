@@ -33,6 +33,7 @@ import {
   ChevronLeft, Send, Loader2, Sparkles, Wand2, Search, X, Paperclip, Ban,
   ShieldAlert, MoreVertical, Truck, MessageSquarePlus, Plus, Trash2, ArrowUpRight,
   ArrowUp, Info, Reply as ReplyIcon, Package, Inbox, MailOpen, UserRound, Archive, MessageSquare, Store, Receipt,
+  CheckSquare, ArrowDown, ArchiveRestore,
 } from 'lucide-react';
 import { useAppState } from '../../context/AppContext';
 import { Button, Input, useToast, ConfirmDialog, UserProfileModal, Skeleton } from '../UI';
@@ -126,6 +127,22 @@ const SELLER_DEFAULT_REPLIES = [
   'Sorry for the delay — your order is on its way.',
   'Feel free to ask if you have any questions!',
 ];
+
+// ─── Draft persistence ────────────────────────────────────────────────────────
+// A half-typed reply used to vanish the instant you switched conversations —
+// `draft` was plain component state, wiped by the per-conversation reset
+// effect. Local-only (localStorage), never synced: it's a save against
+// losing your own half-finished text, not a cross-device feature.
+const draftKey = (userId: string, peerId: string) => `malimart_draft_${userId}_${peerId}`;
+const loadDraft = (userId: string, peerId: string): string => {
+  try { return localStorage.getItem(draftKey(userId, peerId)) || ''; } catch { return ''; }
+};
+const saveDraft = (userId: string, peerId: string, text: string) => {
+  try {
+    if (text) localStorage.setItem(draftKey(userId, peerId), text);
+    else localStorage.removeItem(draftKey(userId, peerId));
+  } catch { /* private mode / storage full — the draft just won't survive a switch */ }
+};
 
 const REPORT_REASONS = ['Spam', 'Harassment', 'Fraud/Scam', 'Inappropriate Content', 'Other'];
 const TONES = ['professional', 'persuasive', 'friendly'] as const;
@@ -251,6 +268,29 @@ export const Conversations = ({
   const [showArchived, setShowArchived] = useState(false);
   const [showNewChat, setShowNewChat] = useState(false);
 
+  // ─── Bulk select ─────────────────────────────────────────────────────────────
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedPeerIds, setSelectedPeerIds] = useState<Set<string>>(new Set());
+  const [bulkWorking, setBulkWorking] = useState(false);
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+  const exitSelectMode = useCallback(() => { setSelectMode(false); setSelectedPeerIds(new Set()); }, []);
+  const toggleSelected = useCallback((peerId: string) => {
+    setSelectedPeerIds(prev => {
+      const next = new Set(prev);
+      if (next.has(peerId)) next.delete(peerId); else next.add(peerId);
+      return next;
+    });
+  }, []);
+
+  // ─── Image lightbox ──────────────────────────────────────────────────────────
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!lightboxUrl) return;
+    const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') setLightboxUrl(null); };
+    window.addEventListener('keydown', onEsc);
+    return () => window.removeEventListener('keydown', onEsc);
+  }, [lightboxUrl]);
+
   // ─── AI ────────────────────────────────────────────────────────────────────
   const [magicMode, setMagicMode] = useState(false);
   const [isPolishing, setIsPolishing] = useState(false);
@@ -299,6 +339,11 @@ export const Conversations = ({
 
   const { selectPeer, openPeer, activePeerId } = m;
 
+  // True once a search jump has repositioned the thread view somewhere in
+  // history — jumpToMessage replaces the loaded page, so the live tail is no
+  // longer necessarily on screen until the user asks to go back to it.
+  const [viewingHistory, setViewingHistory] = useState(false);
+
   // ─── In-thread search ───────────────────────────────────────────────────────
   const [showThreadSearch, setShowThreadSearch] = useState(false);
   const [threadSearchQuery, setThreadSearchQuery] = useState('');
@@ -330,6 +375,7 @@ export const Conversations = ({
     if (!activePeerId) return;
     closeThreadSearch();
     await m.jumpToMessage(activePeerId, hit);
+    setViewingHistory(true);
     setHighlightMsgId(hit.id);
     requestAnimationFrame(() => {
       document.getElementById(`msg-${hit.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -337,6 +383,12 @@ export const Conversations = ({
     if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
     highlightTimerRef.current = setTimeout(() => setHighlightMsgId(null), 2200);
   }, [activePeerId, closeThreadSearch, m]);
+
+  const jumpToLatest = useCallback(() => {
+    if (!activePeerId) return;
+    setViewingHistory(false);
+    selectPeer(activePeerId);
+  }, [activePeerId, selectPeer]);
 
   // ─── Deep link ─────────────────────────────────────────────────────────────
   const openedRef = useRef<string | null>(null);
@@ -408,7 +460,8 @@ export const Conversations = ({
 
   // ─── Scroll ────────────────────────────────────────────────────────────────
   // Stick to the bottom for new messages, but do NOT yank the view when an
-  // older page is prepended — leave the reader where they were.
+  // older page is prepended (or a search jump lands elsewhere) — leave the
+  // reader where they were / where they jumped to.
   const prevOldestRef = useRef<string | null>(null);
   useEffect(() => {
     const oldest = m.thread[0]?.id ?? null;
@@ -416,13 +469,31 @@ export const Conversations = ({
       prevOldestRef.current = oldest;
       return;
     }
+    // A conversation that was empty a moment ago (prevOldestRef still null)
+    // and now has messages is a FRESH open, not a new arrival — land on the
+    // first unread message instead of the bottom, the way opening a long
+    // unread backlog should, rather than always burying it under "newest".
+    const freshOpen = !prevOldestRef.current && m.thread.length > 0;
     prevOldestRef.current = oldest;
+    if (freshOpen) {
+      const firstUnread = m.thread.find(msg => !msg.read && msg.senderId !== userId && !msg.deletedAt);
+      if (firstUnread) {
+        requestAnimationFrame(() => {
+          document.getElementById(`msg-${firstUnread.id}`)?.scrollIntoView({ behavior: 'auto', block: 'center' });
+        });
+        return;
+      }
+    }
     scrollAnchorRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [m.thread]);
+  }, [m.thread, userId]);
 
-  // Reset per-conversation state on switch.
+  // Reset per-conversation state on switch. The draft itself is restored,
+  // not cleared — see the draft-persistence effect below, which owns writing
+  // it back out per peer so a half-typed reply survives switching away and
+  // back (or the tab closing) instead of vanishing with the rest of this
+  // per-conversation UI state.
   useEffect(() => {
-    setDraft('');
+    setDraft(activePeerId ? loadDraft(userId, activePeerId) : '');
     setReplyingTo(null);
     setAttachment(null);
     setMagicMode(false);
@@ -434,11 +505,20 @@ export const Conversations = ({
     setShowThreadSearch(false);
     setThreadSearchQuery('');
     setHighlightMsgId(null);
+    setViewingHistory(false);
     m.clearSearch();
     lastSuggestedFor.current = null;
     if (textareaRef.current) textareaRef.current.style.height = 'auto';
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activePeerId]);
+
+  // Persist the draft for the OPEN conversation as it's typed, debounced so
+  // every keystroke doesn't hit storage.
+  useEffect(() => {
+    if (!activePeerId) return;
+    const t = setTimeout(() => saveDraft(userId, activePeerId, draft), 400);
+    return () => clearTimeout(t);
+  }, [draft, activePeerId, userId]);
 
   // Load the richer profile and the shared order history only when the drawer
   // actually opens — neither is needed to read a conversation.
@@ -630,6 +710,36 @@ export const Conversations = ({
     }
   };
 
+  const handleBulkArchive = async () => {
+    const ids = [...selectedPeerIds];
+    if (ids.length === 0) return;
+    setBulkWorking(true);
+    try {
+      await Promise.all(ids.map(id => m.setPref(id, { archived: !showArchived })));
+      addToast(`${ids.length} conversation${ids.length === 1 ? '' : 's'} ${showArchived ? 'restored' : 'archived'}`, 'success');
+      exitSelectMode();
+    } catch {
+      addToast('Some conversations could not be updated', 'error');
+    } finally {
+      setBulkWorking(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    const ids = [...selectedPeerIds];
+    if (ids.length === 0) return;
+    setBulkWorking(true);
+    try {
+      await Promise.all(ids.map(id => m.removeConversation(id)));
+      addToast(`${ids.length} chat${ids.length === 1 ? '' : 's'} deleted`, 'success');
+      exitSelectMode();
+    } catch {
+      addToast('Some chats could not be deleted', 'error');
+    } finally {
+      setBulkWorking(false);
+    }
+  };
+
   const handleBlock = async (peerId: string) => {
     if (await fetchProfileRole(peerId) === 'admin') {
       addToast('Cannot block an administrator', 'error');
@@ -683,34 +793,79 @@ export const Conversations = ({
                 </span>
               )}
             </h2>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => setShowNewChat(true)}
-              aria-label="New message"
-              className="h-10 w-10 p-0 rounded-2xl"
-            >
-              <MessageSquarePlus className="w-4 h-4" />
-            </Button>
+            <div className="flex items-center gap-1.5">
+              {!selectMode && visibleConversations.length > 0 && (
+                <button
+                  onClick={() => setSelectMode(true)}
+                  aria-label="Select conversations"
+                  className="h-10 w-10 flex items-center justify-center rounded-2xl text-foreground/45 hover:text-foreground hover:bg-foreground/[0.06] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+                >
+                  <CheckSquare className="w-4 h-4" />
+                </button>
+              )}
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => setShowNewChat(true)}
+                aria-label="New message"
+                className="h-10 w-10 p-0 rounded-2xl"
+              >
+                <MessageSquarePlus className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
 
-          <div className="relative">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/35 pointer-events-none z-10" />
-            <Input
-              placeholder="Search conversations"
-              aria-label="Search conversations"
-              value={searchTerm}
-              onChange={(e: any) => setSearchTerm(e.target.value)}
-              className="h-10 pl-10 text-xs rounded-2xl bg-foreground/[0.04] border-transparent"
-            />
-          </div>
+          {!selectMode && (
+            <div className="relative">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/35 pointer-events-none z-10" />
+              <Input
+                placeholder="Search conversations"
+                aria-label="Search conversations"
+                value={searchTerm}
+                onChange={(e: any) => setSearchTerm(e.target.value)}
+                className="h-10 pl-10 text-xs rounded-2xl bg-foreground/[0.04] border-transparent"
+              />
+            </div>
+          )}
 
-          <div className="flex items-center gap-1.5">
-            <FilterPill active={filterUnread} onClick={() => setFilterUnread(v => !v)}>Unread</FilterPill>
-            {cfg.canArchive && (
-              <FilterPill active={showArchived} onClick={() => setShowArchived(v => !v)}>Archived</FilterPill>
-            )}
-          </div>
+          {selectMode ? (
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={exitSelectMode}
+                className="h-9 px-3 rounded-xl text-[10px] font-black uppercase tracking-[0.12em] text-foreground/55 hover:text-foreground hover:bg-foreground/[0.06] transition-colors"
+              >
+                Cancel
+              </button>
+              <span className="text-[10px] font-bold text-foreground/40 tabular-nums flex-1">
+                {selectedPeerIds.size} selected
+              </span>
+              {cfg.canArchive && (
+                <button
+                  onClick={() => void handleBulkArchive()}
+                  disabled={bulkWorking || selectedPeerIds.size === 0}
+                  aria-label={showArchived ? 'Restore selected' : 'Archive selected'}
+                  className="h-9 w-9 flex items-center justify-center rounded-xl text-foreground/55 hover:text-foreground hover:bg-foreground/[0.06] transition-colors disabled:opacity-40"
+                >
+                  {showArchived ? <ArchiveRestore className="w-4 h-4" /> : <Archive className="w-4 h-4" />}
+                </button>
+              )}
+              <button
+                onClick={() => setConfirmBulkDelete(true)}
+                disabled={bulkWorking || selectedPeerIds.size === 0}
+                aria-label="Delete selected"
+                className="h-9 w-9 flex items-center justify-center rounded-xl text-rose-500/80 hover:text-rose-500 hover:bg-rose-500/[0.08] transition-colors disabled:opacity-40"
+              >
+                {bulkWorking ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5">
+              <FilterPill active={filterUnread} onClick={() => setFilterUnread(v => !v)}>Unread</FilterPill>
+              {cfg.canArchive && (
+                <FilterPill active={showArchived} onClick={() => setShowArchived(v => !v)}>Archived</FilterPill>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar px-2 py-2">
@@ -776,6 +931,9 @@ export const Conversations = ({
                     // a gesture that destroys a conversation on contact is the
                     // one place a swipe should NOT be the whole interaction.
                     onDelete={() => setConfirmAction({ type: 'delete-chat', peerId: c.peerId })}
+                    selectMode={selectMode}
+                    checked={selectedPeerIds.has(c.peerId)}
+                    onToggleCheck={() => toggleSelected(c.peerId)}
                   />
                 ))}
               </div>
@@ -965,6 +1123,7 @@ export const Conversations = ({
                           id={msg.id}
                           highlighted={msg.id === highlightMsgId}
                           body={msg.body}
+                          editedAt={msg.editedAt}
                           attachmentUrl={msg.attachmentUrl}
                           attachmentType={msg.attachmentType}
                           deleted={!!msg.deletedAt}
@@ -988,10 +1147,17 @@ export const Conversations = ({
                           onReply={() => setReplyingTo(msg)}
                           onDelete={() => void m.removeMessage(msg.id, false)}
                           onDeleteForEveryone={withinRecall ? () => void m.removeMessage(msg.id, true) : undefined}
+                          onEdit={withinRecall
+                            ? (text) => m.editMessage(msg.id, text).catch((e: any) => {
+                                addToast(e?.message || 'Could not save that edit', 'error');
+                                throw e;
+                              })
+                            : undefined}
                           onReport={!mine ? () => setReportingPeer(active) : undefined}
                           onReact={(emoji) => void m.react(msg.id, emoji)}
                           onRetry={msg.failed ? () => void handleRetry(msg) : undefined}
                           onDiscard={msg.failed ? () => m.discardFailed(msg.id) : undefined}
+                          onViewImage={msg.attachmentType === 'image' ? setLightboxUrl : undefined}
                         />
                       </React.Fragment>
                     );
@@ -1001,6 +1167,17 @@ export const Conversations = ({
               {m.peerTyping && <TypingIndicator name={active.name} />}
               <div ref={scrollAnchorRef} />
             </div>
+
+            {viewingHistory && (
+              <div className="flex justify-center -mt-2 mb-2 px-3 shrink-0">
+                <button
+                  onClick={jumpToLatest}
+                  className="flex items-center gap-1.5 px-3.5 h-8 rounded-full bg-emerald-600 text-white text-[10px] font-black uppercase tracking-[0.1em] shadow-lg hover:bg-emerald-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+                >
+                  <ArrowDown className="w-3.5 h-3.5" /> Jump to latest
+                </button>
+              </div>
+            )}
 
             {/* Composer */}
             <div className="px-3 sm:px-4 py-3 bg-background border-t border-foreground/[0.08] flex flex-col gap-2.5 shrink-0">
@@ -1212,7 +1389,15 @@ export const Conversations = ({
                   </button>
                 )}
 
-                <div className="flex-1 min-w-0 bg-foreground/[0.04] rounded-2xl border border-foreground/[0.08] focus-within:border-emerald-500/40 focus-within:bg-background transition-all">
+                <div className="relative flex-1 min-w-0 bg-foreground/[0.04] rounded-2xl border border-foreground/[0.08] focus-within:border-emerald-500/40 focus-within:bg-background transition-all">
+                  {draft.length > 3800 && (
+                    <span
+                      className={`absolute -top-5 right-1 text-[10px] font-bold tabular-nums ${draft.length >= 4000 ? 'text-rose-500' : 'text-foreground/55'}`}
+                      aria-live="polite"
+                    >
+                      {draft.length}/4000
+                    </span>
+                  )}
                   <textarea
                     ref={textareaRef}
                     aria-label="Message"
@@ -1343,14 +1528,9 @@ export const Conversations = ({
                   ))}
                 </div>
               </div>
-            ) : (
-              <div>
-                <SectionLabel className="mb-2">Past engagements</SectionLabel>
-                <p className="text-xs font-medium text-foreground/40 px-1">
-                  No orders between you yet.
-                </p>
-              </div>
-            )}
+            ) : null /* Nothing to show yet — a header over an empty state was
+                        just clutter; "Referenced here" below already follows
+                        this same collapse-when-empty rule. */}
 
             {/* What this conversation has been about. Free — it comes from the
                 thread already loaded, and it is the question the old details
@@ -1442,6 +1622,30 @@ export const Conversations = ({
       </DetailsDrawer>
 
       {/* ══ Modals ══ */}
+      {lightboxUrl && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Image attachment"
+          className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/85 animate-in fade-in duration-150"
+          onClick={() => setLightboxUrl(null)}
+        >
+          <button
+            onClick={() => setLightboxUrl(null)}
+            aria-label="Close"
+            className="absolute top-4 right-4 h-11 w-11 flex items-center justify-center rounded-2xl bg-white/10 text-white hover:bg-white/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          <img
+            src={lightboxUrl}
+            alt="Attachment, full size"
+            className="max-w-full max-h-full object-contain rounded-lg"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
+
       <UserProfileModal isOpen={!!viewingProfile} onClose={() => setViewingProfile(null)} user={viewingProfile} />
       <OrderDetailsModal isOpen={!!viewingOrder} onClose={() => setViewingOrder(null)} order={viewingOrder} />
 
@@ -1512,6 +1716,19 @@ export const Conversations = ({
           } catch (e: any) {
             addToast(e?.message || 'That did not work', 'error');
           }
+        }}
+      />
+
+      <ConfirmDialog
+        isOpen={confirmBulkDelete}
+        title={`Delete ${selectedPeerIds.size} chat${selectedPeerIds.size === 1 ? '' : 's'}?`}
+        message="Removed from your inbox only — the other person in each conversation keeps their copy."
+        confirmText="Delete chats"
+        isDangerous
+        onCancel={() => setConfirmBulkDelete(false)}
+        onConfirm={async () => {
+          setConfirmBulkDelete(false);
+          await handleBulkDelete();
         }}
       />
 

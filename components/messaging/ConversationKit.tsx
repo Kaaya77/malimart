@@ -24,7 +24,8 @@ import { VerifiedBadge, EmptyState } from '../UI';
 import {
   Pin, MessageSquare, Reply, Trash2, ShieldAlert, Smile, Check, CheckCheck,
   Paperclip, Archive, ArchiveRestore, Search, X, Loader2, UserCircle2,
-  Package, Tag, AlertCircle, RotateCcw, Clock, ArrowUpRight,
+  Package, Tag, AlertCircle, RotateCcw, Clock, ArrowUpRight, Pencil,
+  CheckSquare, Square, ZoomIn,
 } from 'lucide-react';
 import { searchMessagingContacts, Reaction, PeerRole } from '../../services/messagesService';
 import { formatTZS } from '../../constants';
@@ -227,6 +228,7 @@ function useRowSwipe({ enabled }: { enabled: boolean }) {
 
 export const ConversationListItem = ({
   item, selected, pinned, archived, onSelect, onTogglePin, onToggleArchive, onDelete,
+  selectMode, checked, onToggleCheck,
 }: {
   item: ConversationItem;
   selected: boolean;
@@ -237,9 +239,13 @@ export const ConversationListItem = ({
   onToggleArchive?: (e: React.MouseEvent) => void;
   /** Delete the whole conversation from my side. Enables the swipe action. */
   onDelete?: () => void;
+  /** Bulk-action mode: tapping the row toggles its checkbox instead of opening it. */
+  selectMode?: boolean;
+  checked?: boolean;
+  onToggleCheck?: () => void;
 }) => {
   const unread = item.unreadCount ?? 0;
-  const { dragX, revealed, close, handlers } = useRowSwipe({ enabled: !!(onToggleArchive || onDelete) });
+  const { dragX, revealed, close, handlers } = useRowSwipe({ enabled: !selectMode && !!(onToggleArchive || onDelete) });
 
   const runAction = (fn?: (e: any) => void) => (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -310,10 +316,20 @@ export const ConversationListItem = ({
           <span className="absolute left-0 top-1/2 -translate-y-1/2 h-7 w-[3px] rounded-r-full bg-emerald-500" aria-hidden="true" />
         )}
         <button
-          onClick={() => { if (revealed) { close(); return; } onSelect(); }}
+          onClick={() => {
+            if (revealed) { close(); return; }
+            if (selectMode) { onToggleCheck?.(); return; }
+            onSelect();
+          }}
           aria-current={selected ? 'true' : undefined}
+          aria-pressed={selectMode ? !!checked : undefined}
           className="w-full text-left px-3 py-3 min-h-[68px] flex items-center gap-3 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
         >
+          {selectMode && (
+            checked
+              ? <CheckSquare className="w-5 h-5 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+              : <Square className="w-5 h-5 shrink-0 text-foreground/45" aria-hidden="true" />
+          )}
           <PeerAvatar name={item.name} url={item.avatarUrl} online={item.isOnline} />
 
           <span className="flex-1 min-w-0">
@@ -344,7 +360,7 @@ export const ConversationListItem = ({
 
         {/* Pointer-device actions. Hidden once the swipe drawer is open, so the
             two affordances never stack on top of each other. */}
-        {(onTogglePin || onToggleArchive) && !revealed && (
+        {!selectMode && (onTogglePin || onToggleArchive) && !revealed && (
           <div className="absolute right-2 top-1/2 -translate-y-1/2 hidden md:flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
             {onTogglePin && (
               <button
@@ -510,6 +526,8 @@ export interface BubbleProps {
   /** Briefly ringed after a search jump lands on this message. */
   highlighted?: boolean;
   body?: string | null;
+  /** Set once the sender has edited this message. */
+  editedAt?: string | null;
   attachmentUrl?: string | null;
   attachmentType?: 'image' | 'file' | null;
   deleted?: boolean;
@@ -531,27 +549,57 @@ export interface BubbleProps {
   onDelete?: () => void;
   /** Tombstone for both sides — sender only, inside the 1h window. */
   onDeleteForEveryone?: () => void;
+  /** Save an in-place edit — sender only, inside the same 1h window. Passing
+   *  it is what enables the "Edit" action; the caller owns the RPC call. */
+  onEdit?: (newBody: string) => Promise<void> | void;
   onReport?: () => void;
   onReact?: (emoji: string) => void;
   onRetry?: () => void;
   onDiscard?: () => void;
+  /** Open a full-screen viewer for this message's image attachment. */
+  onViewImage?: (url: string) => void;
 }
 
 const EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
 
 export const MessageBubble = ({
-  id, highlighted, body, attachmentUrl, attachmentType, deleted, createdAt,
+  id, highlighted, body, editedAt, attachmentUrl, attachmentType, deleted, createdAt,
   isMine, read, reactions, myUserId, replyToContent, pending, failed, contextSlot,
-  onReply, onDelete, onDeleteForEveryone, onReport, onReact, onRetry, onDiscard,
+  onReply, onDelete, onDeleteForEveryone, onEdit, onReport, onReact, onRetry, onDiscard, onViewImage,
 }: BubbleProps) => {
   const [showEmoji, setShowEmoji] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(body || '');
+  const [savingEdit, setSavingEdit] = useState(false);
+  const editRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (isEditing) { editRef.current?.focus(); editRef.current?.select(); }
+  }, [isEditing]);
+
+  const startEdit = () => { setEditValue(body || ''); setIsEditing(true); setShowMenu(false); };
+  const cancelEdit = () => setIsEditing(false);
+  const saveEdit = async () => {
+    const next = editValue.trim();
+    if (!next || next === body) { setIsEditing(false); return; }
+    setSavingEdit(true);
+    try {
+      await onEdit?.(next);
+      setIsEditing(false);
+    } catch {
+      // Stay in edit mode so the text isn't lost and the user can retry;
+      // the caller is responsible for surfacing why (e.g. a toast).
+    } finally {
+      setSavingEdit(false);
+    }
+  };
   const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Long-press (touch) reveals the actions — on mobile there is no hover, so
   // "hold a message" is the only way to reach them.
   const startPress = () => {
-    if (deleted || pending || failed) return;
+    if (deleted || pending || failed || isEditing) return;
     pressTimer.current = setTimeout(() => {
       setShowMenu(true);
       try { navigator.vibrate?.(15); } catch { /* not supported */ }
@@ -571,7 +619,8 @@ export const MessageBubble = ({
   }, {});
   const hasReactions = Object.keys(grouped).length > 0;
   const actionable = !deleted && !pending && !failed;
-  const hasActions = actionable && (onReply || onReact || onDelete || onDeleteForEveryone || onReport);
+  const canEdit = actionable && isMine && !!onEdit;
+  const hasActions = actionable && (onReply || onReact || onDelete || onDeleteForEveryone || onReport || canEdit);
 
   return (
     <div
@@ -616,13 +665,25 @@ export const MessageBubble = ({
           {attachmentUrl && !deleted && (
             <div className="mb-2">
               {attachmentType === 'image' ? (
-                <img
-                  src={attachmentUrl}
-                  alt="Attachment"
-                  className="max-w-full h-auto rounded-2xl border border-black/10 max-h-72 object-cover"
-                  loading="lazy"
-                  decoding="async"
-                />
+                <button
+                  type="button"
+                  onClick={() => onViewImage?.(attachmentUrl)}
+                  className="group/img relative block rounded-2xl overflow-hidden"
+                  aria-label="View full image"
+                >
+                  <img
+                    src={attachmentUrl}
+                    alt="Attachment"
+                    className="max-w-full h-auto rounded-2xl border border-black/10 max-h-72 object-cover"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  {onViewImage && (
+                    <span className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover/img:bg-black/20 transition-colors">
+                      <ZoomIn className="w-5 h-5 text-white opacity-0 group-hover/img:opacity-100 transition-opacity drop-shadow" />
+                    </span>
+                  )}
+                </button>
               ) : (
                 <a
                   href={attachmentUrl}
@@ -640,6 +701,41 @@ export const MessageBubble = ({
 
           {deleted ? (
             <em className={`text-xs ${isMine ? 'text-white/60' : 'text-foreground/40'}`}>Message deleted</em>
+          ) : isEditing ? (
+            <div className="flex flex-col gap-2 min-w-[14rem]">
+              <textarea
+                ref={editRef}
+                aria-label="Edit message"
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') { e.preventDefault(); cancelEdit(); }
+                  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void saveEdit(); }
+                }}
+                maxLength={4000}
+                rows={2}
+                className={`w-full bg-transparent text-sm leading-relaxed resize-none outline-none border-b
+                  ${isMine ? 'border-white/30 placeholder:text-white/40' : 'border-foreground/20 placeholder:text-foreground/35'}`}
+              />
+              <div className="flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={cancelEdit}
+                  className={`text-[10px] font-black uppercase tracking-[0.1em] px-2 py-1 rounded-lg transition-colors ${isMine ? 'text-white/70 hover:bg-white/10' : 'text-foreground/50 hover:bg-foreground/[0.06]'}`}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void saveEdit()}
+                  disabled={savingEdit || !editValue.trim()}
+                  className={`flex items-center gap-1 text-[10px] font-black uppercase tracking-[0.1em] px-2.5 py-1 rounded-lg transition-colors disabled:opacity-50
+                    ${isMine ? 'bg-white/20 hover:bg-white/30 text-white' : 'bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-700 dark:text-emerald-300'}`}
+                >
+                  {savingEdit ? <Loader2 className="w-3 h-3 animate-spin" /> : null} Save
+                </button>
+              </div>
+            </div>
           ) : (
             <span className="whitespace-pre-wrap break-words">{body}</span>
           )}
@@ -665,16 +761,23 @@ export const MessageBubble = ({
                 </button>
               )}
             </div>
-          ) : (
+          ) : !isEditing && (
             <div className="flex items-center justify-end gap-1 mt-1">
+              {editedAt && !deleted && (
+                <span className={`text-[10px] font-bold italic ${isMine ? 'text-white/60' : 'text-foreground/50'}`}>edited</span>
+              )}
               <span className={`text-[10px] font-bold tabular-nums ${isMine ? 'text-white/60' : 'text-foreground/35'}`}>
                 {pending ? 'Sending' : shortTime(createdAt)}
               </span>
               {pending && <Clock className="w-3 h-3 text-white/60" />}
               {isMine && !deleted && !pending && (
                 read
-                  ? <CheckCheck className="w-3.5 h-3.5 text-white/90" />
-                  : <Check className="w-3.5 h-3.5 text-white/55" />
+                  // Read vs delivered used to be a 0.9/0.55 white-opacity split —
+                  // hard to tell apart at 14px. Read now shifts hue (a light
+                  // emerald tint reads clearly against the emerald bubble)
+                  // instead of relying on opacity alone.
+                  ? <CheckCheck className="w-3.5 h-3.5 text-emerald-200" />
+                  : <Check className="w-3.5 h-3.5 text-white/70" />
               )}
             </div>
           )}
@@ -707,6 +810,15 @@ export const MessageBubble = ({
                   className="p-1.5 rounded-full text-foreground/45 hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
                 >
                   <Reply className="w-3.5 h-3.5" />
+                </button>
+              )}
+              {canEdit && (
+                <button
+                  onClick={startEdit}
+                  title="Edit" aria-label="Edit message"
+                  className="p-1.5 rounded-full text-foreground/45 hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
                 </button>
               )}
               {(onDeleteForEveryone || onDelete) && (
@@ -848,6 +960,11 @@ export const MessageSearchPanel = ({
           {!loading && results.length === 0 && (
             <p className="text-center text-xs font-medium text-foreground/40 py-6">
               No messages match "{query.trim()}"
+            </p>
+          )}
+          {!loading && results.length > 0 && (
+            <p className="px-4 pt-2.5 pb-1 text-[10px] font-bold uppercase tracking-[0.15em] text-foreground/35">
+              {results.length >= 25 ? '25+ results — refine your search' : `${results.length} result${results.length === 1 ? '' : 's'}`}
             </p>
           )}
           {results.map(hit => (

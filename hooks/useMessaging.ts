@@ -26,6 +26,7 @@ import {
   deleteMessage as deleteMessageRpc, deleteConversation as deleteConversationRpc,
   toggleReaction as toggleReactionRpc, setConversationPref, toThreadMessage,
   fetchPeerProfile, SendArgs, searchThread as searchThreadRpc, ThreadSearchHit,
+  editMessage as editMessageRpc,
 } from '../services/messagesService';
 
 /** A peer is "online" if the server saw them within this window. */
@@ -390,6 +391,7 @@ export function useMessaging(userId: string | undefined, options: MessagingOptio
       body: args.body,
       read: false,
       createdAt: new Date().toISOString(),
+      editedAt: null,
       deletedAt: null,
       attachmentUrl: args.attachment?.url ?? null,
       attachmentType: args.attachment?.type ?? null,
@@ -440,6 +442,12 @@ export function useMessaging(userId: string | undefined, options: MessagingOptio
       setThread(prev => prev.filter(m => m.id !== messageId));
     }
     scheduleListRefresh();
+  }, [scheduleListRefresh]);
+
+  const editMessage = useCallback(async (messageId: string, body: string) => {
+    const { body: saved, editedAt } = await editMessageRpc(messageId, body);
+    setThread(prev => prev.map(m => m.id === messageId ? { ...m, body: saved, editedAt } : m));
+    scheduleListRefresh(); // the edited text may be the conversation's last-message preview
   }, [scheduleListRefresh]);
 
   const react = useCallback(async (messageId: string, emoji: string) => {
@@ -591,6 +599,7 @@ export function useMessaging(userId: string | undefined, options: MessagingOptio
     send,
     discardFailed,
     removeMessage,
+    editMessage,
     react,
     removeConversation,
     setPref,

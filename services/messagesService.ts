@@ -53,6 +53,8 @@ export interface ThreadMessage {
   body: string | null;
   read: boolean;
   createdAt: string;
+  /** Set once the sender has edited this message; null otherwise. */
+  editedAt: string | null;
   deletedAt: string | null;
   attachmentUrl: string | null;
   attachmentType: 'image' | 'file' | null;
@@ -103,6 +105,7 @@ export const toThreadMessage = (r: any): ThreadMessage => ({
   body: r.body ?? null,
   read: !!r.read,
   createdAt: r.created_at,
+  editedAt: r.edited_at ?? null,
   deletedAt: r.deleted_at ?? null,
   attachmentUrl: r.attachment_url ?? null,
   attachmentType: (r.attachment_type as 'image' | 'file' | null) ?? null,
@@ -191,6 +194,18 @@ export async function markThreadRead(peerId: string): Promise<number> {
   const { data, error } = await supabase.rpc('mark_thread_read', { p_peer: peerId });
   if (error) { console.error('markThreadRead failed', error); return 0; }
   return Number(data ?? 0);
+}
+
+/**
+ * Edit a message's text in place. Sender only, within one hour of sending —
+ * the same recall window delete-for-everyone uses. Returns the updated
+ * message so the caller can merge `editedAt` into local state without a
+ * refetch.
+ */
+export async function editMessage(messageId: string, body: string): Promise<{ body: string; editedAt: string }> {
+  const { data, error } = await supabase.rpc('edit_message', { p_message: messageId, p_body: body });
+  if (error) { console.error('editMessage failed', error); throw error; }
+  return { body: data.body, editedAt: data.edited_at };
 }
 
 /**
