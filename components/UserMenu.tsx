@@ -25,13 +25,19 @@ export const UserMenu = ({ user, handleLogout }: UserMenuProps) => {
  <Link to="/profile" className={item}>
  <Settings className="w-4 h-4 stroke-[1.5] flex-shrink-0" /> Settings
  </Link>
+ {user.role === 'seller' && (
+ <div className="px-4 pt-2 pb-0.5 text-[9px] uppercase tracking-[0.2em] text-foreground/35">Your Purchases</div>
+ )}
  <Link to="/buyer?tab=wishlist" className={item}>
  <Heart className="w-4 h-4 stroke-[1.5] flex-shrink-0" /> Wishlist
  </Link>
  <Link to="/buyer?tab=follows" className={item}>
  <Store className="w-4 h-4 stroke-[1.5] flex-shrink-0" /> Follows
  </Link>
- <Link to="/orders" className={item}>
+ {/* Always /buyer?tab=orders (not the role-sniffing /orders redirect) —
+     that redirect sent a seller to /seller?tab=orders, their SALES, so
+     they had no way to see what they'd personally bought elsewhere. */}
+ <Link to="/buyer?tab=orders" className={item}>
  <Package className="w-4 h-4 stroke-[1.5] flex-shrink-0" /> Orders
  </Link>
  <div className="h-px w-full bg-foreground/10 my-2" />

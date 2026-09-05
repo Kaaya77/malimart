@@ -111,7 +111,11 @@ const DashboardRedirect = () => {
     const rolePath = user.role === 'seller' ? '/seller' : '/buyer';
     
     if (location.pathname === '/orders') {
-        return <Navigate to={`${rolePath}?tab=orders`} replace />;
+        // Always the buyer's own purchase history, never role-sniffed — a
+        // seller who just checked out (OrderConfirmationPage links here) was
+        // being bounced to /seller?tab=orders, their SALES, with no way to
+        // see what they'd personally bought.
+        return <Navigate to="/buyer?tab=orders" replace />;
     }
     if (location.pathname === '/profile') {
         return <Navigate to="/settings" replace />;

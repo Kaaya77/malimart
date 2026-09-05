@@ -478,7 +478,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         const [cats, offers_, badges, posts, products_] = await Promise.all([
             withCache('public:categories', TTL.CATEGORIES,
                 async () => {
-                    const { data } = await supabase.from('categories').select('*').eq('is_active', true).limit(50);
+                    const { data } = await supabase.from('categories').select('*').eq('is_active', true).order('sort_order', { ascending: true }).limit(50);
                     return data;
                 },
                 (data) => setCategories(data as Category[])

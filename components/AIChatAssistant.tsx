@@ -746,7 +746,7 @@ RESPONSE FORMAT:
 
   // ── FAB ──────────────────────────────────────────────────────────────────
   if (!isOpen) return (
-    <div className={`hidden md:block fixed md:bottom-6 md:right-4 z-[90] transition-all duration-200 ease-out ${scrolledAway ? 'opacity-0 translate-y-6 pointer-events-none' : 'opacity-100 translate-y-0'}`}>
+    <div className={`fixed right-4 bottom-[calc(var(--mm-bottom-obstruction,58px)+0.75rem)] md:bottom-6 md:right-4 z-[90] transition-all duration-200 ease-out ${scrolledAway ? 'opacity-0 translate-y-6 pointer-events-none' : 'opacity-100 translate-y-0'}`}>
       <motion.button initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 300, damping: 18, delay: 0.3 }}
         whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.92 }}

@@ -52,7 +52,7 @@ export const useHomePageData = () => {
                     // 3. Recent avatars
                     supabase.from('profiles').select('avatar_url').not('avatar_url', 'is', null).limit(3),
                     // 4. Active categories
-                    supabase.from('categories').select('name, icon_url').eq('is_active', true).limit(6),
+                    supabase.from('categories').select('name, icon_url').eq('is_active', true).order('sort_order', { ascending: true }).limit(6),
                     // 5. Product counts per category — single RPC replaces N per-category queries
                     supabase.rpc('category_product_counts'),
                     // 6. Ticker data

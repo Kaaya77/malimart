@@ -7,7 +7,7 @@ import {
  Home, Store, UserCircle, User,
  Sun, Moon, BellRing, MessageCircle, LogOut,
  ChevronRight, Info, ArrowRight, Zap,
- Package, Settings, ShieldAlert, Sparkles, LayoutGrid
+ Package, Settings, ShieldAlert, Sparkles
 } from 'lucide-react';
 import { useAuth, useCart, useComms, useCatalog } from '../context/AppContext';
 import { supabase } from '../services/supabaseClient';
@@ -304,6 +304,15 @@ export const Navbar = () => {
  const [searchQuery, setSearchQuery] = useState('');
  const searchRef = useRef<HTMLInputElement>(null);
 
+ // The hamburger trigger lives in the bottom dock on mobile now (Navbar and
+ // MobileBottomNav are separate exported components with no shared state),
+ // so it reaches this drawer's open state via a window event instead of a prop.
+ useEffect(() => {
+   const onOpenMenu = () => setMenuOpen(true);
+   window.addEventListener('navbar:openMenu', onOpenMenu);
+   return () => window.removeEventListener('navbar:openMenu', onOpenMenu);
+ }, []);
+
  const isHome = location.pathname === '/';
  const isOnDark = isHome && !scrolled && !menuOpen && isDark;
  const cartCount = cart.reduce((a,i)=>a+(i.quantity||1),0);
@@ -428,8 +437,10 @@ export const Navbar = () => {
  </div>
  )}
 
- {/* Cart */}
- <Link to="/cart" aria-label={`Cart (${cartCount})`} className={`relative ${ibtn}`}>
+ {/* Cart — hidden on mobile, where the bottom dock already owns a Bag
+     tab; having it in both places was the actual ask to fix. Tablet/
+     desktop have no bottom dock, so it stays here for them. */}
+ <Link to="/cart" aria-label={`Cart (${cartCount})`} className={`relative hidden md:flex ${ibtn}`}>
  <motion.div
    key={cartCount}
    initial={cartCount > 0 ? { scale: 1.35, rotate: -12 } : false}
@@ -480,9 +491,12 @@ export const Navbar = () => {
  <UserMenu user={user} handleLogout={handleLogout}/>
  </div>
 
- {/* Mobile hamburger */}
- <button onClick={()=>setMenuOpen(true)} aria-label="Open menu" className={`md:hidden ${ibtn}`}>
- <Menu className="w-[18px] h-[18px] stroke-[2]"/>
+ {/* Mali — the menu (hamburger) moved to the bottom dock on mobile, and
+     this fills its old slot. It just dispatches the same mali:toggle
+     event the dock/FAB already use, so it opens the one independent
+     floating panel — not a second, top-nav-embedded Mali. */}
+ <button onClick={()=>window.dispatchEvent(new CustomEvent('mali:toggle'))} aria-label="Open Mali assistant" className={`md:hidden ${ibtn}`}>
+ <Sparkles className="w-[18px] h-[18px] stroke-[2]"/>
  </button>
  </div>
  </div>
@@ -537,20 +551,17 @@ export const MobileBottomNav = () => {
 
  const tabs = [
  { id:'home', label:'Home', icon:Home, path:'/' },
+ // No separate Collections tab — the Explore/Shop merge already folded
+ // category browsing into Shop's Stores tab, so a distinct destination here
+ // was redundant with the one right next to it.
  { id:'shop', label:'Shop', icon:Store, path:'/shop' },
- // Collections moved here from the top MegaMenu — mobile drops that
- // menu from its top bar, so its two links (Shop, Collections) live in
- // the bottom nav instead. There's no separate Collections page since
- // the Explore/Shop merge folded category browsing into Shop's Stores tab.
- { id:'collections', label:'Collections', icon:LayoutGrid, path:'/shop?tab=stores' },
  { id:'cart', label:'Bag', icon:ShoppingBag,path:'/cart', badge:cartCount },
  { id:'me', label:(user||isLoading)?'Account':'Sign in', icon:UserCircle, path:accountPath, badge:unread },
- // Mali lives IN the nav on mobile rather than as a floating launcher. A
- // fixed FAB inevitably sits on top of whatever is beneath it — the checkout
- // CTA, a category label, an order row — which is why it kept resurfacing as
- // a bug on page after page. Docking gives it reserved space that page
- // content already scrolls clear of. Desktop keeps the floating FAB.
- { id:'mali', label:'Mali', icon:Sparkles, action:() => window.dispatchEvent(new CustomEvent('mali:toggle')) },
+ // Mali is the independent floating panel everywhere now, mobile included
+ // (see AIChatAssistant's FAB) — no longer a dock tab. This slot is the
+ // hamburger drawer instead, moved down from the top nav; it reaches
+ // Navbar's own menuOpen state via the navbar:openMenu window event.
+ { id:'menu', label:'Menu', icon:Menu, action:() => window.dispatchEvent(new CustomEvent('navbar:openMenu')) },
  ];
 
  const active = (path?: string) => !path ? false : path==='/' ? location.pathname==='/' : location.pathname.startsWith(path);
