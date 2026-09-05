@@ -4,7 +4,7 @@ import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
 import {
   Store, MapPin, Star, BadgeCheck, MessageSquare, Share2,
   Search, Globe, Truck, ShieldCheck, Loader2, ArrowRight,
-  Instagram, Twitter, Facebook, Info, Calendar, Package,
+  Info, Calendar, Package,
   Heart, Filter, LayoutGrid, Tag, Phone, TrendingUp, Clock, Eye, QrCode
 } from 'lucide-react';
 import { useAppState } from '../context/AppContext';
@@ -13,6 +13,7 @@ import { VendorProfile, Product } from '../types';
 import { ProductCard } from '../components/ProductCard';
 import { ReviewSection } from '../components/ReviewSection';
 import { ProductShare } from '../components/ProductShare';
+import { SocialIconRow } from '../components/SocialIconRow';
 import { StorePoster } from '../components/StorePoster';
 import { useToast } from '../components/UI';
 import { formatTZS, messageSellerPath, mapsUrl } from '../constants';
@@ -274,6 +275,12 @@ export const StorePage: React.FC = () => {
                 className="flex items-center gap-2 h-10 px-4 rounded-2xl bg-foreground/[0.06] text-foreground text-sm font-semibold hover:bg-foreground/10 transition-colors active:scale-95">
                 <MessageSquare className="w-4 h-4 stroke-[2]"/> Message
               </button>
+              {/* Social links live right here now, not buried in an About
+                  section — every platform slot always shows, colored when
+                  the seller's added it and gray when they haven't, so
+                  "added" reads as visible progress rather than an
+                  arbitrary subset of icons appearing from nowhere. */}
+              <SocialIconRow links={vendor.social_links} />
               <button onClick={handleShare} aria-label="Share this store"
                 className="w-11 h-11 rounded-2xl bg-foreground/[0.06] flex items-center justify-center text-foreground/50 hover:bg-foreground/10 transition-colors active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40">
                 <Share2 className="w-4 h-4 stroke-[2]"/>
@@ -440,45 +447,10 @@ export const StorePage: React.FC = () => {
                   </div>
                 )}
 
-                {/* Social links — guarded with Array.isArray because this
-                    column has held a legacy {instagram, facebook, ...}
-                    object shape for some rows; .filter on that would throw
-                    and take out this whole section (fixed at the data
-                    layer too, but never trust a jsonb column's shape from
-                    a JSX render). */}
-                {Array.isArray(vendor.social_links) && vendor.social_links.length > 0 && (
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-foreground/35 mb-2">Connect</p>
-                    <div className="flex flex-wrap gap-2">
-                      {vendor.social_links.filter(s => s?.url?.trim()).map((s, i) => {
-                        const raw = s.url.trim();
-                        const platform = (s.platform || '').toLowerCase();
-                        const href = /^https?:\/\//.test(raw)
-                          ? raw
-                          : platform.includes('whatsapp')
-                            ? `https://wa.me/${raw.replace(/[^0-9]/g, '')}`
-                            : platform.includes('instagram')
-                              ? `https://instagram.com/${raw.replace(/^@/, '')}`
-                              : platform.includes('tiktok')
-                                ? `https://tiktok.com/@${raw.replace(/^@/, '')}`
-                                : platform.includes('facebook')
-                                  ? `https://facebook.com/${raw}`
-                                  : `https://${raw}`;
-                        // Never render an empty pill: fall back to the link's host,
-                        // then a generic label, when the seller left platform blank.
-                        let host = '';
-                        try { host = new URL(href).hostname.replace(/^www\./, ''); } catch { /* ignore */ }
-                        const label = (s.platform || '').trim() || host || 'Link';
-                        return (
-                          <a key={i} href={href} target="_blank" rel="noopener noreferrer"
-                            className="flex items-center gap-2 px-3.5 py-2 bg-foreground/[0.05] border border-foreground/8 rounded-full text-[12px] font-semibold text-foreground/70 hover:bg-foreground/[0.09] hover:text-foreground transition-colors">
-                            {label}
-                          </a>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
+                {/* Social links moved up to the header, next to Share — see
+                    SocialIconRow. This About section isn't where anyone
+                    looking for "does this seller have Instagram" would
+                    think to check first. */}
 
                 {/* Tags */}
                 {vendor.tags?.length > 0 && (

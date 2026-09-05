@@ -59,106 +59,105 @@ export const CartItemRow: React.FC<CartItemRowProps> = ({
         dragConstraints={{ left: -80, right: 0 }}
         dragElastic={0.08}
         onDragEnd={(_: any, info: any) => { if (info.offset.x < -60) onRemove(item, variantId); }}
-        className="flex flex-col sm:flex-row gap-6 p-6 group hover:bg-foreground/[0.02] bg-background transition-colors relative"
+        className="flex flex-col sm:flex-row gap-5 p-5 sm:p-6 group hover:bg-foreground/[0.02] bg-background transition-colors relative"
         style={{ touchAction: 'pan-y' }}
       >
         {/* Image */}
         <div
-          className="w-full sm:w-32 aspect-square rounded-[1.5rem] overflow-hidden bg-foreground/[0.06] shrink-0 border border-foreground/10 relative cursor-pointer group/img"
+          className="w-full sm:w-28 aspect-square rounded-2xl overflow-hidden bg-foreground/[0.06] shrink-0 border border-foreground/8 relative cursor-pointer group/img"
           onClick={() => onNavigate(productPath)}
         >
           <img
             src={image}
             alt={item.name}
-            className="w-full h-full object-cover group-hover/img:scale-110 transition-transform duration-700"
+            className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-500"
             loading="lazy"
             decoding="async"
           />
           {isStockLow && (
-            <div className="absolute bottom-0 left-0 right-0 bg-red-500 text-white text-[7px] font-black uppercase text-center py-1">
-              Low Stock
+            <div className="absolute bottom-0 left-0 right-0 bg-rose-500/90 backdrop-blur-sm text-white text-[8px] font-bold uppercase tracking-wider text-center py-1">
+              Low stock
             </div>
           )}
         </div>
 
         {/* Details */}
-        <div className="flex-1 flex flex-col justify-between min-w-0 py-1">
-          <div className="space-y-2">
-            <div className="flex justify-between items-start">
+        <div className="flex-1 flex flex-col justify-between min-w-0">
+          <div className="space-y-2.5">
+            <div className="flex justify-between items-start gap-4">
               <h3
-                className="font-bold text-sm sm:text-base text-foreground leading-tight truncate pr-4 cursor-pointer hover:text-brand-600 transition-colors uppercase"
+                className="font-bold text-[15px] text-foreground leading-snug line-clamp-2 cursor-pointer hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
                 onClick={() => onNavigate(productPath)}
               >
                 {item.name}
               </h3>
-              <div className="text-right">
-                <p className="font-black text-sm sm:text-base whitespace-nowrap">{formatTZS(price)}</p>
+              <div className="text-right shrink-0">
+                <p className="font-bold text-[15px] text-foreground tabular-nums whitespace-nowrap">{formatTZS(price)}</p>
                 {originalPrice && originalPrice > price && (
-                  <p className="text-[10px] text-foreground/40 line-through">{formatTZS(originalPrice)}</p>
+                  <p className="text-[11px] text-foreground/35 line-through tabular-nums">{formatTZS(originalPrice)}</p>
                 )}
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-wider bg-foreground/[0.06] text-foreground/50">
+            <div className="flex flex-wrap gap-1.5">
+              <Badge variant="secondary" className="text-[9px] font-bold uppercase tracking-wider bg-foreground/[0.05] text-foreground/45">
                 {item.category}
               </Badge>
               {variantLabel && (
-                <Badge variant="outline" className="text-[10px] font-bold uppercase tracking-wider border-foreground/10">
+                <Badge variant="outline" className="text-[9px] font-bold uppercase tracking-wider border-foreground/10 text-foreground/45">
                   {variantLabel}
                 </Badge>
               )}
               {offer && (
-                <Badge className={`${offer.campaign_type === 'bogo' ? 'bg-indigo-600' : 'bg-red-500'} text-white border-none text-[10px] font-black uppercase tracking-widest flex items-center gap-1`}>
-                  {offer.campaign_type === 'bogo' ? <Gift className="w-3 h-3" /> : <Zap className="w-3 h-3 fill-current" />}
+                <Badge className={`${offer.campaign_type === 'bogo' ? 'bg-indigo-500' : 'bg-rose-500'} text-white border-none text-[9px] font-bold uppercase tracking-wider flex items-center gap-1`}>
+                  {offer.campaign_type === 'bogo' ? <Gift className="w-2.5 h-2.5" /> : <Zap className="w-2.5 h-2.5 fill-current" />}
                   {offer.title}
                 </Badge>
               )}
             </div>
           </div>
 
-          <div className="flex justify-between items-end mt-6">
-            <div className="flex items-center gap-1 bg-foreground/[0.05] p-1 rounded-xl border border-foreground/8">
+          <div className="flex justify-between items-end mt-4">
+            <div className="flex items-center gap-0.5 bg-foreground/[0.05] p-1 rounded-full">
               <button
                 onClick={() => onUpdateQuantity(item.id, -1, variantId)}
                 disabled={item.quantity <= 1}
-                className="w-11 h-11 rounded-lg flex items-center justify-center bg-background shadow-sm hover:scale-95 transition-all disabled:opacity-50 text-foreground/60"
+                className="w-8 h-8 rounded-full flex items-center justify-center bg-background shadow-sm hover:scale-95 transition-all disabled:opacity-40 text-foreground/60"
                 aria-label="Decrease quantity"
               >
-                <Minus className="w-4 h-4" />
+                <Minus className="w-3.5 h-3.5" />
               </button>
-              <span className="text-sm font-black w-10 text-center tabular-nums">{item.quantity}</span>
+              <span className="text-sm font-bold w-8 text-center tabular-nums text-foreground">{item.quantity}</span>
               <button
                 onClick={() => onUpdateQuantity(item.id, 1, variantId)}
                 disabled={item.quantity >= stock}
-                className="w-11 h-11 rounded-lg flex items-center justify-center bg-background shadow-sm hover:scale-95 transition-all text-foreground"
+                className="w-8 h-8 rounded-full flex items-center justify-center bg-background shadow-sm hover:scale-95 transition-all disabled:opacity-40 text-foreground"
                 aria-label="Increase quantity"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-3.5 h-3.5" />
               </button>
             </div>
 
-            <div className="flex items-center gap-4">
-              <div className="text-right">
-                <p className="text-[10px] font-bold uppercase text-foreground/40">Total</p>
-                <p className="text-sm font-black text-foreground">{formatTZS(price * item.quantity)}</p>
-              </div>
-              <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
+              {item.quantity > 1 && (
+                <p className="text-[11px] font-semibold text-foreground/40 tabular-nums">{formatTZS(price * item.quantity)} total</p>
+              )}
+              <div className="flex items-center gap-0.5">
                 <button
                   onClick={() => onSaveForLater(item, variantId)}
-                  className="w-11 h-11 flex items-center justify-center text-foreground/25 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl transition-all"
+                  className="w-9 h-9 flex items-center justify-center text-foreground/25 hover:text-rose-500 hover:bg-rose-500/10 rounded-full transition-all"
                   title="Save for later"
                   aria-label="Save for later"
                 >
-                  <Heart className="w-5 h-5" />
+                  <Heart className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => onRemove(item, variantId)}
-                  className="w-11 h-11 flex items-center justify-center text-foreground/25 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all"
+                  className="w-9 h-9 flex items-center justify-center text-foreground/25 hover:text-red-500 hover:bg-red-500/10 rounded-full transition-all"
                   title="Remove"
                   aria-label="Remove item"
                 >
-                  <Trash2 className="w-5 h-5" />
+                  <Trash2 className="w-4 h-4" />
                 </button>
               </div>
             </div>

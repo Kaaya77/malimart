@@ -294,13 +294,13 @@ export const CartPage = () => {
             <div className="flex justify-between items-end pb-6 border-b border-foreground/8">
               <div>
                 <div className="flex items-center gap-3">
-                  <h1 className="text-3xl md:text-4xl font-black text-foreground font-display uppercase tracking-tight">Shopping Bag</h1>
+                  <h1 className="text-3xl md:text-4xl font-black text-foreground tracking-tight">Your Bag</h1>
                   <CountBadge count={cart.length} />
                 </div>
-                <p className="text-foreground/50 text-sm font-bold mt-1 uppercase tracking-wider" aria-live="polite">
-                  {cart.length} {cart.length === 1 ? 'Product' : 'Products'} selected
+                <p className="text-foreground/45 text-sm font-medium mt-1" aria-live="polite">
+                  {cart.length} {cart.length === 1 ? 'item' : 'items'}
                   {Object.keys(groupedItems).length > 1 && (
-                    <span className="text-foreground/35"> · {Object.keys(groupedItems).length} sellers</span>
+                    <span> from {Object.keys(groupedItems).length} sellers</span>
                   )}
                 </p>
               </div>

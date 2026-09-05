@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Store, CheckCircle2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Badge, VerifiedBadge } from '../UI';
+import { VerifiedBadge } from '../UI';
 import { CartItemRow } from './CartItemRow';
 import { CartItem, Offer } from '../../types';
 import { formatTZS } from '../../constants';
@@ -41,18 +41,18 @@ export const VendorGroup: React.FC<VendorGroupProps> = ({
     transition={{ duration: 0.6, delay: vendorIndex * 0.1, ease: [0.22, 1, 0.36, 1] }}
     className="space-y-4"
   >
-    <div className="flex items-center justify-between px-2">
+    <div className="flex items-center justify-between px-1">
       <Link
         to={`/store/${sellerId}`}
-        className="flex items-center gap-2 text-foreground uppercase tracking-widest text-xs font-black hover:opacity-70 transition-colors"
+        className="flex items-center gap-2 text-foreground text-sm font-bold hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
       >
-        <Store className="w-4 h-4 text-brand-500" />
-        <span>{vendor?.name || 'Loading Store...'}</span>
+        <Store className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+        <span>{vendor?.name || 'Loading store…'}</span>
         {vendor?.verified && <VerifiedBadge iconOnly size="w-3.5 h-3.5" />}
       </Link>
-      <Badge variant="outline" className="text-[9px] font-bold border-brand-200 text-brand-700 bg-brand-50 dark:bg-brand-900/10 dark:border-brand-900/50">
-        Delivery: {formatTZS(vendor?.fee || 0)}
-      </Badge>
+      <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/40">
+        Delivery {formatTZS(vendor?.fee || 0)}
+      </span>
     </div>
 
     <motion.div
