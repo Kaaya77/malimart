@@ -311,3 +311,7 @@ export const fetchAuditLog = (): Promise<DbResult<any[]>> =>
     .select('*, user:profiles!user_id(full_name, email, role)')
     .order('created_at', { ascending: false })
     .limit(100) as any;
+
+/** Live check: which public tables (if any) currently have RLS disabled. */
+export const checkRlsCoverage = () =>
+  rpc<{ tables_without_rls: string[] }>("admin_security_rls_check");
