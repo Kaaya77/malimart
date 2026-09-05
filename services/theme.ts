@@ -74,11 +74,19 @@ const clearAccentVars = (root: HTMLElement) => {
  */
 export function applyAccent(accentKey?: string | null) {
   const root = document.documentElement;
-  const preset = ACCENT_PRESETS.find(p => p.key === (accentKey ?? 'emerald'));
-  if (!preset || preset.key === 'emerald') {
+  // A literal 'emerald' selection clears the override — its preset is a
+  // near-exact match for Tailwind's own built-in scale, so clearing is a
+  // real optimization there, not a fallback.
+  if (accentKey === 'emerald') {
     clearAccentVars(root);
     return;
   }
+  // Anything else UNRECOGNIZED (no key at all, or a stale DB default like
+  // the old 'sahara' column default) falls back to the brand default,
+  // rose — not a silent clear-to-literal-Tailwind-green. That mismatch is
+  // exactly how a signed-up-but-never-touched-Settings user kept seeing
+  // green everywhere despite the app's default being rose.
+  const preset = ACCENT_PRESETS.find(p => p.key === accentKey) ?? ACCENT_PRESETS.find(p => p.key === 'rose')!;
   // Override the whole emerald scale. Tailwind v4 emits every `emerald-*` and
   // `emerald-*/<opacity>` utility (all steps, all variants — hover/dark/
   // focus-visible/…) as `color-mix(in oklab, var(--color-emerald-<step>) …)`

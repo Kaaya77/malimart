@@ -210,6 +210,20 @@ export function setGlobalAnimal(a: AnimalType) {
   animalListeners.forEach(l => l());
 }
 
+/**
+ * Seeds a default companion from the signed-in account's (optional) gender —
+ * fox "Hadithi" for a man, bunny "Haraka" for a woman or unspecified — but
+ * ONLY the very first time this browser has no saved choice at all. Once
+ * anyone picks a companion here (STORAGE_KEY exists), that choice always
+ * wins; this never overwrites an explicit pick on a later login.
+ */
+export function seedAnimalFromGender(gender?: string | null) {
+  try {
+    if (localStorage.getItem(STORAGE_KEY)) return;
+  } catch { return; }
+  setGlobalAnimal(gender === 'male' ? 'fox' : 'bunny');
+}
+
 export function useAnimalAvatar() {
   const animal = React.useSyncExternalStore(subscribeAnimal, () => _animal);
   return { animal, setAnimal: setGlobalAnimal, animalInfo: ANIMALS[animal] };

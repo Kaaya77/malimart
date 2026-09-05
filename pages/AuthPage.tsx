@@ -58,6 +58,9 @@ export const LoginPage = () => {
     email: '', password: '', name: '',
     referralCode: (searchParams.get('ref') || '').toUpperCase(),
   });
+  // Optional — purely cosmetic (default accent colour + Mali companion).
+  // Never required, never used for anything else.
+  const [gender, setGender] = useState<'male' | 'female' | ''>('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -162,7 +165,7 @@ export const LoginPage = () => {
         const { error } = await supabase.auth.signUp({
           email: formData.email,
           password: formData.password,
-          options: { data: { role, full_name: formData.name, referral_code: referralCode || undefined } },
+          options: { data: { role, full_name: formData.name, referral_code: referralCode || undefined, gender: gender || undefined } },
         });
 
         if (error) throw error;
@@ -304,6 +307,34 @@ export const LoginPage = () => {
                   value={formData.referralCode}
                   onChange={e => setFormData({ ...formData, referralCode: e.target.value.toUpperCase() })}
                   className={`${inputBase} uppercase tracking-wide`} />
+              </div>
+            </div>
+          )}
+
+          {/* Gender (signup, optional) — purely cosmetic: picks a default
+              accent colour and Mali companion, both changeable later in
+              Settings. Leaving it unset defaults to the same as choosing
+              woman, so there's no wrong answer either way. */}
+          {mode === 'signup' && (
+            <div>
+              <label className="block text-[13px] font-semibold text-white/70 mb-1.5">
+                {"I identify as "}<span className="font-normal text-white/40">(optional)</span>
+              </label>
+              <div className="grid grid-cols-3 gap-2 p-1 rounded-2xl bg-white/[0.06] border border-white/15">
+                {([['', 'Skip'], ['male', 'Man'], ['female', 'Woman']] as const).map(([g, label]) => (
+                  <button
+                    key={g || 'skip'}
+                    type="button"
+                    onClick={() => setGender(g)}
+                    className={`relative h-10 rounded-xl text-sm font-semibold transition-all flex items-center justify-center ${
+                      gender === g
+                        ? 'bg-white/90 text-slate-900 shadow-lg'
+                        : 'text-white/60 hover:text-white/90'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
             </div>
           )}

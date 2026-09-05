@@ -89,6 +89,9 @@ export interface User {
     tier?: string; // Added via audit fix
     region?: string;
     full_name?: string;
+    /** Optional, cosmetic only — seeds a default accent colour and Mali
+        companion at signup; user-changeable afterward either way. */
+    gender?: 'male' | 'female' | null;
     email_notifications?: boolean;
     sms_notifications?: boolean;
     push_notifications?: boolean;

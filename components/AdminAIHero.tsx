@@ -197,15 +197,15 @@ export const AdminAIHero = () => {
  await adminApi.createHeroRecommendation({
  productId: product.id,
  title: `Featured: ${product.name}`,
- description: product.description.substring(0, 100) + '...',
+ description: (product.description || product.name || '').substring(0, 100) + '...',
  priceDisplay: formatTZS(product.price),
  offerText: 'Special Feature'
  });
  addToast("Product nominated for Hero section", "success");
  setActiveTab('ai');
  fetchRecommendations();
- } catch (error) {
- addToast("Failed to nominate product", "error");
+ } catch (error: any) {
+ addToast(error?.message ? `Failed to nominate product: ${error.message}` : "Failed to nominate product", "error");
  }
  };
 

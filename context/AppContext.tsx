@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useState, ReactNode, useCa
 import { supabase } from '../services/supabaseClient';
 import { withCache, invalidate, invalidatePrefix, loadPersisted, TTL } from '../services/queryCache';
 import { applyTheme } from '../services/theme';
+import { seedAnimalFromGender } from '../components/MaliAnimalAvatar';
 import {
     requestMyAccountDeletion, touchPresence,
     markNotificationRead as apiMarkNotificationRead,
@@ -299,6 +300,7 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
             if (!profile) return;
             setUser({ ...profile, name: profile.full_name || 'User', email: session.user.email } as User);
             applyTheme(profile as any); // saved theme_mode/accent/motion/contrast follow the user
+            seedAnimalFromGender((profile as any).gender); // no-op once a companion has ever been chosen on this browser
             void touchPresence().catch(() => {});
             // 🚀 Single RPC for ALL user data (+ public data on init) in parallel
             await Promise.all([

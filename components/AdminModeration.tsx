@@ -1,19 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Button, Badge, Input, useToast } from './UI';
 import * as adminApi from '../services/adminApi';
-import { ShieldAlert, Trash2, CheckCircle, AlertTriangle, EyeOff, TrendingUp, Search, Filter, User, UserMinus, UserCheck, Store, BadgeCheck, XCircle, History, Shield, FileText, Users, ShoppingBag, MessageSquare as MessageIcon } from 'lucide-react';
+import { ShieldAlert, AlertTriangle, Search, History, Shield, FileText, MessageSquare as MessageIcon } from 'lucide-react';
 import { analyzeContent } from '../src/services/aiService';
 import { PremiumStatCard } from './UI';
 
+// Users, Vendors and Products each have their own dedicated, richer admin
+// tab already (Citizens/Merchants/Products in AdminPage's own nav — ban,
+// verify-with-documents, and takedown-with-reason respectively). Having the
+// same three things again in here, under different labels, was the
+// "repetition" this hub got called out for — this hub now owns only what's
+// genuinely unique to it: flagged content, reports, appeals, and the audit log.
 export const AdminModeration = () => {
  const [posts, setPosts] = useState<any[]>([]);
  const [reports, setReports] = useState<any[]>([]);
- const [users, setUsers] = useState<any[]>([]);
- const [vendors, setVendors] = useState<any[]>([]);
  const [logs, setLogs] = useState<any[]>([]);
  const [appeals, setAppeals] = useState<any[]>([]);
- const [products, setProducts] = useState<any[]>([]);
- const [activeTab, setActiveTab] = useState<'content' | 'reports' | 'users' | 'vendors' | 'logs' | 'appeals' | 'products'>('content');
+ const [activeTab, setActiveTab] = useState<'content' | 'reports' | 'logs' | 'appeals'>('content');
  const [filter, setFilter] = useState<'all' | 'pending' | 'flagged'>('all');
  const [search, setSearch] = useState('');
  const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -37,16 +40,10 @@ export const AdminModeration = () => {
         setPosts(combined);
       } else if (activeTab === 'reports') {
         setReports(data || []);
-      } else if (activeTab === 'users') {
-        setUsers(data || []);
-      } else if (activeTab === 'vendors') {
-        setVendors(data || []);
       } else if (activeTab === 'logs') {
         setLogs(data || []);
       } else if (activeTab === 'appeals') {
         setAppeals(data || []);
-      } else if (activeTab === 'products') {
-        setProducts(data || []);
       }
     } catch (error) {
       addToast('Failed to load moderation data', 'error');
@@ -60,7 +57,6 @@ export const AdminModeration = () => {
  // Resolve the server-side content_type for a moderation item.
  const contentTypeOf = (item: any): adminApi.ModerationContentType | undefined => {
  if (item?.type === 'social_post' || item?.type === 'review') return item.type;
- if (activeTab === 'products') return 'product';
  return undefined;
  };
 
@@ -69,12 +65,11 @@ export const AdminModeration = () => {
 
  try {
  const items = selectedItems
- .map(id => activeTab === 'content' ? posts.find(p => p.id === id) :
- activeTab === 'products' ? products.find(p => p.id === id) : null)
+ .map(id => activeTab === 'content' ? posts.find(p => p.id === id) : null)
  .filter(Boolean)
  .map((item: any) => ({
  id: item.id,
- content_type: (activeTab === 'products' ? 'product' : item.type) as adminApi.ModerationContentType,
+ content_type: item.type as adminApi.ModerationContentType,
  }));
  if (items.length === 0) return;
 
@@ -116,13 +111,8 @@ export const AdminModeration = () => {
  flag_content: "Content flagged",
  shadowban_content: "Content shadowbanned",
  boost_content: "Content boosted",
- ban_user: "User banned",
- unban_user: "User unbanned",
- verify_vendor: "Vendor verified",
- reject_vendor: "Vendor verification rejected",
  resolve_appeal: "Appeal approved",
  reject_appeal: "Appeal rejected",
- moderate_product: "Product flagged for review",
  };
  if (toasts[action]) addToast(toasts[action], "success");
 
@@ -143,8 +133,7 @@ export const AdminModeration = () => {
  const stats = {
  content: posts.length,
  reports: reports.filter(r => r.status === 'pending').length,
- users: users.length,
- vendors: vendors.filter(v => v.verification_status === 'pending').length
+ appeals: appeals.filter(a => a.status === 'pending').length,
  };
 
  return (
@@ -175,7 +164,7 @@ export const AdminModeration = () => {
  </div>
 
  {/* Quick Stats */}
- <div className="grid grid-cols-1 sm:grid-cols-4 gap-6 mb-12">
+ <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-12">
  <PremiumStatCard 
  title="Total Content" 
  value={stats.content} 
@@ -188,17 +177,11 @@ export const AdminModeration = () => {
  icon={AlertTriangle} 
  trend={{ value: "Action Required", positive: false }}
  />
- <PremiumStatCard 
- title="Active Users" 
- value={stats.users} 
- icon={Users} 
- trend={{ value: "Community", positive: true }}
- />
- <PremiumStatCard 
- title="Vendor Apps" 
- value={stats.vendors} 
- icon={Store} 
- trend={{ value: "Pending Verification", positive: false }}
+ <PremiumStatCard
+ title="Open Appeals"
+ value={stats.appeals}
+ icon={MessageIcon}
+ trend={{ value: "Awaiting Review", positive: false }}
  />
  </div>
 
@@ -206,9 +189,6 @@ export const AdminModeration = () => {
  {[
  { id: 'content', label: 'Content', icon: FileText },
  { id: 'reports', label: 'Reports', icon: AlertTriangle },
- { id: 'users', label: 'Users', icon: Users },
- { id: 'vendors', label: 'Vendors', icon: Store },
- { id: 'products', label: 'Products', icon: ShoppingBag },
  { id: 'appeals', label: 'Appeals', icon: MessageIcon },
  { id: 'logs', label: 'Logs', icon: History }
  ].map(tab => (
@@ -226,7 +206,7 @@ export const AdminModeration = () => {
  </div>
 
  <div className="space-y-12">
- {(activeTab === 'content' || activeTab === 'products') && selectedItems.length > 0 && (
+ {activeTab === 'content' && selectedItems.length > 0 && (
  <div className="bg-foreground text-white dark:text-black p-6 rounded-[2rem] flex justify-between items-center animate-in slide-in-from-bottom-4 duration-500 shadow-xl border border-white/10">
  <div className="flex items-center gap-4">
  <div className="w-8 h-8 rounded-full bg-background/20 dark:bg-black/10 flex items-center justify-center">
@@ -298,31 +278,6 @@ export const AdminModeration = () => {
  </Card>
  ))}
  </div>
- </div>
- )}
-
- {activeTab === 'products' && (
- <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
- {products.map(product => (
- <Card key={product.id} className={`p-6 rounded-3xl border flex flex-col transition-all duration-300 hover:shadow-md hover:-translate-y-1 ${selectedItems.includes(product.id) ? 'border-primary ring-1 ring-primary bg-foreground/[0.05]' : 'border-foreground/8 glass-surface'}`} onClick={() => toggleSelect(product.id)}>
- <div className="flex justify-between items-start mb-4">
- <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full">Product</Badge>
- <Badge variant={product.status === 'active' ? 'secondary' : 'danger'} className="text-[10px] font-bold uppercase tracking-wider rounded-full">{product.status}</Badge>
- </div>
- <div className="flex-1 space-y-3 mb-6">
- <h4 className="font-sans font-bold text-lg text-foreground tracking-tight">{product.name}</h4>
- <p className="text-sm text-foreground/50 line-clamp-2 leading-relaxed">{product.description}</p>
- <div className="pt-4 border-t border-foreground/8 mt-auto">
- <p className="text-[10px] font-bold uppercase tracking-wider text-foreground/50">Seller</p>
- <p className="text-sm font-bold text-foreground">{product.profiles?.full_name}</p>
- </div>
- </div>
- <div className="grid grid-cols-2 gap-2">
- <Button size="sm" variant="outline" className="text-xs font-bold rounded-xl" onClick={(e) => { e.stopPropagation(); handleAction(product, 'moderate_product'); }}>Flag</Button>
- <Button size="sm" variant="danger" className="text-xs font-bold rounded-xl" onClick={(e) => { e.stopPropagation(); handleAction(product, 'delete_content'); }}>Delete</Button>
- </div>
- </Card>
- ))}
  </div>
  )}
 
@@ -398,95 +353,6 @@ export const AdminModeration = () => {
  )}
  </div>
  </div>
- ))}
- </div>
- )}
-
- {activeTab === 'users' && (
- <div className="glass-surface rounded-3xl border border-foreground/8 overflow-hidden shadow-sm">
- <div className="overflow-x-auto">
- <table className="w-full text-left border-collapse">
- <thead>
- <tr className="bg-foreground/[0.06] text-[10px] font-bold uppercase tracking-wider text-foreground/50">
- <th className="p-6 font-sans">User Identity</th>
- <th className="p-6 font-sans">Role</th>
- <th className="p-6 font-sans">Status</th>
- <th className="p-6 font-sans">Joined</th>
- <th className="p-6 text-right font-sans">Actions</th>
- </tr>
- </thead>
- <tbody className="text-xs">
- {users.map(u => (
- <tr key={u.id} className="border-b border-foreground/8 hover:bg-foreground/[0.04] transition-colors">
- <td className="p-6">
- <div className="font-sans font-bold text-sm text-foreground">{u.full_name}</div>
- <div className="text-xs text-foreground/50 mt-1">{u.email}</div>
- </td>
- <td className="p-6">
- <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-wider rounded-full">{u.role}</Badge>
- </td>
- <td className="p-6">
- {u.is_banned ? (
- <Badge variant="danger" className="text-[10px] font-bold uppercase tracking-wider rounded-full">Banned</Badge>
- ) : (
- <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-wider rounded-full">Active</Badge>
- )}
- </td>
- <td className="p-6 text-foreground/50 font-bold text-xs">{new Date(u.created_at).toLocaleDateString()}</td>
- <td className="p-6 text-right">
- {u.is_banned ? (
- <Button size="sm" variant="outline" className="text-xs font-bold rounded-xl" onClick={() => handleAction(u, 'unban_user')}>Unban</Button>
- ) : (
- <Button size="sm" variant="danger" className="text-xs font-bold rounded-xl" onClick={() => handleAction(u, 'ban_user')}>Ban User</Button>
- )}
- </td>
- </tr>
- ))}
- </tbody>
- </table>
- </div>
- </div>
- )}
-
- {activeTab === 'vendors' && (
- <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
- {vendors.map(v => (
- <Card key={v.seller_id} className="p-6 rounded-3xl border border-foreground/8 glass-surface hover:shadow-md transition-all duration-300">
- <div className="flex justify-between items-start mb-6">
- <div className="space-y-1">
- <h4 className="font-sans font-bold text-lg text-foreground tracking-tight">{v.store_name}</h4>
- <p className="text-[10px] font-bold uppercase tracking-wider text-foreground/50">{v.profiles?.full_name} <span className="font-medium ml-2">{v.profiles?.email}</span></p>
- </div>
- <Badge variant={v.is_verified ? 'secondary' : 'outline'} className="text-[10px] font-bold uppercase tracking-wider rounded-full">
- {v.is_verified ? 'Verified' : 'Unverified'}
- </Badge>
- </div>
- <p className="text-sm text-foreground mb-8 leading-relaxed">"{v.description || 'No description provided'}"</p>
- 
- {v.documents && v.documents.length > 0 && (
- <div className="mb-8 space-y-3">
- <h5 className="text-[10px] font-bold uppercase tracking-wider text-foreground/50">Verification Documents</h5>
- <div className="space-y-2">
- {v.documents.map((doc: any) => (
- <div key={doc.id} className="flex justify-between items-center p-4 bg-foreground/[0.06] rounded-2xl text-xs group">
- <span className="font-bold uppercase tracking-wider text-foreground/50">{doc.document_type}</span>
- <a href={doc.document_url} target="_blank" rel="noopener noreferrer" className="text-foreground font-bold uppercase tracking-wider hover:underline flex items-center gap-2">
- View File <FileText className="w-3 h-3" />
- </a>
- </div>
- ))}
- </div>
- </div>
- )}
-
- <div className="flex gap-2">
- {!v.is_verified ? (
- <Button size="lg" className="flex-1 text-xs font-bold rounded-xl shadow-md" onClick={() => handleAction({ id: v.seller_id }, 'verify_vendor')}>Verify Store</Button>
- ) : (
- <Button size="lg" variant="danger" className="flex-1 text-xs font-bold rounded-xl" onClick={() => handleAction({ id: v.seller_id }, 'reject_vendor')}>Revoke Verification</Button>
- )}
- </div>
- </Card>
  ))}
  </div>
  )}

@@ -648,7 +648,11 @@ RESPONSE FORMAT:
       const ai = await getAI();
       const history = messages.filter(m => m.type === 'text' && !m.streaming)
         .map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.text }] }));
-      const chat = ai.chats.create({ model: MODELS.TEXT, history, config: { systemInstruction: getSystem(), tools: [{ googleSearch: {} }] } });
+      // thinkingBudget:0 — gemini-2.5-flash defaults to dynamic "thinking"
+      // before the first streamed token, which is real, visible latency for
+      // what's almost always a quick conversational reply here. Disabling
+      // it is the standard fix for "the AI feels slow" on this model family.
+      const chat = ai.chats.create({ model: MODELS.TEXT, history, config: { systemInstruction: getSystem(), tools: [{ googleSearch: {} }], thinkingConfig: { thinkingBudget: 0 } } });
       const payload: any[] = [];
       if (img) {
         const mime = img.match(/^data:([^;]+);/)?.[1] || 'image/jpeg';
