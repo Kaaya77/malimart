@@ -7,7 +7,7 @@ import {
  Home, Store, UserCircle, User,
  Sun, Moon, BellRing, MessageCircle, LogOut,
  ChevronRight, Info, ArrowRight, Zap,
- Package, Settings, ShieldAlert, Sparkles
+ Package, Settings, ShieldAlert
 } from 'lucide-react';
 import { useAuth, useCart, useComms, useCatalog } from '../context/AppContext';
 import { supabase } from '../services/supabaseClient';
@@ -127,9 +127,6 @@ const MobileDrawer = ({ open, onClose, user, logout, isDark, toggleDark, notific
  { label:'Notifications', path:'/notifications', icon:BellRing, badge:unread },
  { label:'Messages', path:'/messages', icon:MessageCircle, badge:unreadMessages },
  { label:'My Account', path:accountPath, icon:user.role==='admin'?ShieldAlert:user.role==='seller'?Store:Package, badge:0 },
- // Sellers can also shop other stores — give them a way back to their own
- // purchase history, since /seller is their default dashboard landing.
- ...(user.role==='seller' ? [{ label:'My Purchases', path:'/buyer?tab=orders', icon:Package, badge:0 }] : []),
  { label:'Settings', path:accountPath+'?tab=settings', icon:Settings, badge:0 },
  ] : [];
 
@@ -175,9 +172,14 @@ const MobileDrawer = ({ open, onClose, user, logout, isDark, toggleDark, notific
  )}
  <div className="flex-1 min-w-0">
  <p className="font-bold text-foreground truncate">{user.name||user.email}</p>
- <p className="text-xs text-foreground/45 capitalize mt-0.5 flex items-center gap-1">
- {user.role==='seller'?<Store className="w-3 h-3"/>:user.role==='admin'?<ShieldAlert className="w-3 h-3"/>:<User className="w-3 h-3"/>}
- {user.role||'Buyer'}
+ <p className="text-xs text-foreground/45 mt-0.5 flex items-center gap-1">
+ {/* For a seller this reflects which side of the app they're actually
+     standing in right now (location-based), not just their account
+     role — a seller browsing /buyer sees "Shopping", not "Seller",
+     so it's never a guess which dashboard's data they're looking at. */}
+ {user.role==='admin' ? (<><ShieldAlert className="w-3 h-3"/> Admin</>)
+   : user.role==='seller' ? (location.pathname.startsWith('/buyer') ? (<><Package className="w-3 h-3"/> Shopping</>) : (<><Store className="w-3 h-3"/> Selling</>))
+   : (<><User className="w-3 h-3"/> Buyer</>)}
  </p>
  </div>
  <ChevronRight className="w-4 h-4 text-foreground/30 shrink-0"/>
@@ -195,6 +197,23 @@ const MobileDrawer = ({ open, onClose, user, logout, isDark, toggleDark, notific
  </>
  )}
  </Link>
+
+ {/* Explicit Selling/Shopping switch for sellers — the whole point is to
+     never leave it to a role label to guess from; tapping the other side
+     is the same as tapping "My Purchases" used to be, just framed as a
+     deliberate mode switch instead of a buried menu item. */}
+ {user?.role==='seller' && (
+ <div className="grid grid-cols-2 gap-1 p-1 rounded-2xl bg-foreground/[0.04]">
+ <Link to="/seller"
+ className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-bold transition-all ${location.pathname.startsWith('/seller') ? 'bg-background shadow-sm text-foreground' : 'text-foreground/45'}`}>
+ <Store className="w-4 h-4 stroke-[2]"/> Selling
+ </Link>
+ <Link to="/buyer"
+ className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-bold transition-all ${location.pathname.startsWith('/buyer') ? 'bg-background shadow-sm text-foreground' : 'text-foreground/45'}`}>
+ <Package className="w-4 h-4 stroke-[2]"/> Shopping
+ </Link>
+ </div>
+ )}
 
  {/* Main navigation */}
  <div>
@@ -429,7 +448,12 @@ export const Navbar = () => {
  {notifOpen && (
  <>
  <div className="fixed inset-0 z-40" onClick={()=>setNotifOpen(false)}/>
- <div className="absolute top-full right-0 mt-3 z-50 text-foreground">
+ {/* Mobile: fixed + centered instead of anchored off the bell button.
+     The panel is up to 380px wide, but the bell sits well left of the
+     screen's right edge on a phone — anchoring right-0 to IT (correct on
+     tablet/desktop, where Sign in/the account chip sits far enough right)
+     pushed the panel's left edge off-screen. */}
+ <div className="fixed left-1/2 -translate-x-1/2 top-16 z-50 text-foreground md:absolute md:left-auto md:translate-x-0 md:top-full md:right-0 md:mt-3">
  <NotificationsPanel onClose={()=>setNotifOpen(false)}/>
  </div>
  </>
@@ -491,13 +515,6 @@ export const Navbar = () => {
  <UserMenu user={user} handleLogout={handleLogout}/>
  </div>
 
- {/* Mali — the menu (hamburger) moved to the bottom dock on mobile, and
-     this fills its old slot. It just dispatches the same mali:toggle
-     event the dock/FAB already use, so it opens the one independent
-     floating panel — not a second, top-nav-embedded Mali. */}
- <button onClick={()=>window.dispatchEvent(new CustomEvent('mali:toggle'))} aria-label="Open Mali assistant" className={`md:hidden ${ibtn}`}>
- <Sparkles className="w-[18px] h-[18px] stroke-[2]"/>
- </button>
  </div>
  </div>
  </header>
@@ -534,20 +551,10 @@ export const Navbar = () => {
 
 // ─── Mobile bottom nav ────────────────────────────────────────────────────────
 export const MobileBottomNav = () => {
- const { user, isLoading } = useAuth();
  const { cart } = useCart();
- const { notifications } = useComms();
  const navigate = useNavigate();
  const location = useLocation();
  const cartCount = cart.reduce((a,i)=>a+(i.quantity||1),0);
- const unread = notifications?.filter((n:any)=>!n.read).length||0;
-
- // While the session is rehydrating, keep showing "Account" (pointing at
- // /profile, whose DashboardRedirect waits for auth) instead of flashing
- // "Sign in" at logged-in users on every hard refresh.
- const accountPath = user
- ? (user.role==='admin'?'/admin':user.role==='seller'?'/seller':'/buyer')
- : isLoading ? '/profile' : '/login';
 
  const tabs = [
  { id:'home', label:'Home', icon:Home, path:'/' },
@@ -556,7 +563,10 @@ export const MobileBottomNav = () => {
  // was redundant with the one right next to it.
  { id:'shop', label:'Shop', icon:Store, path:'/shop' },
  { id:'cart', label:'Bag', icon:ShoppingBag,path:'/cart', badge:cartCount },
- { id:'me', label:(user||isLoading)?'Account':'Sign in', icon:UserCircle, path:accountPath, badge:unread },
+ // No separate Account tab either — the top bar's account chip is visible
+ // at every width now (a recent fix), so this was the same destination
+ // shown twice at once on mobile. The bell icon up top still carries the
+ // unread badge that used to ride on this tab.
  // Mali is the independent floating panel everywhere now, mobile included
  // (see AIChatAssistant's FAB) — no longer a dock tab. This slot is the
  // hamburger drawer instead, moved down from the top nav; it reaches
