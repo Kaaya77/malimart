@@ -917,6 +917,7 @@ export const Conversations = ({
                       id: c.peerId,
                       name: c.name,
                       avatarUrl: c.avatarUrl,
+                      isAdmin: c.role === 'admin',
                       lastMessage: previewOf(c),
                       lastMessageAt: c.lastMessageAt,
                       unreadCount: c.unreadCount,
@@ -976,7 +977,14 @@ export const Conversations = ({
               >
                 <PeerAvatar name={active.name} url={active.avatarUrl} online={m.peerPresent || isOnline(active.lastSeenAt)} size="sm" />
                 <span className="min-w-0">
-                  <span className="block text-sm font-black text-foreground truncate">{active.name}</span>
+                  <span className="flex items-center gap-1.5 min-w-0">
+                    <span className="text-sm font-black text-foreground truncate">{active.name}</span>
+                    {active.role === 'admin' && (
+                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-400 text-[9px] font-black uppercase tracking-wide shrink-0">
+                        <ShieldAlert className="w-2.5 h-2.5" /> Admin
+                      </span>
+                    )}
+                  </span>
                   {context && context.type !== 'product' ? (
                     <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
                       <Truck className="w-3 h-3" />
@@ -1453,7 +1461,14 @@ export const Conversations = ({
             <div className="flex flex-col items-center text-center gap-3">
               <PeerAvatar name={active.name} url={active.avatarUrl} size="lg" online={m.peerPresent || isOnline(active.lastSeenAt)} />
               <div>
-                <h4 className="text-lg font-black tracking-tight text-foreground">{active.name}</h4>
+                <span className="flex items-center justify-center gap-1.5">
+                  <h4 className="text-lg font-black tracking-tight text-foreground">{active.name}</h4>
+                  {active.role === 'admin' && (
+                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-400 text-[9px] font-black uppercase tracking-wide shrink-0">
+                      <ShieldAlert className="w-2.5 h-2.5" /> Admin
+                    </span>
+                  )}
+                </span>
                 <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-foreground/40 mt-0.5">
                   {m.peerPresent || isOnline(active.lastSeenAt) ? 'Online now' : active.role}
                 </p>

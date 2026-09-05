@@ -105,6 +105,7 @@ const HomePage: React.FC = () => {
       <HeroSection
         heroRecommendation={homeData.heroRecommendation}
         heroFeaturedProducts={homeData.heroFeaturedProducts}
+        heroLoading={homeData.loadingShops}
         heroSettings={homeData.heroSettings}
         greeting={greeting}
         searchQuery={searchQuery}

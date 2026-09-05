@@ -127,6 +127,10 @@ export interface ConversationItem {
   name: string;
   avatarUrl?: string | null;
   isVerified?: boolean;
+  /** Peer is MaliMart staff (role 'admin'), not a regular buyer/seller —
+      shown as a distinct badge so a support/moderation thread never reads
+      as just another anonymous "User". */
+  isAdmin?: boolean;
   lastMessage?: string;
   lastMessageAt?: string;
   unreadCount?: number;
@@ -338,6 +342,11 @@ export const ConversationListItem = ({
                 {item.name}
               </span>
               {item.isVerified && <VerifiedBadge iconOnly size="w-3.5 h-3.5" />}
+              {item.isAdmin && (
+                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-400 text-[9px] font-black uppercase tracking-wide shrink-0">
+                  <ShieldAlert className="w-2.5 h-2.5" /> Admin
+                </span>
+              )}
               {pinned && <Pin className="w-3 h-3 shrink-0 text-emerald-600 dark:text-emerald-400" />}
               {item.lastMessageAt && (
                 <span className={`ml-auto shrink-0 text-[10px] font-bold tabular-nums ${unread > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-foreground/35'}`}>

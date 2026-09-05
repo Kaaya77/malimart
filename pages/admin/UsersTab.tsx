@@ -23,7 +23,14 @@ export const UsersTab = () => {
             <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-widest rounded-full">
                 {u.role}
             </Badge>
-            {u.is_banned && (
+            {/* Deleted takes precedence in the label — softDeleteUser stamps both
+                deleted_at and is_banned, so a deleted row would otherwise say
+                "Banned" too and read as merely suspended, not gone. */}
+            {u.deleted_at ? (
+                <Badge variant="danger" className="text-[10px] font-bold uppercase tracking-widest rounded-full">
+                    Deleted
+                </Badge>
+            ) : u.is_banned && (
                 <Badge variant="danger" className="text-[10px] font-bold uppercase tracking-widest rounded-full">
                     Banned
                 </Badge>

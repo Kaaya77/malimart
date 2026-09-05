@@ -10,6 +10,13 @@ import { CURRENCY } from '../../constants';
 interface HeroSectionProps {
   heroRecommendation: any;
   heroFeaturedProducts?: any[];
+  /** True until useHomePageData's single atomic setData() lands — heroFeaturedProducts
+      and heroRecommendation are always empty/null before that, indistinguishable from
+      "admins genuinely haven't curated anything". Without this, the fallback below ran
+      immediately on first render using whatever `products` (a separate, differently-timed
+      fetch) already had, then swapped to the real curated pick a moment later — the
+      visible "wrong product then switches" flicker. */
+  heroLoading?: boolean;
   heroSettings: { badgeText: string; headline: string; subheadline: string };
   greeting: string;
   searchQuery: string;
@@ -160,6 +167,7 @@ const SideProductPill: React.FC<{
 export const HeroSection = ({
   heroRecommendation,
   heroFeaturedProducts = [],
+  heroLoading = false,
   heroSettings,
   greeting,
 }: HeroSectionProps) => {
@@ -183,16 +191,17 @@ export const HeroSection = ({
       const p = heroRecommendation.products;
       pushUnique(Array.isArray(p) ? p[0] : p);
     }
-    // Fallback ONLY when admins haven't curated anything yet, so a fresh
-    // marketplace still shows a hero instead of an empty slot.
-    if (list.length === 0) {
+    // Fallback ONLY once curation has actually finished loading and truly
+    // came back empty — not while it's still in flight (heroLoading), when
+    // an empty list means "not fetched yet", not "nothing curated".
+    if (list.length === 0 && !heroLoading) {
       products.filter(p => p.is_boosted).sort((a, b) => (b.rating || 0) - (a.rating || 0)).forEach(pushUnique);
       [...products].sort((a, b) =>
         (b.rating || 0) * (b.review_count || 0) - (a.rating || 0) * (a.review_count || 0)
       ).forEach(pushUnique);
     }
     return list.slice(0, 5);
-  }, [heroFeaturedProducts, heroRecommendation, products]);
+  }, [heroFeaturedProducts, heroRecommendation, heroLoading, products]);
 
   useEffect(() => {
     if (featuredProducts.length <= 1) return;

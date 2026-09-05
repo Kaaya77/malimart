@@ -134,6 +134,27 @@ export default defineConfig(({ mode }) => {
           // Cache strategies per asset type
           runtimeCaching: [
             {
+              // The document shell (index.html) — NetworkFirst, not the
+              // precached-by-default copy generateSW would otherwise serve.
+              // That default is exactly what made a branding-only change
+              // (the rose default, the Mali redesign) invisible to a
+              // RETURNING guest: skipWaiting:false/clientsClaim:false below
+              // is a deliberate, separate guard against a stale SW handing
+              // out JS chunk hashes an old index.html didn't reference —
+              // right for versioned chunks, wrong for the shell itself,
+              // which is small and safe to always re-fetch. This rule is
+              // registered before generateSW's own navigateFallback route,
+              // so it wins for every navigation; falls back to the cached
+              // copy only when the network genuinely fails (offline).
+              urlPattern: ({ request }) => request.mode === 'navigate',
+              handler: 'NetworkFirst',
+              options: {
+                cacheName: 'html-shell',
+                networkTimeoutSeconds: 3,
+                cacheableResponse: { statuses: [0, 200] },
+              },
+            },
+            {
               // Image CDN — stale-while-revalidate
               urlPattern: /^https:\/\/(images\.unsplash\.com|cdn-icons-png\.flaticon\.com|ui-avatars\.com)\//,
               handler: 'StaleWhileRevalidate',

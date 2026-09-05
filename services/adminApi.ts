@@ -187,17 +187,24 @@ export const fetchPendingPayouts = (): Promise<DbResult<any[]>> =>
     .order('created_at', { ascending: false })
     .limit(30) as any;
 
-/** Most recent 50 user profiles. */
+/** Most recent 50 user profiles. Excludes soft-deleted rows — a deleted
+    user (softDeleteUser stamps deleted_at) otherwise stayed in this list
+    forever, indistinguishable from a merely-banned one. */
 export const fetchRecentProfiles = (): Promise<DbResult<any[]>> =>
   supabase.from('profiles')
     .select('*')
+    .is('deleted_at', null)
     .order('created_at', { ascending: false })
     .limit(50) as any;
 
-/** Most recent 50 products (admin columns) with seller name. */
+/** Most recent 50 products (admin columns) with seller name. Excludes
+    soft-deleted rows — a product a seller deleted long ago has deleted_at
+    set (same as every other product query in this codebase), but this one
+    never filtered it, so it kept showing up here indefinitely. */
 export const fetchRecentProducts = (): Promise<DbResult<any[]>> =>
   supabase.from('products')
     .select('id, name, price, stock, status, created_at, seller_id, images, category, is_boosted, profiles!seller_id(full_name)')
+    .is('deleted_at', null)
     .order('created_at', { ascending: false })
     .limit(50) as any;
 
