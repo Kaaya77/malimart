@@ -1,5 +1,15 @@
--- 20260703010000_admin_ops_rpcs.sql
+-- 20260905094349_admin_ops_rpcs.sql
 -- ═══════════════════════════════════════════════════════════════════════════
+-- Written 2026-07-03 (see the old filename this replaces:
+-- 20260703010000_admin_ops_rpcs.sql) but never actually applied to the
+-- live project — discovered 2026-09-05 when every admin_* RPC it defines
+-- turned out not to exist server-side at all, so the entire Moderation Hub,
+-- hero-recommendation admin curation, admin messaging lookups, and dispute
+-- resolution had been silently non-functional this whole time (same class
+-- of miss as the messaging_presence_and_search/edit_message migrations
+-- found earlier). Renamed to the timestamp it was actually applied at so
+-- the migration history reflects reality instead of a two-month gap.
+--
 -- Security batch: move admin-side supabase.from() calls out of components
 -- (AdminAIHero, AdminModeration, AdminMessages, AdminPage dispute resolution)
 -- into SECURITY DEFINER RPCs with explicit role checks.
@@ -12,10 +22,11 @@
 --   • Hero management RPCs (list/update/status/delete/clear/create/boost)
 --   • Hero manual settings read/write (platform_settings row 1)
 --   • admin_get_user_profile / admin_get_order (AdminMessages lookups)
---   • mark_thread_read(peer)             — self-scoped unread flip
 --   • admin_resolve_dispute(...)         — atomic disputes+orders resolution
 --
 -- All statements idempotent (OR REPLACE). Uses the existing is_admin() helper.
+-- mark_thread_read was part of the original draft but is deliberately
+-- omitted here — see the note near the end of this file.
 -- ═══════════════════════════════════════════════════════════════════════════
 
 -- ─── 1. Moderation Hub read model ────────────────────────────────────────────
@@ -505,24 +516,12 @@ REVOKE ALL ON FUNCTION public.admin_get_order(UUID) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.admin_get_user_profile(UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.admin_get_order(UUID) TO authenticated;
 
--- Self-scoped: mark everything the peer sent ME as read. Any authenticated
--- user may call this for their own inbox (no cross-user write possible).
-CREATE OR REPLACE FUNCTION public.mark_thread_read(p_peer UUID)
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-BEGIN
-  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'not authenticated'; END IF;
-  UPDATE messages
-  SET read = TRUE
-  WHERE receiver_id = auth.uid() AND sender_id = p_peer AND read = FALSE;
-END;
-$$;
-
-REVOKE ALL ON FUNCTION public.mark_thread_read(UUID) FROM PUBLIC, anon;
-GRANT  EXECUTE ON FUNCTION public.mark_thread_read(UUID) TO authenticated;
+-- mark_thread_read(uuid) intentionally NOT (re)created here: by the time
+-- this migration was actually applied (2026-09-05, see header note below),
+-- a later migration (messaging_surgery) had already defined a superior
+-- version — returns the count of rows touched and also stamps updated_at —
+-- so re-declaring the original signature-compatible-but-worse version would
+-- have silently regressed it. Left for the historical record only.
 
 -- ─── 7. Atomic dispute resolution (AdminPage.handleResolveDispute) ──────────
 -- Replaces two sequential client-side updates (disputes then orders) that
