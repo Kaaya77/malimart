@@ -24,7 +24,6 @@ export const CATEGORY_META: Record<string, { icon: ElementType; color: string }>
   'Food & Groceries':        { icon: ShoppingBasket, color: '#fb923c' },
   'Food & Pantry':           { icon: ShoppingBasket, color: '#fb923c' },
   'Pantry & Spices':         { icon: Soup, color: '#f59e0b' },
-  'Food & Spices':           { icon: Soup, color: '#f59e0b' },
   'Home & Living':           { icon: Sofa, color: '#34d399' },
   'Crafts & Art':            { icon: Palette, color: '#a78bfa' },
   'Handicrafts':             { icon: Palette, color: '#a78bfa' },

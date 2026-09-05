@@ -540,12 +540,19 @@ export const Conversations = ({
   const visibleConversations = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
     return m.conversations.filter(c => {
+      // A seller who also buys shows up as a "seller" account everywhere, but
+      // a given thread's peer.role tells us which hat they were wearing in
+      // it — someone who messaged them as a customer (role 'buyer') belongs
+      // in the Seller Inbox, someone they messaged as a shopper (role
+      // 'seller', i.e. another store) belongs in their own Buyer inbox.
+      // Without this split every thread appeared in both dashboards at once.
+      if (cfg.contactFilter && c.role !== cfg.contactFilter) return false;
       if (cfg.canArchive && (showArchived ? !c.archived : c.archived)) return false;
       if (filterUnread && c.unreadCount === 0) return false;
       if (q && !c.name.toLowerCase().includes(q) && !(c.lastBody || '').toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [m.conversations, searchTerm, filterUnread, showArchived, cfg.canArchive]);
+  }, [m.conversations, searchTerm, filterUnread, showArchived, cfg.canArchive, cfg.contactFilter]);
 
   /**
    * Pinned / Unread / Earlier. Every row used to carry identical visual
