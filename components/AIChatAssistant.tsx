@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { motion, AnimatePresence, useMotionValue } from 'framer-motion';
 import { X, Send, Mic, MicOff, Paperclip, ChevronRight, Trash2, Volume2, Loader2, Zap, Copy, Check, ShoppingBag, ChevronLeft, Eye, Minus, Plus } from 'lucide-react';
@@ -130,7 +130,10 @@ const VoiceCanvas = ({ analyser }: { analyser: AnalyserNode | null }) => {
       id = requestAnimationFrame(draw);
       ctx.clearRect(0, 0, W, H);
       phase += 0.04;
-      ctx.strokeStyle = '#10b981';
+      // Read the live accent var each frame rather than hardcoding emerald —
+      // cheap (one computed-style read per frame) and keeps the waveform
+      // matching whatever accent the user actually has selected.
+      ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--color-emerald-500').trim() || '#10b981';
       ctx.lineWidth = 2;
       if (analyser && data) {
         analyser.getByteTimeDomainData(data);
@@ -362,6 +365,10 @@ export const AIChatAssistant = () => {
 
   const firstName = user?.full_name?.split(' ')[0] || (user as any)?.display_name || null;
   const { animalInfo } = useAnimalAvatar();
+  // Same pool the homepage hero falls back to (is_boosted) — admin's boost
+  // toggle is the one lever that reaches both surfaces, so what Mali opens
+  // with and what the hero shows are never two unrelated ideas of "featured".
+  const featuredPicks = useMemo(() => products.filter(p => p.is_boosted).slice(0, 6), [products]);
 
   const _timeG = getTimeGreeting();
   const _tod = getTimeOfDay();
@@ -798,10 +805,14 @@ RESPONSE FORMAT:
       <div className="flex flex-col h-full rounded-3xl overflow-hidden bg-background border border-foreground/[0.1] shadow-2xl shadow-black/20 relative">
         {/* Single static wash instead of three drifting animated blobs —
             enough to keep the panel from feeling flat, without competing
-            with the messages for attention. */}
+            with the messages for attention. Uses the theme's own emerald
+            CSS var (which theme.ts overrides per accent) instead of a
+            hardcoded RGB — the previous value was literal green regardless
+            of the chosen accent, same class of bug as the cart's brand-*
+            tokens. */}
         <div
           className="absolute inset-x-0 top-0 h-40 pointer-events-none"
-          style={{ background: 'radial-gradient(120% 100% at 20% 0%, rgba(16,185,129,0.06), transparent 70%)' }}
+          style={{ background: 'radial-gradient(120% 100% at 20% 0%, color-mix(in oklab, var(--color-emerald-500) 10%, transparent), transparent 70%)' }}
           aria-hidden="true"
         />
 
@@ -925,6 +936,26 @@ RESPONSE FORMAT:
                     onSuggest={s => handleSend(undefined, s)} />
                 ))}
               </AnimatePresence>
+
+              {messages.length === 1 && featuredPicks.length > 0 && (
+                <div className="mt-2 mb-4">
+                  <p className="text-[9px] font-black uppercase tracking-[0.18em] text-foreground/35 mb-2 ml-1">Featured right now</p>
+                  <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1">
+                    {featuredPicks.map(p => (
+                      <button key={p.id}
+                        onClick={() => handleSend(undefined, `Tell me about ${p.name}`)}
+                        className="flex-shrink-0 w-24 text-left group">
+                        <div className="w-24 h-24 rounded-2xl overflow-hidden bg-foreground/[0.06] border border-foreground/[0.08]">
+                          <img src={p.images?.[0]} alt={p.name} loading="lazy" decoding="async"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                        </div>
+                        <p className="text-[10px] font-bold text-foreground/70 mt-1.5 line-clamp-1">{p.name}</p>
+                        <p className="text-[10px] font-black text-emerald-600 dark:text-emerald-400">{formatTZS(p.price)}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {messages.length === 1 && (
                 <div className="grid grid-cols-2 gap-2 mt-2">
