@@ -370,7 +370,7 @@ export const ShopPage: React.FC = () => {
             {TABS.map(t => {
               const Icon = t.icon;
               return (
-                <button key={t.id} onClick={() => setTab(t.id)}
+                <button key={t.id} onClick={() => setTab(t.id)} aria-current={tab === t.id ? 'page' : undefined}
                   className={`relative flex items-center gap-2 px-4 h-11 rounded-xl text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all flex-shrink-0 ${tab === t.id ? 'bg-foreground text-background' : 'text-foreground/45 hover:text-foreground hover:bg-foreground/[0.05]'}`}>
                   <Icon className="w-3.5 h-3.5 stroke-[2]" />
                   {t.label}
