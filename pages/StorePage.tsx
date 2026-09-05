@@ -440,8 +440,13 @@ export const StorePage: React.FC = () => {
                   </div>
                 )}
 
-                {/* Social links */}
-                {vendor.social_links && vendor.social_links.length > 0 && (
+                {/* Social links — guarded with Array.isArray because this
+                    column has held a legacy {instagram, facebook, ...}
+                    object shape for some rows; .filter on that would throw
+                    and take out this whole section (fixed at the data
+                    layer too, but never trust a jsonb column's shape from
+                    a JSX render). */}
+                {Array.isArray(vendor.social_links) && vendor.social_links.length > 0 && (
                   <div>
                     <p className="text-[10px] font-black uppercase tracking-widest text-foreground/35 mb-2">Connect</p>
                     <div className="flex flex-wrap gap-2">

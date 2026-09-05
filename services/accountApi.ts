@@ -32,6 +32,7 @@ async function rpc<T>(fn: string, args?: Record<string, unknown>): Promise<T> {
 export const touchPresence = () => rpc<void>("touch_presence");
 
 // ---------- Notifications ----------
+export const markNotificationRead = (id: string) => rpc<void>("mark_notification_read", { p_id: id });
 export const markAllNotificationsRead = () => rpc<void>("mark_all_notifications_read");
 export const deleteNotifications = (ids: string[]) =>
   rpc<number>("delete_my_notifications", { p_ids: ids });

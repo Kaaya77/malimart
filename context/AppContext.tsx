@@ -3,7 +3,13 @@ import React, { createContext, useContext, useEffect, useState, ReactNode, useCa
 import { supabase } from '../services/supabaseClient';
 import { withCache, invalidate, invalidatePrefix, loadPersisted, TTL } from '../services/queryCache';
 import { applyTheme } from '../services/theme';
-import { requestMyAccountDeletion, touchPresence } from '../services/accountApi';
+import {
+    requestMyAccountDeletion, touchPresence,
+    markNotificationRead as apiMarkNotificationRead,
+    markAllNotificationsRead as apiMarkAllNotificationsRead,
+    deleteNotifications as apiDeleteNotifications,
+    deleteAllNotifications as apiDeleteAllNotifications,
+} from '../services/accountApi';
 import { usePresence } from '../hooks/usePresence';
 import { Product, CartItem, User, Order, Notification, VendorProfile, Address, ProductVariant, Offer, Category, Payment, Shipment, TrustBadge, ReturnRequest, OrderNote, ActivityLog, WalletTransaction, SocialPost, SocialInteraction, Follower, Review } from '../types';
 import { useToast } from '../components/UI';
@@ -1474,23 +1480,30 @@ export const AppStateProvider = ({ children }: { children: ReactNode }) => {
         }
     }, [user, addToast]);
 
+    // These read through RPCs, not supabase.from() directly — a legacy
+    // violation this file used to carry (CLAUDE.md's contained AppContext/
+    // useHomePageData exception), migrated while touching this code. The
+    // optimistic setNotifications is what actually matters here: the
+    // Navbar unread badge and NotificationsPanel both read this SAME
+    // shared array now, so a read/delete anywhere updates the badge
+    // everywhere instead of only inside whichever component made the call.
     const markNotificationRead = useCallback(async (id: string) => {
-        await supabase.from('notifications').update({ read: true }).eq('id', id);
         setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+        await apiMarkNotificationRead(id);
     }, []);
     const markAllNotificationsRead = useCallback(async () => {
         if (!user) return;
-        await supabase.from('notifications').update({ read: true }).eq('user_id', user.id);
         setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+        await apiMarkAllNotificationsRead();
     }, [user]);
     const dismissNotification = useCallback(async (id: string) => {
-        await supabase.from('notifications').delete().eq('id', id);
         setNotifications(prev => prev.filter(n => n.id !== id));
+        await apiDeleteNotifications([id]);
     }, []);
     const deleteAllNotifications = useCallback(async () => {
         if (!user) return;
         setNotifications([]); // optimistic
-        await supabase.from('notifications').delete().eq('user_id', user.id);
+        await apiDeleteAllNotifications();
     }, [user]);
 
     const updateVendorProfile = useCallback(async (data: Partial<VendorProfile>) => {

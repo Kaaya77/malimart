@@ -320,6 +320,7 @@ export const Navbar = () => {
  const [menuOpen, setMenuOpen] = useState(false);
  const [searchOpen, setSearchOpen] = useState(false);
  const [notifOpen, setNotifOpen] = useState(false);
+ const [acctMenuOpen, setAcctMenuOpen] = useState(false);
  const [searchQuery, setSearchQuery] = useState('');
  const searchRef = useRef<HTMLInputElement>(null);
 
@@ -331,6 +332,8 @@ export const Navbar = () => {
    window.addEventListener('navbar:openMenu', onOpenMenu);
    return () => window.removeEventListener('navbar:openMenu', onOpenMenu);
  }, []);
+
+ useEffect(() => { setAcctMenuOpen(false); }, [location.pathname]);
 
  const isHome = location.pathname === '/';
  const isOnDark = isHome && !scrolled && !menuOpen && isDark;
@@ -495,6 +498,23 @@ export const Navbar = () => {
      always there so the control is still reachable and recognisable. */}
  <div className="relative group">
  {user ? (
+ // A seller has two dashboards behind this one icon, so tapping it can't
+ // just navigate straight into one of them (that's exactly what it did
+ // before, silently, as if it had "chosen" for them) — it opens the menu
+ // instead, which now leads with a Selling/Shopping switch. A buyer/admin
+ // has only one destination, so theirs still navigates directly.
+ user.role === 'seller' ? (
+ <button onClick={()=>setAcctMenuOpen(o=>!o)} aria-haspopup="true" aria-expanded={acctMenuOpen}
+ className={`flex items-center gap-2 h-9 pl-1 pr-1 sm:pr-3 rounded-full transition-colors
+ ${isOnDark?'hover:bg-white/15':'hover:bg-foreground/[0.06]'}`}>
+ {user.avatar_url ? (
+ <img src={user.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover ring-1 ring-foreground/10" loading="lazy" decoding="async"/>
+ ) : (
+ <span className="w-7 h-7 rounded-full bg-foreground text-background flex items-center justify-center text-xs font-bold">{initial}</span>
+ )}
+ <span className="text-sm font-semibold hidden sm:inline">Account</span>
+ </button>
+ ) : (
  <Link to={accountPath}
  className={`flex items-center gap-2 h-9 pl-1 pr-1 sm:pr-3 rounded-full transition-colors
  ${isOnDark?'hover:bg-white/15':'hover:bg-foreground/[0.06]'}`}>
@@ -505,6 +525,7 @@ export const Navbar = () => {
  )}
  <span className="text-sm font-semibold hidden sm:inline">Account</span>
  </Link>
+ )
  ) : (
  <Link to="/login"
  className={`flex items-center gap-2 h-9 px-2.5 sm:px-4 rounded-full text-sm font-semibold transition-colors
@@ -512,7 +533,7 @@ export const Navbar = () => {
  <User className="w-3.5 h-3.5 stroke-[2.2]"/> <span className="hidden sm:inline">Sign in</span>
  </Link>
  )}
- <UserMenu user={user} handleLogout={handleLogout}/>
+ <UserMenu user={user} handleLogout={handleLogout} forceOpen={user?.role==='seller' ? acctMenuOpen : undefined} onRequestClose={()=>setAcctMenuOpen(false)}/>
  </div>
 
  </div>

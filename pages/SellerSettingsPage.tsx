@@ -113,8 +113,19 @@ export const SellerSettingsPage = ({ onBack }: { onBack?: () => void } = {}) => 
  lowStockThreshold: (vendorProfile as any).low_stock_threshold ?? 5,
  });
 
- if (vendorProfile.social_links) {
+ // Defensive: a legacy shape ({instagram, facebook, ...} object rather
+ // than [{platform, url}]) used to reach this state directly and crash
+ // "Add Link" the moment it spread a non-array into an array literal.
+ // The one row that had it is migrated, but never trust the column's
+ // historical shape again over an isolated code fix.
+ if (Array.isArray(vendorProfile.social_links)) {
  setSocialLinks(vendorProfile.social_links);
+ } else if (vendorProfile.social_links && typeof vendorProfile.social_links === 'object') {
+ setSocialLinks(
+ Object.entries(vendorProfile.social_links as Record<string, string>)
+ .filter(([, url]) => url && url.trim())
+ .map(([platform, url]) => ({ platform, url }))
+ );
  }
  }
  }, [vendorProfile, user]);

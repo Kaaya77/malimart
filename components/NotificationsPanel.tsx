@@ -1,45 +1,39 @@
 // =====================================================================
 // NotificationsPanel.tsx — dropdown/sheet with the cancel/delete UX
 // users expect: mark all read, multi-select delete, clear read.
-// All writes go through RPCs (ownership enforced server-side).
+// Reads/writes go through useComms()'s shared notifications state (which
+// itself calls ownership-enforced RPCs) instead of keeping a private copy
+// — a private copy is why marking read or deleting here never used to
+// move the unread badge in the navbar, which reads that same shared state.
 // =====================================================================
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { fetchNotifications } from "../services/notificationsService";
-import {
-  markAllNotificationsRead, deleteNotifications, clearReadNotifications, deleteAllNotifications,
-} from "../services/accountApi";
-
-interface Notif {
-  id: string; type: string; title: string; message: string;
-  link: string | null; read: boolean; created_at: string;
-}
+import { useComms } from "../context/AppContext";
+import { clearReadNotifications, deleteNotifications } from "../services/accountApi";
 
 const ICONS: Record<string, string> = {
   order: "📦", message: "💬", payment: "💳", system: "⚙️", promo: "🏷️",
 };
 
 export function NotificationsPanel({ onClose }: { onClose: () => void }) {
-  const [items, setItems] = useState<Notif[]>([]);
+  const { notifications, markNotificationRead, markAllNotificationsRead, deleteAllNotifications, refreshNotifications } = useComms();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [selecting, setSelecting] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [working, setWorking] = useState(false);
 
-  const load = async () => {
-    const data = await fetchNotifications(30);
-    setItems((data as Notif[]) ?? []);
-    setLoading(false);
-  };
-  useEffect(() => { load(); }, []);
+  const items = notifications ?? [];
 
   const toggle = (id: string) =>
     setSelected((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
   const removeSelected = async () => {
     const ids = [...selected];
-    await deleteNotifications(ids);
-    setItems((it) => it.filter((n) => !selected.has(n.id)));
-    setSelected(new Set()); setSelecting(false);
+    setWorking(true);
+    try {
+      await deleteNotifications(ids);
+      await refreshNotifications();
+      setSelected(new Set()); setSelecting(false);
+    } finally { setWorking(false); }
   };
 
   return (
@@ -49,7 +43,7 @@ export function NotificationsPanel({ onClose }: { onClose: () => void }) {
         <div className="flex gap-2 text-xs">
           {selecting ? (
             <>
-              <button onClick={removeSelected} disabled={selected.size === 0}
+              <button onClick={removeSelected} disabled={selected.size === 0 || working}
                 className="font-semibold text-red-600 disabled:opacity-40">
                 Delete ({selected.size})
               </button>
@@ -57,8 +51,7 @@ export function NotificationsPanel({ onClose }: { onClose: () => void }) {
             </>
           ) : (
             <>
-              <button onClick={async () => { await markAllNotificationsRead();
-                setItems((it) => it.map((n) => ({ ...n, read: true }))); }}>
+              <button onClick={() => markAllNotificationsRead()}>
                 Mark all read
               </button>
               <button onClick={() => setSelecting(true)}>Select</button>
@@ -68,13 +61,12 @@ export function NotificationsPanel({ onClose }: { onClose: () => void }) {
       </header>
 
       <div className="max-h-[60vh] overflow-y-auto">
-        {loading && <p className="p-4 text-sm text-foreground/45">Loading…</p>}
-        {!loading && items.length === 0 && (
+        {items.length === 0 && (
           <p className="p-6 text-center text-sm text-foreground/45">
             You're all caught up. New order and message updates will appear here.
           </p>
         )}
-        {items.map((n) => {
+        {items.map((n: any) => {
           const inner = (
             <div className={`flex gap-3 px-4 py-3 transition-colors ${n.read ? "" : "bg-emerald-500/10"}`}>
               {selecting && (
@@ -97,7 +89,7 @@ export function NotificationsPanel({ onClose }: { onClose: () => void }) {
               {inner}
             </div>
           ) : (
-            <Link key={n.id} to={n.link} onClick={onClose}
+            <Link key={n.id} to={n.link} onClick={() => { if (!n.read) markNotificationRead(n.id); onClose(); }}
               className="block border-b border-foreground/8 last:border-0 hover:bg-foreground/[0.04]">
               {inner}
             </Link>
@@ -107,7 +99,7 @@ export function NotificationsPanel({ onClose }: { onClose: () => void }) {
 
       <footer className="flex items-center justify-center gap-4 border-t border-foreground/10 px-4 py-2.5 text-center">
         <button
-          onClick={async () => { await clearReadNotifications(); load(); }}
+          onClick={async () => { await clearReadNotifications(); await refreshNotifications(); }}
           className="text-xs font-medium text-foreground/45 hover:text-foreground"
         >
           Clear read
@@ -116,7 +108,7 @@ export function NotificationsPanel({ onClose }: { onClose: () => void }) {
           <button
             onClick={async () => {
               await deleteAllNotifications();
-              setItems([]); setSelected(new Set()); setSelecting(false);
+              setSelected(new Set()); setSelecting(false);
             }}
             className="text-xs font-semibold text-foreground/45 hover:text-red-600"
           >
