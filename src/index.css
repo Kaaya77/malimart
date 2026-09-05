@@ -681,6 +681,13 @@ a, button {
 /* Stop pull-to-refresh hijacking and scroll chaining behind modals */
 html, body {
   overscroll-behavior-y: contain;
+  /* Several horizontal scroll rails (category chips, store cards) bleed to
+     the viewport edge via a negative margin on their own container, by
+     design — but with no horizontal containment here, even a sub-pixel
+     rounding overflow from one of them made the ENTIRE page draggable
+     sideways on touch, including over plain empty space with no rail in
+     sight. Rails still scroll internally; the page itself never should. */
+  overflow-x: hidden;
 }
 
 /* Remove the grey tap flash on Android/iOS */

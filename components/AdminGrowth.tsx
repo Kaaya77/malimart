@@ -35,9 +35,9 @@ const CAMPAIGN_TYPES = [
 ];
 
 const STATUS_COLOR: Record<string, string> = {
-  active: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-  inactive: 'bg-foreground/5 text-foreground/40',
-  expired: 'bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400',
+  active: 'bg-emerald-500/[0.1] text-emerald-700 dark:text-emerald-400',
+  inactive: 'bg-foreground/[0.05] text-foreground/40',
+  expired: 'bg-rose-500/[0.1] text-rose-600 dark:text-rose-400',
 };
 
 function deriveStatus(c: Campaign): string {
@@ -201,15 +201,17 @@ export const AdminGrowth = () => {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      {/* Header */}
+      {/* Header — same eyebrow + title pattern used across the rest of the
+          app (homepage sections, settings, shop) rather than this tab's old
+          heavier all-caps display type. */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
-          <p className="text-[9px] uppercase tracking-[0.3em] font-black text-foreground/40 mb-1">Platform Marketing</p>
-          <h2 className="text-3xl font-black uppercase tracking-tight text-foreground">Growth Engine</h2>
+          <p className="text-[10px] font-black uppercase tracking-[0.25em] text-foreground/40 mb-2">Platform Marketing</p>
+          <h2 className="text-2xl md:text-[2rem] font-bold tracking-tight text-foreground">Growth Engine</h2>
         </div>
         <button
           onClick={() => { resetForm(); setEditingCampaign(null); setShowForm(true); }}
-          className="flex items-center gap-2 h-10 px-5 bg-foreground text-background rounded-xl text-[10px] font-black uppercase tracking-[0.18em] hover:opacity-80 transition-opacity"
+          className="flex items-center gap-2 h-10 px-5 bg-foreground text-background rounded-2xl text-[10px] font-black uppercase tracking-[0.18em] hover:opacity-85 transition-opacity"
         >
           <Plus className="w-3.5 h-3.5 stroke-[2.5]" /> New Campaign
         </button>
@@ -222,13 +224,13 @@ export const AdminGrowth = () => {
           { label: 'Active Now', value: stats.active, icon: CheckCircle2 },
           { label: 'Total Redemptions', value: stats.totalUsage, icon: Users },
         ].map(s => (
-          <div key={s.label} className="bg-foreground/[0.03] border border-foreground/8 rounded-2xl p-5 flex items-center gap-4">
-            <div className="w-9 h-9 bg-foreground/[0.06] rounded-xl flex items-center justify-center flex-shrink-0">
-              <s.icon className="w-4 h-4 text-foreground/50" />
+          <div key={s.label} className="bg-foreground/[0.03] border border-foreground/[0.08] rounded-2xl p-5 flex items-center gap-4">
+            <div className="w-9 h-9 bg-emerald-500/[0.1] rounded-xl flex items-center justify-center flex-shrink-0">
+              <s.icon className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
-              <p className="text-[9px] font-black uppercase tracking-wider text-foreground/40">{s.label}</p>
-              <p className="text-xl font-black text-foreground">{s.value.toLocaleString()}</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-foreground/40">{s.label}</p>
+              <p className="text-xl font-black text-foreground tabular-nums">{s.value.toLocaleString()}</p>
             </div>
           </div>
         ))}
@@ -259,11 +261,12 @@ export const AdminGrowth = () => {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                     {CAMPAIGN_TYPES.map(ct => (
                       <button key={ct.value} onClick={() => setForm(f => ({ ...f, campaign_type: ct.value }))}
-                        className={`flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border-2 transition-all text-center ${form.campaign_type === ct.value ? 'border-foreground bg-foreground/[0.04]' : 'border-foreground/8 hover:border-foreground/20'}`}
+                        aria-pressed={form.campaign_type === ct.value}
+                        className={`flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border transition-colors text-center ${form.campaign_type === ct.value ? 'border-emerald-500/30 bg-emerald-500/[0.08]' : 'border-foreground/[0.08] hover:border-foreground/20'}`}
                       >
-                        <ct.icon className={`w-4 h-4 ${form.campaign_type === ct.value ? 'text-foreground' : 'text-foreground/30'}`} />
-                        <span className={`text-[9px] font-black uppercase tracking-wider ${form.campaign_type === ct.value ? 'text-foreground' : 'text-foreground/40'}`}>{ct.label}</span>
-                        <span className="text-[8px] text-foreground/30 font-medium">{ct.desc}</span>
+                        <ct.icon className={`w-4 h-4 ${form.campaign_type === ct.value ? 'text-emerald-600 dark:text-emerald-400' : 'text-foreground/35'}`} />
+                        <span className={`text-[9px] font-black uppercase tracking-wider ${form.campaign_type === ct.value ? 'text-emerald-700 dark:text-emerald-400' : 'text-foreground/45'}`}>{ct.label}</span>
+                        <span className="text-[8px] text-foreground/35 font-medium">{ct.desc}</span>
                       </button>
                     ))}
                   </div>
@@ -349,7 +352,8 @@ export const AdminGrowth = () => {
                 {/* Toggles */}
                 <div className="flex flex-wrap gap-4">
                   <button onClick={() => setForm(f => ({ ...f, is_auto_apply: !f.is_auto_apply }))}
-                    className={`flex items-center gap-2 h-9 px-4 rounded-xl border text-[9px] font-black uppercase tracking-wider transition-all ${form.is_auto_apply ? 'border-foreground bg-foreground/[0.06] text-foreground' : 'border-foreground/12 text-foreground/40 hover:border-foreground/25'}`}
+                    aria-pressed={form.is_auto_apply}
+                    className={`flex items-center gap-2 h-9 px-4 rounded-xl border text-[9px] font-black uppercase tracking-wider transition-colors ${form.is_auto_apply ? 'border-emerald-500/30 bg-emerald-500/[0.08] text-emerald-700 dark:text-emerald-400' : 'border-foreground/[0.12] text-foreground/40 hover:border-foreground/25'}`}
                   >
                     <Zap className="w-3.5 h-3.5" /> Auto-Apply {form.is_auto_apply ? 'On' : 'Off'}
                   </button>
@@ -416,10 +420,10 @@ export const AdminGrowth = () => {
                         {status}
                       </span>
                       {c.is_flash_sale && (
-                        <span className="text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400">⚡ Flash</span>
+                        <span className="text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/[0.1] text-amber-600 dark:text-amber-400">⚡ Flash</span>
                       )}
                       {c.is_auto_apply && !c.is_flash_sale && (
-                        <span className="text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400">Auto</span>
+                        <span className="text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-sky-500/[0.1] text-sky-600 dark:text-sky-400">Auto</span>
                       )}
                     </div>
                     <div className="flex flex-wrap items-center gap-3 text-[9px] font-bold text-foreground/40 uppercase tracking-wider">
@@ -448,18 +452,18 @@ export const AdminGrowth = () => {
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <button onClick={() => handleToggleStatus(c)}
-                      className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${status === 'active' ? 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-600' : 'bg-foreground/[0.05] text-foreground/30 hover:text-foreground'}`}
+                      className={`w-9 h-9 flex items-center justify-center rounded-xl transition-colors ${status === 'active' ? 'bg-emerald-500/[0.1] text-emerald-600 dark:text-emerald-400' : 'bg-foreground/[0.05] text-foreground/30 hover:text-foreground'}`}
                       title={status === 'active' ? 'Pause' : 'Activate'}
                     >
                       {status === 'active' ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
                     </button>
                     <button onClick={() => handleEdit(c)}
-                      className="w-8 h-8 flex items-center justify-center rounded-lg bg-foreground/[0.04] hover:bg-foreground/10 text-foreground/50 hover:text-foreground transition-all"
+                      className="w-9 h-9 flex items-center justify-center rounded-xl bg-foreground/[0.04] hover:bg-foreground/[0.1] text-foreground/50 hover:text-foreground transition-colors"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
                     </button>
                     <button onClick={() => setDeletingId(c.id)}
-                      className="w-8 h-8 flex items-center justify-center rounded-lg bg-foreground/[0.04] hover:bg-red-50 dark:hover:bg-red-900/20 text-foreground/30 hover:text-red-500 transition-all"
+                      className="w-9 h-9 flex items-center justify-center rounded-xl bg-foreground/[0.04] hover:bg-rose-500/[0.08] text-foreground/30 hover:text-rose-500 transition-colors"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>

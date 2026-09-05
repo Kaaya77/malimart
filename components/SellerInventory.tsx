@@ -32,7 +32,8 @@ import { useAppState } from '../context/AppContext';
 import { useDebounce } from '../src/hooks/useDebounce';
 import { useToast, ConfirmModal, Modal, Textarea, Label, Button } from './UI';
 import { Product } from '../types';
-import { formatTZS, CURRENCY, CATEGORY_HIERARCHY } from '../constants';
+import { formatTZS, CURRENCY } from '../constants';
+import { useCategoryOptions } from '../hooks/useCategoryOptions';
 import { supabase } from '../services/supabaseClient';
 import { rateLimit } from '../src/security';
 import { withCache, invalidate, TTL } from '../services/queryCache';
@@ -102,6 +103,7 @@ export const SellerInventory = ({
 }) => {
   const { addToast } = useToast();
   const { sellerInventory: contextInventory, refreshSellerData } = useAppState();
+  const categoryOptions = useCategoryOptions();
   const navigate = useNavigate();
   const [products, setProducts] = useState<InventoryProduct[]>(
     (contextInventory || []) as InventoryProduct[]
@@ -624,7 +626,7 @@ export const SellerInventory = ({
               className="h-9 px-3 max-w-[9.5rem] sm:max-w-none truncate rounded-xl border border-foreground/12 bg-foreground/[0.03] text-xs font-medium text-foreground outline-none focus:border-emerald-500/50 transition-colors flex-shrink-0"
             >
               <option value="All">All Categories</option>
-              {Object.keys(CATEGORY_HIERARCHY).map(c => <option key={c} value={c}>{c}</option>)}
+              {categoryOptions.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
 
             {/* Low stock toggle */}

@@ -31,13 +31,17 @@ export interface AccentPreset {
   swatch: string;
 }
 
-// `emerald` is the default — it maps to the app's built-in brand green, so we
-// leave the Tailwind scale untouched for it (see applyTheme).
+// `rose` is MaliMart's official brand color and the default for anyone who
+// hasn't picked their own accent. It still works through the same override
+// mechanism as every other preset (see applyAccent) — there's no "free" path
+// anymore, since the whole point is that unbranded `emerald-*` utilities
+// should NOT render as literal Tailwind green by default. `emerald` stays
+// in the list as an ordinary preset for anyone who wants the old color back.
 export const ACCENT_PRESETS: AccentPreset[] = [
+  { key: "rose",    label: "Rose",     hue: 345, sat: 74, swatch: "#f43f5e" },
   { key: "emerald", label: "Emerald",  hue: 160, sat: 84, swatch: "#10b981" },
   { key: "ocean",   label: "Ocean",    hue: 205, sat: 82, swatch: "#0ea5e9" },
   { key: "violet",  label: "Violet",   hue: 264, sat: 68, swatch: "#8b5cf6" },
-  { key: "rose",    label: "Rose",     hue: 345, sat: 74, swatch: "#f43f5e" },
   { key: "amber",   label: "Amber",    hue: 35,  sat: 92, swatch: "#f59e0b" },
   { key: "teal",    label: "Teal",     hue: 175, sat: 66, swatch: "#14b8a6" },
   { key: "indigo",  label: "Indigo",   hue: 234, sat: 62, swatch: "#6366f1" },

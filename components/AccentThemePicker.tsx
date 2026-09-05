@@ -16,7 +16,7 @@ interface AccentThemePickerProps {
  * (applyTheme overrides the emerald scale), then persists via onSelect.
  */
 export const AccentThemePicker: React.FC<AccentThemePickerProps> = ({ value, mode, onSelect }) => {
-  const active = value || 'emerald';
+  const active = value || 'rose';
 
   const choose = (key: string) => {
     applyAccent(key); // recolour live without touching dark/light mode

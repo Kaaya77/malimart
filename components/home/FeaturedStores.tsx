@@ -6,7 +6,6 @@ import { useAppState } from '../../context/AppContext';
 
 interface FeaturedStoresProps {
   topShops: VendorProfile[];
-  setActiveStore: (s: VendorProfile) => void;
   navigate: (p: string) => void;
 }
 
@@ -21,11 +20,12 @@ interface FeaturedStoresProps {
  * carried to desktop too, since a rail of sellers is something you skim
  * past rather than scan as a grid.
  *
- * Still the SHARED components/categories/StoreCard underneath — only the
- * arrangement around it changed. `onClick`/`rank` behaviour is unchanged
- * from before (see StoreCard's own docstring for why both exist).
+ * Clicking a card now goes straight to /store/:id — StoreCard's own default
+ * navigation (see its docstring). This used to override that with a preview
+ * MODAL instead, which added an extra click for no real benefit; the modal
+ * is gone, along with the activeStore state it needed in HomePage.
  */
-export const FeaturedStores: React.FC<FeaturedStoresProps> = ({ topShops, setActiveStore, navigate }) => {
+export const FeaturedStores: React.FC<FeaturedStoresProps> = ({ topShops, navigate }) => {
   const { followSeller, unfollowSeller, isFollowing } = useAppState();
 
   if (!topShops || topShops.length === 0) return null;
@@ -63,7 +63,6 @@ export const FeaturedStores: React.FC<FeaturedStoresProps> = ({ topShops, setAct
                 <StoreCard
                   vendor={s}
                   rank={i < 3 ? i + 1 : undefined}
-                  onClick={() => setActiveStore(s)}
                   isFavorite={isFollowing(s.seller_id)}
                   onFavoriteToggle={() =>
                     isFollowing(s.seller_id) ? unfollowSeller(s.seller_id) : followSeller(s.seller_id)

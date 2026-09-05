@@ -22,7 +22,8 @@ import { PreviewStep } from './product-form/PreviewStep';
 import { supabase } from '../services/supabaseClient';
 import { fetchProductVariants } from '../services/shopService';
 import { compressImage, extFor, IMMUTABLE_CACHE } from '../services/imageCompression';
-import { CURRENCY, CATEGORY_HIERARCHY, formatTZS } from '../constants';
+import { CURRENCY, formatTZS } from '../constants';
+import { useCategoryOptions } from '../hooks/useCategoryOptions';
 
 interface ProductFormProps {
  initialData?: Product | null;
@@ -41,6 +42,7 @@ import { PhonePreview } from './product-form/PhonePreview';
 export const ProductForm = ({ initialData, onClose, onSuccess, mode = 'modal' }: ProductFormProps) => {
  const { user } = useAppState();
  const { addToast } = useToast();
+ const categoryOptions = useCategoryOptions();
  const [step, setStep] = useState<'details' | 'media' | 'logistics' | 'variants' | 'preview'>('details');
  const [isQuickMode, setIsQuickMode] = useState(false);
  const [isLoading, setIsLoading] = useState(false);
@@ -63,7 +65,7 @@ export const ProductForm = ({ initialData, onClose, onSuccess, mode = 'modal' }:
  name: '',
  brand: '',
  description: '',
- category: Object.keys(CATEGORY_HIERARCHY)[0],
+ category: categoryOptions[0],
  subcategory: '',
  price: 0,
  cost_price: 0,
@@ -84,6 +86,24 @@ export const ProductForm = ({ initialData, onClose, onSuccess, mode = 'modal' }:
  const [attributes, setAttributes] = useState<{name: string, values: string[]}[]>([]);
  const [variants, setVariants] = useState<ProductVariant[]>([]);
  const [tagInput, setTagInput] = useState('');
+
+ // categoryOptions[0] above is a one-time initial value for a NEW product —
+ // if the live categories table hasn't loaded yet on first render, this
+ // locks in the hardcoded fallback's first entry forever. Follow the live
+ // list until the seller picks something themselves (tracked by comparing
+ // against the last value THIS effect itself set, so a manual pick is never
+ // clobbered); skip entirely when editing an existing product, whose
+ // category came from initialData, not this default.
+ const lastAutoCategoryRef = React.useRef(categoryOptions[0]);
+ useEffect(() => {
+   if (initialData) return;
+   setFormData(f => {
+     if (f.category && f.category !== lastAutoCategoryRef.current) return f;
+     lastAutoCategoryRef.current = categoryOptions[0];
+     return { ...f, category: categoryOptions[0] };
+   });
+   // eslint-disable-next-line react-hooks/exhaustive-deps
+ }, [categoryOptions, initialData]);
 
  useEffect(() => {
  if (initialData?.id) {

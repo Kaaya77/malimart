@@ -54,7 +54,7 @@ const MegaMenu = ({ isHome, scrolled, categories }: { isHome: boolean; scrolled:
  }, [categories]);
 
  return (
- <nav className="hidden md:flex items-center gap-7">
+ <nav className="hidden lg:flex items-center gap-7">
  <Link to="/shop" className={link}>Shop</Link>
  <div className="relative group">
  <button className={`${link} flex items-center gap-1`} aria-haspopup="true">
@@ -137,7 +137,7 @@ const MobileDrawer = ({ open, onClose, user, logout, isDark, toggleDark, notific
  <AnimatePresence>
  {open && (
  <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} transition={{duration:0.2}}
- className="fixed inset-0 z-[300] md:hidden">
+ className="fixed inset-0 z-[300] lg:hidden">
  {/* Backdrop */}
  <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
  onClick={onClose} className="absolute inset-0 bg-black/60 backdrop-blur-sm"/>
@@ -363,11 +363,11 @@ export const Navbar = () => {
  <div className={`flex items-center gap-1 ${isOnDark?'text-white':'text-foreground'}`}>
 
  {/* Search */}
- <button onClick={()=>setSearchOpen(true)} aria-label="Search" className={`${ibtn} hidden md:flex gap-1.5 items-center`}>
+ <button onClick={()=>setSearchOpen(true)} aria-label="Search" className={`${ibtn} hidden lg:flex gap-1.5 items-center`}>
  <Search className="w-[18px] h-[18px] stroke-[2]"/>
  <span className={`text-[10px] font-semibold tracking-wide hidden lg:inline ${isOnDark?'text-white/50':'text-foreground/35'}`}>⌘K</span>
  </button>
- <button onClick={()=>setSearchOpen(true)} aria-label="Search" className={`${ibtn} md:hidden`}>
+ <button onClick={()=>setSearchOpen(true)} aria-label="Search" className={`${ibtn} lg:hidden`}>
  <Search className="w-[18px] h-[18px] stroke-[2]"/>
  </button>
 
@@ -378,7 +378,7 @@ export const Navbar = () => {
 
  {/* Messages (desktop) */}
  {user && (
- <Link to="/messages" aria-label={`Messages${unreadMessages?` (${unreadMessages} unread)`:''}`} className={`hidden md:flex relative ${ibtn}`}>
+ <Link to="/messages" aria-label={`Messages${unreadMessages?` (${unreadMessages} unread)`:''}`} className={`hidden lg:flex relative ${ibtn}`}>
  <MessageCircle className="w-[18px] h-[18px] stroke-[2]"/>
  {(unreadMessages||0)>0 && (
  <span className="absolute top-1.5 right-1.5 min-w-[14px] h-3.5 px-0.5 rounded-full bg-rose-500 text-white text-[8px] font-black flex items-center justify-center">
@@ -390,7 +390,7 @@ export const Navbar = () => {
 
  {/* Notifications (desktop) — inline popover, no page navigation */}
  {user && (
- <div className="hidden md:block relative">
+ <div className="hidden lg:block relative">
  <button onClick={()=>setNotifOpen(o=>!o)} aria-label={`Notifications${unread?` (${unread} unread)`:''}`} aria-expanded={notifOpen} className={`relative ${ibtn}`}>
  <motion.span
    className="inline-flex"
@@ -453,7 +453,7 @@ export const Navbar = () => {
  </Link>
 
  {/* Account chip (desktop) */}
- <div className="hidden md:block relative group">
+ <div className="hidden lg:block relative group">
  {user ? (
  <Link to={accountPath}
  className={`flex items-center gap-2 h-9 pl-1 pr-3 rounded-full transition-colors
@@ -476,7 +476,7 @@ export const Navbar = () => {
  </div>
 
  {/* Mobile hamburger */}
- <button onClick={()=>setMenuOpen(true)} aria-label="Open menu" className={`md:hidden ${ibtn}`}>
+ <button onClick={()=>setMenuOpen(true)} aria-label="Open menu" className={`lg:hidden ${ibtn}`}>
  <Menu className="w-[18px] h-[18px] stroke-[2]"/>
  </button>
  </div>
@@ -557,7 +557,7 @@ export const MobileBottomNav = () => {
 
  return (
  <nav role="navigation" aria-label="Mobile navigation"
- className="fixed bottom-0 inset-x-0 z-40 md:hidden"
+ className="fixed bottom-0 inset-x-0 z-40 lg:hidden"
  style={{paddingBottom:'env(safe-area-inset-bottom)'}}>
  <div className="mx-2 mb-2 rounded-2xl bg-background/80 backdrop-blur-2xl ring-1 ring-foreground/12 shadow-[0_-2px_20px_-4px_rgba(0,0,0,0.12)] relative overflow-hidden">
  {/* Sliding pill indicator */}

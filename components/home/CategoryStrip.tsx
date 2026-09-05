@@ -13,11 +13,12 @@ import { categoryMeta, CATEGORY_META } from '../categoryIcons';
  * — brittle (a renamed/new category silently falls through to a stock
  * fallback photo) and heavy (nine external images on every home load).
  *
- * Replaced with one flat, icon-led tile grid: solid colour, one glyph, name
- * and count. No network image at all, and — because it's one responsive grid
- * instead of a desktop bento plus a separate mobile rail — one render path
- * instead of two. The colour-per-category identity carries over from the old
- * map; only the photography is gone.
+ * Replaced with a flat, icon-led tile: solid colour, one glyph, name and
+ * count. No network image at all. Laid out as a horizontal scroll rail at
+ * every breakpoint — one render path, not a desktop grid plus a separate
+ * mobile rail — matching the same snap-scroll pattern FeaturedStores uses
+ * for its store rail. The colour-per-category identity carries over from
+ * the old map; only the photography is gone.
  */
 
 const CategoryTile: React.FC<{
@@ -28,7 +29,7 @@ const CategoryTile: React.FC<{
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.35, delay: Math.min(index * 0.03, 0.24) }}
     onClick={onClick}
-    className="group relative flex flex-col justify-between text-left rounded-3xl p-4 md:p-5 aspect-square sm:aspect-[4/3] transition-colors overflow-hidden"
+    className="group relative flex flex-col justify-between text-left rounded-3xl p-4 shrink-0 snap-start w-[132px] h-[132px] sm:w-[152px] sm:h-[152px] transition-colors overflow-hidden"
     style={{ background: `${color}14` }}
   >
     <span
@@ -95,18 +96,29 @@ export const CategoryStrip: React.FC = () => {
         </button>
       </div>
 
-      <div className="container mx-auto px-4 md:px-8 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 md:gap-4">
-        {displayCategories.map((c, i) => (
-          <CategoryTile
-            key={c.name}
-            name={c.name}
-            icon={c.icon}
-            color={c.color}
-            count={countByCategory[c.name]}
-            onClick={() => go(c.name)}
-            index={i}
-          />
-        ))}
+      {/* Same scroll-fade affordance as FeaturedStores' rail — a horizontal
+          rail should read as scrollable at every breakpoint, not just
+          on phones. */}
+      <div className="relative">
+        <div className="overflow-x-auto no-scrollbar pl-4 md:pl-8 -mr-4 md:-mr-8">
+          <div className="flex gap-3 pr-4 md:pr-8 snap-x snap-mandatory">
+            {displayCategories.map((c, i) => (
+              <CategoryTile
+                key={c.name}
+                name={c.name}
+                icon={c.icon}
+                color={c.color}
+                count={countByCategory[c.name]}
+                onClick={() => go(c.name)}
+                index={i}
+              />
+            ))}
+          </div>
+        </div>
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-background to-transparent"
+        />
       </div>
     </section>
   );

@@ -1,23 +1,20 @@
 import React from 'react';
 import { Button, Input, Label, Textarea, Switch } from '../UI';
 import { Product } from '../../types';
-import { CATEGORY_HIERARCHY, formatTZS } from '../../constants';
+import { formatTZS } from '../../constants';
 import { DollarSign, Languages, Loader2, MapPin, Sparkles, Wand2, X as XIcon, Check } from 'lucide-react';
 import { useToast } from '../UI';
-import { useCatalog } from '../../context/AppContext';
 import { usePF } from './FormContext';
+import { useCategoryOptions } from '../../hooks/useCategoryOptions';
 
 const CONDITIONS = ['New', 'Like New', 'Used — Good', 'Used — Fair', 'Refurbished'];
 
 export const DetailsStep = () => {
     const { aiLoading, includeVat, isMagicFilling, formData, setFormData, variants, tagInput, setTagInput, handleMagicFill, generateMagicDescription, handleSuggestPrice, handleTranslate, handleEnhanceDescription, toggleVat } = usePF();
     const { addToast } = useToast();
-    // Live categories from the DB (top-level only); static hierarchy as fallback
-    const { categories } = useCatalog();
-    const categoryOptions = React.useMemo(() => {
-      const db = (categories || []).filter((c: any) => !c.parent_id && c.is_active !== false).map((c: any) => c.name);
-      return db.length >= 2 ? db : Object.keys(CATEGORY_HIERARCHY);
-    }, [categories]);
+    // The one category list shared with every other seller entry point and
+    // with the homepage/Shop's own category filters — see useCategoryOptions.
+    const categoryOptions = useCategoryOptions();
     return (
  <div className="space-y-10">
  <div className="flex items-center justify-between gap-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 p-5 text-white shadow-lg shadow-emerald-600/15">

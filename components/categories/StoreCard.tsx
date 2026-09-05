@@ -132,7 +132,7 @@ export const StoreCard: React.FC<StoreCardProps> = React.memo(({ vendor, isFavor
               <span className="font-semibold text-foreground/70">{vendor.rating.toFixed(1)}</span>
             </span>
           )}
-          {vendor.total_sales != null && (
+          {!!vendor.total_sales && (
             <span className="flex items-center gap-1"><Package className="w-3 h-3" />{vendor.total_sales} sales</span>
           )}
           {vendor.region && (

@@ -36,7 +36,7 @@
     <meta property="twitter:image" content="https://malimart.vercel.app/api/og" />
 
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛍️</text></svg>">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%231acd86%22/><text y=%22.9em%22 font-size=%2270%22 x=%2215%22>🛍️</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23f43f5e%22/><text y=%22.9em%22 font-size=%2270%22 x=%2215%22>🛍️</text></svg>">
 
     <script>
       (function() {
@@ -45,6 +45,24 @@
           document.documentElement.classList.add('dark');
         } else {
           document.documentElement.classList.remove('dark');
+        }
+
+        // Rose is MaliMart's official brand accent (see services/theme.ts —
+        // ACCENT_PRESETS[0], hue 345 sat 74%, same RAMP function). Signed-in
+        // users get their saved theme_accent from AppContext's applyTheme()
+        // once the session resolves, which overrides these same CSS vars —
+        // but a signed-out visitor never reaches that code at all, so
+        // without this the whole app rendered literal Tailwind emerald
+        // (green) for every guest. This is the same values, computed once,
+        // applied before first paint so there's no color flash either.
+        var rose = {
+          50: 'hsl(345 74% 97%)', 100: 'hsl(345 74% 93%)', 200: 'hsl(345 74% 86%)',
+          300: 'hsl(345 74% 76%)', 400: 'hsl(345 74% 64%)', 500: 'hsl(345 74% 52%)',
+          600: 'hsl(345 74% 44%)', 700: 'hsl(345 74% 36%)', 800: 'hsl(345 74% 29%)',
+          900: 'hsl(345 74% 23%)', 950: 'hsl(345 74% 15%)',
+        };
+        for (var step in rose) {
+          document.documentElement.style.setProperty('--color-emerald-' + step, rose[step]);
         }
       })();
     </script>

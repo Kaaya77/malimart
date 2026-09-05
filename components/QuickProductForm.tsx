@@ -1,5 +1,5 @@
 import { validateUpload } from '../src/security';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Sparkles, Loader2, Store } from 'lucide-react';
 import { useAppState } from '../context/AppContext';
 import { Button, Input, Label, ImageDropzone, useToast } from './UI';
@@ -7,7 +7,8 @@ import { Product } from '../types';
 import { supabase } from '../services/supabaseClient';
 import { compressImage, IMMUTABLE_CACHE } from '../services/imageCompression';
 import * as aiService from '../services/geminiService';
-import { CURRENCY, CATEGORY_HIERARCHY } from '../constants';
+import { CURRENCY } from '../constants';
+import { useCategoryOptions } from '../hooks/useCategoryOptions';
 
 interface QuickProductFormProps {
  onClose: () => void;
@@ -17,14 +18,24 @@ interface QuickProductFormProps {
 export const QuickProductForm = ({ onClose, onSuccess }: QuickProductFormProps) => {
  const { user } = useAppState();
  const { addToast } = useToast();
+ const categoryOptions = useCategoryOptions();
  const [isLoading, setIsLoading] = useState(false);
  const [formData, setFormData] = useState<Partial<Product>>({
  name: '',
  price: 0,
- category: Object.keys(CATEGORY_HIERARCHY)[0],
+ category: categoryOptions[0],
  images: [],
  status: 'active',
  });
+ // categoryOptions[0] above is a one-time initial value — if the live
+ // categories table hasn't loaded yet on first render, this locks in the
+ // hardcoded fallback's first entry forever. Keep following the live list
+ // until the seller actually picks something themselves.
+ const [categoryTouched, setCategoryTouched] = useState(false);
+ useEffect(() => {
+   if (!categoryTouched) setFormData(f => ({ ...f, category: categoryOptions[0] }));
+   // eslint-disable-next-line react-hooks/exhaustive-deps
+ }, [categoryOptions, categoryTouched]);
 
  const handleImageUpload = async (fileOrUrl: File | string) => {
  setIsLoading(true);
@@ -114,8 +125,8 @@ export const QuickProductForm = ({ onClose, onSuccess }: QuickProductFormProps) 
  </div>
  <Input value={formData.name || ''} onChange={(e: any) => setFormData({...formData, name: e.target.value})} placeholder="Product Name" />
  <Input type="number" value={formData.price || ''} onChange={(e: any) => setFormData({...formData, price: Number(e.target.value)})} placeholder={`Price (${CURRENCY})`} />
- <select value={formData.category || ''} onChange={(e) => setFormData({...formData, category: e.target.value})} className="w-full h-12 bg-foreground/[0.04] border border-foreground/15 rounded-2xl px-4 text-foreground text-sm focus:outline-none focus:border-foreground/30 transition-colors">
- {Object.keys(CATEGORY_HIERARCHY).map(c => <option key={c} value={c}>{c}</option>)}
+ <select value={formData.category || ''} onChange={(e) => { setCategoryTouched(true); setFormData({...formData, category: e.target.value}); }} className="w-full h-12 bg-foreground/[0.04] border border-foreground/15 rounded-2xl px-4 text-foreground text-sm focus:outline-none focus:border-foreground/30 transition-colors">
+ {categoryOptions.map(c => <option key={c} value={c}>{c}</option>)}
  </select>
  <Button onClick={handleSubmit} disabled={isLoading} className="w-full h-12">Publish</Button>
  </div>

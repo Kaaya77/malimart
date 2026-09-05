@@ -364,7 +364,11 @@ export const ShopPage: React.FC = () => {
       </div>
 
       {/* Tabs + (on the products tab) filter/sort */}
-      <div className="sticky top-16 md:top-20 z-20 bg-background/95 backdrop-blur-xl border-b border-foreground/8">
+      {/* z-40, not z-20: ProductCard's own wishlist/add-to-cart buttons sit at
+          z-30 (see ProductCardActions.tsx) so they stay above the card image
+          they float over — a header below that bled visibly under them on
+          scroll. z-40 matches the tier the mobile bottom nav already uses. */}
+      <div className="sticky top-16 md:top-20 z-40 bg-background/95 backdrop-blur-xl border-b border-foreground/8">
         <div className="container mx-auto px-4 md:px-8 py-2.5 flex flex-wrap items-center gap-2.5">
           <div className="flex gap-1 overflow-x-auto no-scrollbar">
             {TABS.map(t => {

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { BackendError } from '../components/UI';
 import { useNavigate } from 'react-router-dom';
 import { useAppState } from '../context/AppContext';
@@ -11,9 +11,8 @@ import { FeaturedStores } from '../components/home/FeaturedStores';
 import { ProductGridSection } from '../components/home/ProductGridSection';
 import { TrustStrip } from '../components/home/TrustStrip';
 import { ExploreBanner } from '../components/home/ExploreBanner';
-import { StoreModal } from '../components/StoreModal';
 import { HomePageSkeleton } from '../components/skeletons/HomePageSkeleton';
-import { Product, VendorProfile } from '../types';
+import { Product } from '../types';
 import { isNewArrival } from '../constants';
 
 const containerVariants = {
@@ -37,7 +36,6 @@ const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const homeData = useHomePageData();
 
-  const [activeStore, setActiveStore] = useState<VendorProfile | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPlaceholderIdx, setCurrentPlaceholderIdx] = useState(0);
 
@@ -152,7 +150,6 @@ const HomePage: React.FC = () => {
       {homeData.topShops.length > 0 && (
         <FeaturedStores
           topShops={homeData.topShops}
-          setActiveStore={setActiveStore}
           navigate={navigate}
         />
       )}
@@ -196,16 +193,6 @@ const HomePage: React.FC = () => {
 
       {/* Trust signals now sit under the hero (see above) rather than here at
           the very bottom, so they are seen before the buying decision. */}
-
-      <AnimatePresence>
-        {activeStore && (
-          <StoreModal
-            store={activeStore}
-            isOpen={!!activeStore}
-            onClose={() => setActiveStore(null)}
-          />
-        )}
-      </AnimatePresence>
     </div>
   );
 };
