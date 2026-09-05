@@ -1,7 +1,7 @@
-﻿import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { motion, AnimatePresence, useSpring, useTransform, useMotionValue, useAnimate } from 'framer-motion';
-import { X, Send, Mic, MicOff, Paperclip, ChevronRight, Trash2, Volume2, Loader2, Zap, Copy, Check, ShoppingBag, ChevronLeft, Eye } from 'lucide-react';
+import { motion, AnimatePresence, useMotionValue } from 'framer-motion';
+import { X, Send, Mic, MicOff, Paperclip, ChevronRight, Trash2, Volume2, Loader2, Zap, Copy, Check, ShoppingBag, ChevronLeft, Eye, Minus, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getAI, getLiveAI } from '../services/aiClient';
 import { MODELS } from '../services/aiModels';
@@ -19,7 +19,32 @@ import {
   type PersonalityMode, type LanguageMode,
 } from '../services/maliPersonality';
 
-// â”€â”€ Audio helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+/**
+ * AIChatAssistant — Mali's UI, redesigned.
+ *
+ * Everything under this comment that ISN'T presentation is untouched from
+ * the previous version: the audio pipeline (resample/encode/decode/
+ * decodeAudioData/createBlob), the Gemini Live voice session, the streaming
+ * chat request and its [PRODUCT:id] + trailing-JSON parsing convention, the
+ * system-prompt builder, the widget drag/reposition persistence, the
+ * mali:ask / mali:open / mali:toggle window-event contract, and the emote
+ * engine in MaliAnimalAvatar. Rewriting any of that wasn't the ask, and it
+ * is the part of this component actually worth being careful with.
+ *
+ * What changed is the visual language. The old panel read as a separate
+ * "gaming HUD" bolted onto the app — animated glow halos, orbiting
+ * particles, three drifting blurred blobs behind the messages, heavy
+ * foreground/background gradient bubbles. This pass brings Mali into the
+ * same editorial vocabulary the rest of the app already speaks: flat
+ * bg-foreground/[0.04] surfaces, a single fixed emerald accent (not a
+ * gradient standing in for it), rounded-3xl panels, uppercase-tracked
+ * micro-labels — the same language messaging, settings and the homepage
+ * redesign use. The companion's personality (emotes, voice, easter eggs,
+ * Sheng/sass toggles) is exactly as expressive as before; the chrome around
+ * it is calmer.
+ */
+
+// ── Audio helpers ───────────────────────────────────────────────────────────
 function resample(data: Float32Array, from: number, to: number): Float32Array {
   const ratio = from / to;
   const out = new Float32Array(Math.round(data.length / ratio));
@@ -53,7 +78,7 @@ function createBlob(data: Float32Array) {
   return { data: encode(new Uint8Array(i16.buffer)), mimeType: 'audio/pcm;rate=16000' };
 }
 
-// â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Types ────────────────────────────────────────────────────────────────────
 interface Msg {
   id: string;
   role: 'user' | 'assistant';
@@ -66,46 +91,31 @@ interface Msg {
   suggestions?: string[];
 }
 
-// â”€â”€ Animated mesh background â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-const MeshBackground = () => (
-  <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-3xl">
-    <motion.div className="absolute -top-16 -left-16 w-64 h-64 rounded-full bg-emerald-500/6 blur-3xl"
-      animate={{ x: [0,40,0], y: [0,-30,0] }} transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }} />
-    <motion.div className="absolute top-1/2 -right-20 w-48 h-48 rounded-full bg-teal-400/5 blur-3xl"
-      animate={{ x: [0,-25,0], y: [0,35,0] }} transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut', delay: 2 }} />
-    <motion.div className="absolute -bottom-12 left-1/3 w-56 h-56 rounded-full bg-emerald-600/4 blur-3xl"
-      animate={{ x: [0,20,0], y: [0,-20,0] }} transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut', delay: 4 }} />
-  </div>
-);
-
-
-// ── Methali toast ─────────────────────────────────────────────────────────────
+// ── Methali toast ────────────────────────────────────────────────────────────
 const MethaliToast = ({ methali, onClose }: { methali: { sw: string; en: string }; onClose: () => void }) => (
   <motion.div key="methali"
-    initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
-    className="absolute top-16 left-3 right-3 z-40 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 rounded-2xl p-3 backdrop-blur-sm shadow-lg">
-    <div className="flex items-start gap-2">
+    initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }}
+    className="absolute top-16 left-3 right-3 z-40 bg-background border border-foreground/[0.1] rounded-2xl p-3 shadow-lg">
+    <div className="flex items-start gap-2.5">
       <span className="text-lg flex-shrink-0">📜</span>
       <div className="flex-1 min-w-0">
-        <p className="text-[9px] font-black uppercase tracking-widest text-emerald-500 mb-0.5">Methali ya Leo</p>
+        <p className="text-[9px] font-black uppercase tracking-[0.15em] text-emerald-600 dark:text-emerald-400 mb-0.5">Methali ya Leo</p>
         <p className="text-[11px] font-bold text-foreground/80 italic">&ldquo;{methali.sw}&rdquo;</p>
-        <p className="text-[9px] text-foreground/50 mt-0.5">{methali.en}</p>
+        <p className="text-[9px] text-foreground/45 mt-0.5">{methali.en}</p>
       </div>
-      <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
-        onClick={onClose} className="flex-shrink-0 text-foreground/30 hover:text-foreground/60 transition-colors">
+      <button onClick={onClose} aria-label="Dismiss" className="flex-shrink-0 text-foreground/30 hover:text-foreground/60 transition-colors">
         <X className="w-3 h-3" />
-      </motion.button>
+      </button>
     </div>
   </motion.div>
 );
 
-// â”€â”€ Mali avatar with optional rings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// MaliAvatar now delegates to MaliAnimalAvatar
+// ── Mali avatar wrapper ──────────────────────────────────────────────────────
 const MaliAvatar = ({ size = 36, rings = false, pulse = false, emote }: { size?: number; rings?: boolean; pulse?: boolean; emote?: EmoteType }) => (
   <MaliAnimalAvatar size={size} rings={rings} pulse={pulse} emote={emote ?? 'idle'} />
 );
 
-// â”€â”€ Voice mode waveform (canvas) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Voice mode waveform ──────────────────────────────────────────────────────
 const VoiceCanvas = ({ analyser }: { analyser: AnalyserNode | null }) => {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
@@ -120,18 +130,10 @@ const VoiceCanvas = ({ analyser }: { analyser: AnalyserNode | null }) => {
       id = requestAnimationFrame(draw);
       ctx.clearRect(0, 0, W, H);
       phase += 0.04;
-
+      ctx.strokeStyle = '#10b981';
+      ctx.lineWidth = 2;
       if (analyser && data) {
         analyser.getByteTimeDomainData(data);
-        const grad = ctx.createLinearGradient(0, 0, W, 0);
-        grad.addColorStop(0, 'rgba(16,185,129,0)');
-        grad.addColorStop(0.2, 'rgba(16,185,129,0.9)');
-        grad.addColorStop(0.8, 'rgba(20,184,166,0.9)');
-        grad.addColorStop(1, 'rgba(20,184,166,0)');
-        ctx.strokeStyle = grad;
-        ctx.lineWidth = 2.5;
-        ctx.shadowBlur = 12;
-        ctx.shadowColor = '#10b981';
         ctx.beginPath();
         for (let i = 0; i < data.length; i++) {
           const x = (i / data.length) * W;
@@ -140,16 +142,6 @@ const VoiceCanvas = ({ analyser }: { analyser: AnalyserNode | null }) => {
         }
         ctx.stroke();
       } else {
-        // idle animated sine
-        const grad = ctx.createLinearGradient(0, 0, W, 0);
-        grad.addColorStop(0, 'rgba(16,185,129,0)');
-        grad.addColorStop(0.3, 'rgba(16,185,129,0.6)');
-        grad.addColorStop(0.7, 'rgba(20,184,166,0.6)');
-        grad.addColorStop(1, 'rgba(20,184,166,0)');
-        ctx.strokeStyle = grad;
-        ctx.lineWidth = 2;
-        ctx.shadowBlur = 8;
-        ctx.shadowColor = '#10b981';
         ctx.beginPath();
         for (let x = 0; x <= W; x++) {
           const t = x / W;
@@ -165,7 +157,7 @@ const VoiceCanvas = ({ analyser }: { analyser: AnalyserNode | null }) => {
   return <canvas ref={ref} width={320} height={60} className="w-full h-[60px]" />;
 };
 
-// â”€â”€ Typing indicator with rotating context â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Typing indicator ─────────────────────────────────────────────────────────
 const THINKING = [
   'Browsing the catalog…',
   'Thinking of ideas…',
@@ -180,21 +172,21 @@ const TypingBubble = () => {
     return () => clearInterval(id);
   }, []);
   return (
-    <motion.div initial={{ opacity: 0, y: 8, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }}
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 4 }} className="flex items-end gap-2 mb-3">
       <MaliAvatar size={28} pulse />
-      <div className="px-4 py-3 glass-surface border border-foreground/8 rounded-2xl rounded-bl-sm shadow-sm flex items-center gap-3 max-w-[200px]">
+      <div className="px-4 py-3 bg-foreground/[0.04] border border-foreground/[0.08] rounded-2xl rounded-bl-md flex items-center gap-3 max-w-[210px]">
         <div className="flex gap-1">
           {[0, 0.18, 0.36].map(d => (
             <motion.span key={d} className="w-1.5 h-1.5 rounded-full bg-emerald-500"
-              animate={{ y: [0,-6,0], opacity: [0.4,1,0.4] }}
+              animate={{ y: [0, -6, 0], opacity: [0.4, 1, 0.4] }}
               transition={{ duration: 0.9, delay: d, repeat: Infinity, ease: 'easeInOut' }} />
           ))}
         </div>
         <AnimatePresence mode="wait">
           <motion.span key={idx} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.25 }}
-            className="text-[9px] font-medium text-foreground/40 whitespace-nowrap">
+            className="text-[10px] font-semibold text-foreground/45 whitespace-nowrap">
             {THINKING[idx]}
           </motion.span>
         </AnimatePresence>
@@ -203,21 +195,19 @@ const TypingBubble = () => {
   );
 };
 
-// â”€â”€ Suggestion chips â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Suggestion chips ─────────────────────────────────────────────────────────
 const SuggestionChips = ({ chips, onPick }: { chips: string[]; onPick: (s: string) => void }) => (
-  <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="flex flex-wrap gap-1.5 mt-2">
-    {chips.map((c, i) => (
-      <motion.button key={c} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: i * 0.08 }} whileHover={{ scale: 1.05, y: -1 }} whileTap={{ scale: 0.95 }}
-        onClick={() => onPick(c)}
-        className="px-3 py-1.5 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 hover:from-emerald-500/20 hover:to-teal-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 hover:border-emerald-500/40 rounded-full text-[10px] font-bold transition-all flex items-center gap-1">
+  <div className="flex flex-wrap gap-1.5 mt-2">
+    {chips.map(c => (
+      <button key={c} onClick={() => onPick(c)}
+        className="flex items-center gap-1 px-3 py-1.5 bg-emerald-500/[0.08] hover:bg-emerald-500/[0.14] text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 rounded-full text-[10px] font-bold transition-colors">
         <ChevronRight className="w-2.5 h-2.5" />{c}
-      </motion.button>
+      </button>
     ))}
-  </motion.div>
+  </div>
 );
 
-// â”€â”€ Product carousel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Product carousel ─────────────────────────────────────────────────────────
 const ProductCarousel = ({ ids, products, onAdd, onView }: {
   ids: string[]; products: any[]; onAdd: (p: any) => void; onView: (p: any) => void;
 }) => {
@@ -226,30 +216,27 @@ const ProductCarousel = ({ ids, products, onAdd, onView }: {
   if (!items.length) return null;
   const p = items[idx];
   return (
-    <motion.div initial={{ opacity: 0, y: 10, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }}
-      className="ml-9 mb-3 w-[82%]">
-      <div className="bg-background rounded-2xl border border-foreground/8 shadow-sm overflow-hidden">
+    <div className="ml-9 mb-3 w-[82%]">
+      <div className="bg-foreground/[0.03] rounded-2xl border border-foreground/[0.08] overflow-hidden">
         <div className="relative">
           <AnimatePresence mode="wait">
-            <motion.div key={p.id} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }} className="flex gap-3 p-3">
-              <div className="w-16 h-16 rounded-xl overflow-hidden bg-foreground/5 flex-shrink-0 relative group">
-                <img src={p.images?.[0]} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt={p.name} loading="lazy" />
+            <motion.div key={p.id} initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -16 }} transition={{ duration: 0.2 }} className="flex gap-3 p-3">
+              <div className="w-16 h-16 rounded-xl overflow-hidden bg-foreground/[0.06] flex-shrink-0">
+                <img src={p.images?.[0]} className="w-full h-full object-cover" alt={p.name} loading="lazy" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-bold text-[11px] text-foreground line-clamp-2 leading-snug mb-1">{p.name}</p>
-                <p className="text-[12px] font-black text-emerald-600 mb-2">{formatTZS(p.price)}</p>
+                <p className="text-[12px] font-black text-emerald-600 dark:text-emerald-400 mb-2">{formatTZS(p.price)}</p>
                 <div className="flex items-center gap-1.5">
-                  <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.96 }}
-                    onClick={() => onView(p)}
-                    className="flex items-center gap-1.5 h-7 px-3 bg-foreground/[0.06] text-foreground/70 rounded-xl text-[9px] font-black uppercase tracking-wider hover:bg-foreground/10 transition-colors">
+                  <button onClick={() => onView(p)}
+                    className="flex items-center gap-1.5 h-7 px-3 bg-foreground/[0.06] text-foreground/70 rounded-xl text-[9px] font-black uppercase tracking-wider hover:bg-foreground/[0.1] transition-colors">
                     <Eye className="w-2.5 h-2.5" /> View
-                  </motion.button>
-                  <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.96 }}
-                    onClick={() => onAdd(p)}
-                    className="flex items-center gap-1.5 h-7 px-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl text-[9px] font-black uppercase tracking-wider shadow-sm shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-shadow">
+                  </button>
+                  <button onClick={() => onAdd(p)}
+                    className="flex items-center gap-1.5 h-7 px-3 bg-emerald-600 text-white rounded-xl text-[9px] font-black uppercase tracking-wider hover:bg-emerald-700 transition-colors">
                     <ShoppingBag className="w-2.5 h-2.5" /> Add to bag
-                  </motion.button>
+                  </button>
                 </div>
               </div>
             </motion.div>
@@ -258,18 +245,18 @@ const ProductCarousel = ({ ids, products, onAdd, onView }: {
             <div className="flex items-center justify-between px-3 pb-2.5">
               <div className="flex gap-1">
                 {items.map((_: any, i: number) => (
-                  <button key={i} onClick={() => setIdx(i)}
+                  <button key={i} onClick={() => setIdx(i)} aria-label={`View recommendation ${i + 1}`}
                     className={`h-1 rounded-full transition-all duration-300 ${i === idx ? 'w-4 bg-emerald-500' : 'w-1.5 bg-foreground/20'}`} />
                 ))}
               </div>
               <div className="flex gap-1">
                 <button aria-label="Previous product" onClick={() => setIdx(i => Math.max(0, i - 1))}
-                  className="w-5 h-5 rounded-full bg-foreground/5 hover:bg-foreground/10 flex items-center justify-center transition-colors disabled:opacity-30"
+                  className="w-5 h-5 rounded-full bg-foreground/[0.05] hover:bg-foreground/[0.1] flex items-center justify-center transition-colors disabled:opacity-30"
                   disabled={idx === 0}>
                   <ChevronLeft className="w-3 h-3" />
                 </button>
                 <button aria-label="Next product" onClick={() => setIdx(i => Math.min(items.length - 1, i + 1))}
-                  className="w-5 h-5 rounded-full bg-foreground/5 hover:bg-foreground/10 flex items-center justify-center transition-colors disabled:opacity-30"
+                  className="w-5 h-5 rounded-full bg-foreground/[0.05] hover:bg-foreground/[0.1] flex items-center justify-center transition-colors disabled:opacity-30"
                   disabled={idx === items.length - 1}>
                   <ChevronRight className="w-3 h-3" />
                 </button>
@@ -279,13 +266,13 @@ const ProductCarousel = ({ ids, products, onAdd, onView }: {
         </div>
       </div>
       {items.length > 1 && (
-        <p className="text-[9px] text-foreground/30 font-medium ml-1 mt-1">{idx + 1} of {items.length} recommendations</p>
+        <p className="text-[9px] text-foreground/55 font-medium ml-1 mt-1">{idx + 1} of {items.length} recommendations</p>
       )}
-    </motion.div>
+    </div>
   );
 };
 
-// â”€â”€ Message bubble â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Message bubble ───────────────────────────────────────────────────────────
 const MessageBubble = ({ m, isFirst, products, onAdd, onView, onSuggest }: {
   m: Msg; isFirst: boolean; products: any[];
   onAdd: (p: any) => void; onView: (p: any) => void; onSuggest: (s: string) => void;
@@ -310,10 +297,7 @@ const MessageBubble = ({ m, isFirst, products, onAdd, onView, onSuggest }: {
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 12, x: isUser ? 12 : -12, scale: 0.96 }}
-      animate={{ opacity: 1, y: 0, x: 0, scale: 1 }}
-      transition={{ type: 'spring', stiffness: 380, damping: 26 }}
+    <div
       className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} mb-2`}
       onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
     >
@@ -323,20 +307,20 @@ const MessageBubble = ({ m, isFirst, products, onAdd, onView, onSuggest }: {
 
         <div className="relative flex flex-col gap-0.5">
           {m.image && (
-            <div className="mb-1 max-w-[160px] rounded-2xl overflow-hidden border border-foreground/10 shadow-sm">
+            <div className="mb-1 max-w-[160px] rounded-2xl overflow-hidden border border-foreground/[0.1]">
               <img src={m.image} alt="" className="w-full object-cover" />
             </div>
           )}
 
-          <div className={`relative px-3.5 py-2.5 rounded-2xl text-[12px] leading-relaxed shadow-sm group ${
+          <div className={`relative px-3.5 py-2.5 rounded-2xl text-[12px] leading-relaxed group ${
             isUser
-              ? 'bg-gradient-to-br from-foreground to-foreground/85 text-background rounded-br-[4px]'
-              : 'glass-surface/80 backdrop-blur-sm border border-foreground/8 rounded-bl-[4px] text-foreground'
+              ? 'bg-emerald-600 text-white rounded-br-md'
+              : 'bg-foreground/[0.04] border border-foreground/[0.08] rounded-bl-md text-foreground'
           }`}>
             {isUser ? (
               <span className="font-medium">{m.text}</span>
             ) : (
-              <div className="prose prose-sm max-w-none text-foreground [&_p]:my-0.5 [&_p:first-child]:mt-0 [&_p:last-child]:mb-0 [&_ul]:my-1 [&_li]:my-0.5 [&_strong]:font-black [&_code]:text-emerald-500 [&_code]:bg-emerald-500/8 [&_code]:px-1 [&_code]:rounded [&_a]:text-emerald-500 [&_a]:no-underline">
+              <div className="prose prose-sm max-w-none text-foreground [&_p]:my-0.5 [&_p:first-child]:mt-0 [&_p:last-child]:mb-0 [&_ul]:my-1 [&_li]:my-0.5 [&_strong]:font-black [&_code]:text-emerald-600 [&_code]:dark:text-emerald-400 [&_code]:bg-emerald-500/[0.08] [&_code]:px-1 [&_code]:rounded [&_a]:text-emerald-600 [&_a]:dark:text-emerald-400 [&_a]:no-underline">
                 <ReactMarkdown>{m.text}</ReactMarkdown>
                 {m.streaming && (
                   <motion.span className="inline-block w-0.5 h-3.5 bg-emerald-500 rounded-full ml-0.5 align-middle"
@@ -345,20 +329,19 @@ const MessageBubble = ({ m, isFirst, products, onAdd, onView, onSuggest }: {
               </div>
             )}
 
-            {/* Copy button */}
             <AnimatePresence>
               {hovered && !m.streaming && (
                 <motion.button aria-label={copied ? 'Copied' : 'Copy message'} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8 }} transition={{ duration: 0.15 }}
                   onClick={copy}
-                  className={`absolute -top-2 ${isUser ? 'left-0 -translate-x-full -ml-1' : 'right-0 translate-x-full ml-1'} w-6 h-6 rounded-lg bg-background border border-foreground/10 flex items-center justify-center shadow-sm hover:bg-foreground/5 transition-colors`}>
+                  className={`absolute -top-2 ${isUser ? 'left-0 -translate-x-full -ml-1' : 'right-0 translate-x-full ml-1'} w-6 h-6 rounded-lg bg-background border border-foreground/[0.1] flex items-center justify-center shadow-sm hover:bg-foreground/[0.05] transition-colors`}>
                   {copied ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3 text-foreground/40" />}
                 </motion.button>
               )}
             </AnimatePresence>
           </div>
 
-          <span className={`text-[8px] text-foreground/20 font-medium px-1 ${isUser ? 'text-right' : ''}`}>{time}</span>
+          <span className={`text-[9px] text-foreground/45 font-medium px-1 ${isUser ? 'text-right' : ''}`}>{time}</span>
         </div>
       </div>
 
@@ -367,11 +350,11 @@ const MessageBubble = ({ m, isFirst, products, onAdd, onView, onSuggest }: {
           <SuggestionChips chips={m.suggestions} onPick={onSuggest} />
         </div>
       ) : null}
-    </motion.div>
+    </div>
   );
 };
 
-// â”€â”€ Main component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Main component ───────────────────────────────────────────────────────────
 export const AIChatAssistant = () => {
   const { products, addToCart, user } = useAppState();
   const { addToast } = useToast();
@@ -439,10 +422,6 @@ export const AIChatAssistant = () => {
   const genId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
   // ── Repositionable widget ──────────────────────────────────────────────
-  // The companion is anchored bottom-right by default; dragging it offsets
-  // from that anchor and the offset persists across sessions. Same offset
-  // applies whether the bubble is closed or the panel is open, so the panel
-  // opens wherever the user last left the bubble.
   const posX = useMotionValue(0);
   const posY = useMotionValue(0);
   const dragConstraintsRef = useRef({ top: -(window.innerHeight - 160), left: -(window.innerWidth - 100), right: 20, bottom: 20 });
@@ -457,13 +436,8 @@ export const AIChatAssistant = () => {
   const savePosition = () => {
     try { localStorage.setItem('mali_widget_pos', JSON.stringify({ x: posX.get(), y: posY.get() })); } catch {}
   };
-  // Browsers still fire a native `click` after mouseup regardless of how far
-  // the pointer moved in between — without this guard, every drag-to-reposition
-  // also re-triggers onClick and pops the chat open.
   const draggedRef = useRef(false);
   const handleFabDrag = (_: unknown, info: { offset: { x: number; y: number } }) => {
-    // Set as soon as real movement is detected — well before pointerup/click,
-    // unlike onDragEnd which can resolve a frame after the native click already fired.
     if (Math.abs(info.offset.x) > 4 || Math.abs(info.offset.y) > 4) draggedRef.current = true;
   };
   const handleFabDragEnd = () => {
@@ -474,49 +448,31 @@ export const AIChatAssistant = () => {
   useEffect(() => { scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' }); }, [messages, isTyping]);
   useEffect(() => { if (isOpen && !isMinimized) setTimeout(() => inputRef.current?.focus(), 250); }, [isOpen, isMinimized]);
   useEffect(() => () => stopLiveSession(), []);
-  // Show methali on first open of the day
   useEffect(() => {
     if (isOpen && !methaliSeen) { setTimeout(() => setShowMethali(true), 1200); }
   }, [isOpen]);
 
-  // Deliberate-emote policy: the companion stays its calm animated self at all
-  // times. Reactions play ONLY on real occasions — the AI's chosen emote per
-  // reply, thinking while it works, purchase celebrations, mood empathy.
-
-  // Cross-component handoff: anywhere in the app can dispatch
-  // `new CustomEvent('mali:ask', { detail: { q } })` to open the assistant
-  // pre-loaded with a question (used by the search modal's "Ask Mali" row).
   useEffect(() => {
     const ask = (q: unknown) => {
       if (typeof q !== 'string' || !q.trim()) return;
-      (window as any).__maliPendingAsk = null; // consumed — don't replay on remount
+      (window as any).__maliPendingAsk = null;
       setIsOpen(true);
       setIsMinimized(false);
-      setTimeout(() => handleSend(undefined, q.trim()), 350); // let the panel mount
+      setTimeout(() => handleSend(undefined, q.trim()), 350);
     };
     const onAsk = (e: Event) => ask((e as CustomEvent).detail?.q);
     window.addEventListener('mali:ask', onAsk);
 
-    // `mali:ask` requires a question and bails without one, so there was no way
-    // to just OPEN the panel from elsewhere. The mobile bottom nav needs
-    // exactly that — see the docked "Mali" tab in components/Navbar.tsx.
     const onOpen = () => { setIsOpen(true); setIsMinimized(false); };
     window.addEventListener('mali:open', onOpen);
 
-    // The docked nav tab TOGGLES: tapping "Mali" again closes the panel, which
-    // is what people instinctively try first.
     const onToggle = () => setIsOpen(v => { if (v) stopLiveSession(); return !v; });
     window.addEventListener('mali:toggle', onToggle);
 
-    // Escape always closes. Independent of the header buttons, so a layout
-    // regression can never leave the panel un-dismissable again — which is
-    // exactly what happened when the header rendered off-screen.
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') { stopLiveSession(); setIsOpen(false); }
     };
     window.addEventListener('keydown', onKey);
-    // The assistant mounts lazily (post-idle) — consume any ask dispatched
-    // before the listener existed.
     const pending = (window as any).__maliPendingAsk;
     if (pending) { (window as any).__maliPendingAsk = null; ask(pending); }
     return () => {
@@ -534,13 +490,8 @@ export const AIChatAssistant = () => {
   };
 
   const getSystem = () => {
-    // Product names/categories are seller-supplied — flatten whitespace so a
-    // crafted listing can't smuggle instruction-looking lines into the prompt,
-    // and mark the block as data below.
     const clean = (s: string) => String(s || '').replace(/\s+/g, ' ').slice(0, 120);
     const catalog = products.slice(0, 60).map(p => `[${p.id}] ${clean(p.name)} · ${formatTZS(p.price)} · ${clean(p.category)}`).join('\n');
-    // Stores derived from the catalog so Mali can talk about sellers/shops, not
-    // just products (name, region, verified badge, how many items they carry).
     const storeMap = new Map<string, { name: string; region: string; verified: boolean; count: number }>();
     for (const p of products) {
       const sid = (p as any).seller_id;
@@ -585,7 +536,7 @@ RESPONSE FORMAT:
 5. If asked about something not in catalog — say so honestly and suggest the closest match`;
   };
 
-  // â”€â”€ Live voice â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Live voice ─────────────────────────────────────────────────────────────
   const stopLiveSession = useCallback(() => {
     sessionRef.current?.then((s: any) => { try { s.close(); } catch {} });
     sessionRef.current = null;
@@ -654,7 +605,7 @@ RESPONSE FORMAT:
     } catch { stopLiveSession(); }
   };
 
-  // â”€â”€ Send (streaming) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Send (streaming) ─────────────────────────────────────────────────────
   const handleSend = async (e?: React.FormEvent, override?: string) => {
     if (e) e.preventDefault();
     const text = override || input.trim();
@@ -666,7 +617,6 @@ RESPONSE FORMAT:
     setIsTyping(true);
     setAvatarEmote(isLateNight() ? 'sleepy' : 'thinking');
 
-    // Easter egg check — short-circuit AI call if triggered
     const egg = detectEasterEgg(text);
     if (egg && egg.responses.length > 0) {
       const pick = (a: string[]) => a[Math.floor(Math.random() * a.length)];
@@ -680,7 +630,6 @@ RESPONSE FORMAT:
       return;
     }
 
-    // Mood detection — prepend empathy response
     const mood = detectUserMood(text);
     if (mood !== 'neutral') {
       const moodResp = getMoodResponse(mood);
@@ -689,7 +638,6 @@ RESPONSE FORMAT:
       setMessages(prev => [...prev, { id: genId(), role: 'assistant', text: moodResp, type: 'text', ts: Date.now() }]);
     }
 
-    // Purchase confetti
     if (detectPurchase(text)) {
       setShowConfetti(true);
       setAvatarEmote('celebrating');
@@ -721,7 +669,6 @@ RESPONSE FORMAT:
         setMessages(prev => prev.map(m => m.id === aid ? { ...m, text: full } : m));
       }
 
-      // Extract trailing JSON: suggestions + the emote the model chose to perform
       const suggestMatch = full.match(/\{[^{}]*"suggestions"\s*:\s*\[[^\]]*\][^{}]*\}/);
       let suggestions: string[] = [];
       let cleanText = full;
@@ -738,7 +685,6 @@ RESPONSE FORMAT:
         cleanText = full.replace(suggestMatch[0], '').trim();
       }
 
-      // Extract product tags — group into carousel
       const productRegex = /\[PRODUCT:([a-zA-Z0-9-]+)\]/g;
       const productIds: string[] = [];
       let match: RegExpExecArray | null;
@@ -759,9 +705,6 @@ RESPONSE FORMAT:
         setMessages(prev => prev.map(m => m.id === aid ? { ...m, text: cleanText, streaming: false, suggestions } : m));
       }
     } catch (err) {
-      // Surface the real cause for diagnosis (e.g. the /api/gemini proxy returns
-      // 503 "AI service not configured" when GEMINI_API_KEY is missing on the
-      // deployment) — the swallowed error made "Mali isn't working" undebuggable.
       console.error('Mali AI request failed:', err);
       setIsTyping(false);
       setMessages(prev => [...prev, { id: genId(), role: 'assistant', type: 'text', ts: Date.now(), text: "Oops, something went sideways! Try again — I'm still here 😊" }]);
@@ -773,35 +716,24 @@ RESPONSE FORMAT:
     e.target.value = '';
     const check = validateUpload(file);
     if (!check.ok) { addToast(check.error || 'Unsupported file', 'error'); return; }
-    // Compress before base64-encoding — a raw phone photo would otherwise ship
-    // megabytes of inline data with the request (and every follow-up turn).
     const blob = await compressImage(file, 1024, 0.75);
     const reader = new FileReader();
     reader.onloadend = () => setAttachment(reader.result as string);
     reader.readAsDataURL(blob);
   };
 
-  // Detect grouped messages (consecutive same-sender, within 60s)
   const isFirstInGroup = (i: number) => {
     if (i === 0) return true;
     const prev = messages[i - 1]; const curr = messages[i];
     return prev.role !== curr.role || curr.ts - prev.ts > 60_000;
   };
 
-  // Auto-hide while scrolling DOWN, restore on scroll-up or when scrolling
-  // stops. The safe-zone variable only helps against bars that declare
-  // themselves; it cannot know about ordinary page content the launcher
-  // happens to sit on top of — the "Secure Checkout" button on the bag, a
-  // category label on Explore. Getting out of the way whenever the user is
-  // actively moving through content fixes that everywhere at once, instead of
-  // per-page patching, and the launcher is never more than a flick away.
   useEffect(() => {
     let lastY = window.scrollY;
     let idle: ReturnType<typeof setTimeout>;
     const onScroll = () => {
       const y = window.scrollY;
       const dy = y - lastY;
-      // Small threshold so momentum jitter does not flicker it.
       if (y > 120 && dy > 6) setScrolledAway(true);
       else if (dy < -6) setScrolledAway(false);
       lastY = y;
@@ -812,46 +744,35 @@ RESPONSE FORMAT:
     return () => { window.removeEventListener('scroll', onScroll); clearTimeout(idle); };
   }, []);
 
-  // â”€â”€ FAB â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── FAB ──────────────────────────────────────────────────────────────────
   if (!isOpen) return (
-    // Sits above whatever is pinned to the bottom (mobile nav, or a page's own
-    // sticky CTA bar) via --mm-bottom-obstruction, rather than a hardcoded
-    // 58px that assumed the nav was the only thing down there.
     <div className={`hidden md:block fixed md:bottom-6 md:right-4 z-[90] transition-all duration-200 ease-out ${scrolledAway ? 'opacity-0 translate-y-6 pointer-events-none' : 'opacity-100 translate-y-0'}`}>
       <motion.button initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 300, damping: 18, delay: 0.3 }}
-        whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.9 }}
+        whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.92 }}
         onClick={() => { if (!draggedRef.current) setIsOpen(true); }}
         drag dragMomentum={false} dragElastic={0.12} dragConstraints={dragConstraintsRef.current}
         onDrag={handleFabDrag} onDragEnd={handleFabDragEnd}
         style={{ x: posX, y: posY, touchAction: 'none' }}
         title="Drag to reposition"
-        className="relative w-14 h-14 rounded-[18px] cursor-grab active:cursor-grabbing"
+        className="relative w-14 h-14 rounded-2xl cursor-grab active:cursor-grabbing bg-background border border-foreground/[0.1] shadow-lg"
       >
-        {/* Glow halo */}
-        <motion.div className="absolute inset-0 rounded-[18px] bg-gradient-to-br from-emerald-400 to-teal-600 blur-xl"
-          animate={{ opacity: [0.5, 0.8, 0.5], scale: [1, 1.2, 1] }}
-          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }} />
-
-        {/* Orbiting particles */}
-        {[0, 120, 240].map(deg => (
-          <motion.div key={deg} className="absolute inset-0 pointer-events-none"
-            animate={{ rotate: 360 }} transition={{ duration: 5, repeat: Infinity, ease: 'linear' }}
-            style={{ rotate: deg }}>
-            <div className="absolute top-0 left-1/2 w-1.5 h-1.5 -translate-x-1/2 -translate-y-2 rounded-full bg-emerald-300 shadow-sm shadow-emerald-400" />
-          </motion.div>
-        ))}
-
-        {/* Button surface — the user's chosen companion IS the button, always
-            its own animated self, no emote takeovers. */}
-        <div className="absolute inset-0 rounded-[18px] flex items-center justify-center shadow-xl overflow-visible">
-          <MaliAnimalAvatar size={56} pulse emote="idle" />
+        {/* One calm breathing ring — replaces the old glow halo + three
+            orbiting particles, which read as a game HUD rather than a
+            shopping companion. */}
+        <motion.span
+          className="absolute inset-0 rounded-2xl border-2 border-emerald-500/40"
+          animate={{ scale: [1, 1.18, 1], opacity: [0.6, 0, 0.6] }}
+          transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}
+        />
+        <div className="absolute inset-0 rounded-2xl flex items-center justify-center overflow-visible">
+          <MaliAnimalAvatar size={52} pulse emote="idle" />
         </div>
       </motion.button>
     </div>
   );
 
-  // â”€â”€ Chat window â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Chat window ──────────────────────────────────────────────────────────
   const starters = [
     { emoji: '✨', label: "What's new?",   q: "What's new in the store?" },
     { emoji: '🎁', label: 'Gift ideas',    q: 'Help me find a gift under 50,000 TZS' },
@@ -860,289 +781,238 @@ RESPONSE FORMAT:
   ];
 
   return (
-    <motion.div initial={{ opacity: 0, y: 28, scale: 0.92 }} animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: 28, scale: 0.92 }}
-      transition={{ type: 'spring', stiffness: 320, damping: 26 }}
-      // BLOCKER FIX: the panel was `bottom-[100px]` + a hardcoded `h-[550px]`,
-      // so it demanded 650px of vertical space. On a phone with browser chrome
-      // (~519px visible) the panel's top landed at 519-650 = -131px, putting
-      // the header — and with it the ONLY close and minimise buttons — off the
-      // top of the screen, unreachable at any scroll position. The chat could
-      // be opened and never closed.
-      //
-      // Height is now viewport-relative and clamped, so the top edge can never
-      // go negative. dvh (not vh) so it tracks mobile browser chrome as it
-      // collapses. It sits above whatever is pinned to the bottom, reusing the
-      // same safe-zone variable as everything else.
-      className={`fixed right-4 z-[90] w-[calc(100vw-2rem)] md:w-[390px]
+    <motion.div initial={{ opacity: 0, y: 24, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: 24, scale: 0.96 }}
+      transition={{ type: 'spring', stiffness: 340, damping: 28 }}
+      className={`fixed right-4 z-[90] w-[calc(100vw-2rem)] md:w-[400px]
         bottom-[calc(var(--mm-bottom-obstruction,58px)+0.75rem)] md:bottom-4 md:right-4
         ${isMinimized
           ? 'h-16'
-          : 'h-[min(550px,calc(100dvh-var(--mm-bottom-obstruction,58px)-2.5rem))] md:h-[min(590px,calc(100dvh-6rem))]'}
+          : 'h-[min(560px,calc(100dvh-var(--mm-bottom-obstruction,58px)-2.5rem))] md:h-[min(640px,calc(100dvh-6rem))]'}
         transition-[height] duration-300 ease-out`}
     >
-      {/* Gradient border wrapper */}
-      <div className="h-full p-px rounded-3xl bg-gradient-to-b from-emerald-500/20 via-foreground/5 to-teal-500/15 shadow-2xl shadow-black/25">
-        <div className="flex flex-col h-full rounded-[23px] overflow-hidden bg-background/97 backdrop-blur-2xl relative">
-          <MeshBackground />
+      <div className="flex flex-col h-full rounded-3xl overflow-hidden bg-background border border-foreground/[0.1] shadow-2xl shadow-black/20 relative">
+        {/* Single static wash instead of three drifting animated blobs —
+            enough to keep the panel from feeling flat, without competing
+            with the messages for attention. */}
+        <div
+          className="absolute inset-x-0 top-0 h-40 pointer-events-none"
+          style={{ background: 'radial-gradient(120% 100% at 20% 0%, rgba(16,185,129,0.06), transparent 70%)' }}
+          aria-hidden="true"
+        />
 
-          {/* Confetti on purchase */}
-          <AnimatePresence>{showConfetti && <MaliConfetti count={50} />}</AnimatePresence>
+        <AnimatePresence>{showConfetti && <MaliConfetti count={50} />}</AnimatePresence>
 
-          {/* Methali of the day — first open only */}
-          <AnimatePresence>
-            {showMethali && <MethaliToast methali={getDailyMethali()} onClose={() => setShowMethali(false)} />}
-          </AnimatePresence>
+        <AnimatePresence>
+          {showMethali && <MethaliToast methali={getDailyMethali()} onClose={() => setShowMethali(false)} />}
+        </AnimatePresence>
 
-          {/* Companion picker — rendered at the panel root, NOT inside the
-              header: the header's stacking context (z-10 + backdrop-blur) let
-              the messages area paint over the popover and steal its clicks. */}
-          <AnimatePresence>
-            {showAnimalPicker && (
-              <>
-                <motion.div
-                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                  className="absolute inset-0 z-40 bg-black/25 backdrop-blur-[2px]"
-                  onClick={() => setShowAnimalPicker(false)}
-                />
-                <div className="absolute top-16 left-3 z-50">
-                  <AnimalPicker onClose={() => setShowAnimalPicker(false)} />
-                </div>
-              </>
-            )}
-          </AnimatePresence>
-
-          {/* â”€â”€ Header â”€â”€ */}
-          <div className="relative z-10 px-4 py-3 border-b border-foreground/6 flex items-center justify-between gap-2 flex-shrink-0 bg-background/95 backdrop-blur-sm">
-            <div className="flex items-center gap-3 min-w-0">
-              <motion.button whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.93 }}
-                onClick={() => {
-                  // Expand first if minimised — a 64px-tall panel would clip the popover
-                  if (isMinimized) setIsMinimized(false);
-                  setShowAnimalPicker(v => !v);
-                }}
-                className="flex-shrink-0"
-                title="Change companion">
-                <MaliAvatar size={38} rings={isLive} emote={avatarEmote} />
-              </motion.button>
-              <div className="min-w-0">
-                <p className="font-black text-sm bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent truncate">{animalInfo.name}</p>
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <motion.span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isLive ? 'bg-red-500' : 'bg-emerald-500'}`}
-                    animate={{ opacity: [1, 0.3, 1], scale: [1, 0.8, 1] }}
-                    transition={{ duration: 2, repeat: Infinity }} />
-                  <span className="text-[9px] font-bold uppercase tracking-widest text-foreground/35 truncate whitespace-nowrap">
-                    {isConnecting ? 'Connecting…' : isLive ? 'Voice on' : 'Ready'}
-                  </span>
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-0.5 flex-shrink-0">
-              {/* Sheng toggle — secondary personality control, hidden on narrow
-                  panels where 5 header buttons would otherwise squeeze the
-                  name/status text down to a single letter. */}
-              <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
-                aria-label={languageMode === 'sheng' ? 'Switch to English' : 'Switch to Sheng mode'}
-                title={languageMode === 'sheng' ? 'Switch to English' : 'Switch to Sheng mode'}
-                onClick={() => {
-                  const next: LanguageMode = languageMode === 'english' ? 'sheng' : 'english';
-                  setLanguageMode(next); localStorage.setItem('mali_language', next);
-                }}
-                className={`hidden md:inline-flex p-1.5 rounded-xl transition-all text-[9px] font-black tracking-wide ${languageMode === 'sheng' ? 'bg-emerald-500/15 text-emerald-500' : 'text-foreground/30 hover:bg-foreground/6'}`}>
-                {languageMode === 'sheng' ? 'SHENG' : 'SW'}
-              </motion.button>
-              {/* Sass/calm toggle — same reasoning as above */}
-              <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
-                aria-label={personalityMode === 'sass' ? 'Switch to calm mode' : 'Activate sass mode'}
-                title={personalityMode === 'sass' ? 'Switch to calm mode' : 'Activate sass mode 🌶️'}
-                onClick={() => {
-                  const next: PersonalityMode = personalityMode === 'calm' ? 'sass' : 'calm';
-                  setPersonalityMode(next); localStorage.setItem('mali_personality', next);
-                  setAvatarEmote(next === 'sass' ? 'cool' : 'angel');
-                  setTimeout(() => setAvatarEmote('idle'), 1800);
-                }}
-                className={`hidden md:inline-flex p-1.5 rounded-xl transition-all text-[11px] ${personalityMode === 'sass' ? 'bg-rose-500/10 text-rose-500' : 'text-foreground/30 hover:bg-foreground/6'}`}>
-                {personalityMode === 'sass' ? '🌶️' : '😇'}
-              </motion.button>
-              <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
-                onClick={clearChat} aria-label="Clear chat history" className="p-2 hover:bg-foreground/6 rounded-xl transition-colors" title="Clear">
-                <Trash2 className="w-3.5 h-3.5 text-foreground/35" />
-              </motion.button>
-              <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
-                aria-label={isMinimized ? 'Expand chat' : 'Minimise chat'}
-                onClick={() => setIsMinimized(v => !v)} className="p-2 hover:bg-foreground/6 rounded-xl transition-colors">
-                <motion.div animate={{ rotate: isMinimized ? 180 : 0 }} transition={{ duration: 0.3 }}>
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="text-foreground/35">
-                    <path d="M2 7h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                    {!isMinimized && <path d="M4 4l3-3 3 3M4 10l3 3 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>}
-                  </svg>
-                </motion.div>
-              </motion.button>
-              <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
-                aria-label="Close chat"
-                onClick={() => { stopLiveSession(); setIsOpen(false); }}
-                className="p-2 hover:bg-rose-500/8 hover:text-rose-500 text-foreground/35 rounded-xl transition-colors">
-                <X className="w-3.5 h-3.5" />
-              </motion.button>
-            </div>
-          </div>
-
-          {!isMinimized && (
+        <AnimatePresence>
+          {showAnimalPicker && (
             <>
-              {/* â”€â”€ Voice overlay â”€â”€ */}
+              <motion.div
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                className="absolute inset-0 z-40 bg-black/25 backdrop-blur-[2px]"
+                onClick={() => setShowAnimalPicker(false)}
+              />
+              <div className="absolute top-16 left-3 z-50">
+                <AnimalPicker onClose={() => setShowAnimalPicker(false)} />
+              </div>
+            </>
+          )}
+        </AnimatePresence>
+
+        {/* ── Header ── */}
+        <div className="relative z-10 px-4 py-3 border-b border-foreground/[0.08] flex items-center justify-between gap-2 flex-shrink-0 bg-background">
+          <button
+            onClick={() => {
+              if (isMinimized) setIsMinimized(false);
+              setShowAnimalPicker(v => !v);
+            }}
+            className="flex items-center gap-3 min-w-0 text-left rounded-2xl -ml-1 pl-1 py-1 pr-2 hover:bg-foreground/[0.04] transition-colors"
+            title="Change companion"
+            aria-label="Change companion"
+          >
+            <MaliAvatar size={38} rings={isLive} emote={avatarEmote} />
+            <span className="min-w-0">
+              <span className="block font-black text-sm text-foreground truncate">{animalInfo.name}</span>
+              <span className="flex items-center gap-1.5 min-w-0">
+                <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isLive ? 'bg-rose-500' : 'bg-emerald-500'}`} />
+                <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-foreground/60 truncate whitespace-nowrap">
+                  {isConnecting ? 'Connecting…' : isLive ? 'Voice on' : 'Ready'}
+                </span>
+              </span>
+            </span>
+          </button>
+          <div className="flex items-center gap-0.5 flex-shrink-0">
+            <button
+              aria-label={languageMode === 'sheng' ? 'Switch to English' : 'Switch to Sheng mode'}
+              title={languageMode === 'sheng' ? 'Switch to English' : 'Switch to Sheng mode'}
+              onClick={() => {
+                const next: LanguageMode = languageMode === 'english' ? 'sheng' : 'english';
+                setLanguageMode(next); localStorage.setItem('mali_language', next);
+              }}
+              className={`hidden md:inline-flex h-8 px-2 items-center justify-center rounded-xl transition-colors text-[9px] font-black tracking-wide ${languageMode === 'sheng' ? 'bg-emerald-500/[0.12] text-emerald-600 dark:text-emerald-400' : 'text-foreground/35 hover:bg-foreground/[0.06]'}`}>
+              {languageMode === 'sheng' ? 'SHENG' : 'SW'}
+            </button>
+            <button
+              aria-label={personalityMode === 'sass' ? 'Switch to calm mode' : 'Activate sass mode'}
+              title={personalityMode === 'sass' ? 'Switch to calm mode' : 'Activate sass mode 🌶️'}
+              onClick={() => {
+                const next: PersonalityMode = personalityMode === 'calm' ? 'sass' : 'calm';
+                setPersonalityMode(next); localStorage.setItem('mali_personality', next);
+                setAvatarEmote(next === 'sass' ? 'cool' : 'angel');
+                setTimeout(() => setAvatarEmote('idle'), 1800);
+              }}
+              className={`hidden md:inline-flex h-8 w-8 items-center justify-center rounded-xl transition-colors text-[11px] ${personalityMode === 'sass' ? 'bg-rose-500/[0.1] text-rose-500' : 'text-foreground/35 hover:bg-foreground/[0.06]'}`}>
+              {personalityMode === 'sass' ? '🌶️' : '😇'}
+            </button>
+            <button
+              onClick={clearChat} aria-label="Clear chat history" title="Clear"
+              className="h-8 w-8 flex items-center justify-center hover:bg-foreground/[0.06] rounded-xl transition-colors">
+              <Trash2 className="w-3.5 h-3.5 text-foreground/40" />
+            </button>
+            <button
+              aria-label={isMinimized ? 'Expand chat' : 'Minimise chat'}
+              onClick={() => setIsMinimized(v => !v)}
+              className="h-8 w-8 flex items-center justify-center hover:bg-foreground/[0.06] rounded-xl transition-colors">
+              {isMinimized ? <Plus className="w-3.5 h-3.5 text-foreground/40" /> : <Minus className="w-3.5 h-3.5 text-foreground/40" />}
+            </button>
+            <button
+              aria-label="Close chat"
+              onClick={() => { stopLiveSession(); setIsOpen(false); }}
+              className="h-8 w-8 flex items-center justify-center hover:bg-rose-500/[0.08] hover:text-rose-500 text-foreground/40 rounded-xl transition-colors">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+
+        {!isMinimized && (
+          <>
+            {/* ── Voice overlay ── */}
+            <AnimatePresence>
+              {isLive && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  className="absolute inset-0 z-30 bg-background/97 backdrop-blur-sm flex flex-col items-center justify-center gap-5">
+                  <MaliAvatar size={72} rings pulse />
+                  <div className="w-full px-8">
+                    <VoiceCanvas analyser={analyserRef.current} />
+                  </div>
+                  <div className="flex flex-col items-center gap-1">
+                    <p className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground/55">Mali is listening</p>
+                    <p className="text-[10px] text-foreground/50">Speak naturally — she'll respond</p>
+                  </div>
+                  <button onClick={stopLiveSession}
+                    className="flex items-center gap-2 px-6 py-2.5 bg-rose-500/[0.08] text-rose-500 border border-rose-500/25 rounded-full text-[11px] font-black uppercase tracking-widest hover:bg-rose-500 hover:text-white hover:border-rose-500 transition-all">
+                    <MicOff className="w-3.5 h-3.5" /> End voice
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* ── Messages ── */}
+            <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 relative z-10 scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <AnimatePresence initial={false}>
+                {messages.map((m, i) => (
+                  <MessageBubble key={m.id} m={m} isFirst={isFirstInGroup(i)}
+                    products={products}
+                    onAdd={p => { addToCart(p); addToast(`Added ${p.name} to bag 🛍️`, 'success'); }}
+                    onView={p => { setIsOpen(false); navigate(`/product/${p.id}`); }}
+                    onSuggest={s => handleSend(undefined, s)} />
+                ))}
+              </AnimatePresence>
+
+              {messages.length === 1 && (
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                  {starters.map(s => (
+                    <button key={s.q}
+                      onClick={() => handleSend(undefined, s.q)}
+                      className="flex items-center gap-2.5 p-3 bg-foreground/[0.03] border border-foreground/[0.08] rounded-2xl hover:border-emerald-500/25 hover:bg-emerald-500/[0.04] transition-colors text-left">
+                      <span className="text-xl">{s.emoji}</span>
+                      <span className="text-[11px] font-bold text-foreground/65 leading-tight">{s.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <AnimatePresence>{isTyping && <TypingBubble />}</AnimatePresence>
+            </div>
+
+            {/* ── Input ── */}
+            <div className="relative z-10 px-3 pb-3 pt-2.5 border-t border-foreground/[0.08] bg-background flex-shrink-0">
               <AnimatePresence>
-                {isLive && (
-                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                    className="absolute inset-0 z-30 bg-background/95 backdrop-blur-lg flex flex-col items-center justify-center gap-5">
-                    {/* Ambient orbs */}
-                    {[
-                      { cls: 'top-8 left-8 w-24 h-24 bg-emerald-500/8', dur: 4 },
-                      { cls: 'bottom-16 right-8 w-32 h-32 bg-teal-500/6', dur: 5 },
-                      { cls: 'top-1/3 right-4 w-16 h-16 bg-emerald-400/10', dur: 3 },
-                    ].map((o, i) => (
-                      <motion.div key={i} className={`absolute rounded-full blur-2xl pointer-events-none ${o.cls}`}
-                        animate={{ scale: [1, 1.3, 1], opacity: [0.5, 1, 0.5] }}
-                        transition={{ duration: o.dur, repeat: Infinity, ease: 'easeInOut', delay: i * 0.7 }} />
-                    ))}
-                    <MaliAvatar size={72} rings pulse />
-                    <div className="w-full px-8">
-                      <VoiceCanvas analyser={analyserRef.current} />
+                {attachment && (
+                  <motion.div initial={{ opacity: 0, height: 0, marginBottom: 0 }} animate={{ opacity: 1, height: 'auto', marginBottom: 8 }}
+                    exit={{ opacity: 0, height: 0, marginBottom: 0 }} className="flex items-center gap-2 overflow-hidden">
+                    <div className="w-10 h-10 rounded-xl overflow-hidden border border-foreground/[0.1] flex-shrink-0">
+                      <img src={attachment} alt="" className="w-full h-full object-cover" />
                     </div>
-                    <div className="flex flex-col items-center gap-1">
-                      <p className="text-[11px] font-black uppercase tracking-[0.2em] text-foreground/50">Mali is listening</p>
-                      <p className="text-[9px] text-foreground/25">Speak naturally — she'll respond</p>
-                    </div>
-                    <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
-                      onClick={stopLiveSession}
-                      className="flex items-center gap-2 px-6 py-2.5 bg-red-500/10 text-red-500 border border-red-500/25 rounded-full text-[11px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white hover:border-red-500 transition-all">
-                      <MicOff className="w-3.5 h-3.5" /> End voice
-                    </motion.button>
+                    <span className="text-[10px] text-foreground/45 font-medium flex-1">Image attached</span>
+                    <button aria-label="Remove attachment" onClick={() => setAttachment(null)}
+                      className="w-5 h-5 rounded-full bg-foreground/[0.08] flex items-center justify-center">
+                      <X className="w-2.5 h-2.5 text-foreground/50" />
+                    </button>
                   </motion.div>
                 )}
               </AnimatePresence>
 
-              {/* â”€â”€ Messages â”€â”€ */}
-              <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 relative z-10 scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                <AnimatePresence initial={false}>
-                  {messages.map((m, i) => (
-                    <MessageBubble key={m.id} m={m} isFirst={isFirstInGroup(i)}
-                      products={products}
-                      onAdd={p => { addToCart(p); addToast(`Added ${p.name} to bag 🛍️`, 'success'); }}
-                      onView={p => { setIsOpen(false); navigate(`/product/${p.id}`); }}
-                      onSuggest={s => handleSend(undefined, s)} />
-                  ))}
-                </AnimatePresence>
+              <form onSubmit={handleSend} className="flex gap-2 items-center">
+                <button type="button" aria-label="Attach image"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-10 h-10 flex items-center justify-center rounded-xl bg-foreground/[0.05] hover:bg-foreground/[0.08] text-foreground/40 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex-shrink-0">
+                  <Paperclip className="w-4 h-4" />
+                </button>
+                <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFile} />
 
-                {/* Quick starters on fresh chat */}
-                <AnimatePresence>
-                  {messages.length === 1 && (
-                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0 }} transition={{ delay: 0.4 }}
-                      className="grid grid-cols-2 gap-2 mt-2">
-                      {starters.map((s, i) => (
-                        <motion.button key={s.q}
-                          initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.45 + i * 0.08 }}
-                          whileHover={{ scale: 1.03, y: -2 }} whileTap={{ scale: 0.97 }}
-                          onClick={() => handleSend(undefined, s.q)}
-                          className="flex items-center gap-2.5 p-3 glass-surface/60 border border-foreground/6 rounded-2xl hover:border-emerald-500/25 hover:bg-emerald-500/4 transition-all text-left group">
-                          <motion.span className="text-xl" whileHover={{ scale: 1.2, rotate: 10 }} transition={{ type: 'spring', stiffness: 400 }}>
-                            {s.emoji}
-                          </motion.span>
-                          <span className="text-[11px] font-bold text-foreground/60 group-hover:text-foreground/80 leading-tight transition-colors">{s.label}</span>
-                        </motion.button>
-                      ))}
-                    </motion.div>
+                <div className="flex-1 relative">
+                  <input ref={inputRef} value={input}
+                    onChange={e => setInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+                    placeholder={isLive ? 'Speaking…' : `Ask ${animalInfo.name} anything…`}
+                    disabled={isLive}
+                    className="w-full h-11 pl-4 pr-10 rounded-2xl bg-foreground/[0.05] border border-foreground/[0.08] focus:border-emerald-500/40 focus:bg-background text-[12px] font-medium text-foreground placeholder:text-foreground/30 outline-none transition-colors"
+                  />
+                  {input.trim() && (
+                    <button type="button"
+                      onClick={async () => {
+                        setIsTyping(true);
+                        try {
+                          const ai = await getAI();
+                          const r = await ai.models.generateContent({
+                            model: MODELS.TEXT,
+                            contents: `Rephrase this shopping query to be clearer and more specific for a Tanzanian marketplace, return ONLY the rephrased query: "${input}"`,
+                          });
+                          setInput(r.text?.trim() || input);
+                        } finally { setIsTyping(false); }
+                      }}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-foreground/30 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                      title="AI refine" aria-label="Refine query with AI">
+                      <Zap className="w-3.5 h-3.5" />
+                    </button>
                   )}
-                </AnimatePresence>
+                </div>
 
-                <AnimatePresence>{isTyping && <TypingBubble />}</AnimatePresence>
-              </div>
-
-              {/* â”€â”€ Input â”€â”€ */}
-              <div className="relative z-10 px-3 pb-3 pt-2 border-t border-foreground/6 bg-background/95 backdrop-blur-sm flex-shrink-0">
-                {/* Attachment preview */}
-                <AnimatePresence>
-                  {attachment && (
-                    <motion.div initial={{ opacity: 0, height: 0, marginBottom: 0 }} animate={{ opacity: 1, height: 'auto', marginBottom: 8 }}
-                      exit={{ opacity: 0, height: 0, marginBottom: 0 }} className="flex items-center gap-2 overflow-hidden">
-                      <div className="w-10 h-10 rounded-xl overflow-hidden border border-foreground/10 shadow-sm flex-shrink-0">
-                        <img src={attachment} alt="" className="w-full h-full object-cover" />
-                      </div>
-                      <span className="text-[10px] text-foreground/40 font-medium flex-1">Image attached</span>
-                      <motion.button whileTap={{ scale: 0.9 }} aria-label="Remove attachment" onClick={() => setAttachment(null)}
-                        className="w-5 h-5 rounded-full bg-foreground/8 flex items-center justify-center">
-                        <X className="w-2.5 h-2.5 text-foreground/50" />
-                      </motion.button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                <form onSubmit={handleSend} className="flex gap-2 items-center">
-                  <motion.button type="button" aria-label="Attach image" whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.9 }}
-                    onClick={() => fileInputRef.current?.click()}
-                    className="w-10 h-10 flex items-center justify-center rounded-xl bg-foreground/5 hover:bg-foreground/8 text-foreground/35 hover:text-emerald-600 transition-all flex-shrink-0">
-                    <Paperclip className="w-4 h-4" />
-                  </motion.button>
-                  <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFile} />
-
-                  <div className="flex-1 relative">
-                    <motion.input ref={inputRef} value={input}
-                      onChange={e => setInput(e.target.value)}
-                      onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-                      placeholder={isLive ? 'Speaking…' : `Ask ${animalInfo.name} anything…`}
-                      disabled={isLive}
-                      className="w-full h-10 pl-4 pr-10 rounded-2xl bg-foreground/[0.05] border border-foreground/8 focus:border-emerald-500/40 focus:bg-foreground/[0.07] text-[12px] font-medium text-foreground placeholder:text-foreground/25 outline-none transition-all"
-                    />
-                    <AnimatePresence>
-                      {input.trim() && (
-                        <motion.button type="button" initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.5 }}
-                          onClick={async () => {
-                            setIsTyping(true);
-                            try {
-                              const ai = await getAI();
-                              const r = await ai.models.generateContent({
-                                model: MODELS.TEXT,
-                                contents: `Rephrase this shopping query to be clearer and more specific for a Tanzanian marketplace, return ONLY the rephrased query: "${input}"`,
-                              });
-                              setInput(r.text?.trim() || input);
-                            } finally { setIsTyping(false); }
-                          }}
-                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-foreground/25 hover:text-emerald-500 transition-colors"
-                          title="AI refine">
-                          <Zap className="w-3.5 h-3.5" />
-                        </motion.button>
-                      )}
-                    </AnimatePresence>
-                  </div>
-
-                  <AnimatePresence mode="wait">
-                    {input.trim() || attachment ? (
-                      <motion.button key="send" type="submit" aria-label="Send message" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0.8, opacity: 0 }} whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.9 }}
-                        className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-emerald-500/35 transition-shadow hover:shadow-emerald-500/55">
-                        <Send className="w-4 h-4 text-white" />
-                      </motion.button>
-                    ) : (
-                      <motion.button key="mic" type="button" aria-label={isLive ? 'End voice session' : 'Start voice session'} initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0.8, opacity: 0 }} whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.9 }}
-                        onClick={() => isLive ? stopLiveSession() : startLiveSession()}
-                        disabled={isConnecting}
-                        className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg transition-all ${
-                          isLive ? 'bg-red-500 shadow-red-500/35' : 'bg-foreground shadow-black/15'
-                        }`}>
-                        {isConnecting ? <Loader2 className="w-4 h-4 text-background animate-spin" />
-                          : isLive ? <Volume2 className="w-4 h-4 text-white" />
-                          : <Mic className="w-4 h-4 text-background" />}
-                      </motion.button>
-                    )}
-                  </AnimatePresence>
-                </form>
-              </div>
-            </>
-          )}
-        </div>
+                {input.trim() || attachment ? (
+                  <button key="send" type="submit" aria-label="Send message"
+                    className="w-11 h-11 rounded-2xl bg-emerald-600 hover:bg-emerald-700 flex items-center justify-center flex-shrink-0 transition-colors">
+                    <Send className="w-4 h-4 text-white" />
+                  </button>
+                ) : (
+                  <button key="mic" type="button" aria-label={isLive ? 'End voice session' : 'Start voice session'}
+                    onClick={() => isLive ? stopLiveSession() : startLiveSession()}
+                    disabled={isConnecting}
+                    className={`w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 transition-colors ${
+                      isLive ? 'bg-rose-500 hover:bg-rose-600' : 'bg-foreground hover:bg-foreground/85'
+                    }`}>
+                    {isConnecting ? <Loader2 className="w-4 h-4 text-background animate-spin" />
+                      : isLive ? <Volume2 className="w-4 h-4 text-white" />
+                      : <Mic className="w-4 h-4 text-background" />}
+                  </button>
+                )}
+              </form>
+            </div>
+          </>
+        )}
       </div>
     </motion.div>
   );
