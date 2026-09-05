@@ -7,7 +7,7 @@ import {
  Home, Store, UserCircle, User,
  Sun, Moon, BellRing, MessageCircle, LogOut,
  ChevronRight, Info, ArrowRight, Zap,
- Package, Settings, ShieldAlert, Sparkles
+ Package, Settings, ShieldAlert, Sparkles, LayoutGrid
 } from 'lucide-react';
 import { useAuth, useCart, useComms, useCatalog } from '../context/AppContext';
 import { supabase } from '../services/supabaseClient';
@@ -54,7 +54,7 @@ const MegaMenu = ({ isHome, scrolled, categories }: { isHome: boolean; scrolled:
  }, [categories]);
 
  return (
- <nav className="hidden lg:flex items-center gap-7">
+ <nav className="hidden md:flex items-center gap-7">
  <Link to="/shop" className={link}>Shop</Link>
  <div className="relative group">
  <button className={`${link} flex items-center gap-1`} aria-haspopup="true">
@@ -137,7 +137,7 @@ const MobileDrawer = ({ open, onClose, user, logout, isDark, toggleDark, notific
  <AnimatePresence>
  {open && (
  <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} transition={{duration:0.2}}
- className="fixed inset-0 z-[300] lg:hidden">
+ className="fixed inset-0 z-[300] md:hidden">
  {/* Backdrop */}
  <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
  onClick={onClose} className="absolute inset-0 bg-black/60 backdrop-blur-sm"/>
@@ -363,12 +363,12 @@ export const Navbar = () => {
  <div className={`flex items-center gap-1 ${isOnDark?'text-white':'text-foreground'}`}>
 
  {/* Search */}
- <button onClick={()=>setSearchOpen(true)} aria-label="Search" className={`${ibtn} hidden lg:flex gap-1.5 items-center`}>
+ {/* One search button at every width now — mobile used to get its own
+     icon-only duplicate of this same button, which was redundant now that
+     mobile shows the full icon row like tablet does. */}
+ <button onClick={()=>setSearchOpen(true)} aria-label="Search" className={`${ibtn} flex gap-1.5 items-center`}>
  <Search className="w-[18px] h-[18px] stroke-[2]"/>
  <span className={`text-[10px] font-semibold tracking-wide hidden lg:inline ${isOnDark?'text-white/50':'text-foreground/35'}`}>⌘K</span>
- </button>
- <button onClick={()=>setSearchOpen(true)} aria-label="Search" className={`${ibtn} lg:hidden`}>
- <Search className="w-[18px] h-[18px] stroke-[2]"/>
  </button>
 
  {/* Dark mode */}
@@ -376,9 +376,11 @@ export const Navbar = () => {
  {isDark?<Sun className="w-[18px] h-[18px] stroke-[2]"/>:<Moon className="w-[18px] h-[18px] stroke-[2]"/>}
  </button>
 
- {/* Messages (desktop) */}
+ {/* Messages — shown at every width now, alongside the rest of this icon
+     row (search/dark-toggle/cart), not desktop-only. Shop/Collections are
+     what moved to the bottom nav on mobile; these icons didn't need to. */}
  {user && (
- <Link to="/messages" aria-label={`Messages${unreadMessages?` (${unreadMessages} unread)`:''}`} className={`hidden lg:flex relative ${ibtn}`}>
+ <Link to="/messages" aria-label={`Messages${unreadMessages?` (${unreadMessages} unread)`:''}`} className={`relative ${ibtn}`}>
  <MessageCircle className="w-[18px] h-[18px] stroke-[2]"/>
  {(unreadMessages||0)>0 && (
  <span className="absolute top-1.5 right-1.5 min-w-[14px] h-3.5 px-0.5 rounded-full bg-rose-500 text-white text-[8px] font-black flex items-center justify-center">
@@ -388,9 +390,9 @@ export const Navbar = () => {
  </Link>
  )}
 
- {/* Notifications (desktop) — inline popover, no page navigation */}
+ {/* Notifications — inline popover, no page navigation. Shown everywhere now. */}
  {user && (
- <div className="hidden lg:block relative">
+ <div className="relative">
  <button onClick={()=>setNotifOpen(o=>!o)} aria-label={`Notifications${unread?` (${unread} unread)`:''}`} aria-expanded={notifOpen} className={`relative ${ibtn}`}>
  <motion.span
    className="inline-flex"
@@ -452,31 +454,34 @@ export const Navbar = () => {
  </AnimatePresence>
  </Link>
 
- {/* Account chip (desktop) */}
- <div className="hidden lg:block relative group">
+ {/* Account chip — shown at every width now. The text label folds away
+     below sm so the chip squeezes to just the avatar on the narrowest
+     phones instead of pushing the row into overflow; the avatar/icon is
+     always there so the control is still reachable and recognisable. */}
+ <div className="relative group">
  {user ? (
  <Link to={accountPath}
- className={`flex items-center gap-2 h-9 pl-1 pr-3 rounded-full transition-colors
+ className={`flex items-center gap-2 h-9 pl-1 pr-1 sm:pr-3 rounded-full transition-colors
  ${isOnDark?'hover:bg-white/15':'hover:bg-foreground/[0.06]'}`}>
  {user.avatar_url ? (
  <img src={user.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover ring-1 ring-foreground/10" loading="lazy" decoding="async"/>
  ) : (
  <span className="w-7 h-7 rounded-full bg-foreground text-background flex items-center justify-center text-xs font-bold">{initial}</span>
  )}
- <span className="text-sm font-semibold">Account</span>
+ <span className="text-sm font-semibold hidden sm:inline">Account</span>
  </Link>
  ) : (
  <Link to="/login"
- className={`flex items-center gap-2 h-9 px-4 rounded-full text-sm font-semibold transition-colors
+ className={`flex items-center gap-2 h-9 px-2.5 sm:px-4 rounded-full text-sm font-semibold transition-colors
  ${isOnDark?'bg-white text-black hover:bg-white/90':'bg-foreground text-background hover:bg-foreground/85'}`}>
- <User className="w-3.5 h-3.5 stroke-[2.2]"/> Sign in
+ <User className="w-3.5 h-3.5 stroke-[2.2]"/> <span className="hidden sm:inline">Sign in</span>
  </Link>
  )}
  <UserMenu user={user} handleLogout={handleLogout}/>
  </div>
 
  {/* Mobile hamburger */}
- <button onClick={()=>setMenuOpen(true)} aria-label="Open menu" className={`lg:hidden ${ibtn}`}>
+ <button onClick={()=>setMenuOpen(true)} aria-label="Open menu" className={`md:hidden ${ibtn}`}>
  <Menu className="w-[18px] h-[18px] stroke-[2]"/>
  </button>
  </div>
@@ -533,6 +538,11 @@ export const MobileBottomNav = () => {
  const tabs = [
  { id:'home', label:'Home', icon:Home, path:'/' },
  { id:'shop', label:'Shop', icon:Store, path:'/shop' },
+ // Collections moved here from the top MegaMenu — mobile drops that
+ // menu from its top bar, so its two links (Shop, Collections) live in
+ // the bottom nav instead. There's no separate Collections page since
+ // the Explore/Shop merge folded category browsing into Shop's Stores tab.
+ { id:'collections', label:'Collections', icon:LayoutGrid, path:'/shop?tab=stores' },
  { id:'cart', label:'Bag', icon:ShoppingBag,path:'/cart', badge:cartCount },
  { id:'me', label:(user||isLoading)?'Account':'Sign in', icon:UserCircle, path:accountPath, badge:unread },
  // Mali lives IN the nav on mobile rather than as a floating launcher. A
@@ -557,7 +567,7 @@ export const MobileBottomNav = () => {
 
  return (
  <nav role="navigation" aria-label="Mobile navigation"
- className="fixed bottom-0 inset-x-0 z-40 lg:hidden"
+ className="fixed bottom-0 inset-x-0 z-40 md:hidden"
  style={{paddingBottom:'env(safe-area-inset-bottom)'}}>
  <div className="mx-2 mb-2 rounded-2xl bg-background/80 backdrop-blur-2xl ring-1 ring-foreground/12 shadow-[0_-2px_20px_-4px_rgba(0,0,0,0.12)] relative overflow-hidden">
  {/* Sliding pill indicator */}
