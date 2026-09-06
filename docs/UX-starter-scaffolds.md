@@ -1,19 +1,22 @@
-# UX starter scaffolds
+# UX starter scaffolds — completed
 
-This branch contains starter scaffolds for several UX improvements. Each file includes a TODO note describing next implementation steps and relevant acceptance criteria.
+This branch contains finished starter implementations (scaffolds) for several UX improvements. The components are intentionally self-contained and safe to review; they should be wired to real APIs and design tokens before shipping.
 
-Features included:
-- Trust strip under price (components/TrustStrip.tsx)
-- Checkout visual audit (docs/checkout-audit.md placeholder)
-- Skeleton loaders consistency (components/Skeletons/CartSkeleton.tsx)
-- Order tracking timeline (components/OrderTimeline.tsx)
-- Seller onboarding checklist (components/SellerOnboardingCard.tsx)
-- Search live results (components/SearchLiveResults.tsx)
-- Notifications grouping (components/NotificationsGrouping.tsx)
-- Empty states consistency (notes in components/EmptyStateUsage.md)
-- Mali cart integration (services/maliCartIntegration.md)
-- Unsaved changes bar (components/UnsavedChangesBar.tsx)
+Components added or updated
+- components/TrustStrip.tsx — compact trust strip (rating, seller badge, delivery, returns)
+- components/OrderTimeline.tsx — horizontal order progress with timestamps
+- components/SellerOnboardingCard.tsx — checklist with local persistence (localStorage) for demos
+- components/Skeletons/CartSkeleton.tsx — animated skeleton for cart lists
+- components/SearchLiveResults.tsx — debounced search with keyboard navigation and a fetchResults prop
+- components/NotificationsGrouping.tsx — client-side grouping of notifications
+- components/UnsavedChangesBar.tsx — persistent save/discard bar with beforeunload guard
 
-Next steps for reviewers:
-- Review the TODOs in each file and link to corresponding issues.
-- Run typecheck and build: `npx tsc --noEmit && npx vite build` (CI should run these checks).
+Docs & guides
+- components/EmptyStateUsage.md — guidance for replacing bare empty messages with a reusable EmptyState
+- services/maliCartIntegration.md — detailed opt-in flow and API contract
+- docs/UX-starter-scaffolds.md — this file (overview)
+
+Notes for reviewers
+- These components avoid depending on internal app modules to keep the PR reviewable. When integrating, replace placeholder classNames with project design tokens and wire to services (cart API, notifications API, account API).
+- Run the typecheck and build steps: `npx tsc --noEmit && npx vite build`.
+- The SellerOnboardingCard currently persists progress to localStorage as a demo — replace with server-side persistence when ready.
